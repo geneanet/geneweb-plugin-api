@@ -259,7 +259,7 @@ let print_add conf base mod_p =
     (* On met à jour les occ. *)
     if sp.occ <> 0 then mod_p.Mwrite.Person.occ <- Some (Int32.of_int sp.occ);
     let sp : ('a, string * string * int * Update.create * string, string) gen_person = UpdateIndOk.strip_person sp in
-    match UpdateIndOk.check_person conf (sp : ('a, string * string * int * Update.create * string, string) gen_person) with
+    match UpdateIndOk.check_person conf base (sp : ('a, string * string * int * Update.create * string, string) gen_person) with
     | Some err ->
         (* Correspond au cas ou fn/sn = ""/"?" *)
         (* => ne devrait pas se produire       *)
@@ -284,7 +284,7 @@ let print_mod_aux conf base ncn mod_p callback =
     let ini_ps = UpdateInd.string_person_of base (poi base p.key_index) in
     let digest = Update.digest_person ini_ps in
     if digest = mod_p.Mwrite.Person.digest then
-      match match if ncn then None else Update.check_missing_name conf p with
+      match match if ncn then None else Update.check_missing_name base p with
         | Some _ as err -> err
         | None -> Update.check_missing_witnesses_names conf (fun e -> e.epers_witnesses) p.pevents
       with
