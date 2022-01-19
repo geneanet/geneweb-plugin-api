@@ -87,6 +87,7 @@ let code_french_date conf d m y =
 
 
 let encode_dmy conf d m y is_long =
+  Adef.safe @@
   let date = if d != 0 then string_of_int d else "" in
   let date =
     if m != 0 then
@@ -105,9 +106,9 @@ let string_of_dmy conf d is_long =
     | OrYear d2 | YearInt d2 ->
         let d2 = Date.dmy_of_dmy2 d2 in
         encode_dmy conf d2.day d2.month d2.year is_long
-    | _ -> ""
+    | _ -> Adef.safe ""
   in
-  DateDisplay.string_of_prec_dmy conf sy sy2 d
+  !!(DateDisplay.string_of_prec_dmy conf sy sy2 d)
 
 (* ************************************************************************** *)
 (*  [Fonc] string_of_dmy_raw : Def.dmy -> string                              *)
@@ -151,7 +152,7 @@ let string_of_dmy_raw d =
 let string_of_date_raw conf d =
   match d with
   | Dgreg (d, _) -> string_of_dmy_raw d
-  | Dtext t -> Util.safe_html (string_with_macros conf [] t)
+  | Dtext t -> string_with_macros conf [] t
 
 let gregorian_precision conf d is_long =
   if d.delta = 0 then string_of_dmy conf d is_long
@@ -159,15 +160,16 @@ let gregorian_precision conf d is_long =
     let d2 =
       Calendar.gregorian_of_sdn d.prec (Calendar.sdn_of_gregorian d + d.delta)
     in
-    transl conf "between (date)" ^ " " ^ string_of_dmy conf d is_long ^ " " ^
-      transl_nth conf "and" 0 ^ " " ^ string_of_dmy conf d2 is_long
+    transl conf "between (date)"
+    ^ " " ^ string_of_dmy conf d is_long
+    ^ " " ^ transl_nth conf "and" 0
+    ^ " " ^ string_of_dmy conf d2 is_long
 
 let string_of_french_dmy conf d =
   code_french_date conf d.day d.month d.year
 
 let string_of_hebrew_dmy conf d =
   DateDisplay.code_hebrew_date conf d.day d.month d.year
-
 
 (* ************************************************************************** *)
 (*  [Fonc] string_of_date_and_conv :
@@ -188,8 +190,7 @@ let string_of_date_and_conv conf d =
       let date = string_of_dmy conf d false in
       let date_long = string_of_dmy conf d true in
       let date_conv = date in
-      let date_conv_long = date_long
-      in
+      let date_conv_long = date_long in
       (date, date_long, date_conv, date_conv_long, Some `gregorian)
   | Dgreg (d, Djulian) ->
       let date_conv =
@@ -206,27 +207,26 @@ let string_of_date_and_conv conf d =
         else ""
       in
       let date =
-        DateDisplay.string_of_dmy conf d1 ^ year_prec ^ " " ^
-          transl_nth conf "gregorian/julian/french/hebrew" 1
+        !!(DateDisplay.string_of_dmy conf d1)
+        ^ year_prec
+        ^ " " ^ transl_nth conf "gregorian/julian/french/hebrew" 1
       in
       (date, date, date_conv, date_conv_long, Some `julian)
   | Dgreg (d, Dfrench) ->
       let d1 = Calendar.french_of_gregorian d in
       let date = string_of_french_dmy conf d1 in
-      let date_long = DateDisplay.string_of_on_french_dmy conf d1 in
+      let date_long = !!(DateDisplay.string_of_on_french_dmy conf d1) in
       let date_conv = gregorian_precision conf d false in
-      let date_conv_long = DateDisplay.string_of_dmy conf d
-      in
+      let date_conv_long = !!(DateDisplay.string_of_dmy conf d) in
       (date, date_long, date_conv, date_conv_long, Some `french)
   | Dgreg (d, Dhebrew) ->
       let d1 = Calendar.hebrew_of_gregorian d in
       let date = string_of_hebrew_dmy conf d1 in
-      let date_long = DateDisplay.string_of_on_hebrew_dmy conf d1 in
+      let date_long = !!(DateDisplay.string_of_on_hebrew_dmy conf d1) in
       let date_conv = gregorian_precision conf d false in
-      let date_conv_long = DateDisplay.string_of_dmy conf d
-      in
+      let date_conv_long = !!(DateDisplay.string_of_dmy conf d) in
       (date, date_long, date_conv, date_conv_long, Some `hebrew)
-  | Dtext t -> ("(" ^ Util.safe_html (string_with_macros conf [] t) ^ ")", "", "", "", None)
+  | Dtext t -> ("(" ^ string_with_macros conf [] t ^ ")", "", "", "", None)
 
 (**/**) (* Affichage nom/prénom *)
 
@@ -513,7 +513,7 @@ let pers_to_piqi_simple_person conf base p base_prefix =
         let (birth_date, death_date, _) = Gutil.get_birth_death_date p in
         let birth =
           match birth_date with
-          | Some d -> DateDisplay.string_slash_of_date conf d
+          | Some d -> !!(DateDisplay.string_slash_of_date conf d)
           | None -> ""
         in
         let birth_raw =
@@ -530,7 +530,7 @@ let pers_to_piqi_simple_person conf base p base_prefix =
         in
         let death =
           match death_date with
-          | Some d -> DateDisplay.string_slash_of_date conf d
+          | Some d -> !!(DateDisplay.string_slash_of_date conf d)
           | None -> ""
         in
         let death_raw =
@@ -545,7 +545,7 @@ let pers_to_piqi_simple_person conf base p base_prefix =
             let burial_place = sou base (get_burial_place p) in
             Util.string_of_place conf burial_place
         in
-        (birth, birth_raw, birth_place, death, death_raw, death_place)
+        (birth, birth_raw, !!birth_place, death, death_raw, !!death_place)
       else ("", "", "", "", "", "")
     in
     let image =
@@ -619,9 +619,9 @@ let fam_to_piqi_family_link conf base (ifath : Gwdb.iper) imoth sp ifam fam base
       (marriage_date, marriage_date_long, marriage_date_conv, marriage_date_conv_long, marriage_cal, string_of_date_raw conf d)
     | _ -> ("", "", "", "", None, "")
   in
-  let marriage_date_text = Perso.get_marriage_date_text conf fam p_auth in
+  let marriage_date_text = !!(Perso.get_marriage_date_text conf fam p_auth) in
   let marriage_place =
-    if m_auth then Util.string_of_place conf gen_f.marriage_place else ""
+    if m_auth then !!(Util.string_of_place conf gen_f.marriage_place) else ""
   in
   let marriage_src = if p_auth then gen_f.marriage_src else "" in
   let marriage_type =
@@ -710,8 +710,10 @@ let fill_events conf base p base_prefix p_auth pers_to_piqi witness_constructor 
       (fun (name, date, place, note, src, w, isp) ->
         let (name, type_) =
           match name with
-          | Perso.Pevent name -> (Util.string_of_pevent_name conf base name, event_to_piqi_event (Some name) None)
-          | Perso.Fevent name -> (Util.string_of_fevent_name conf base name, event_to_piqi_event None (Some name))
+          | Perso.Pevent name -> ( !!(Util.string_of_pevent_name conf base name)
+                                 , event_to_piqi_event (Some name) None)
+          | Perso.Fevent name -> ( !!(Util.string_of_fevent_name conf base name)
+                                 , event_to_piqi_event None (Some name) )
         in
         let (date, date_long, date_conv, date_conv_long, date_cal, date_raw) =
           match Adef.od_of_cdate date with
@@ -720,7 +722,7 @@ let fill_events conf base p base_prefix p_auth pers_to_piqi witness_constructor 
             (date, date_long, date_conv, date_conv_long, date_cal, string_of_date_raw conf d)
           | _ -> ("", "", "", "", None, "")
         in
-        let place = Util.string_of_place conf (sou base place) in
+        let place = !!(Util.string_of_place conf (sou base place)) in
         let note =
           if not conf.no_note then
             begin
@@ -877,9 +879,9 @@ let get_family_piqi base conf ifam p base_prefix spouse_to_piqi witnesses_to_piq
       (marriage_date, marriage_date_long, marriage_date_conv, marriage_date_conv_long, marriage_cal, string_of_date_raw conf d)
     | _ -> ("", "", "", "", None, "")
   in
-  let marriage_date_text = Perso.get_marriage_date_text conf fam p_auth in
+  let marriage_date_text = !!(Perso.get_marriage_date_text conf fam p_auth) in
   let marriage_place =
-    if m_auth then Util.string_of_place conf gen_f.marriage_place else ""
+    if m_auth then !!(Util.string_of_place conf gen_f.marriage_place) else ""
   in
   let marriage_src = if p_auth then gen_f.marriage_src else "" in
   let marriage_type =
@@ -1098,14 +1100,14 @@ let get_events_witnesses conf base p base_prefix gen_p p_auth has_relations pers
           let witnesses_name =
             match name with
             | Perso.Pevent name ->
-                if p_auth then Util.string_of_pevent_name conf base name
+                if p_auth then !!(Util.string_of_pevent_name conf base name)
                 else  ""
             | Perso.Fevent name ->
-                if p_auth then Util.string_of_fevent_name conf base name
+                if p_auth then !!(Util.string_of_fevent_name conf base name)
                 else  ""
           in
           let event_witness_type =
-            Utf8.capitalize_fst wk ^ witness_date ^ ": " ^ witnesses_name
+            Utf8.capitalize_fst !!(wk) ^ witness_date ^ ": " ^ witnesses_name
           in
           let husband = pers_to_piqi conf base p base_prefix in
           let wife =
@@ -1188,13 +1190,13 @@ let fill_image conf base p =
   else ""
 
 let fill_birth_place conf p_auth gen_p =
-  if p_auth then Util.string_of_place conf gen_p.birth_place else ""
+  if p_auth then !!(Util.string_of_place conf gen_p.birth_place) else ""
 
 let fill_baptism_place conf p_auth gen_p =
-  if p_auth then Util.string_of_place conf gen_p.baptism_place else ""
+  if p_auth then !!(Util.string_of_place conf gen_p.baptism_place) else ""
 
 let fill_death_place conf p_auth gen_p =
-  if p_auth then Util.string_of_place conf gen_p.death_place else ""
+  if p_auth then !!(Util.string_of_place conf gen_p.death_place) else ""
 
 let fill_birth_src p_auth gen_p =
   if p_auth then gen_p.birth_src else ""
@@ -1209,7 +1211,7 @@ let fill_baptism_src p_auth gen_p =
   if p_auth then gen_p.baptism_src else ""
 
 let fill_burial_place conf p_auth gen_p =
-  if p_auth then Util.string_of_place conf gen_p.burial_place else ""
+  if p_auth then !!(Util.string_of_place conf gen_p.burial_place) else ""
 
 let fill_death conf p_auth gen_p =
   match (p_auth, gen_p.death) with
@@ -1553,7 +1555,9 @@ let has_sources p_auth psources birth_src baptism_src death_src burial_src =
   else false
 
 let fill_titles conf base p =
-  List.map (Perso.string_of_title ~link:false conf base "" p) (Perso.nobility_titles_list conf base p)
+  List.map
+    (fun x -> !!(Perso.string_of_title ~link:false conf base (Adef.safe "") p x))
+    (Perso.nobility_titles_list conf base p)
 
 let transform_empty_string_to_None string =
   if string = "" then None else Some string
@@ -1587,19 +1591,19 @@ let fill_burial_date_raw_if_is_main_person conf p_auth gen_p is_main_person =
     ""
 
 let fill_birth_text conf p p_auth =
-  Perso.get_birth_text conf p p_auth
+  !!(Perso.get_birth_text conf p p_auth)
 
 let fill_baptism_text conf p p_auth =
-  Perso.get_baptism_text conf p p_auth
+  !!(Perso.get_baptism_text conf p p_auth)
 
 let fill_death_text conf p p_auth =
-  Perso.get_death_text conf p p_auth
+  !!(Perso.get_death_text conf p p_auth)
 
 let fill_burial_text conf p p_auth =
-  Perso.get_burial_text conf p p_auth
+  !!(Perso.get_burial_text conf p p_auth)
 
 let fill_cremation_text conf p p_auth =
-  Perso.get_cremation_text conf p p_auth
+  !!(Perso.get_cremation_text conf p p_auth)
 
 let fill_baptism_text_if_main_person_or_parent conf p p_auth is_main_person_or_father_or_mother =
   if (is_main_person_or_father_or_mother) then
@@ -1615,7 +1619,9 @@ let fill_burial_type p_auth gen_p =
   else `dont_know
 
 let fill_titles_with_links conf base p =
-  List.map (Perso.string_of_title ~link:true conf base "" p) (Perso.nobility_titles_list conf base p)
+  List.map
+    (fun x -> !!(Perso.string_of_title ~link:true conf base (Adef.safe "") p x))
+    (Perso.nobility_titles_list conf base p)
 
 let has_history_if_is_main_person conf base p p_auth is_main_person =
   if is_main_person then
@@ -1631,12 +1637,11 @@ let has_duplication_if_is_main_person conf base p is_main_person =
 
 let fill_linked_page_if_is_main_person conf base p is_main_person =
   if is_main_person then
-    (
-    Perso.get_linked_page conf base p "BIBLIO",
-    Perso.get_linked_page conf base p "BNOTE",
-    Perso.get_linked_page conf base p "DEATH",
-    Perso.get_linked_page conf base p "HEAD",
-    Perso.get_linked_page conf base p "OCCU"
+    ( !!(Perso.get_linked_page conf base p "BIBLIO")
+    , !!(Perso.get_linked_page conf base p "BNOTE")
+    , !!(Perso.get_linked_page conf base p "DEATH")
+    , !!(Perso.get_linked_page conf base p "HEAD")
+    , !!(Perso.get_linked_page conf base p "OCCU")
     )
   else
     ("", "", "", "", "")
@@ -1915,7 +1920,7 @@ let print_person_tree conf base =
   print_result conf data
   else begin
     Output.status conf Def.Not_Found ;
-    Output.print_string conf ""
+    Output.print_sstring conf ""
   end
 
 (* ********************************************************************* *)
@@ -1981,7 +1986,7 @@ let print_result_fiche_person conf base ip nb_asc_max nb_desc_max simple_graph_i
     print_result conf data
   end else begin
     Output.status conf Def.Not_Found ;
-    Output.print_string conf ""
+    Output.print_sstring conf ""
   end
 
 (* ********************************************************************* *)
@@ -2437,7 +2442,7 @@ let print_result_graph_tree conf base ip =
   print_result conf data
   else begin
     Output.status conf Def.Not_Found ;
-    Output.print_string conf ""
+    Output.print_sstring conf ""
   end
 
 (* ************************************************************************ *)

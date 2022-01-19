@@ -8,10 +8,9 @@ open Util
 open Api_update_util
 
 let reconstitute_person_aux conf fn_occ fn_rparents fn_pevt_witnesses mod_p =
-  let no_html_tags_only_printable s = no_html_tags (only_printable s) in
   let key_index = Gwdb.iper_of_string @@ Int32.to_string mod_p.Mwrite.Person.index in
-  let first_name = no_html_tags_only_printable mod_p.Mwrite.Person.firstname in
-  let surname = no_html_tags_only_printable mod_p.Mwrite.Person.lastname in
+  let first_name = only_printable mod_p.Mwrite.Person.firstname in
+  let surname = only_printable mod_p.Mwrite.Person.lastname in
   (* S'il y a des caractères interdits, on les supprime *)
   let (first_name, surname) =
     let contain_fn = String.contains first_name in
@@ -23,10 +22,10 @@ let reconstitute_person_aux conf fn_occ fn_rparents fn_pevt_witnesses mod_p =
   in
   let occ = fn_occ mod_p in
   let image = Opt.map_default "" only_printable mod_p.Mwrite.Person.image in
-  let strings_aux = List.map no_html_tags_only_printable in
+  let strings_aux = List.map only_printable in
   let first_names_aliases = strings_aux mod_p.Mwrite.Person.firstname_aliases in
   let surnames_aliases = strings_aux mod_p.Mwrite.Person.surname_aliases in
-  let public_name = Opt.to_string mod_p.Mwrite.Person.public_name |> no_html_tags_only_printable in
+  let public_name = Opt.to_string mod_p.Mwrite.Person.public_name |> only_printable in
   let qualifiers = strings_aux mod_p.Mwrite.Person.qualifiers in
   let aliases = strings_aux mod_p.Mwrite.Person.aliases in
   let titles =
@@ -88,7 +87,7 @@ let reconstitute_person_aux conf fn_occ fn_rparents fn_pevt_witnesses mod_p =
     List.map begin fun evt ->
       let name =
         match evt.Mwrite.Pevent.event_perso with
-        | Some n -> Epers_Name (no_html_tags (only_printable n))
+        | Some n -> Epers_Name (only_printable n)
         | _ ->
           match evt.Mwrite.Pevent.pevent_type with
           | Some x -> Api_piqi_util.pevent_name_of_piqi_pevent_name x
@@ -99,8 +98,8 @@ let reconstitute_person_aux conf fn_occ fn_rparents fn_pevt_witnesses mod_p =
         | Some date -> Api_update_util.date_of_piqi_date conf date
         | None -> None
       in
-      let place = Opt.map_default "" (fun p -> no_html_tags (only_printable p)) evt.Mwrite.Pevent.place in
-      let reason = Opt.map_default "" (fun r -> no_html_tags (only_printable r)) evt.Mwrite.Pevent.reason in
+      let place = Opt.map_default "" (fun p -> only_printable p) evt.Mwrite.Pevent.place in
+      let reason = Opt.map_default "" (fun r -> only_printable r) evt.Mwrite.Pevent.reason in
       let note =
         Opt.map_default
           "" (fun n -> only_printable_or_nl (Mutil.strip_all_trailing_spaces n))
@@ -301,7 +300,7 @@ let print_mod ?(no_check_name = false) ?(fexclude = []) conf base mod_p =
     begin
       let p =
         (* Do not check sex of married person *)
-        let conf = { conf with Config.env = ("nsck", "on") :: conf.Config.env } in
+        let conf = { conf with Config.env = ("nsck", Adef.encoded "on") :: conf.Config.env } in
         UpdateIndOk.effective_mod conf base p
       in
       let op = poi base p.key_index in
