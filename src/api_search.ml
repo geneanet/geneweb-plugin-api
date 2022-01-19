@@ -175,14 +175,14 @@ let select_start_with conf base ini_n ini_p =
   in
   List.rev_append list_maj list_min
 
-let aux_ini s =
-  let rec loop s acc =
-    if String.contains s '+' then
-      let index = String.index s '+' in
+let aux_ini (s : string) : string list =
+  let rec loop (s : Adef.encoded_string) acc =
+    if String.contains (s :> string) '+' then
+      let index = String.index (s :> string) '+' in
       let start = index + 1 in
-      let len = String.length s - start in
-      let ns = String.sub s start len in
-      loop ns (Mutil.decode (String.sub s 0 index) :: acc)
+      let len = String.length (s :> string) - start in
+      let ns = Adef.encoded @@ String.sub (s :> string) start len in
+      loop ns (Mutil.decode (Adef.encoded @@ String.sub (s :> string) 0 index) :: acc)
     else (Mutil.decode s :: acc)
   in
   loop (Mutil.encode s) []
@@ -599,7 +599,7 @@ let complete_with_dico assets conf nb max mode ini list =
   match mode with
   | Some mode when !nb < max ->
     let format =
-      match p_getenv conf.base_env "places_format" with
+      match List.assoc_opt "places_format" conf.base_env with
       | None -> []
       | Some s ->
         List.map begin function
@@ -624,7 +624,7 @@ let complete_with_dico assets conf nb max mode ini list =
 
 let search_auto_complete assets conf base mode place_mode max n =
   let aux data compare =
-    let conf = { conf with env = ("data", data) :: conf.env } in
+    let conf = { conf with env = ("data", Mutil.encode data) :: conf.env } in
     UpdateData.get_all_data conf base
     |> List.rev_map (sou base)
     |> List.sort compare

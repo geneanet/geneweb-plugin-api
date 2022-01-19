@@ -8,6 +8,14 @@ open Def
 open Util
 open Api_update_util
 
+let opt_only_printable = function
+  | Some s -> only_printable s
+  | None -> ""
+
+let opt_only_printable_or_nl_stripped = function
+  | Some x -> only_printable_or_nl (Mutil.strip_all_trailing_spaces x)
+  | None -> ""
+
 let reconstitute_family conf base mod_f =
   (* Attention, si witnesses est vide, on va supprimer des témoins (qui sont
      en double parce que dans GeneWeb, ils sont récupérés une fois dans fevents
@@ -32,7 +40,7 @@ let reconstitute_family conf base mod_f =
       (fun evt ->
         let name =
           match evt.Mwrite.Fevent.event_perso with
-          | Some n -> Efam_Name (no_html_tags (only_printable n))
+          | Some n -> Efam_Name (only_printable n)
           | _ ->
               match evt.Mwrite.Fevent.fevent_type with
               | Some `efam_marriage -> Efam_Marriage
@@ -51,30 +59,13 @@ let reconstitute_family conf base mod_f =
         in
         let date =
           match evt.Mwrite.Fevent.date with
-          | Some date -> Api_update_util.date_of_piqi_date conf date
+          | Some d -> Api_update_util.date_of_piqi_date conf d
           | None -> None
         in
-        let place =
-          match evt.Mwrite.Fevent.place with
-          | Some place -> no_html_tags (only_printable place)
-          | None -> ""
-        in
-        let reason =
-          match evt.Mwrite.Fevent.reason with
-          | Some reason -> no_html_tags (only_printable reason)
-          | None -> ""
-        in
-        let note =
-          match evt.Mwrite.Fevent.note with
-          | Some note ->
-              only_printable_or_nl (Mutil.strip_all_trailing_spaces note)
-          | None -> ""
-        in
-        let src =
-          match evt.Mwrite.Fevent.src with
-          | Some src -> only_printable src
-          | None -> ""
-        in
+        let place = opt_only_printable evt.Mwrite.Fevent.place in
+        let reason = opt_only_printable evt.Mwrite.Fevent.reason in
+        let note = opt_only_printable_or_nl_stripped evt.Mwrite.Fevent.note in
+        let src = opt_only_printable evt.Mwrite.Fevent.src  in
         let witnesses =
           List.fold_right
             (fun witness accu ->
@@ -97,21 +88,10 @@ let reconstitute_family conf base mod_f =
       mod_f.Mwrite.Family.fevents
   in
   let comment =
-    match mod_f.Mwrite.Family.comment with
-    | Some comment ->
-        only_printable_or_nl (Mutil.strip_all_trailing_spaces comment)
-    | None -> ""
+    opt_only_printable_or_nl_stripped mod_f.Mwrite.Family.comment
   in
-  let fsources =
-    match mod_f.Mwrite.Family.fsources with
-    | Some s -> only_printable s
-    | None -> ""
-  in
-  let origin_file =
-    match mod_f.Mwrite.Family.origin_file with
-    | Some s -> s
-    | None -> ""
-  in
+  let fsources = opt_only_printable mod_f.Mwrite.Family.fsources in
+  let origin_file = Opt.to_string mod_f.Mwrite.Family.origin_file in
   let fam_index = Gwdb.ifam_of_string @@ Int32.to_string mod_f.Mwrite.Family.index in
   let parents =
     let father = mod_f.Mwrite.Family.father in
