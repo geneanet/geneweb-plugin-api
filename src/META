@@ -1,1 +1,1 @@
-depends:lib_piqi
+depends:lib_piqi, lib_csv
