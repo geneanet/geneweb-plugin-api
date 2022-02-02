@@ -1,6 +1,6 @@
 
 module StrSet = Set.Make (String)
-              
+(*              
 module ApiCsv : sig
 
   type t
@@ -17,7 +17,7 @@ end = struct
     try
       Csv.load file
     with Csv.Failure (nrecord, nfield, msg) ->
-      Geneweb.GWPARAM.Default.syslog
+      !Geneweb.GWPARAM.syslog
         `LOG_ERR
         ("failed to load csv from :" ^ file
          ^ " " ^ string_of_int nrecord
@@ -29,13 +29,15 @@ end = struct
   let fold_left = List.fold_left
     
 end
+ *)
 
 
-
+let quote s =  "\"" ^ s ^ "\""
+              
 let build_line =
   let rec aux s l = match l with
-    | [x] -> s ^ x
-    | x :: xs -> aux (s ^ x ^ ",") xs
+    | [x] -> s ^ (quote x)
+    | x :: xs -> aux (s ^ (quote x) ^ ",") xs
     | [] -> s
   in fun l -> aux "" l
             
@@ -61,9 +63,10 @@ let sorted_array_of_set s =
   a
        
 let write_dico_place_set ~assets ~fname_csv ~lang =
-  Geneweb.GWPARAM.Default.syslog `LOG_DEBUG ("writing places files for lang " ^ lang ^ " from file: " ^ fname_csv);
+  !Geneweb.GWPARAM.syslog `LOG_DEBUG ("writing places files for lang "
+                                      ^ lang ^ " from file: " ^ fname_csv);
 
-  let csv = ApiCsv.load_from_file ~file:fname_csv in
+  let csv = Api_csv.load_from_file ~file:fname_csv in
   
   let sets = StrSet.empty,
              StrSet.empty,
@@ -73,7 +76,7 @@ let write_dico_place_set ~assets ~fname_csv ~lang =
   in
   
   let towns, area_codes, countys, regions, countrys =
-    ApiCsv.fold_left (
+    Api_csv.fold_left (
         fun (towns, area_codes, countys, regions, countrys) ->
         function
         | [ _ ; _ ; _ ; _ ; _ ] as l ->
@@ -88,9 +91,9 @@ let write_dico_place_set ~assets ~fname_csv ~lang =
            let countrys = add_opt l countrys in
            (towns, area_codes, countys, regions, countrys)
         | l ->
-           Geneweb.GWPARAM.Default.syslog `LOG_DEBUG ("malformed line in file: " ^ fname_csv);
+           !Geneweb.GWPARAM.syslog `LOG_DEBUG ("malformed line in file: " ^ fname_csv);
            let s = List.fold_left (fun s a -> s ^ "," ^ a) "" l in
-           Geneweb.GWPARAM.Default.syslog `LOG_DEBUG ("line is: " ^ s);
+           !Geneweb.GWPARAM.syslog `LOG_DEBUG ("line is: " ^ s);
            (towns, area_codes, countys, regions, countrys)
       ) sets csv
   in
