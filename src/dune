@@ -53,6 +53,7 @@
   (libraries geneweb geneweb.gwd_lib geneweb.util piqirun.ext csv)
   (modules
     api
+    api_csv
     api_def
     api_graph
     api_marshal_dico_place
