@@ -26,7 +26,6 @@ open Api_util
 (* ************************************************************************ *)
 
 let print_auto_complete assets conf base =
-  !Geneweb.GWPARAM.syslog `LOG_DEBUG "print_auto_complete";
   let params = get_params conf Mext_write.parse_auto_complete in
   let s = params.Mwrite.Auto_complete.input in
   let max_res = Int32.to_int params.Mwrite.Auto_complete.limit in
