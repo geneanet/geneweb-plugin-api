@@ -1,36 +1,5 @@
 
 module StrSet = Set.Make (String)
-(*              
-module ApiCsv : sig
-
-  type t
-
-  val load_from_file : file:string -> t
-
-  val fold_left : ('a -> string list -> 'a) -> 'a -> t -> 'a
-
-end = struct
-
-  type t = Csv.t
-
-  let load_from_file ~file =
-    try
-      Csv.load file
-    with Csv.Failure (nrecord, nfield, msg) ->
-      !Geneweb.GWPARAM.syslog
-        `LOG_ERR
-        ("failed to load csv from :" ^ file
-         ^ " " ^ string_of_int nrecord
-         ^ " " ^ string_of_int nfield
-         ^ " " ^ msg);
-      []
-
-
-  let fold_left = List.fold_left
-    
-end
- *)
-
 
 let quote s =  "\"" ^ s ^ "\""
               
