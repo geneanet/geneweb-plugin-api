@@ -89,7 +89,7 @@
     geneweb.wserver
     plugin_api_lib
   )
-  (embed_in_plugin_libraries geneweb_plugin_api.lib csv)
+  (embed_in_plugin_libraries geneweb_plugin_api.lib)
   (modes (native plugin))
   (modules plugin_api)
   (optional)
