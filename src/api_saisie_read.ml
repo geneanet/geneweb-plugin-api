@@ -606,8 +606,8 @@ let pers_to_piqi_simple_person conf base p base_prefix =
       - Family : Retourne une famille dont tous les champs sont complétés.
     [Rem] : Non exporté en clair hors de ce module.                      *)
 (* ********************************************************************* *)
-let fam_to_piqi_family_link conf base (ifath : Gwdb.iper) imoth sp ifam fam base_prefix spouse_to_piqi_callback witness_to_piqi_callback child_to_piqi_callback family_link_constructor =
-  let spouse = spouse_to_piqi_callback conf base sp base_prefix in
+let fam_to_piqi_family_link conf base (ifath : Gwdb.iper) imoth sp ifam fam base_prefix spouse_to_piqi witness_to_piqi child_to_piqi family_link_constructor =
+  let spouse = spouse_to_piqi conf base sp base_prefix in
   let p_auth = true in
   let m_auth = true in
   let gen_f = Util.string_gen_family base (gen_family_of_family fam) in
@@ -653,7 +653,7 @@ let fam_to_piqi_family_link conf base (ifath : Gwdb.iper) imoth sp ifam fam base
   in
   let witnesses =
     Mutil.array_to_list_map
-      (fun ip -> witness_to_piqi_callback conf base (poi base ip) base_prefix)
+      (fun ip -> witness_to_piqi conf base (poi base ip) base_prefix)
       gen_f.witnesses
   in
   let notes =
@@ -679,7 +679,7 @@ let fam_to_piqi_family_link conf base (ifath : Gwdb.iper) imoth sp ifam fam base
   in
   let children =
     List.map
-      (fun (p, base_prefix) -> child_to_piqi_callback conf base p base_prefix)
+      (fun (p, base_prefix) -> child_to_piqi conf base p base_prefix)
       (!GWPARAM_ITL.get_children_of_parents base base_prefix ifam ifath imoth)
   in
   family_link_constructor index spouse marriage_date marriage_date_long marriage_date_raw marriage_date_conv marriage_date_conv_long
@@ -697,14 +697,14 @@ let fam_to_piqi_family_link conf base (ifath : Gwdb.iper) imoth sp ifam fam base
       - p                     : the person
       - base_prefix           : the name of the base of the person
       - p_auth                : private informations are returned
-      - pers_to_piqi_callback : function to call to create the person object (spouse / witnesses)
+      - pers_to_piqi          : function to call to create the person object (spouse / witnesses)
       - witness_constructor   : function to call to create the witness object
       - event_constructor     : function to call to create the event object
     [Returns] :
       - Array of events
                                                                          *)
 (* ********************************************************************* *)
-let fill_events conf base p base_prefix p_auth pers_to_piqi_callback witness_constructor event_constructor =
+let fill_events conf base p base_prefix p_auth pers_to_piqi witness_constructor event_constructor =
   if p_auth then
     List.map
       (fun (name, date, place, note, src, w, isp) ->
@@ -745,7 +745,7 @@ let fill_events conf base p base_prefix p_auth pers_to_piqi_callback witness_con
           string_with_macros conf env s
         in
         let spouse =
-          Opt.map (fun ip -> pers_to_piqi_callback conf base (poi base ip) base_prefix) isp
+          Opt.map (fun ip -> pers_to_piqi conf base (poi base ip) base_prefix) isp
         in
         let witnesses =
           Mutil.array_to_list_map
@@ -757,7 +757,7 @@ let fill_events conf base p base_prefix p_auth pers_to_piqi_callback witness_con
                  | Witness_Officer -> `witness_officer
                in
                let witness = poi base ip in
-               let witness = pers_to_piqi_callback conf base witness base_prefix in
+               let witness = pers_to_piqi conf base witness base_prefix in
                witness_constructor witness_type witness
                )
             w
@@ -768,9 +768,9 @@ let fill_events conf base p base_prefix p_auth pers_to_piqi_callback witness_con
   else []
 
 
-let fill_events_if_is_main_person conf base p base_prefix p_auth is_main_person pers_to_piqi_callback witness_constructor event_constructor =
+let fill_events_if_is_main_person conf base p base_prefix p_auth is_main_person pers_to_piqi witness_constructor event_constructor =
   if is_main_person then
-    fill_events conf base p base_prefix p_auth pers_to_piqi_callback witness_constructor event_constructor
+    fill_events conf base p base_prefix p_auth pers_to_piqi witness_constructor event_constructor
   else []
 
 (* ********************************************************************* *)
@@ -782,14 +782,14 @@ let fill_events_if_is_main_person conf base p base_prefix p_auth is_main_person 
       - p                     : the person
       - base_prefix           : the name of the base of the person
       - p_auth                : private informations are returned
-      - pers_to_piqi_callback : function to call to create the person object (spouse / witnesses)
+      - pers_to_piqi          : function to call to create the person object (spouse / witnesses)
       - witness_constructor   : function to call to create the witness object
       - event_constructor     : function to call to create the event object
     [Returns] :
       - Array of related person
                                                                          *)
 (* ********************************************************************* *)
-let get_related_piqi conf base p base_prefix gen_p has_relations pers_to_piqi_callback relation_person_constructor =
+let get_related_piqi conf base p base_prefix gen_p has_relations pers_to_piqi relation_person_constructor =
   if has_relations then
     let list =
       let list = List.sort_uniq compare gen_p.related in
@@ -831,7 +831,7 @@ let get_related_piqi conf base p base_prefix gen_p has_relations pers_to_piqi_ca
     in
     List.map
       (fun (p, rp) ->
-        let p = pers_to_piqi_callback conf base p base_prefix in
+        let p = pers_to_piqi conf base p base_prefix in
         let r_type =
           match rp.r_type with
           | Adoption -> `rchild_adoption
@@ -854,18 +854,18 @@ let get_related_piqi conf base p base_prefix gen_p has_relations pers_to_piqi_ca
       - p                         : the person
       - base_prefix               : the name of the base of the person
       - p_auth                    : private informations are returned
-      - pers_to_piqi_callback     : function to call to create a person object (spouse)
+      - pers_to_piqi              : function to call to create a person object (spouse)
       - witness_constructor       : function to call to create a witness object
-      - child_to_piqi_callback : function to call to create a child object
+      - child_to_piqi             : function to call to create a child object
       - event_constructor         : function to call to create an event object
     [Returns] :
       - Array of related person
                                                                          *)
 (* ********************************************************************* *)
-let get_family_piqi base conf ifam p base_prefix spouse_to_piqi_callback witnesses_to_piqi_callback child_to_piqi_callback family_constructor =
+let get_family_piqi base conf ifam p base_prefix spouse_to_piqi witnesses_to_piqi child_to_piqi family_constructor =
   let fam = foi base ifam in
   let sp = poi base (Gutil.spouse (get_iper p) fam) in
-  let spouse = spouse_to_piqi_callback conf base sp base_prefix in
+  let spouse = spouse_to_piqi conf base sp base_prefix in
   let ifath = get_father fam in
   let imoth = get_mother fam in
   let p_auth = authorized_age conf base p in
@@ -916,7 +916,7 @@ let get_family_piqi base conf ifam p base_prefix spouse_to_piqi_callback witness
   in
   let witnesses =
     Mutil.array_to_list_map
-      (fun ip -> witnesses_to_piqi_callback conf base (poi base ip) base_prefix)
+      (fun ip -> witnesses_to_piqi conf base (poi base ip) base_prefix)
       gen_f.witnesses
   in
   let notes =
@@ -942,7 +942,7 @@ let get_family_piqi base conf ifam p base_prefix spouse_to_piqi_callback witness
   in
   let children =
     Mutil.array_to_list_map
-      (fun ip -> child_to_piqi_callback conf base (poi base ip) base_prefix)
+      (fun ip -> child_to_piqi conf base (poi base ip) base_prefix)
       (get_children fam)
   in
   (* lien inter arbre *)
@@ -950,7 +950,7 @@ let get_family_piqi base conf ifam p base_prefix spouse_to_piqi_callback witness
     List.fold_right begin fun (_, _, children) acc ->
       List.fold_right begin fun ((p, _), baseprefix, can_merge) acc ->
         if can_merge then acc
-        else child_to_piqi_callback conf base p baseprefix :: acc
+        else child_to_piqi conf base p baseprefix :: acc
       end children acc
     end (!GWPARAM_ITL.get_children' conf base (get_iper p) fam (get_iper sp)) []
   in
@@ -967,18 +967,18 @@ let get_family_piqi base conf ifam p base_prefix spouse_to_piqi_callback witness
       - base                       : database
       - p                          : the person
       - base_prefix                : the name of the base of the person
-      - spouse_to_piqi_callback    : function to call to create the person object (spouse / witnesses)
-      - witnesses_to_piqi_callback : function to call to create the witness object
-      - child_to_piqi_callback  : function to call to create the child object
+      - spouse_to_piqi             : function to call to create the person object (spouse / witnesses)
+      - witnesses_to_piqi          : function to call to create the witness object
+      - child_to_piqi              : function to call to create the child object
     [Returns] :
       - Array of related person
                                                                          *)
 (* ********************************************************************* *)
-let get_families_piqi base conf p base_prefix spouse_to_piqi_callback witnesses_to_piqi_callback child_to_piqi_callback family_constructor =
+let get_families_piqi base conf p base_prefix spouse_to_piqi witnesses_to_piqi child_to_piqi family_constructor =
   let families =
     Mutil.array_to_list_map
       (fun ifam ->
-         get_family_piqi base conf ifam p base_prefix spouse_to_piqi_callback witnesses_to_piqi_callback child_to_piqi_callback family_constructor
+         get_family_piqi base conf ifam p base_prefix spouse_to_piqi witnesses_to_piqi child_to_piqi family_constructor
       )
       (get_family p)
   in
@@ -987,7 +987,7 @@ let get_families_piqi base conf p base_prefix spouse_to_piqi_callback witnesses_
     List.fold_right begin fun (ifam, fam, (ifath, imoth, isp), baseprefix, can_merge ) acc ->
       if can_merge then acc
       else
-        fam_to_piqi_family_link conf base ifath imoth isp ifam fam baseprefix spouse_to_piqi_callback witnesses_to_piqi_callback child_to_piqi_callback family_constructor :: acc
+        fam_to_piqi_family_link conf base ifath imoth isp ifam fam baseprefix spouse_to_piqi witnesses_to_piqi child_to_piqi family_constructor :: acc
     end (!GWPARAM_ITL.get_families conf base p) []
   in
     families @ families_link
@@ -1001,13 +1001,13 @@ let get_families_piqi base conf p base_prefix spouse_to_piqi_callback witnesses_
       - p                           : the person
       - base_prefix                 : the name of the base of the person
       - gen_p                       : the generation of the person
-      - pers_to_piqi_callback       : function to call to create a person object
+      - pers_to_piqi                : function to call to create a person object
       - relation_person_constructor : function to call to create the child object
     [Returns] :
       - Array of related parents
                                                                          *)
 (* ********************************************************************* *)
-let get_rparents_piqi base conf base_prefix gen_p has_relations pers_to_piqi_callback relation_person_constructor =
+let get_rparents_piqi base conf base_prefix gen_p has_relations pers_to_piqi relation_person_constructor =
   if has_relations then
     List.fold_left
       (fun rl rp ->
@@ -1021,7 +1021,7 @@ let get_rparents_piqi base conf base_prefix gen_p has_relations pers_to_piqi_cal
         in
         let to_relation_person conf base ip =
           let p = poi base ip in
-          let p = pers_to_piqi_callback conf base p base_prefix in
+          let p = pers_to_piqi conf base p base_prefix in
           relation_person_constructor r_type p
         in
         let rl =
@@ -1048,13 +1048,13 @@ let get_rparents_piqi base conf base_prefix gen_p has_relations pers_to_piqi_cal
       - gen_p                     : the generation of the person
       - p_auth                    : private informations are returned
       - has_relations             : indicate if the main person has relations
-      - pers_to_piqi_callback     : function to call to create a person object
+      - pers_to_piqi              : function to call to create a person object
       - event_witness_constructor : function to call to create a event witness object
     [Returns] :
       - Array of events
                                                                          *)
 (* ********************************************************************* *)
-let get_events_witnesses conf base p base_prefix gen_p p_auth has_relations pers_to_piqi_callback event_witness_constructor =
+let get_events_witnesses conf base p base_prefix gen_p p_auth has_relations pers_to_piqi event_witness_constructor =
   if has_relations then
     begin
       let related = List.sort_uniq compare gen_p.related in
@@ -1112,12 +1112,12 @@ let get_events_witnesses conf base p base_prefix gen_p p_auth has_relations pers
           let event_witness_type =
             Utf8.capitalize_fst wk ^ witness_date ^ ": " ^ witnesses_name
           in
-          let husband = pers_to_piqi_callback conf base p base_prefix in
+          let husband = pers_to_piqi conf base p base_prefix in
           let wife =
             match isp with
             | Some isp ->
                 let sp = poi base isp in
-                Some (pers_to_piqi_callback conf base sp base_prefix )
+                Some (pers_to_piqi conf base sp base_prefix )
             | None -> None
           in
           event_witness_constructor event_witness_type husband wife
@@ -1140,13 +1140,13 @@ let get_events_witnesses conf base p base_prefix gen_p p_auth has_relations pers
 (* ********************************************************************* *)
 let fam_to_piqi_family conf base p ifam =
   let base_prefix = conf.command in
-  let spouse_to_piqi_callback conf base p base_prefix =
+  let spouse_to_piqi conf base p base_prefix =
       pers_to_piqi_simple_person conf base p base_prefix
   in
-  let witnesses_to_piqi_callback conf base p base_prefix =
+  let witnesses_to_piqi conf base p base_prefix =
       pers_to_piqi_simple_person conf base p base_prefix
   in
-  let child_to_piqi_callback conf base p base_prefix =
+  let child_to_piqi conf base p base_prefix =
       pers_to_piqi_simple_person conf base p base_prefix
   in
   let family_constructor index spouse marriage_date marriage_date_long marriage_date_raw marriage_date_conv marriage_date_conv_long marriage_cal
@@ -1182,7 +1182,7 @@ let fam_to_piqi_family conf base p ifam =
       children = children;
     }
   in
-  get_family_piqi base conf ifam p base_prefix spouse_to_piqi_callback witnesses_to_piqi_callback child_to_piqi_callback family_constructor
+  get_family_piqi base conf ifam p base_prefix spouse_to_piqi witnesses_to_piqi child_to_piqi family_constructor
 
 let fill_image conf base p =
   if has_image conf base p then
@@ -1451,13 +1451,13 @@ let fiche_relation_person_constructor r_type p =
 
 let fill_families conf base p =
   let base_prefix = conf.command in
-  let spouse_to_piqi_callback conf base p base_prefix =
+  let spouse_to_piqi conf base p base_prefix =
       pers_to_piqi_simple_person conf base p base_prefix
   in
-  let witnesses_to_piqi_callback conf base p base_prefix =
+  let witnesses_to_piqi conf base p base_prefix =
       pers_to_piqi_simple_person conf base p base_prefix
   in
-  let child_to_piqi_callback conf base p base_prefix =
+  let child_to_piqi conf base p base_prefix =
       pers_to_piqi_simple_person conf base p base_prefix
   in
   let family_constructor index spouse marriage_date marriage_date_long marriage_date_raw marriage_date_conv marriage_date_conv_long marriage_cal
@@ -1493,22 +1493,22 @@ let fill_families conf base p =
       children = children;
     }
   in
-  get_families_piqi base conf p base_prefix spouse_to_piqi_callback witnesses_to_piqi_callback child_to_piqi_callback family_constructor
+  get_families_piqi base conf p base_prefix spouse_to_piqi witnesses_to_piqi child_to_piqi family_constructor
 
 let fill_fiche_families conf base p base_prefix nb_asc nb_desc nb_desc_max pers_to_piqi_person simple_graph_info no_event =
   let include_families = (nb_desc_max > nb_desc && (nb_asc <= 2)) in
   if include_families
   then
-    let spouse_to_piqi_callback conf base p base_prefix =
+    let spouse_to_piqi conf base p base_prefix =
       pers_to_piqi_person conf base p base_prefix false 0 1 0 0 false simple_graph_info no_event
     in
-    let witnesses_to_piqi_callback conf base p base_prefix =
+    let witnesses_to_piqi conf base p base_prefix =
       if not simple_graph_info then
         pers_to_piqi_person conf base p base_prefix false 0 1 0 0 false simple_graph_info no_event
       else
         Mread.default_person()
     in
-    let child_to_piqi_callback conf base p base_prefix =
+    let child_to_piqi conf base p base_prefix =
       pers_to_piqi_person conf base p base_prefix false 0 0 (nb_desc+1) nb_desc_max false simple_graph_info no_event
     in
     let family_constructor index spouse marriage_date marriage_date_long marriage_date_raw marriage_date_conv marriage_date_conv_long marriage_cal
@@ -1544,7 +1544,7 @@ let fill_fiche_families conf base p base_prefix nb_asc nb_desc nb_desc_max pers_
         children = children;
       }
     in
-      get_families_piqi base conf p base_prefix spouse_to_piqi_callback witnesses_to_piqi_callback child_to_piqi_callback family_constructor
+      get_families_piqi base conf p base_prefix spouse_to_piqi witnesses_to_piqi child_to_piqi family_constructor
   else []
 
 let has_sources p_auth psources birth_src baptism_src death_src burial_src =
