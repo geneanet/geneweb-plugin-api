@@ -175,6 +175,17 @@ let select_start_with conf base ini_n ini_p =
   in
   List.rev_append list_maj list_min
 
+let aux_ini s =
+  let rec loop s acc =
+    if String.contains s '+' then
+      let index = String.index s '+' in
+      let start = index + 1 in
+      let len = String.length s - start in
+      let ns = String.sub s start len in
+      loop ns (Mutil.decode (String.sub s 0 index) :: acc)
+    else (Mutil.decode s :: acc)
+  in
+  loop s []
 
 let select_both_all base ini_n ini_p maiden_name =
   let find_sn p x = kmp x (sou base (get_surname p)) in
@@ -182,33 +193,11 @@ let select_both_all base ini_n ini_p maiden_name =
   let find_str s x = kmp x s in
   let ini_n = Util.name_key base ini_n in
   let ini_n = Mutil.encode ini_n in
-  let ini_n =
-    let rec loop s acc =
-      if String.contains s '+' then
-        let index = String.index s '+' in
-        let start = index + 1 in
-        let len = String.length s - start in
-        let ns = String.sub s start len in
-        loop ns (Mutil.decode (String.sub s 0 index) :: acc)
-      else (Mutil.decode s :: acc)
-    in
-    loop ini_n []
-  in
+  let ini_n = aux_ini ini_n in
   let ini_n = List.filter (fun s -> s <> "") ini_n in
   (* choper dans code varenv la variable qui dit que c'est + *)
   let ini_p = Mutil.encode ini_p in
-  let ini_p =
-    let rec loop s acc =
-      if String.contains s '+' then
-        let index = String.index s '+' in
-        let start = index + 1 in
-        let len = String.length s - start in
-        let ns = String.sub s start len in
-        loop ns (Mutil.decode (String.sub s 0 index) :: acc)
-      else (Mutil.decode s :: acc)
-    in
-    loop ini_p []
-  in
+  let ini_p = aux_ini ini_p in
   let add_maiden p ini_p l =
     if get_sex p = Male then
       l :=
@@ -266,18 +255,7 @@ let select_all base is_surnames ini =
     else ini
   in
   let ini = Mutil.encode ini in
-  let ini =
-    let rec loop s acc =
-      if String.contains s '+' then
-        let index = String.index s '+' in
-        let start = index + 1 in
-        let len = String.length s - start in
-        let ns = String.sub s start len in
-        loop ns (Mutil.decode (String.sub s 0 index) :: acc)
-      else (Mutil.decode s :: acc)
-    in
-    loop ini []
-  in
+  let ini = aux_ini ini in
   let list = ref [] in
   Gwdb.Collection.iter begin fun p ->
     if List.for_all (fun s -> find p s) ini
@@ -409,24 +387,14 @@ let string_incl_start_with x y =
 
 let select_both_start_with_person base ini_n ini_p =
   let find n x = string_start_with x n in
-  let rec cut_at_space s acc =
-    if String.contains s '+' then
-      let index = String.index s '+' in
-      let start = index + 1 in
-      let len = String.length s - start in
-      let ns = String.sub s start len in
-      cut_at_space ns (Mutil.decode (String.sub s 0 index) :: acc)
-    else (Mutil.decode s :: acc)
-  in
-  let ini_n = cut_at_space (Mutil.encode (Name.lower ini_n)) [] in
-  let ini_p = cut_at_space (Mutil.encode (Name.lower ini_p)) [] in
+  let ini_n = aux_ini (Mutil.encode (Name.lower ini_n)) in
+  let ini_p = aux_ini (Mutil.encode (Name.lower ini_p)) in
   Gwdb.Collection.fold begin fun list p ->
       let surnames =
-        cut_at_space (Mutil.encode (Name.lower (sou base (get_surname p)))) []
+        aux_ini (Mutil.encode (Name.lower (sou base (get_surname p))))
       in
       let first_names =
-        cut_at_space
-          (Mutil.encode (Name.lower (sou base (get_first_name p)))) []
+        aux_ini (Mutil.encode (Name.lower (sou base (get_first_name p))))
       in
       let start_surname =
         List.for_all
@@ -444,19 +412,10 @@ let select_both_start_with_person base ini_n ini_p =
 
 let select_start_with_person base get_field ini =
   let find n x = string_start_with x n in
-  let rec cut_at_space s acc =
-    if String.contains s '+' then
-      let index = String.index s '+' in
-      let start = index + 1 in
-      let len = String.length s - start in
-      let ns = String.sub s start len in
-      cut_at_space ns (Mutil.decode (String.sub s 0 index) :: acc)
-    else (Mutil.decode s :: acc)
-  in
-  let ini = cut_at_space (Mutil.encode (Name.lower ini)) [] in
+  let ini = aux_ini (Mutil.encode (Name.lower ini)) in
   Gwdb.Collection.fold begin fun list p ->
       let names =
-        cut_at_space (Mutil.encode (Name.lower (sou base (get_field p)))) []
+        aux_ini (Mutil.encode (Name.lower (sou base (get_field p))))
       in
       let start_name =
         List.for_all
@@ -577,18 +536,7 @@ let select_start_with_auto_complete base mode max_res ini =
 let select_all_auto_complete _ base get_field max_res ini =
   let find p x = kmp x (sou base (get_field p)) in
   let ini = Mutil.encode ini in
-  let ini =
-    let rec loop s acc =
-      if String.contains s '+' then
-        let index = String.index s '+' in
-        let start = index + 1 in
-        let len = String.length s - start in
-        let ns = String.sub s start len in
-        loop ns (Mutil.decode (String.sub s 0 index) :: acc)
-      else (Mutil.decode s :: acc)
-    in
-    loop ini []
-  in
+  let ini = aux_ini ini in
   let string_set = ref StrSet.empty in
   let nb_res = ref 0 in
   Gwdb.Collection.fold_until (fun () -> !nb_res < max_res) begin fun () p ->
@@ -745,33 +693,11 @@ let select_both_link_person base ini_n ini_p max_res =
   let find_fn p x = kmp x (sou base (get_first_name p)) in
   let ini_n = Util.name_key base ini_n in
   let ini_n = Mutil.encode ini_n in
-  let ini_n =
-    let rec loop s acc =
-      if String.contains s '+' then
-        let index = String.index s '+' in
-        let start = index + 1 in
-        let len = String.length s - start in
-        let ns = String.sub s start len in
-        loop ns (Mutil.decode (String.sub s 0 index) :: acc)
-      else (Mutil.decode s :: acc)
-    in
-    loop ini_n []
-  in
+  let ini_n = aux_ini ini_n in
   let ini_n = List.filter (fun s -> s <> "") ini_n in
   (* choper dans code varenv la variable qui dit que c'est + *)
   let ini_p = Mutil.encode ini_p in
-  let ini_p =
-    let rec loop s acc =
-      if String.contains s '+' then
-        let index = String.index s '+' in
-        let start = index + 1 in
-        let len = String.length s - start in
-        let ns = String.sub s start len in
-        loop ns (Mutil.decode (String.sub s 0 index) :: acc)
-      else (Mutil.decode s :: acc)
-    in
-    loop ini_p []
-  in
+  let ini_p = aux_ini ini_p in
   fst @@ Gwdb.Collection.fold_until (fun (_, n) -> n < max_res) begin fun (list, n) p ->
     if List.for_all (fun s -> find_sn p s) ini_n then
       if List.for_all (fun s -> find_fn p s) ini_p then
@@ -783,18 +709,7 @@ let select_both_link_person base ini_n ini_p max_res =
 let select_link_person base get_field max_res ini =
   let find p x = kmp x (sou base (get_field p)) in
   let ini = Mutil.encode ini in
-  let ini =
-    let rec loop s acc =
-      if String.contains s '+' then
-        let index = String.index s '+' in
-        let start = index + 1 in
-        let len = String.length s - start in
-        let ns = String.sub s start len in
-        loop ns (Mutil.decode (String.sub s 0 index) :: acc)
-      else (Mutil.decode s :: acc)
-    in
-    loop ini []
-  in
+  let ini = aux_ini ini in
   fst @@ Gwdb.Collection.fold_until (fun (_, n) -> n < max_res) begin fun (list, n) p ->
       if List.for_all (fun s -> find p s) ini
       then (get_iper p :: list, n + 1)
