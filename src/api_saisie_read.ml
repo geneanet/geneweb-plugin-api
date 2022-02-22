@@ -2115,129 +2115,84 @@ let print_fiche_person conf base =
 
 (**/**)
 
-(* Graphe d'ascendance v2 *)
+let hash_id x = Int64.of_int (Hashtbl.hash x)
 
-let build_graph_asc_v2 conf base p max_gen =
-(*
-  let () = load_ascends_array base in
-  let () = load_unions_array base in
-  let () = load_couples_array base in
-  let () = Perso.build_sosa_ht conf base in
-*)
-  let ht = Hashtbl.create 42 in
-  let create_edge factor_from baseprefix_from p_from factor_to baseprefix_to p_to =
-    (* Pour les liens inter arbres, on rend l'id unique avec *)
-    (* le prefix de la base et l'index de la personne.       *)
-    let id_from =
-      Int64.of_string @@ string_of_int (Hashtbl.hash (baseprefix_from, get_iper p_from, factor_from))
-    in
-    let id_to =
-      Int64.of_string @@ string_of_int (Hashtbl.hash (baseprefix_to, get_iper p_to, factor_to))
-    in
-    Mread.Edge.({
-      from_node = id_from;
-      to_node = id_to;
-    })
-  in
-  let create_node p gen more_info base_prefix factor =
-    (* Pour les liens inter arbres, on rend l'id unique avec *)
-    (* le prefix de la base et l'index de la personne.       *)
-    let uniq_id = Hashtbl.hash (base_prefix, get_iper p, factor) in
-    let id = Int64.of_string @@ string_of_int uniq_id in
-    let p = pers_to_piqi_person_tree conf base p more_info gen max_gen base_prefix in
-    { Mread.Node.id = id
-    ; person = p
-    ; ifam = None
-    }
-  in
-(*
-  let create_family ifam families =
-    if p_getenv conf.env "full_infos" = Some "1" then
-      families := (fam_to_piqi_family conf base ifam) :: !families
-  in
-*)
+let create_edge factor_from baseprefix_from p_from factor_to baseprefix_to p_to =
+  let from_node = hash_id (baseprefix_from, get_iper p_from, factor_from) in
+  let to_node = hash_id (baseprefix_to, get_iper p_to, factor_to) in
+  Mread.Edge.{ from_node ; to_node }
+
+let create_node conf base max_gen ifam p gen more_info base_prefix factor =
+  let id = hash_id (base_prefix, get_iper p, factor) in
+  let p = pers_to_piqi_person_tree conf base p more_info gen max_gen base_prefix in
+  { Mread.Node.id = id
+  ; person = p
+  ; ifam
+  }
+
+let factor ht x =
+  try
+    let i = Hashtbl.find ht x + 1 in
+    Hashtbl.replace ht x i;
+    i
+  with Not_found ->
+    Hashtbl.add ht x 1;
+    1
+
+(* Graphe d'ascendance *)
+let build_graph_asc conf base p max_gen =
+  let create_node = create_node conf base max_gen None in
+  let ht = Hashtbl.create 0 in
   let nodes = ref [] in
   let edges = ref [] in
-  let rec loop l =
-    match l with
+  let rec loop = function
     | [] -> ()
     | (p, gen) :: l ->
       if gen >= max_gen then loop l
-      else
-        begin
-          match get_parents p with
-          | Some ifam ->
-            let factor =
-              try Hashtbl.find ht (get_iper p) with Not_found -> 1
+      else match get_parents p with
+        | Some ifam ->
+          let p_factor = try Hashtbl.find ht (get_iper p) with Not_found -> 1 in
+          let cpl = foi base ifam in
+          let fath = poi base (get_father cpl) in
+          let moth = poi base (get_mother cpl) in
+          let fath_factor = factor ht (get_iper fath) + 1 in
+          let moth_factor = factor ht (get_iper moth) + 1 in
+          nodes := create_node fath gen Ancestor conf.command fath_factor :: !nodes;
+          nodes := create_node moth gen Ancestor conf.command moth_factor :: !nodes;
+          edges := create_edge p_factor conf.command p fath_factor conf.command fath :: !edges;
+          edges := create_edge p_factor conf.command p moth_factor conf.command moth :: !edges;
+          (*create_family ifam families;*)
+          loop ((fath, gen + 1) :: (moth, gen + 1) :: l)
+        | None ->
+          (* lien inter arbre *)
+          let ip = get_iper p in
+          let () = !GWPARAM_ITL.init_cache conf base ip (max_gen - gen) 0 0 in
+          let () =
+            let ht = Hashtbl.create 0 in
+            let rec loop_parents l =
+              match l with
+              | [] -> ()
+              | (base_prefix, p, gen) :: l ->
+                if gen >= max_gen then loop_parents l
+                else
+                  let ip = get_iper p in
+                  let p_factor = try Hashtbl.find ht (base_prefix, get_iper p) with Not_found -> 1 in
+                  match !GWPARAM_ITL.get_father conf base base_prefix ip
+                      , !GWPARAM_ITL.get_mother conf base base_prefix ip with
+                  | (Some ((fath, _), bpf), Some ((moth, _), bpm)) ->
+                    let fath_factor = factor ht (bpf, get_iper fath) + 1 in
+                    let moth_factor = factor ht (bpm, get_iper moth) + 1 in
+                    nodes := create_node fath gen Ancestor bpf fath_factor :: !nodes;
+                    nodes := create_node moth gen Ancestor bpm moth_factor :: !nodes;
+                    edges := create_edge p_factor base_prefix p fath_factor bpf fath :: !edges;
+                    edges := create_edge p_factor base_prefix p moth_factor bpm moth :: !edges;
+                    let l = (bpf, fath, gen + 1) :: (bpm, moth, gen + 1) :: l in
+                    loop_parents l
+                  | _ -> loop_parents l
             in
-            let cpl = foi base ifam in
-            let fath = poi base (get_father cpl) in
-            let moth = poi base (get_mother cpl) in
-            let fath_factor =
-              try
-                let i = Hashtbl.find ht (get_iper fath) + 1 in
-                Hashtbl.replace ht (get_iper fath) i;
-                i
-              with Not_found -> Hashtbl.add ht (get_iper fath) 1; 1
-            in
-            let moth_factor =
-              try
-                let i = Hashtbl.find ht (get_iper moth) + 1 in
-                Hashtbl.replace ht (get_iper moth) i;
-                i
-              with Not_found -> Hashtbl.add ht (get_iper moth) 1; 1
-            in
-            nodes := create_node fath gen Ancestor conf.command fath_factor :: !nodes;
-            nodes := create_node moth gen Ancestor conf.command moth_factor :: !nodes;
-            edges := create_edge factor conf.command p fath_factor conf.command fath :: !edges;
-            edges := create_edge factor conf.command p moth_factor conf.command moth :: !edges;
-            (*create_family ifam families;*)
-            loop ((fath, gen + 1) :: (moth, gen + 1) :: l)
-          | None ->
-            (* lien inter arbre *)
-            let ip = get_iper p in
-            let () = !GWPARAM_ITL.init_cache conf base ip (max_gen - gen) 0 0 in
-            let () =
-              let ht = Hashtbl.create 0 in
-              let rec loop_parents l =
-                match l with
-                | [] -> ()
-                | (base_prefix, p, gen) :: l ->
-                  if gen >= max_gen then loop_parents l
-                  else
-                    let factor =
-                      try Hashtbl.find ht (base_prefix, get_iper p) with Not_found -> 1
-                    in
-                    let ip = get_iper p in
-                    match !GWPARAM_ITL.get_father conf base base_prefix ip
-                        , !GWPARAM_ITL.get_mother conf base base_prefix ip with
-                    | (Some ((fath, _), bpf), Some ((moth, _), bpm)) ->
-                      let fath_factor =
-                        try
-                          let i = Hashtbl.find ht (bpf, get_iper fath) + 1 in
-                          Hashtbl.replace ht (bpf, get_iper fath) i ;
-                          i
-                        with Not_found -> Hashtbl.add ht (bpf, get_iper fath) 1 ; 1
-                      in
-                      let moth_factor =
-                        try
-                          let i = Hashtbl.find ht (bpm, get_iper moth) + 1 in
-                          Hashtbl.replace ht (bpm, get_iper moth) i ;
-                          i
-                        with Not_found -> Hashtbl.add ht (bpm, get_iper moth) 1; 1
-                      in
-                      nodes := create_node fath gen Ancestor bpf fath_factor :: !nodes;
-                      nodes := create_node moth gen Ancestor bpm moth_factor :: !nodes;
-                      edges := create_edge factor base_prefix p fath_factor bpf fath :: !edges;
-                      edges := create_edge factor base_prefix p moth_factor bpm moth :: !edges;
-                      let l = (bpf, fath, gen + 1) :: (bpm, moth, gen + 1) :: l in
-                      loop_parents l
-                    | _ -> loop_parents l
-              in
-              loop_parents [ (conf.command, p, gen) ]
-            in
-            loop l
-        end
+            loop_parents [ (conf.command, p, gen) ]
+          in
+          loop l
   in
   nodes := create_node p 1 Root conf.command 1 :: !nodes;
   loop [(p, 1)];
@@ -2245,197 +2200,108 @@ let build_graph_asc_v2 conf base p max_gen =
   (* la référence, suivi du père suivi, puis de la mère ...  *)
   (List.rev !nodes, List.rev !edges)
 
-
-(* Graphe de descendance v2 *)
-
-let build_graph_desc_v2 conf base p max_gen =
-(*
-  let () = load_descends_array base in
-  let () = load_unions_array base in
-  let () = load_couples_array base in
-  let () = Perso.build_sosa_ht conf base in
-*)
-  let ht = Hashtbl.create 42 in
-  let create_edge factor_from baseprefix_from p_from factor_to baseprefix_to p_to =
-    (* Pour les liens inter arbres, on rend l'id unique avec *)
-    (* le prefix de la base et l'index de la personne.       *)
-    let id_from =
-      Int64.of_string @@ string_of_int (Hashtbl.hash (baseprefix_from, get_iper p_from, factor_from))
-    in
-    let id_to =
-      Int64.of_string @@ string_of_int (Hashtbl.hash (baseprefix_to, get_iper p_to, factor_to))
-    in
-    Mread.Edge.({
-      from_node = id_from;
-      to_node = id_to;
-    })
+(* Graphe de descendance *)
+let build_graph_desc conf base p max_gen =
+  let ht = Hashtbl.create 0 in
+  let create_node ifam =
+    create_node conf base max_gen (Some (Int64.of_string (Gwdb.string_of_ifam ifam)))
   in
-  let create_node p ifam gen more_info base_prefix factor =
-    (* Pour les liens inter arbres, on rend l'id unique avec *)
-    (* le prefix de la base et l'index de la personne.       *)
-    let uniq_id = Hashtbl.hash (base_prefix, get_iper p, factor) in
-    let id = Int64.of_string @@ string_of_int uniq_id in
-    let p = pers_to_piqi_person_tree conf base p more_info gen max_gen base_prefix in
-    let ifam = Int64.of_string @@ Gwdb.string_of_ifam ifam in
-    { Mread.Node.id = id
-    ; person = p
-    ; ifam = Some ifam
-    }
-  in
-(*
-  let create_family ifam families =
-    if p_getenv conf.env "full_infos" = Some "1" then
-      families := (fam_to_piqi_family conf base ifam) :: !families
-  in
-*)
   let nodes = ref [] in
   let edges = ref [] in
-  let rec loop l =
-    match l with
+  let rec loop = function
     | [] -> ()
     | (p, gen) :: l ->
-        if gen >= max_gen then loop l
-        else
-          begin
-            let factor =
-              try Hashtbl.find ht (get_iper p) with Not_found -> 1
-            in
-            let ifam = get_family p in
-            let l =
-              Array.fold_left
-                (fun acc ifam  ->
-                  let fam = foi base ifam in
-                  let sp = poi base (Gutil.spouse (get_iper p) fam) in
-                  let sp_factor =
-                    try
-                      let i = Hashtbl.find ht (get_iper sp) + 1 in
-                      Hashtbl.replace ht (get_iper sp) i;
-                      i
-                    with Not_found -> Hashtbl.add ht (get_iper sp) 1; 1
-                  in
-                  let children =
-                    Mutil.array_to_list_map (poi base) (get_children fam)
-                  in
-                  nodes := create_node sp ifam gen Spouse conf.command sp_factor :: !nodes;
-                  edges := create_edge factor conf.command p sp_factor conf.command sp :: !edges;
-                  if gen <> max_gen then
-                    begin
-                      List.iter begin fun c ->
-                        let c_factor =
-                          try
-                            let i = Hashtbl.find ht (get_iper c) + 1 in
-                            Hashtbl.replace ht (get_iper c) i;
-                            i
-                          with Not_found -> Hashtbl.add ht (get_iper c) 1; 1
-                        in
-                        nodes := create_node c ifam gen Children conf.command c_factor :: !nodes;
-                        edges := create_edge factor conf.command p c_factor conf.command c :: !edges;
-                        edges := create_edge sp_factor conf.command sp c_factor conf.command c :: !edges
-                      end children;
-                      (*create_family ifam families;*)
-                      let child_local =
-                        List.fold_left (fun acc c -> (c, gen + 1) :: acc) acc children
-                      in
-                      (* lien inter arbre *)
-                      let () = !GWPARAM_ITL.init_cache conf base (get_iper p) 1 1 (max_gen - gen) in
-                      let () =
-                        let ht = Hashtbl.create 0 in
-                        let rec loop_child fam_link =
-                          match fam_link with
-                          | [] -> ()
-                          | (base_prefix, p, gen) :: l ->
-                              if gen >= max_gen then loop_child l
-                              else begin
-                                let factor =
-                                  try Hashtbl.find ht (base_prefix, get_iper p) with Not_found -> 1
-                                in
-                                let l =
-                                  List.fold_left begin fun acc (fam_bp, (_, _, isp), children) ->
-                                    let sp_factor =
-                                      try
-                                        let i = Hashtbl.find ht (fam_bp, isp) + 1 in
-                                        Hashtbl.replace ht (fam_bp, isp) i ;
-                                        i
-                                      with Not_found -> Hashtbl.add ht (fam_bp, isp) 1 ; 1
-                                    in
-                                    List.fold_left begin fun acc ((c, _), baseprefix, can_merge) ->
-                                      if can_merge then acc
-                                      else
-                                        let c_factor =
-                                          try
-                                            let i = Hashtbl.find ht (baseprefix, get_iper c) + 1 in
-                                            Hashtbl.replace ht (baseprefix, get_iper c) i;
-                                            i
-                                          with Not_found -> Hashtbl.add ht (baseprefix, get_iper c) 1; 1
-                                        in
-                                        nodes := create_node c ifam gen Children baseprefix c_factor :: !nodes;
-                                        edges := create_edge factor base_prefix p c_factor baseprefix c :: !edges;
-                                        edges := create_edge sp_factor baseprefix sp c_factor baseprefix c :: !edges;
-                                        (baseprefix, c, gen + 1) :: acc
-                                    end acc children
-                                  end l (!GWPARAM_ITL.get_children' conf base (get_iper p) fam (get_iper sp))
-                                in
-                                loop_child l
-                              end
-                        in
-                        loop_child [(conf.command, p, gen)]
-                      in
-                      child_local
-                    end
-                  else acc)
-                l ifam
-            in
-
-            (* lien inter arbre *)
-            let () =
-              !GWPARAM_ITL.init_cache conf base (get_iper p) 1 1 (max_gen - gen)
-            in
-            let () =
-              let ht = Hashtbl.create 42 in
-              let rec loop_desc l =
-                match l with
-                | [] -> ()
-                | (base_prefix, p, gen) :: l ->
-                  if gen >= max_gen then loop_desc l
-                  else
-                    let l =
-                      List.fold_left begin fun acc (ifam, fam, (_ifath, _imoth, sp), baseprefix, can_merge) ->
-                        if can_merge then acc
-                        else
-                          let sp_factor =
-                            try
-                              let i = Hashtbl.find ht (baseprefix, get_iper sp) + 1 in
-                              Hashtbl.replace ht (baseprefix, get_iper sp) i;
-                              i
-                            with Not_found -> Hashtbl.add ht (baseprefix, get_iper sp) 1; 1
-                          in
-                          nodes := create_node sp ifam gen Spouse baseprefix sp_factor :: !nodes;
-                          edges := create_edge factor base_prefix p sp_factor baseprefix sp :: !edges;
-                          List.fold_left begin fun acc (_baseprefix, _cpl, children) ->
-                            List.fold_left begin fun acc ((c, _), _, _) ->
-                              let c_factor =
-                                try
-                                  let i = Hashtbl.find ht (baseprefix, get_iper c) + 1 in
-                                  Hashtbl.replace ht (baseprefix, get_iper c) i;
-                                  i
-                                with Not_found -> Hashtbl.add ht (baseprefix, get_iper c) 1; 1
-                              in
-                              nodes := create_node c ifam gen Children baseprefix c_factor :: !nodes;
-                              edges := create_edge factor base_prefix p c_factor baseprefix c :: !edges;
-                              edges := create_edge sp_factor baseprefix sp c_factor baseprefix c :: !edges;
-                              (baseprefix, c, gen + 1) :: acc
+      if gen >= max_gen then loop l
+      else
+        let p_factor = try Hashtbl.find ht (get_iper p) with Not_found -> 1 in
+        let ifam = get_family p in
+        let l =
+          Array.fold_left (fun acc ifam  ->
+              let fam = foi base ifam in
+              let sp = poi base (Gutil.spouse (get_iper p) fam) in
+              let sp_factor = factor ht (get_iper sp) + 1 in
+              let children = Mutil.array_to_list_map (poi base) (get_children fam) in
+              nodes := create_node ifam sp gen Spouse conf.command sp_factor :: !nodes;
+              edges := create_edge p_factor conf.command p sp_factor conf.command sp :: !edges;
+              if gen <> max_gen then begin
+                List.iter begin fun c ->
+                  let c_factor = factor ht (get_iper c) + 1 in
+                  nodes := create_node ifam c gen Children conf.command c_factor :: !nodes;
+                  edges := create_edge p_factor conf.command p c_factor conf.command c :: !edges;
+                  edges := create_edge sp_factor conf.command sp c_factor conf.command c :: !edges
+                end children;
+                (*create_family ifam families;*)
+                let child_local =
+                  List.fold_left (fun acc c -> (c, gen + 1) :: acc) acc children
+                in
+                (* lien inter arbre *)
+                let () = !GWPARAM_ITL.init_cache conf base (get_iper p) 1 1 (max_gen - gen) in
+                let () =
+                  let ht = Hashtbl.create 0 in
+                  let rec loop_child = function
+                    | [] -> ()
+                    | (base_prefix, p, gen) :: l ->
+                      if gen >= max_gen then loop_child l
+                      else
+                        let p_factor = try Hashtbl.find ht (base_prefix, get_iper p) with Not_found -> 1 in
+                        let l =
+                          List.fold_left begin fun acc (fam_bp, (_, _, isp), children) ->
+                            let sp_factor = factor ht (fam_bp, isp) + 1 in
+                            List.fold_left begin fun acc ((c, _), baseprefix, can_merge) ->
+                              if can_merge then acc
+                              else
+                                let c_factor = factor ht (baseprefix, get_iper c) + 1 in
+                                nodes := create_node ifam c gen Children baseprefix c_factor :: !nodes;
+                                edges := create_edge p_factor base_prefix p c_factor baseprefix c :: !edges;
+                                edges := create_edge sp_factor baseprefix sp c_factor baseprefix c :: !edges;
+                                (baseprefix, c, gen + 1) :: acc
                             end acc children
-                          end acc (!GWPARAM_ITL.get_children' conf base (get_iper p) fam (get_iper sp))
-                      end l (!GWPARAM_ITL.get_families conf base p)
-                    in loop_desc l
-              in
-              loop_desc [(conf.command, p, gen)]
-            in
+                          end l (!GWPARAM_ITL.get_children' conf base (get_iper p) fam (get_iper sp))
+                        in
+                        loop_child l
+                  in
+                  loop_child [(conf.command, p, gen)]
+                in
+                child_local
+              end else acc)
+            l ifam
+        in
 
-            loop l
-          end
+        (* lien inter arbre *)
+        let () = !GWPARAM_ITL.init_cache conf base (get_iper p) 1 1 (max_gen - gen) in
+        let () =
+          let ht = Hashtbl.create 0 in
+          let rec loop_desc = function
+            | [] -> ()
+            | (base_prefix, p, gen) :: l ->
+              if gen >= max_gen then loop_desc l
+              else
+                let p_factor = try Hashtbl.find ht (base_prefix, get_iper p) with Not_found -> 1 in
+                let l =
+                  List.fold_left begin fun acc (ifam, fam, (_ifath, _imoth, sp), baseprefix, can_merge) ->
+                    if can_merge then acc
+                    else
+                      let sp_factor = factor ht (baseprefix, get_iper sp) + 1 in
+                      nodes := create_node ifam sp gen Spouse baseprefix sp_factor :: !nodes;
+                      edges := create_edge p_factor base_prefix p sp_factor baseprefix sp :: !edges;
+                      List.fold_left begin fun acc (_baseprefix, _cpl, children) ->
+                        List.fold_left begin fun acc ((c, _), _, _) ->
+                          let c_factor = factor ht (baseprefix, get_iper c) + 1 in
+                          nodes := create_node ifam c gen Children baseprefix c_factor :: !nodes;
+                          edges := create_edge p_factor base_prefix p c_factor baseprefix c :: !edges;
+                          edges := create_edge sp_factor baseprefix sp c_factor baseprefix c :: !edges;
+                          (baseprefix, c, gen + 1) :: acc
+                        end acc children
+                      end acc (!GWPARAM_ITL.get_children' conf base (get_iper p) fam (get_iper sp))
+                  end l (!GWPARAM_ITL.get_families conf base p)
+                in loop_desc l
+          in
+          loop_desc [(conf.command, p, gen)]
+        in
+
+        loop l
   in
-  nodes := create_node p Gwdb.dummy_ifam 1 Root conf.command 1 :: !nodes;
+  nodes := create_node Gwdb.dummy_ifam p 1 Root conf.command 1 :: !nodes;
   loop [(p, 1)];
   (* On retourne la liste pour avoir les noeuds dans l'ordre *)
   (* la référence, suivi du père suivi, puis de la mère ...  *)
@@ -2443,7 +2309,7 @@ let build_graph_desc_v2 conf base p max_gen =
 
 
 (* ********************************************************************* *)
-(*  [Fonc] print_result_graph_tree_v2 : conf -> base -> todo                    *)
+(*  [Fonc] print_result_graph_tree : conf -> base -> todo                    *)
 (** [Description] :
     [Args] :
       - conf  : configuration de la base
@@ -2451,7 +2317,7 @@ let build_graph_desc_v2 conf base p max_gen =
     [Retour] :
     [Rem] : Non exporté en clair hors de ce module.                      *)
 (* ********************************************************************* *)
-let print_result_graph_tree_v2 conf base ip =
+let print_result_graph_tree conf base ip =
   if Gwdb.iper_exists base ip then
   let params = get_params conf Mext_read.parse_graph_tree_params in
   (* Construction de la base avec calcul des sosas           *)
@@ -2471,7 +2337,7 @@ let print_result_graph_tree_v2 conf base ip =
   in
   (* cache lien inter arbre *)
   let () = !GWPARAM_ITL.init_cache conf base ip 1 1 1 in
-  let (nodes_asc, edges_asc) = build_graph_asc_v2 conf base p nb_asc in
+  let (nodes_asc, edges_asc) = build_graph_asc conf base p nb_asc in
   (*
   let nodes_asc =
     List.rev_map
@@ -2492,7 +2358,7 @@ let print_result_graph_tree_v2 conf base ip =
     | Some n -> min max_desc (max (Int32.to_int n) 1)
     | None -> max_desc
   in
-  let (nodes_desc, edges_desc) = build_graph_desc_v2 conf base p nb_desc in
+  let (nodes_desc, edges_desc) = build_graph_desc conf base p nb_desc in
   let nodes_siblings =
     match get_parents p with
     | Some ifam ->
@@ -2663,7 +2529,7 @@ let print_nb_ancestors conf base =
   print_from_identifier_person conf base print_result_nb_ancestors (get_params conf Mext_read.parse_identifier_person)
 
 (* ********************************************************************* *)
-(*  [Fonc] print_graph_tree_v2 : conf -> base -> unit                    *)
+(*  [Fonc] print_graph_tree : conf -> base -> unit                    *)
 (** [Description] : Retourne un graph d'ascendance et de descendance
        d'une personne
     [Args] :
@@ -2672,7 +2538,7 @@ let print_nb_ancestors conf base =
     [Retour] : unit (graph | Error)
     [Rem] : Non exporté en clair hors de ce module.                      *)
 (* ********************************************************************* *)
-let print_graph_tree_v2 conf base =
+let print_graph_tree conf base =
   let params = get_params conf Mext_read.parse_graph_tree_params in
   let identifier_person = params.Mread.Graph_tree_params.identifier_person in
-  print_from_identifier_person conf base print_result_graph_tree_v2 identifier_person
+  print_from_identifier_person conf base print_result_graph_tree identifier_person

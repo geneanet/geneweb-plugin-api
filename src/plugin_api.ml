@@ -100,8 +100,10 @@ let () =
       , aux @@ w_base @@ Api.print_ref_person_from_ip)
     ; ( "API_SEARCH"
       , aux @@ w_base @@ Api_search.print_search)
+    ; ( "API_GRAPH_TREE"
+      , aux @@ w_base @@ Api_saisie_read.print_graph_tree)
     ; ( "API_GRAPH_TREE_V2"
-      , aux @@ w_base @@ Api_saisie_read.print_graph_tree_v2)
+      , aux @@ w_base @@ Api_saisie_read.print_graph_tree)
     ; ( "API_PERSON_TREE"
       , aux @@ w_base @@ Api_saisie_read.print_person_tree)
     ; ( "API_FICHE_PERSON"
