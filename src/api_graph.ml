@@ -50,8 +50,12 @@ let print_close_person_relations conf base =
 
 let event_aux_pers_to_piqi_person conf base =
   fun p ->
-    let base_loop = has_base_loop conf base in
-    Api_util.pers_to_piqi_person_light conf base p base_loop Perso.get_sosa_person false
+  let base_loop = has_base_loop conf base in
+  let compute_sosa =
+    if base_loop then fun _ -> Sosa.zero
+    else Perso.get_sosa_person
+  in
+  Api_util.pers_to_piqi_person_light conf base p compute_sosa false
 
 let pevents_aux conf base filter acc p =
   match get_pevents p with
