@@ -1,62 +1,76 @@
+
 module StrSet = Set.Make (String)
 
-let rest str =
-  let i = String.index str ',' in
-  String.sub str (i + 1) (String.length str - i - 1)
+let quote s =  "\"" ^ s ^ "\""
+              
+let build_line =
+  let rec aux s l = match l with
+    | [x] -> s ^ (quote x)
+    | x :: xs -> aux (s ^ (quote x) ^ ",") xs
+    | [] -> s
+  in fun l -> aux "" l
+            
+let add_opt l set = match l with
+  | x :: _ when x <> "" ->
+     StrSet.add (build_line l) set
+  | _ -> set
 
-let write_dico_place_set assets fname_csv lang =
-  let (towns, area_codes, countys, regions, countrys) =
-    let ic = open_in fname_csv in
-    let string_set_town = ref StrSet.empty in
-    let string_set_area_code = ref StrSet.empty in
-    let string_set_county = ref StrSet.empty in
-    let string_set_region = ref StrSet.empty in
-    let string_set_country = ref StrSet.empty in
-    let string_set r s = r := StrSet.add s !r in
-    begin
-      try while true do
-          let line = input_line ic in
-          match String.split_on_char ',' line with
-          | [ town ; area_code ; county ; region ; country ] ->
-            let place = line in
-            if town <> "" then string_set string_set_town place ;
-            let place = rest place in
-            if area_code <> "" then string_set string_set_area_code place ;
-            let place = rest place in
-            if county <> "" then string_set string_set_county place ;
-            let place = rest place in
-            if region <> "" then string_set string_set_region place ;
-            let place = rest place in
-            if country <> "" then string_set string_set_country place ;
-          | _ -> ()
-        done
-      with End_of_file -> close_in ic
-    end ;
-    let aux r =
-      let a = StrSet.elements !r |> Array.of_list in
-      Array.sort Gutil.alphabetic a ;
-      a
-    in
-    ( aux string_set_town
-    , aux string_set_area_code
-    , aux string_set_county
-    , aux string_set_region
-    , aux string_set_country
-    )
+let generate assets lang k data =
+  match Api_search.dico_fname assets lang k with
+  | None -> ()
+  | Some fname_set ->
+     let ext_flags =
+       [ Open_wronly ; Open_append ; Open_creat ; Open_binary ; Open_nonblock ]
+     in
+     let oc = open_out_gen ext_flags 0o644 fname_set in
+     output_value oc (data : Api_search.dico) ;
+     close_out oc
+
+let sorted_array_of_set s =
+  let a = StrSet.elements s |> Array.of_list in
+  Array.sort Gutil.alphabetic a ;
+  a
+       
+let write_dico_place_set ~assets ~fname_csv ~lang =
+  !Geneweb.GWPARAM.syslog `LOG_DEBUG ("writing places files for lang "
+                                      ^ lang ^ " from file: " ^ fname_csv);
+
+  let csv = Api_csv.load_from_file ~file:fname_csv in
+  
+  let sets = StrSet.empty,
+             StrSet.empty,
+             StrSet.empty,
+             StrSet.empty,
+             StrSet.empty
   in
-  let generate k data =
-    match Api_search.dico_fname assets lang k with
-    | None -> ()
-    | Some fname_set ->
-      let ext_flags =
-        [ Open_wronly ; Open_append ; Open_creat ; Open_binary ; Open_nonblock ]
-      in
-      let oc = open_out_gen ext_flags 0o644 fname_set in
-      output_value oc (data : Api_search.dico) ;
-      close_out oc
+  
+  let towns, area_codes, countys, regions, countrys =
+    Api_csv.fold_left (
+        fun (towns, area_codes, countys, regions, countrys) ->
+        function
+        | [ _ ; _ ; _ ; _ ; _ ] as l ->
+           let towns = add_opt l towns in
+           let l = List.tl l in
+           let area_codes = add_opt l area_codes in
+           let l = List.tl l in
+           let countys = add_opt l countys in
+           let l = List.tl l in
+           let regions = add_opt l regions in
+           let l = List.tl l in
+           let countrys = add_opt l countrys in
+           (towns, area_codes, countys, regions, countrys)
+        | l ->
+           !Geneweb.GWPARAM.syslog `LOG_DEBUG ("malformed line in file: " ^ fname_csv);
+           let s = List.fold_left (fun s a -> s ^ "," ^ a) "" l in
+           !Geneweb.GWPARAM.syslog `LOG_DEBUG ("line is: " ^ s);
+           (towns, area_codes, countys, regions, countrys)
+      ) sets csv
   in
-  generate `town towns ;
-  generate `area_code area_codes ;
-  generate `county countys ;
-  generate `region regions ;
-  generate `country countrys
+  
+  let generate = generate assets lang in
+  
+  generate `town (sorted_array_of_set towns) ;
+  generate `area_code (sorted_array_of_set area_codes) ;
+  generate `county (sorted_array_of_set countys) ;
+  generate `region (sorted_array_of_set regions) ;
+  generate `country (sorted_array_of_set countrys)

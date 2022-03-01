@@ -574,7 +574,7 @@ let complete_with_dico assets conf nb max mode ini list =
             let hd =
               if format <> []
               then
-                let expl_hd = String.split_on_char ',' hd in
+                let expl_hd = Api_csv.row_of_string hd in
                 String.concat ", " @@
                 Mutil.filter_map begin function
                   | `town -> List.nth_opt expl_hd 0
@@ -610,8 +610,8 @@ let complete_with_dico assets conf nb max mode ini list =
           | "Region" -> `region
           | "Country" -> `country
           | _ -> raise Not_found
-        end
-          (String.split_on_char ',' s)
+          end
+          (Api_csv.row_of_string s)
     in
     let dico =
       begin match dico_fname assets conf.lang mode with

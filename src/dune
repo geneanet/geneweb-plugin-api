@@ -50,9 +50,10 @@
 (library
   (name plugin_api_lib)
   (public_name geneweb_plugin_api.lib)
-  (libraries geneweb geneweb.gwd_lib geneweb.util piqirun.ext)
+  (libraries geneweb geneweb.gwd_lib geneweb.util piqirun.ext csv)
   (modules
     api
+    api_csv
     api_def
     api_graph
     api_marshal_dico_place

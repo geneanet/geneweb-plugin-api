@@ -38,7 +38,8 @@ let () =
       | Some fn -> not (Sys.file_exists fn)
     in
     if e `town || e `area_code || e `county || e `region || e `country
-    then Api_marshal_dico_place.write_dico_place_set assets (Filename.concat assets s) lang
+    then Api_marshal_dico_place.write_dico_place_set
+           ~assets ~fname_csv:(Filename.concat assets s) ~lang
   in
   Array.iter begin fun s ->
     try Scanf.sscanf s "dico_place_%[a-z].csv" (aux s) with _ -> ()

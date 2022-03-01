@@ -10,7 +10,6 @@ open Gwdb
 open Util
 open Api_util
 
-
 (**/**) (* Fonctions pour l'auto-completion. *)
 
 
@@ -25,6 +24,7 @@ open Api_util
       - result : la liste de la recherche.
                                                                            *)
 (* ************************************************************************ *)
+
 let print_auto_complete assets conf base =
   let params = get_params conf Mext_write.parse_auto_complete in
   let s = params.Mwrite.Auto_complete.input in
