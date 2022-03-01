@@ -89,13 +89,10 @@ let print_loop conf base =
   in
   let p =
     if !base_loop then
-      (* Comme il y a une boucle, Perso.get_single_sosa ne va pas marcher *)
-      (* mais la fonction ne sera pas appelée dans pers_to_piqi_person.   *)
-      pers_to_piqi_person conf base !pers !base_loop
-        (Perso.get_single_sosa conf base) false
+      pers_to_piqi_person conf base !pers (fun _ -> Sosa.zero) false
     else
       let ref_pers = empty_reference_person in
-      empty_piqi_person conf ref_pers false
+      empty_piqi_person conf ref_pers
   in
   let data = data_person p in
   print_result conf data
@@ -114,7 +111,7 @@ let print_loop conf base =
 let print_info_ind conf base =
   let ref_person = get_params conf Mext.parse_reference_person in
   let filters = get_filters conf in
-  let base_loop = has_base_loop conf base in
+  let compute_sosa = Api_util.compute_sosa conf base true in
   let sn = ref_person.M.Reference_person.n in
   let fn = ref_person.M.Reference_person.p in
   let occ = ref_person.M.Reference_person.oc in
@@ -122,12 +119,11 @@ let print_info_ind conf base =
     match Gwdb.person_of_key base fn sn (Int32.to_int occ) with
     | Some ip ->
         let p = pget conf base ip in
-        if apply_filters_p conf filters (Perso.get_single_sosa conf base) p then
-          pers_to_piqi_person
-            conf base p base_loop (Perso.get_single_sosa conf base) false
+        if apply_filters_p conf filters compute_sosa p then
+          pers_to_piqi_person conf base p compute_sosa false
         else
-          empty_piqi_person conf ref_person base_loop
-    | None -> empty_piqi_person conf ref_person base_loop
+          empty_piqi_person conf ref_person
+    | None -> empty_piqi_person conf ref_person
   in
   let data = data_person p in
   print_result conf data
@@ -163,8 +159,7 @@ let print_list_ref_person conf base =
   let data =
     data_list_person_option conf base filters pl
   in
-  print_result conf data
-
+  print_result conf data 
 
 (* ******************************************************************** *)
 (*  [Fonc] print_ref_person_from_ip : config -> base -> unit            *)
@@ -531,18 +526,18 @@ let print_img conf base =
     else
       print_result conf (fl list)
   in
-  let base_loop = has_base_loop conf base in
+  let compute_sosa = Api_util.compute_sosa conf base false in
   if p_getenvbin conf.env "full_infos" = Some "1" then
     aux
       (fun p img ->
-         let p = pers_to_piqi_person_full conf base p base_loop Perso.get_sosa_person true in
+         let p = pers_to_piqi_person_full conf base p compute_sosa true in
          M.Full_image.({person = p; img }))
       (fun list ->
          Mext.gen_list_full_images @@ M.List_full_images.({images = list}) )
   else
     aux
       (fun p img ->
-         let p = pers_to_piqi_person_light conf base p base_loop Perso.get_sosa_person true in
+         let p = pers_to_piqi_person_light conf base p compute_sosa true in
          M.Image.({person = p; img}))
       (fun list ->
          Mext.gen_list_images @@ M.List_images.({list_images = list}) )
@@ -570,17 +565,17 @@ let print_img_all conf base =
     else
       print_result conf (fl list)
   in
-  let base_loop = has_base_loop conf base in
+  let compute_sosa = Api_util.compute_sosa conf base false in
   if p_getenvbin conf.env "full_infos" = Some "1" then
     aux
       (fun p img ->
-         let p = pers_to_piqi_person_full conf base p base_loop Perso.get_sosa_person false in
+         let p = pers_to_piqi_person_full conf base p compute_sosa false in
          M.Full_image.({person = p; img = img;}))
       (fun list -> Mext.gen_list_full_images @@ M.List_full_images.({images = list}) )
   else
     aux
       (fun p img ->
-         let p = pers_to_piqi_person_light conf base p base_loop Perso.get_sosa_person false in
+         let p = pers_to_piqi_person_light conf base p compute_sosa false in
          M.Image.({person = p; img}))
       (fun list ->
          Mext.gen_list_images @@ M.List_images.({list_images = list}))
@@ -700,12 +695,13 @@ let print_all_persons conf base =
   in
   let () = Perso.build_sosa_ht conf base in
   let list =
-    Gwdb.Collection.fold ~from ~until (fun acc i -> i :: acc) [] (Gwdb.persons base)
+    Gwdb.Collection.fold ~from ~until (fun acc i ->
+        let pass_filters = apply_filters_p conf filters Perso.get_sosa_person i in
+        if pass_filters then i :: acc else acc
+      ) [] (Gwdb.persons base)
   in
-  let list = List.filter (apply_filters_p conf filters Perso.get_sosa_person) list in
   let data = conv_data_list_person conf base filters list in
   print_result conf data
-
 
 let print_all_families conf base =
   let params = get_params conf Mext.parse_all_families_params in

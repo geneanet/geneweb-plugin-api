@@ -11,8 +11,7 @@ open Def
 open Gwdb
 open Util
 open Api_def
-
-
+  
 (* ... utils ... *)
 
 let p_getenvbin = Api_piqi_util.p_getenvbin
@@ -38,8 +37,19 @@ let is_empty_or_quest_name p =
 let has_base_loop conf base =
   try let _ = (Util.create_topological_sort conf base) in false
   with (Consang.TopologicalSortError _) -> true
+                                         
+let has_sosa_ref conf base =
+  Util.find_sosa_ref conf base <> None
+  
+let compute_sosa conf base single_sosa =
+  if not (has_sosa_ref conf base) then fun _ -> Sosa.zero
+  else if has_base_loop conf base then fun _ -> Sosa.zero
+  else if not single_sosa then
+    let () = Perso.build_sosa_ht conf base in
+    Perso.get_sosa_person
+  else (Perso.get_single_sosa conf base)
 
-
+  
 (* Pour aller plus vite et ne pas tester l'existance de fichier    *)
 (* plusieurs fois en fonction des extensions, on prend le problème *)
 (* à l'envers et on charge tous les fichiers qui existe. Ensuite,  *)
@@ -640,12 +650,12 @@ let piqi_ref_person_to_person base ref_person =
       - Person : Retourne une personne "vide".
     [Rem] : Non exporté en clair hors de ce module.                      *)
 (* ********************************************************************* *)
-let empty_piqi_person_light conf ref_person base_loop =
+let empty_piqi_person_light conf ref_person =
   let sn = ref_person.M.Reference_person.n in
   let fn = ref_person.M.Reference_person.p in
   let occ = ref_person.M.Reference_person.oc in
   {
-    M.Person.sosa = if base_loop then "-1" else "0";
+    M.Person.sosa = "0";
     n = sn;
     p = fn;
     oc = occ;
@@ -682,12 +692,12 @@ let empty_piqi_person_light conf ref_person base_loop =
       - Person : Retourne une personne "vide".
     [Rem] : Non exporté en clair hors de ce module.                      *)
 (* ********************************************************************* *)
-let empty_piqi_person_full conf ref_person base_loop =
+let empty_piqi_person_full conf ref_person =
   let sn = ref_person.M.Reference_person.n in
   let fn = ref_person.M.Reference_person.p in
   let occ = ref_person.M.Reference_person.oc in
   {
-    M.Full_person.sosa = if base_loop then "-1" else "0";
+    M.Full_person.sosa = "0";
     n = sn;
     p = fn;
     oc = occ;
@@ -726,10 +736,10 @@ let empty_piqi_person_full conf ref_person base_loop =
   }
 
 
-let empty_piqi_person conf ref_person base_loop =
+let empty_piqi_person conf ref_person =
   if p_getenvbin conf.env "full_infos" = Some "1"
-  then PFull (empty_piqi_person_full conf ref_person base_loop)
-  else PLight (empty_piqi_person_light conf ref_person base_loop)
+  then PFull (empty_piqi_person_full conf ref_person)
+  else PLight (empty_piqi_person_light conf ref_person)
 
 
 (* ************************************************************************** *)
@@ -751,7 +761,7 @@ let empty_piqi_person conf ref_person base_loop =
       - Person : Retourne une personne dont tous les champs sont complétés.
     [Rem] : Non exporté en clair hors de ce module.                           *)
 (* ************************************************************************** *)
-let spouse_to_piqi_spouse conf base p fam base_loop compute_sosa load_img =
+let spouse_to_piqi_spouse conf base p fam compute_sosa load_img =
   let gen_p = Util.string_gen_person base (gen_person_of_person p) in
   let p_auth = authorized_age conf base p in
   let ifath = get_father fam in
@@ -760,14 +770,7 @@ let spouse_to_piqi_spouse conf base p fam base_loop compute_sosa load_img =
     authorized_age conf base (pget conf base ifath) &&
     authorized_age conf base (pget conf base imoth)
   in
-  let sosa_p =
-    (* Très bonne idée de tester base_loop avant l'appel de compute_sosa   *)
-    (* comme ça, s'il y a une boucle, l'init de init_sosa_t ne plante pas. *)
-    if base_loop then "-1"
-    else
-      let sosa_p = compute_sosa p in
-      Sosa.to_string sosa_p
-  in
+  let sosa_p = Sosa.to_string (compute_sosa p) in
   let sex =
     match gen_p.sex with
     | Male -> `male
@@ -913,17 +916,10 @@ let spouse_to_piqi_spouse conf base p fam base_loop compute_sosa load_img =
       - Person : Retourne une personne dont tous les champs sont complétés.
     [Rem] : Non exporté en clair hors de ce module.                           *)
 (* ************************************************************************** *)
-let pers_to_piqi_person_light conf base p base_loop compute_sosa load_img =
+let pers_to_piqi_person_light conf base p compute_sosa load_img =
   let gen_p = Util.string_gen_person base (gen_person_of_person p) in
   let p_auth = authorized_age conf base p in
-  let sosa_p =
-    (* Très bonne idée de tester base_loop avant l'appel de compute_sosa   *)
-    (* comme ça, s'il y a une boucle, l'init de init_sosa_t ne plante pas. *)
-    if base_loop then "-1"
-    else
-      let sosa_p = compute_sosa p in
-      Sosa.to_string sosa_p
-  in
+  let sosa_p = Sosa.to_string (compute_sosa p) in
   let sex =
     match gen_p.sex with
     | Male -> `male
@@ -1020,7 +1016,7 @@ let pers_to_piqi_person_light conf base p base_loop compute_sosa load_img =
   let sl =
     List.map
       (fun (p, fam) ->
-        spouse_to_piqi_spouse conf base p fam base_loop compute_sosa load_img)
+        spouse_to_piqi_spouse conf base p fam compute_sosa load_img)
       sl
   in
   let ascend = get_parents p <> None in
@@ -1078,17 +1074,10 @@ let pers_to_piqi_person_light conf base p base_loop compute_sosa load_img =
       - Person : Retourne une personne dont tous les champs sont complétés.
     [Rem] : Non exporté en clair hors de ce module.                           *)
 (* ************************************************************************** *)
-let pers_to_piqi_person_full conf base p base_loop compute_sosa load_img =
+let pers_to_piqi_person_full conf base p compute_sosa load_img =
   let gen_p = Util.string_gen_person base (gen_person_of_person p) in
   let p_auth = authorized_age conf base p in
-  let sosa_p =
-    (* Très bonne idée de tester base_loop avant l'appel de compute_sosa   *)
-    (* comme ça, s'il y a une boucle, l'init de init_sosa_t ne plante pas. *)
-    if base_loop then "-1"
-    else
-      let sosa_p = compute_sosa p in
-      Sosa.to_string sosa_p
-  in
+  let sosa_p = Sosa.to_string (compute_sosa p) in
   let sex =
     match gen_p.sex with
     | Male -> `male
@@ -1288,10 +1277,10 @@ let pers_to_piqi_person_full conf base p base_loop compute_sosa load_img =
   }
 
 
-let pers_to_piqi_person conf base p base_loop compute_sosa load_img =
+let pers_to_piqi_person conf base p compute_sosa load_img =
   if p_getenvbin conf.env "full_infos" = Some "1"
-  then PFull (pers_to_piqi_person_full conf base p base_loop compute_sosa load_img)
-  else PLight (pers_to_piqi_person_light conf base p base_loop compute_sosa load_img)
+  then PFull (pers_to_piqi_person_full conf base p compute_sosa load_img)
+  else PLight (pers_to_piqi_person_light conf base p compute_sosa load_img)
 
 
 (* ********************************************************************* *)
@@ -1453,31 +1442,26 @@ let data_person p =
   | PFull p -> Mext.gen_full_person p
 
 let person_map conf base l compute_sosa load_img =
-  let base_loop = has_base_loop conf base in
   if p_getenvbin conf.env "full_infos" = Some "1" then
     PFull
       (List.map
-         (fun p -> pers_to_piqi_person_full conf base p base_loop compute_sosa load_img)
+         (fun p -> pers_to_piqi_person_full conf base p compute_sosa load_img)
          l)
   else
     PLight
       (List.map
-         (fun p -> pers_to_piqi_person_light conf base p base_loop compute_sosa load_img)
+         (fun p -> pers_to_piqi_person_light conf base p compute_sosa load_img)
          l)
-
+  
 let conv_data_list_person conf base filters l =
+  let len = List.length l in
   if filters.nb_results then
-    let len = M.Internal_int32.({value = Int32.of_int (List.length l)}) in
+    let len = M.Internal_int32.({value = Int32.of_int len}) in
     Mext.gen_internal_int32 len
   else
-    let compute_sosa =
-      if List.length l > 1 then
-        let () = Perso.build_sosa_ht conf base in
-        Perso.get_sosa_person
-      else (Perso.get_single_sosa conf base)
-    in
+    let compute_sosa = compute_sosa conf base (len <= 1) in
     let load_img =
-      if List.length l > 20 then let () = load_image_ht conf in true
+      if len > 20 then let () = load_image_ht conf in true
       else false
     in
     let l = person_map conf base l compute_sosa load_img in
@@ -1490,21 +1474,16 @@ let conv_data_list_person conf base filters l =
         Mext.gen_list_full_persons list
 
 let data_list_person_option conf base filters l =
-  let compute_sosa =
-    if List.length l > 1 then
-      let () = Perso.build_sosa_ht conf base in
-      Perso.get_sosa_person
-    else (Perso.get_single_sosa conf base)
-  in
+  let len = List.length l in
+  let compute_sosa = compute_sosa conf base (len <= 1) in
   let load_img =
-    if List.length l > 20 then let () = load_image_ht conf in true
+    if len > 20 then let () = load_image_ht conf in true
     else false
   in
   if filters.nb_results then
-    let len = M.Internal_int32.({value = Int32.of_int (List.length l)}) in
+    let len = M.Internal_int32.({value = Int32.of_int len}) in
     Mext.gen_internal_int32 len
   else
-    let base_loop = has_base_loop conf base in
     let l =
       if p_getenvbin conf.env "full_infos" = Some "1" then
         PFull
@@ -1513,11 +1492,11 @@ let data_list_person_option conf base filters l =
               match p with
               | PFull p ->
                   if apply_filters_p conf filters compute_sosa p then
-                    pers_to_piqi_person_full conf base p base_loop compute_sosa load_img
+                    pers_to_piqi_person_full conf base p compute_sosa load_img
                   else
                     let ref_p = person_to_reference_person base p in
-                    empty_piqi_person_full conf ref_p base_loop
-              | PLight ref_p -> empty_piqi_person_full conf ref_p base_loop )
+                    empty_piqi_person_full conf ref_p
+              | PLight ref_p -> empty_piqi_person_full conf ref_p)
             l)
       else
         PLight
@@ -1526,11 +1505,11 @@ let data_list_person_option conf base filters l =
               match p with
               | PFull p ->
                   if apply_filters_p conf filters compute_sosa p then
-                    pers_to_piqi_person_light conf base p base_loop compute_sosa load_img
+                    pers_to_piqi_person_light conf base p compute_sosa load_img
                   else
                     let ref_p = person_to_reference_person base p in
-                    empty_piqi_person_light conf ref_p base_loop
-              | PLight ref_p -> empty_piqi_person_light conf ref_p base_loop )
+                    empty_piqi_person_light conf ref_p
+              | PLight ref_p -> empty_piqi_person_light conf ref_p)
             l)
     in
     match l with
@@ -1541,26 +1520,20 @@ let data_list_person_option conf base filters l =
         let list = M.List_full_persons.({persons = pl}) in
         Mext.gen_list_full_persons list
 
-
 let person_node_map conf base l =
-  let compute_sosa =
-    if List.length l > 1 then
-      let () = Perso.build_sosa_ht conf base in
-      Perso.get_sosa_person
-    else (Perso.get_single_sosa conf base)
-  in
+  let len = List.length l in
+  let compute_sosa = compute_sosa conf base (len <= 1) in
   let load_img =
-    if List.length l > 20 then let () = load_image_ht conf in true
+    if len > 20 then let () = load_image_ht conf in true
     else false
   in
-  let base_loop = has_base_loop conf base in
   if p_getenvbin conf.env "full_infos" = Some "1" then
     PFull
       (List.rev_map
          (fun p ->
            let id = Int64.of_string @@ Gwdb.string_of_iper (get_iper p) in
            let p =
-             pers_to_piqi_person_full conf base p base_loop compute_sosa load_img
+             pers_to_piqi_person_full conf base p compute_sosa load_img
            in
            M.Full_node.({
              id = id;
@@ -1573,14 +1546,14 @@ let person_node_map conf base l =
          (fun p ->
            let id = Int64.of_string @@ Gwdb.string_of_iper (get_iper p) in
            let p =
-             pers_to_piqi_person_light conf base p base_loop compute_sosa load_img
+             pers_to_piqi_person_light conf base p compute_sosa load_img
            in
            M.Node.({
              id = id;
              person = p;
            }))
          l)
-
+  
 let person_node_map_lia conf base l =
   let compute_sosa = (fun _ -> Sosa.zero) in
   (* TODO ? *)
@@ -1588,13 +1561,12 @@ let person_node_map_lia conf base l =
     if List.length l > 20 then let () = load_image_ht conf in true
     else false
   in
-  let base_loop = has_base_loop conf base in
   if p_getenvbin conf.env "full_infos" = Some "1" then
     PFull
       (List.rev_map
          (fun (id, p) ->
            let p =
-             pers_to_piqi_person_full conf base p base_loop compute_sosa load_img
+             pers_to_piqi_person_full conf base p compute_sosa load_img
            in
            M.Full_node.({
              id = id;
@@ -1606,7 +1578,7 @@ let person_node_map_lia conf base l =
       (List.rev_map
          (fun (id, p) ->
            let p =
-             pers_to_piqi_person_light conf base p base_loop compute_sosa load_img
+             pers_to_piqi_person_light conf base p compute_sosa load_img
            in
            M.Node.({
              id = id;
