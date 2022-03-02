@@ -2155,8 +2155,8 @@ let build_graph_asc conf base p max_gen =
           let cpl = foi base ifam in
           let fath = poi base (get_father cpl) in
           let moth = poi base (get_mother cpl) in
-          let fath_factor = factor ht (get_iper fath) + 1 in
-          let moth_factor = factor ht (get_iper moth) + 1 in
+          let fath_factor = factor ht (get_iper fath) in
+          let moth_factor = factor ht (get_iper moth) in
           nodes := create_node fath gen Ancestor conf.command fath_factor :: !nodes;
           nodes := create_node moth gen Ancestor conf.command moth_factor :: !nodes;
           edges := create_edge p_factor conf.command p fath_factor conf.command fath :: !edges;
@@ -2180,8 +2180,8 @@ let build_graph_asc conf base p max_gen =
                   match !GWPARAM_ITL.get_father conf base base_prefix ip
                       , !GWPARAM_ITL.get_mother conf base base_prefix ip with
                   | (Some ((fath, _), bpf), Some ((moth, _), bpm)) ->
-                    let fath_factor = factor ht (bpf, get_iper fath) + 1 in
-                    let moth_factor = factor ht (bpm, get_iper moth) + 1 in
+                    let fath_factor = factor ht (bpf, get_iper fath) in
+                    let moth_factor = factor ht (bpm, get_iper moth) in
                     nodes := create_node fath gen Ancestor bpf fath_factor :: !nodes;
                     nodes := create_node moth gen Ancestor bpm moth_factor :: !nodes;
                     edges := create_edge p_factor base_prefix p fath_factor bpf fath :: !edges;
@@ -2219,13 +2219,13 @@ let build_graph_desc conf base p max_gen =
           Array.fold_left (fun acc ifam  ->
               let fam = foi base ifam in
               let sp = poi base (Gutil.spouse (get_iper p) fam) in
-              let sp_factor = factor ht (get_iper sp) + 1 in
+              let sp_factor = factor ht (get_iper sp) in
               let children = Mutil.array_to_list_map (poi base) (get_children fam) in
               nodes := create_node ifam sp gen Spouse conf.command sp_factor :: !nodes;
               edges := create_edge p_factor conf.command p sp_factor conf.command sp :: !edges;
               if gen <> max_gen then begin
                 List.iter begin fun c ->
-                  let c_factor = factor ht (get_iper c) + 1 in
+                  let c_factor = factor ht (get_iper c) in
                   nodes := create_node ifam c gen Children conf.command c_factor :: !nodes;
                   edges := create_edge p_factor conf.command p c_factor conf.command c :: !edges;
                   edges := create_edge sp_factor conf.command sp c_factor conf.command c :: !edges
@@ -2246,11 +2246,11 @@ let build_graph_desc conf base p max_gen =
                         let p_factor = try Hashtbl.find ht (base_prefix, get_iper p) with Not_found -> 1 in
                         let l =
                           List.fold_left begin fun acc (fam_bp, (_, _, isp), children) ->
-                            let sp_factor = factor ht (fam_bp, isp) + 1 in
+                            let sp_factor = factor ht (fam_bp, isp) in
                             List.fold_left begin fun acc ((c, _), baseprefix, can_merge) ->
                               if can_merge then acc
                               else
-                                let c_factor = factor ht (baseprefix, get_iper c) + 1 in
+                                let c_factor = factor ht (baseprefix, get_iper c) in
                                 nodes := create_node ifam c gen Children baseprefix c_factor :: !nodes;
                                 edges := create_edge p_factor base_prefix p c_factor baseprefix c :: !edges;
                                 edges := create_edge sp_factor baseprefix sp c_factor baseprefix c :: !edges;
@@ -2281,12 +2281,12 @@ let build_graph_desc conf base p max_gen =
                   List.fold_left begin fun acc (ifam, fam, (_ifath, _imoth, sp), baseprefix, can_merge) ->
                     if can_merge then acc
                     else
-                      let sp_factor = factor ht (baseprefix, get_iper sp) + 1 in
+                      let sp_factor = factor ht (baseprefix, get_iper sp) in
                       nodes := create_node ifam sp gen Spouse baseprefix sp_factor :: !nodes;
                       edges := create_edge p_factor base_prefix p sp_factor baseprefix sp :: !edges;
                       List.fold_left begin fun acc (_baseprefix, _cpl, children) ->
                         List.fold_left begin fun acc ((c, _), _, _) ->
-                          let c_factor = factor ht (baseprefix, get_iper c) + 1 in
+                          let c_factor = factor ht (baseprefix, get_iper c) in
                           nodes := create_node ifam c gen Children baseprefix c_factor :: !nodes;
                           edges := create_edge p_factor base_prefix p c_factor baseprefix c :: !edges;
                           edges := create_edge sp_factor baseprefix sp c_factor baseprefix c :: !edges;
