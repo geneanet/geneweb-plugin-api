@@ -1780,6 +1780,9 @@ let rec pers_to_piqi_fiche_person conf base p base_prefix is_main_person nb_asc 
       let burial_src = if (is_main_person) then fill_burial_src p_auth gen_p else "" in
       let has_sources = if (is_main_person) then has_sources p_auth psources birth_src baptism_src death_src burial_src else false in
       let (death_type, death_date, death_date_conv, death_cal) = fill_death conf p_auth gen_p in
+      let _, _, birth_date_conv, _, _ = fill_birth conf p_auth gen_p in
+      let _, _, baptism_date_conv, _, _ = fill_baptism conf p_auth gen_p in
+      let _, _, burial_date_conv, _, _ = fill_burial conf p_auth gen_p in
       (* Linked links (family book). *)
       let (linked_page_biblio, linked_page_bnote, linked_page_death, linked_page_head, linked_page_occu) = if not simple_graph_info then fill_linked_page_if_is_main_person conf base p is_main_person else ("", "", "", "", "") in
       let pers_to_piqi_fiche_person_only conf base p base_prefix =
@@ -1869,13 +1872,13 @@ let rec pers_to_piqi_fiche_person conf base p base_prefix is_main_person nb_asc 
 
         (* These fields should not be set because Fiche Person fields are better. *)
         baptism_date = None;
-        baptism_date_conv = None;
+        baptism_date_conv = transform_empty_string_to_None baptism_date_conv;
         baptism_date_cal = None;
         birth_date = None;
-        birth_date_conv = None;
+        birth_date_conv = transform_empty_string_to_None birth_date_conv;
         birth_date_cal = None;
         burial_date = None;
-        burial_date_conv = None;
+        burial_date_conv = transform_empty_string_to_None burial_date_conv;
         burial_date_cal = None;
         events = if return_simple_attributes && not no_event then fill_events conf base p base_prefix p_auth pers_to_piqi_simple_person simple_witness_constructor get_event_constructor else [];
         events_witnesses = if return_simple_attributes && not no_event then get_events_witnesses conf base p base_prefix gen_p p_auth has_relations pers_to_piqi_simple_person simple_event_witness_constructor else [];
