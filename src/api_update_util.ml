@@ -788,12 +788,7 @@ let pers_to_piqi_person_search_info conf base p =
         let witnesses =
           Mutil.array_to_list_map
             (fun (ip, wk) ->
-               let witness_type =
-                 match wk with
-                 | Witness -> `witness
-                 | Witness_GodParent -> `witness_godparent
-                 | Witness_Officer -> `witness_officer
-               in
+              let witness_type = Api_util.piqi_of_witness_kind wk in
                let witness = pers_to_piqi_simple_person conf base @@ poi base ip in
                Mwrite.Witness_event.{ witness_type ; witness })
             w
@@ -1220,12 +1215,7 @@ let pers_to_piqi_mod_person conf base p =
          let witnesses =
            Mutil.array_to_list_map
              (fun (ip, wk) ->
-                let witness_type =
-                  match wk with
-                  | Witness -> `witness
-                  | Witness_GodParent -> `witness_godparent
-                  | Witness_Officer -> `witness_officer
-                in
+                let witness_type = Api_util.piqi_of_witness_kind wk in
                 let p = poi base ip in
                 let person_link = pers_to_piqi_person_link conf base p in
                 Mwrite.Witness.{ witness_type ; person = Some person_link })
@@ -1460,12 +1450,7 @@ let fam_to_piqi_mod_family conf base ifam fam =
          let witnesses =
            Mutil.array_to_list_map
              (fun (ip, wk) ->
-                let witness_type =
-                  match wk with
-                  | Witness -> `witness
-                  | Witness_GodParent -> `witness_godparent
-                  | Witness_Officer -> `witness_officer
-                in
+                let witness_type = Api_util.piqi_of_witness_kind wk in
                 let p = poi base ip in
                 let person_link = pers_to_piqi_person_link conf base p in
                 Mwrite.Witness.{ witness_type; person = Some person_link })

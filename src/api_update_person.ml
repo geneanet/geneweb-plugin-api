@@ -201,12 +201,7 @@ let reconstitute_person conf base mod_p
     List.fold_right begin fun witness accu ->
       match witness.Mwrite.Witness.person with
       | Some person ->
-        let wk =
-          match witness.Mwrite.Witness.witness_type with
-          | `witness -> Witness
-          | `witness_godparent -> Witness_GodParent
-          | `witness_officer -> Witness_Officer
-        in
+        let wk = Api_util.witness_kind_of_piqi witness.Mwrite.Witness.witness_type in
         let wit = (reconstitute_somebody base person, wk) in
         wit :: accu
       | None -> accu
