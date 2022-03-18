@@ -20,7 +20,12 @@ let wiz fn conf base =
     (* FIXME: Needs auth headers *)
     Api_util.print_error conf `unauthorized ""
 
-let w_lock = GWD.Request.w_lock ~onerror:(fun conf _ -> Update.error_locked conf)
+let w_lock =
+  GWD.Request.w_lock
+    ~onerror:(fun conf _ ->
+        let err = Update.string_of_error conf Update.UERR_locked_base in
+        Api_util.print_error conf `conflict err
+      )
 
 let w_base =
   let none conf =

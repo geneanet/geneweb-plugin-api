@@ -1591,6 +1591,7 @@ let from_piqi_status = function
   | `unauthorized -> Def.Unauthorized
   | `forbidden -> Def.Forbidden
   | `not_found -> Def.Not_Found
+  | `conflict -> Def.Conflict
 
 (** [print_error conf code]
     Print error code and [raise Exit]
