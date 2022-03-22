@@ -194,7 +194,7 @@ let print_config conf base =
           | `not_dead -> (death, transl conf "alive")
           | `dead -> (death, transl conf "died")
           | `dead_young -> (death, transl conf "died young")
-          | `dont_know_if_dead -> (death, "-")
+          | `dont_know_if_dead -> (death, transl conf "api_dont_know_if_dead")
           | `of_course_dead -> (death, transl conf "of course dead")
           | _ -> failwith "transl_death"
         in
