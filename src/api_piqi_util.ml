@@ -246,13 +246,6 @@ module ReferencePerson
 
 end
 
-let get_params conf parse =
-  match (p_getenvbin conf.env "data", p_getenvbin conf.env "input") with
-  | (Some d, Some "pb") -> parse d `pb
-  | (Some d, Some "json") -> parse d `json
-  | (Some d, Some "xml") -> parse d `xml
-  | _ -> exit (-2)
-
 let print_result conf data =
   let (content_type, output) =
     match p_getenvbin conf.env "output" with
@@ -264,6 +257,36 @@ let print_result conf data =
   let data = data output in
   Util.html ~content_type conf ;
   Output.print_string conf data
+
+let from_piqi_status = function
+  | `bad_request -> Def.Bad_Request
+  | `unauthorized -> Def.Unauthorized
+  | `forbidden -> Def.Forbidden
+  | `not_found -> Def.Not_Found
+  | `conflict -> Def.Conflict
+
+(** [print_error conf code]
+    Print error code and [raise Exit]
+*)
+let print_error conf code msg =
+  let piqi_error = Api_piqi.default_error () in
+  piqi_error.Api_piqi.Error.code <- code ;
+  piqi_error.Api_piqi.Error.message <- Opt.of_string msg ;
+  let data = Api_piqi_ext.gen_error piqi_error in
+  Output.status conf (from_piqi_status code) ;
+  print_result conf data ;
+  raise Exit
+
+let get_params conf parse =
+  match (p_getenvbin conf.env "data", p_getenvbin conf.env "input") with
+  | (Some d, Some "pb") -> parse d `pb
+  | (Some d, Some "json") -> parse d `json
+  | (Some d, Some "xml") -> parse d `xml
+  | _ -> assert false
+
+let get_params conf parse =
+  try get_params conf parse
+  with e -> print_error conf `bad_request (Printexc.to_string e)
 
 let piqi_fevent_name_of_fevent_name = function
   | Efam_Marriage -> `efam_marriage

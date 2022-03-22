@@ -1586,26 +1586,6 @@ let person_node_map_lia conf base l =
            }))
          l)
 
-let from_piqi_status = function
-  | `bad_request -> Def.Bad_Request
-  | `unauthorized -> Def.Unauthorized
-  | `forbidden -> Def.Forbidden
-  | `not_found -> Def.Not_Found
-  | `conflict -> Def.Conflict
-
-(** [print_error conf code]
-    Print error code and [raise Exit]
-*)
-let print_error conf code msg =
-  let piqi_error = M.default_error () in
-  piqi_error.M.Error.code <- code ;
-  piqi_error.M.Error.message <- Opt.of_string msg ;
-  let data = Mext.gen_error piqi_error in
-  Output.status conf (from_piqi_status code) ;
-  print_result conf data ;
-  raise Exit
-
-
 let chop_base_prefix base_prefix =
   let len = String.length base_prefix in
   if len > 2 &&
@@ -1614,3 +1594,5 @@ let chop_base_prefix base_prefix =
   then
     String.sub base_prefix 0 (len - 2)
   else base_prefix
+
+let print_error = Api_piqi_util.print_error
