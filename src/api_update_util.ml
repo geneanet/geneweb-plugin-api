@@ -5,7 +5,6 @@ module Mwrite = Api_saisie_write_piqi
 module Mext_write = Api_saisie_write_piqi_ext
 
 open Geneweb
-open Config
 open Def
 open Gwdb
 open Util
@@ -730,19 +729,7 @@ let pers_to_piqi_person_search_info conf base p =
       | None -> ""
       *)
   in
-  let occupation =
-    let s = sou base (get_occupation p) in
-    let s =
-      let wi =
-        {Wiki.wi_mode = "NOTES";
-         Wiki.wi_file_path = Notes.file_path conf base;
-         Wiki.wi_person_exists = person_exists conf base;
-         Wiki.wi_always_show_link = conf.wizard || conf.friend}
-      in
-      Wiki.syntax_links conf wi s
-    in
-    string_with_macros conf [] s
-  in
+  let occupation = !!(Notes.source conf base (sou base (get_occupation p))) in
   let events =
     List.map
       (fun (name, date, place, note, src, w, isp) ->
@@ -757,33 +744,8 @@ let pers_to_piqi_person_search_info conf base p =
           | _ -> ("", "", "", "", None)
         in
         let place = !!(Util.string_of_place conf (sou base place)) in
-        let note =
-          let env = [('i', fun () -> Util.default_image_name base p)] in
-          let s = sou base note in
-          let s = string_with_macros conf env s in
-          let lines = Wiki.html_of_tlsw conf s in
-          let wi =
-            {Wiki.wi_mode = "NOTES";
-             Wiki.wi_file_path = Notes.file_path conf base;
-             Wiki.wi_person_exists = person_exists conf base;
-             Wiki.wi_always_show_link = conf.wizard || conf.friend}
-          in
-          Wiki.syntax_links conf wi (String.concat "\n" lines)
-        in
-        let src =
-          let s = sou base src in
-          let env = [('i', fun () -> Util.default_image_name base p)] in
-          let s =
-            let wi =
-              {Wiki.wi_mode = "NOTES";
-               Wiki.wi_file_path = Notes.file_path conf base;
-               Wiki.wi_person_exists = person_exists conf base;
-               Wiki.wi_always_show_link = conf.wizard || conf.friend}
-            in
-            Wiki.syntax_links conf wi s
-          in
-          string_with_macros conf env s
-        in
+        let note = !!(Notes.person_note conf base p (sou base note)) in
+        let src = !!(Notes.source conf base (sou base src)) in
         let spouse =
           match isp with
           | Some ip ->
@@ -818,33 +780,8 @@ let pers_to_piqi_person_search_info conf base p =
         })
       (Perso.events_list conf base p)
   in
-  let notes =
-    let env = [('i', fun () -> Util.default_image_name base p)] in
-    let s = sou base (get_notes p) in
-    let s = string_with_macros conf env s in
-    let lines = Wiki.html_of_tlsw conf s in
-    let wi =
-      {Wiki.wi_mode = "NOTES";
-       Wiki.wi_file_path = Notes.file_path conf base;
-       Wiki.wi_person_exists = person_exists conf base;
-       Wiki.wi_always_show_link = conf.wizard || conf.friend}
-    in
-    Wiki.syntax_links conf wi (String.concat "\n" lines)
-  in
-  let psources =
-    let s = sou base (get_psources p) in
-    let env = [('i', fun () -> Util.default_image_name base p)] in
-    let s =
-      let wi =
-        {Wiki.wi_mode = "NOTES";
-         Wiki.wi_file_path = Notes.file_path conf base;
-         Wiki.wi_person_exists = person_exists conf base;
-         Wiki.wi_always_show_link = conf.wizard || conf.friend}
-      in
-      Wiki.syntax_links conf wi s
-    in
-    string_with_macros conf env s
-  in
+  let notes = !!(Notes.person_note conf base p (sou base (get_notes p))) in
+  let psources = !!(Notes.source conf base (sou base (get_psources p))) in
   let has_sources = psources <> "" in
   let titles = Perso.nobility_titles_list conf base p in
   let titles =
