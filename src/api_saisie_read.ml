@@ -599,7 +599,9 @@ let fam_to_piqi_family_link conf base (ifath : Gwdb.iper) imoth sp ifam fam base
   let marriage_place =
     if m_auth then !!(Util.string_of_place conf gen_f.marriage_place) else ""
   in
-  let marriage_src = if p_auth then gen_f.marriage_src else "" in
+  let marriage_src =
+    if m_auth then !!(Notes.source conf base gen_f.marriage_src) else ""
+  in
   let marriage_type =
     match gen_f.relation with
     | Married -> `married
@@ -836,7 +838,9 @@ let get_family_piqi base conf ifam p base_prefix spouse_to_piqi witnesses_to_piq
   let marriage_place =
     if m_auth then !!(Util.string_of_place conf gen_f.marriage_place) else ""
   in
-  let marriage_src = if p_auth then gen_f.marriage_src else "" in
+  let marriage_src =
+    if m_auth then !!(Notes.source conf base gen_f.marriage_src) else ""
+  in
   let marriage_type =
     match gen_f.relation with
     | Married -> `married
@@ -1140,17 +1144,17 @@ let fill_baptism_place conf p_auth gen_p =
 let fill_death_place conf p_auth gen_p =
   if p_auth then !!(Util.string_of_place conf gen_p.death_place) else ""
 
-let fill_birth_src p_auth gen_p =
-  if p_auth then gen_p.birth_src else ""
+let fill_birth_src conf base p_auth gen_p =
+  if p_auth then !!(Notes.source conf base gen_p.birth_src) else ""
 
-let fill_burial_src p_auth gen_p =
-  if p_auth then gen_p.burial_src else ""
+let fill_burial_src conf base p_auth gen_p =
+  if p_auth then !!(Notes.source conf base gen_p.burial_src) else ""
 
-let fill_death_src p_auth gen_p =
-  if p_auth then gen_p.death_src else ""
+let fill_death_src conf base p_auth gen_p =
+  if p_auth then !!(Notes.source conf base gen_p.death_src) else ""
 
-let fill_baptism_src p_auth gen_p =
-  if p_auth then gen_p.baptism_src else ""
+let fill_baptism_src conf base p_auth gen_p =
+  if p_auth then !!(Notes.source conf base gen_p.baptism_src) else ""
 
 let fill_burial_place conf p_auth gen_p =
   if p_auth then !!(Util.string_of_place conf gen_p.burial_place) else ""
@@ -1596,10 +1600,10 @@ let pers_to_piqi_person conf base p base_prefix is_main_person =
     let (father, mother) = fill_parents conf base p base_prefix in
 
     let psources = fill_sources conf base p_auth gen_p is_main_person in
-    let birth_src = fill_birth_src p_auth gen_p in
-    let baptism_src = fill_baptism_src p_auth gen_p in
-    let death_src = fill_death_src p_auth gen_p in
-    let burial_src = fill_burial_src p_auth gen_p in
+    let birth_src = fill_birth_src conf base p_auth gen_p in
+    let baptism_src = fill_baptism_src conf base p_auth gen_p in
+    let death_src = fill_death_src conf base p_auth gen_p in
+    let burial_src = fill_burial_src conf base p_auth gen_p in
     let has_sources = has_sources p_auth psources birth_src baptism_src death_src burial_src in
 
     {
@@ -1621,7 +1625,7 @@ let pers_to_piqi_person conf base p base_prefix is_main_person =
       birth_date_conv = transform_empty_string_to_None birth_date_conv;
       birth_date_cal = birth_cal;
       birth_place = transform_empty_string_to_None (fill_birth_place conf p_auth gen_p);
-      birth_src = transform_empty_string_to_None (fill_birth_src p_auth gen_p);
+      birth_src = transform_empty_string_to_None (fill_birth_src conf base p_auth gen_p);
       baptism_date = transform_empty_string_to_None baptism_date;
       baptism_date_conv = transform_empty_string_to_None baptism_date_conv;
       baptism_date_cal = baptism_cal;
@@ -1692,12 +1696,12 @@ let rec pers_to_piqi_fiche_person conf base p base_prefix is_main_person nb_asc 
       let gen_p = Util.string_gen_person base (gen_person_of_person p) in
 
       (* Sources only returned for the main person. *)
-      let psources = if (is_main_person) then fill_sources conf base p_auth gen_p is_main_person else "" in
-      let birth_src = if (is_main_person) then fill_birth_src p_auth gen_p else "" in
-      let baptism_src = if (is_main_person) then fill_baptism_src p_auth gen_p else "" in
-      let death_src = if (is_main_person) then fill_death_src p_auth gen_p else "" in
-      let burial_src = if (is_main_person) then fill_burial_src p_auth gen_p else "" in
-      let has_sources = if (is_main_person) then has_sources p_auth psources birth_src baptism_src death_src burial_src else false in
+      let psources = if is_main_person then fill_sources conf base p_auth gen_p is_main_person else "" in
+      let birth_src = if is_main_person then fill_birth_src conf base p_auth gen_p else "" in
+      let baptism_src = if is_main_person then fill_baptism_src conf base p_auth gen_p else "" in
+      let death_src = if is_main_person then fill_death_src conf base p_auth gen_p else "" in
+      let burial_src = if is_main_person then fill_burial_src conf base p_auth gen_p else "" in
+      let has_sources = if is_main_person then has_sources p_auth psources birth_src baptism_src death_src burial_src else false in
       let (death_type, death_date, death_date_conv, death_cal) = fill_death conf p_auth gen_p in
       (* Linked links (family book). *)
       let (linked_page_biblio, linked_page_bnote, linked_page_death, linked_page_head, linked_page_occu) = if not simple_graph_info then fill_linked_page_if_is_main_person conf base p is_main_person else ("", "", "", "", "") in
