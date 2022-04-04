@@ -1616,3 +1616,30 @@ let piqi_of_witness_kind = function
   | Witness_Attending        -> `witness_attending
   | Witness_Mentioned        -> `witness_mentioned
 
+
+let translate_witness conf = function
+  | Witness                  ->
+     transl_nth conf "witness/witnesses" 0
+  | Witness_GodParent        ->
+     transl_nth conf "godfather/godmother/godparents" 2
+  | Witness_CivilOfficer     ->
+     transl_nth conf "civil registrar/civil registrar/civil registrar" 2
+  | Witness_ReligiousOfficer ->
+     transl_nth conf "parrish registrar/parrish registrar/parrish registrar" 2
+  | Witness_Informant        ->
+     transl_nth conf "informant/informant/informant" 2
+  | Witness_Attending        ->
+     transl_nth conf "present/present/present" 2
+  | Witness_Mentioned        ->
+     transl_nth conf "mentioned/mentioned/mentioned" 2
+
+let witness_kinds = [
+    Witness;
+    Witness_GodParent;
+    Witness_CivilOfficer;
+    Witness_ReligiousOfficer;
+    Witness_Informant;
+    Witness_Attending;
+    Witness_Mentioned
+  ]
+

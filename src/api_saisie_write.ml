@@ -135,6 +135,7 @@ let print_person_search_info conf base =
       - Config
                                                                            *)
 (* ************************************************************************ *)
+
 let print_config conf base =
   let transl_cal =
     List.map
@@ -155,18 +156,11 @@ let print_config conf base =
   in
   let transl_cal = Mwrite.Config_transl_calendar.({msg = transl_cal;}) in
   let transl_wit =
-    List.map
-      (fun wit ->
-        let (pos, sval) =
-          match wit with
-          | `witness ->
-              (`witness, transl_nth conf "witness/witnesses" 0)
-          | `witness_godparent ->
-              (`witness_godparent,
-               transl_nth conf "godfather/godmother/godparents" 2)
-        in
+    List.map (fun wk ->
+        let pos = Api_util.piqi_of_witness_kind wk in
+        let sval = Api_util.translate_witness conf wk in
         Mwrite.Transl_witness_type.({pos = pos; sval = sval;}))
-      [ `witness; `witness_godparent ]
+      Api_util.witness_kinds
   in
   let transl_wit = Mwrite.Config_transl_witness_type.({msg = transl_wit;}) in
   let transl_prec =
