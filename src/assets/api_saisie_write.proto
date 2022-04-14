@@ -27,6 +27,7 @@ enum WitnessType {
   WITNESS_INFORMANT = 4;
   WITNESS_ATTENDING = 5;
   WITNESS_MENTIONED = 6;
+  WITNESS_OTHER = 7;
 }
 
 enum Precision {

@@ -1606,6 +1606,7 @@ let witness_kind_of_piqi = function
   | `witness_informant        -> Witness_Informant
   | `witness_attending        -> Witness_Attending
   | `witness_mentioned        -> Witness_Mentioned
+  | `witness_other            -> Witness_Other
                                
 let piqi_of_witness_kind = function
   | Witness                  -> `witness
@@ -1615,8 +1616,8 @@ let piqi_of_witness_kind = function
   | Witness_Informant        -> `witness_informant
   | Witness_Attending        -> `witness_attending
   | Witness_Mentioned        -> `witness_mentioned
-
-
+  | Witness_Other            -> `witness_other
+                              
 let translate_witness conf = function
   | Witness                  ->
      transl_nth conf "witness/witnesses" 0
@@ -1632,14 +1633,17 @@ let translate_witness conf = function
      transl_nth conf "present/present/present" 2
   | Witness_Mentioned        ->
      transl_nth conf "mentioned/mentioned/mentioned" 2
+  | Witness_Other            ->
+     transl_nth conf "other/other/other" 2
 
 let witness_kinds = [
     Witness;
-    Witness_GodParent;
+    Witness_GodParent;(*
     Witness_CivilOfficer;
-    Witness_ReligiousOfficer;
+    Witness_ReligiousOfficer;*)
     Witness_Informant;
     Witness_Attending;
-    Witness_Mentioned
+    Witness_Mentioned;
+    Witness_Other
   ]
 
