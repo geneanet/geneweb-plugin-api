@@ -1595,4 +1595,40 @@ let chop_base_prefix base_prefix =
     String.sub base_prefix 0 (len - 2)
   else base_prefix
 
+
 let print_error = Api_piqi_util.print_error
+
+let witness_kind_of_piqi = function
+  | `witness                  -> Witness
+  | `witness_godparent        -> Witness_GodParent
+  | `witness_civilofficer     -> Witness_CivilOfficer
+  | `witness_religiousofficer -> Witness_ReligiousOfficer
+  | `witness_informant        -> Witness_Informant
+  | `witness_attending        -> Witness_Attending
+  | `witness_mentioned        -> Witness_Mentioned
+  | `witness_other            -> Witness_Other
+                               
+let piqi_of_witness_kind = function
+  | Witness                  -> `witness
+  | Witness_GodParent        -> `witness_godparent
+  | Witness_CivilOfficer     -> `witness_civilofficer
+  | Witness_ReligiousOfficer -> `witness_religiousofficer
+  | Witness_Informant        -> `witness_informant
+  | Witness_Attending        -> `witness_attending
+  | Witness_Mentioned        -> `witness_mentioned
+  | Witness_Other            -> `witness_other
+                              
+let translate_witness conf witness_kind =
+  Util.string_of_witness_kind conf Def.Neuter witness_kind
+
+let witness_kinds = [
+    Witness;
+    Witness_GodParent;
+    Witness_CivilOfficer;
+    Witness_ReligiousOfficer;
+    Witness_Informant;
+    Witness_Attending;
+    Witness_Mentioned;
+    Witness_Other
+  ]
+

@@ -750,12 +750,7 @@ let fill_events conf base p base_prefix p_auth pers_to_piqi witness_constructor 
         let witnesses =
           Mutil.array_to_list_map
             (fun (ip, wk) ->
-               let witness_type =
-                 match wk with
-                 | Witness -> `witness
-                 | Witness_GodParent -> `witness_godparent
-                 | Witness_Officer -> `witness_officer
-               in
+               let witness_type = Api_util.piqi_of_witness_kind wk in
                let witness = poi base ip in
                let witness = pers_to_piqi conf base witness base_prefix in
                witness_constructor witness_type witness
