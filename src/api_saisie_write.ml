@@ -158,7 +158,7 @@ let print_config conf base =
   let transl_wit =
     List.map (fun wk ->
         let pos = Api_util.piqi_of_witness_kind wk in
-        let sval = Api_util.translate_witness conf wk in
+        let sval = !! (Api_util.translate_witness conf wk) in
         Mwrite.Transl_witness_type.({pos = pos; sval = sval;}))
       Api_util.witness_kinds
   in
