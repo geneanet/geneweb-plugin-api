@@ -241,7 +241,7 @@ let print_config conf base =
         in
         Mwrite.Transl_fevent_name.({
           pos = pos;
-          sval = sval;
+          sval = !!(sval);
         }))
       [ Efam_Marriage; Efam_NoMarriage; Efam_Engage;
         Efam_Divorce ; Efam_Separated;
@@ -262,7 +262,7 @@ let print_config conf base =
         in
         Mwrite.Transl_pevent_name.({
           pos = pos;
-          sval = sval;
+          sval = !!(sval);
         }))
       [ Epers_Birth; Epers_Baptism; Epers_Death; Epers_Burial ]
   in
@@ -275,7 +275,7 @@ let print_config conf base =
         in
         Mwrite.Transl_pevent_name.({
           pos = pos;
-          sval = sval;
+          sval = !!(sval);
         }))
       [ Epers_Accomplishment; Epers_Acquisition; Epers_Adhesion;
         Epers_BarMitzvah; Epers_BatMitzvah; Epers_Benediction; Epers_Cremation;
@@ -307,7 +307,7 @@ let print_config conf base =
         in
         Mwrite.Transl_pevent_name.({
           pos = pos;
-          sval = sval;
+          sval = !!(sval);
         }))
       [ Epers_BaptismLDS; Epers_ConfirmationLDS; Epers_DotationLDS;
         Epers_FamilyLinkLDS; Epers_ScellentChildLDS; Epers_ScellentParentLDS;
@@ -446,7 +446,7 @@ let print_config conf base =
   in
   let transl_hebrew_month = Mwrite.Config_transl_hebrew_month.({msg = transl_hebrew_month;}) in
   let (gwf_place_format, gwf_place_format_placeholder) =
-    match p_getenv conf.base_env "places_format" with
+    match List.assoc_opt "places_format" conf.base_env with
     | Some s ->
         let placeholder =
           (try
@@ -588,11 +588,11 @@ let compute_warnings conf base resp =
     sou base (get_first_name p) ^ " " ^ sou base (get_surname p)
   in
   let print_someone_dates p =
-    print_someone p ^ " " ^ DateDisplay.short_dates_text conf base p
+    print_someone p ^ " " ^ !!(DateDisplay.short_dates_text conf base p)
   in
   match resp with
   | Api_update_util.UpdateErrorConflict c -> (false, [], [], Some c, [])
-  | Api_update_util.UpdateError s -> (false, [Update.string_of_error conf s], [], None, [])
+  | Api_update_util.UpdateError s -> (false, [!!(Update.string_of_error conf s)], [], None, [])
   | Api_update_util.UpdateSuccess (wl, ml, hr) ->
       let warning =
         List.fold_right
@@ -606,7 +606,7 @@ let compute_warnings conf base resp =
                            "the difference of age between %t and %t is quite important"))
                      (fun _ -> print_someone p1)
                      (fun _ -> print_someone p2))
-                  ^ ": " ^ (DateDisplay.string_of_age conf a)
+                  ^ ": " ^ !!(DateDisplay.string_of_age conf a)
                 in
                 w :: wl
             | BirthAfterDeath p ->
@@ -690,7 +690,7 @@ let compute_warnings conf base resp =
                   (transl_nth
                      conf "died at an advanced age" (index_of_sex (get_sex p)))
                   ^ " " ^
-                  (DateDisplay.string_of_age conf a)
+                  !!(DateDisplay.string_of_age conf a)
                 in
                 w :: wl
             | DeadTooEarlyToBeFather (father, child) ->
@@ -707,8 +707,8 @@ let compute_warnings conf base resp =
                   Printf.sprintf
                     (ftransl conf "%t's %s before his/her %s")
                     (fun _ -> print_someone_dates p)
-                    (Util.string_of_fevent_name conf base e1.efam_name)
-                    (Util.string_of_fevent_name conf base e2.efam_name)
+                    !!(Util.string_of_fevent_name conf base e1.efam_name)
+                    !!(Util.string_of_fevent_name conf base e2.efam_name)
                 in
                 w :: wl
             | FWitnessEventAfterDeath (p, e, _) ->
@@ -716,7 +716,7 @@ let compute_warnings conf base resp =
                   Printf.sprintf
                     (ftransl conf "%t witnessed the %s after his/her death")
                     (fun _ -> print_someone_dates p)
-                    (Util.string_of_fevent_name conf base e.efam_name)
+                    !!(Util.string_of_fevent_name conf base e.efam_name)
                 in
                 w :: wl
             | FWitnessEventBeforeBirth (p, e, _) ->
@@ -724,7 +724,7 @@ let compute_warnings conf base resp =
                   Printf.sprintf
                     (ftransl conf "%t witnessed the %s before his/her birth")
                     (fun _ -> print_someone_dates p)
-                    (Util.string_of_fevent_name conf base e.efam_name)
+                    !!(Util.string_of_fevent_name conf base e.efam_name)
                 in
                 w :: wl
             | IncoherentSex (p, _, _) ->
@@ -775,7 +775,7 @@ let compute_warnings conf base resp =
                 let w =
                 Printf.sprintf "%s\n%s\n" (print_someone_dates p)
                   (transl conf "is a very young parent") ^
-                Printf.sprintf "(%s)" (DateDisplay.string_of_age conf a)
+                Printf.sprintf "(%s)" !!(DateDisplay.string_of_age conf a)
                 in
                 w :: wl
             | PossibleDuplicateFam (f1, _) ->
@@ -791,7 +791,7 @@ let compute_warnings conf base resp =
                 let w =
                 Printf.sprintf "%s\n%s\n" (print_someone p)
                   (transl conf "is a very old parent") ^
-                Printf.sprintf "(%s)" (DateDisplay.string_of_age conf a);
+                Printf.sprintf "(%s)" !!(DateDisplay.string_of_age conf a);
                 in
                 w :: wl
             | PEventOrder (p, e1, e2) ->
@@ -799,8 +799,8 @@ let compute_warnings conf base resp =
                   Printf.sprintf
                     (ftransl conf "%t's %s before his/her %s")
                     (fun _ -> print_someone_dates p)
-                    (Util.string_of_pevent_name conf base e1.epers_name)
-                    (Util.string_of_pevent_name conf base e2.epers_name)
+                    !!(Util.string_of_pevent_name conf base e1.epers_name)
+                    !!(Util.string_of_pevent_name conf base e2.epers_name)
                 in
                 w :: wl
             | PWitnessEventAfterDeath (p, e, _) ->
@@ -808,7 +808,7 @@ let compute_warnings conf base resp =
                   Printf.sprintf
                     (ftransl conf "%t witnessed the %s after his/her death")
                     (fun _ -> print_someone_dates p)
-                    (Util.string_of_pevent_name conf base e.epers_name)
+                    !!(Util.string_of_pevent_name conf base e.epers_name)
                 in
                 w :: wl
             | PWitnessEventBeforeBirth (p, e, _) ->
@@ -816,7 +816,7 @@ let compute_warnings conf base resp =
                   Printf.sprintf
                     (ftransl conf "%t witnessed the %s before his/her birth")
                     (fun _ -> print_someone_dates p)
-                    (Util.string_of_pevent_name conf base e.epers_name)
+                    !!(Util.string_of_pevent_name conf base e.epers_name)
                 in
                 w :: wl
             | TitleDatesError (p, t) ->
@@ -828,10 +828,10 @@ let compute_warnings conf base resp =
                      Printf.sprintf "%s %s %s-%s"
                        (sou base t.t_ident) (sou base t.t_place)
                        (match Adef.od_of_cdate t.t_date_start with
-                        | Some d -> DateDisplay.string_of_date conf d
+                        | Some d -> !!(DateDisplay.string_of_date conf d)
                         | _ -> "" )
                        (match Adef.od_of_cdate t.t_date_end with
-                        | Some d -> DateDisplay.string_of_date conf d
+                        | Some d -> !!(DateDisplay.string_of_date conf d)
                         | _ -> "" ))
                 in
                 w :: wl
@@ -848,7 +848,7 @@ let compute_warnings conf base resp =
                 print_someone p ^ " " ^
                   (Printf.sprintf
                      (ftransl conf "married at age %t")
-                     (fun _ -> DateDisplay.string_of_age conf a))
+                     (fun _ -> !!(DateDisplay.string_of_age conf a)))
                 in
                 w :: wl)
           wl []
@@ -1385,7 +1385,7 @@ let print_mod_family_request conf base =
          in
          let lastname = sou base (get_surname sp) in
          let firstname = sou base (get_first_name sp) in
-         let dates = Opt.of_string @@ Api_saisie_read.short_dates_text conf base sp in
+         let dates = Opt.of_string (Api_saisie_read.short_dates_text conf base sp) in
          let image =
            Opt.of_string @@
            let img = sou base (get_image sp) in
@@ -2180,9 +2180,11 @@ let check_input_person mod_p : 'unit_or_exn =
     end mod_p.Mwrite.Person.pevents ()
   else if s = "" then
     let designation = mod_p.Mwrite.Person.firstname ^ "." ^ string_of_int o ^ " ?" in
+    let designation = (Util.escape_html designation : Adef.escaped_string :> Adef.safe_string) in
     raise_ModErr (Update.UERR_missing_surname designation)
   else if f = "" then
     let designation = "?." ^ string_of_int o ^ " " ^ mod_p.Mwrite.Person.lastname in
+    let designation = (Util.escape_html designation : Adef.escaped_string :> Adef.safe_string) in
     raise_ModErr (Update.UERR_missing_first_name designation)
   else if mod_p.Mwrite.Person.sex = `unknown then
     raise_ModErr (Update.UERR_sex_undefined (f, s, o))
@@ -2346,7 +2348,7 @@ let print_add_first_fam conf =
   in
   let response =
     { Mwrite.Modification_status.is_base_updated
-    ; base_warnings = List.map (Update.string_of_error conf) warnings
+    ; base_warnings = List.map (fun s -> !!(Update.string_of_error conf s)) warnings
     ; base_miscs = miscs
     ; index_person = None
     ; lastname
