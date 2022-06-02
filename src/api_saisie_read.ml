@@ -1474,7 +1474,7 @@ let has_sources p_auth psources birth_src baptism_src death_src burial_src =
 
 let fill_titles conf base p =
   List.map
-    (fun x -> !!(Perso.string_of_title ~link:false conf base (Adef.safe "") p x))
+    (fun x -> !!(Perso.string_of_title ~safe:true ~link:false conf base (Adef.safe "") p x))
     (Perso.nobility_titles_list conf base p)
 
 let transform_empty_string_to_None string =
