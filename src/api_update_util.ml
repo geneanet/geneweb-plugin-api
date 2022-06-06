@@ -743,7 +743,7 @@ let pers_to_piqi_person_search_info conf base p =
           | Some d -> Api_saisie_read.string_of_date_and_conv conf d
           | _ -> ("", "", "", "", None)
         in
-        let place = !!(Util.string_of_place conf (sou base place)) in
+        let place = !!(Util.raw_string_of_place conf (sou base place) |> Adef.safe) in
         let note = !!(Notes.person_note conf base p (sou base note)) in
         let src = !!(Notes.source conf base (sou base src)) in
         let spouse =
