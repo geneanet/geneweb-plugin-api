@@ -484,9 +484,9 @@ let child_of_parent conf base p =
   (* alors on l'affiche, sinon on n'affiche que le prénom.   *)
   let print_father fath =
     if not (eq_istr (get_surname p) (get_surname fath)) then
-      gen_person_text ~html:false conf base fath
+      gen_person_text ~escape:false ~html:false conf base fath
     else
-      gen_person_text ~html:false ~sn:false conf base fath
+      gen_person_text ~escape:false ~html:false ~sn:false conf base fath
   in
   let a = pget conf base (get_iper p) in
   let ifam =
@@ -510,11 +510,11 @@ let child_of_parent conf base p =
       let s =
         match (fath, moth) with
         | (Some fath, None) -> print_father fath
-        | (None, Some moth) -> gen_person_text ~html:false conf base moth
+        | (None, Some moth) -> gen_person_text ~escape:false ~html:false conf base moth
         | (Some fath, Some moth) ->
             print_father fath
             ^^^ " " ^<^ transl_nth conf "and" 0 ^<^ " "
-            ^<^ gen_person_text ~html:false conf base moth
+            ^<^ gen_person_text ~escape:false ~html:false conf base moth
         | _ -> Adef.safe ""
       in
       let is = index_of_sex (get_sex p) in
