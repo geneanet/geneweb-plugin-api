@@ -781,7 +781,7 @@ let pers_to_piqi_person_search_info conf base p =
   let titles = Perso.nobility_titles_list conf base p in
   let titles =
     List.map (fun x ->
-        !!(Perso.string_of_title ~link:false conf base (Adef.safe "") p x)
+        !!(Perso.string_of_title ~safe:true ~link:false conf base (Adef.safe "") p x)
       ) titles
   in
   let related =
