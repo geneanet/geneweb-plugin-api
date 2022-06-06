@@ -536,7 +536,7 @@ let husband_wife conf base p =
           Printf.sprintf (relation_txt conf (get_sex p) fam) (fun () -> "")
         in
         translate_eval
-          (relation ^<^ " " ^<^ (gen_person_text ~html:false conf base conjoint)
+          (relation ^<^ " " ^<^ (gen_person_text ~escape:false ~html:false conf base conjoint)
            :> string)
       else loop (i + 1)
     else ""
