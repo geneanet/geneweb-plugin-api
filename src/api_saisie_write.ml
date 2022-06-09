@@ -582,14 +582,68 @@ let empty_death_pevent () =
   }
 
 (**/**) (* Fonctions qui renvoie le ModificationStatus. *)
+let print_someone base p =
+  sou base (get_first_name p) ^ " " ^ sou base (get_surname p)
 
+let print_someone_dates conf base p =
+  print_someone base p ^ " " ^ !!(DateDisplay.short_dates_text conf base p)
+
+let merge_dup_link conf iper txt =
+  let iper_s = Gwdb.string_of_iper iper in
+  let henv = ["i", Adef.encoded iper_s;
+              "ip", Adef.encoded iper_s;
+              "m", Adef.encoded "MRG_DUP";]
+  in
+  "<a href=" ^ !!(Util.commd {conf with henv})  ^ ">"
+  ^ txt
+  ^ "</a>"
+  
+let possible_family_dup conf base f1 =
+  let f = foi base f1 in
+  let w =
+    Printf.sprintf
+      (fcapitale (ftransl conf "%s and %s have several unions"))
+      (print_someone base @@ poi base @@ get_father f)
+      (print_someone base @@ poi base @@ get_mother f)
+  in
+  let link = merge_dup_link conf (get_father f)
+               (transl conf "click here to merge these unions")
+  in
+  w ^ ". " ^ link
+  
+let possible_family_dup_homonmous conf base fam p =
+  let f = foi base fam in
+  let father = get_father f in
+  let mother = get_mother f in
+  let curr, hom =
+    if eq_iper father (get_iper p) then mother, father
+    else father, mother
+  in
+  let w =
+    Printf.sprintf
+      (fcapitale (ftransl conf "%s has unions with several persons named %s"))
+      (print_someone base @@ poi base @@ curr)
+      (print_someone base @@ poi base @@ hom)
+  in
+  let txt = transl conf "click here to merge these persons and their unions" in
+  let link = merge_dup_link conf curr txt in
+  (*
+  let iper = Gwdb.string_of_iper curr in
+  let henv = ["i", Adef.encoded iper;
+              "ip", Adef.encoded iper;
+              "m", Adef.encoded "MRG_DUP";]
+  in
+
+  let link =
+    "<a href=" ^ !!(Util.commd {conf with henv})  ^ ">"
+    ^ (transl conf "click here to merge these persons and their unions")
+    ^ "</a>"
+  in*)
+  w ^ ". " ^ link
+  
 let compute_warnings conf base resp =
-  let print_someone p =
-    sou base (get_first_name p) ^ " " ^ sou base (get_surname p)
-  in
-  let print_someone_dates p =
-    print_someone p ^ " " ^ !!(DateDisplay.short_dates_text conf base p)
-  in
+  let print_someone = print_someone base in
+  let print_someone_dates = print_someone_dates conf base in
   match resp with
   | Api_update_util.UpdateErrorConflict c -> (false, [], [], Some c, [])
   | Api_update_util.UpdateError s -> (false, [!!(Update.string_of_error conf s)], [], None, [])
@@ -779,14 +833,11 @@ let compute_warnings conf base resp =
                 in
                 w :: wl
             | PossibleDuplicateFam (f1, _) ->
-              let f = foi base f1 in
-              let w =
-                Printf.sprintf
-                  (fcapitale (ftransl conf "%s and %s have several unions"))
-                  (print_someone @@ poi base @@ get_father f)
-                  (print_someone @@ poi base @@ get_mother f)
-              in
-              w :: wl
+               let w = possible_family_dup conf base f1 in
+               w :: wl
+            | PossibleDuplicateFamHomonymous (f1, _, p) ->
+               let w = possible_family_dup_homonmous conf base f1 p in
+               w :: wl
             | ParentTooOld (p, a, _) ->
                 let w =
                 Printf.sprintf "%s\n%s\n" (print_someone p)

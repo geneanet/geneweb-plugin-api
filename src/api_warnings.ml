@@ -34,6 +34,7 @@ let empty : M.Base_warnings.t =
   ; warning_old_for_marriage = []
   ; warning_distant_children = []
   ; warning_event_order = []
+  ; warning_possible_duplicate_fam_homonymous = []
   }
 
 (** [add_error_to_piqi_warning_list base error]
@@ -197,6 +198,13 @@ let add_warning_to_piqi_warning_list conf base =
                    family1 = fam_to_piqi_family conf base f1
                  ; family2 = fam_to_piqi_family conf base f2
                  } :: w.warning_possible_duplicate_fam }
+    | PossibleDuplicateFamHomonymous (f1, f2, p) ->
+       { w with warning_possible_duplicate_fam_homonymous =
+                  M.Warning_possible_duplicate_fam_homonymous.{
+                    family1 = fam_to_piqi_family conf base f1
+                  ; family2 = fam_to_piqi_family conf base f2
+                  ; homonymous = p2wp base p
+                  } :: w.warning_possible_duplicate_fam_homonymous }
     | PWitnessEventAfterDeath (p, e, origin) ->
       { w with warning_witness_date_after_death =
                  M.Warning_witness_date_after_death.{

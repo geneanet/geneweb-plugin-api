@@ -485,6 +485,12 @@ message WarningPossibleDuplicateFam {
   required FullFamily family2 = 2;
 }
 
+message WarningPossibleDuplicateFamHomonymous {
+  required FullFamily family1 = 1;
+  required FullFamily family2 = 2;
+  required WarningPerson homonymous = 3;
+}
+
 message WarningTitleDatesError {
   required WarningPerson person = 1;
   required Title title = 2;
@@ -583,6 +589,7 @@ message BaseWarnings {
   repeated WarningOldForMarriage warning_old_for_marriage = 27;
   repeated WarningDistantChildren warning_distant_children = 28;
   repeated WarningEventOrder warning_event_order = 29;
+  repeated WarningPossibleDuplicateFamHomonymous warning_possible_duplicate_fam_homonymous = 30;
 }
 
 message FilterDate {
