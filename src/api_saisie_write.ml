@@ -607,7 +607,7 @@ let possible_family_dup conf base f1 =
       (print_someone base @@ poi base @@ get_mother f)
   in
   let link = merge_dup_link conf (get_father f)
-               (transl conf "click here to merge these unions")
+               (transl conf "click here to merge these unions" |> Utf8.capitalize_fst)
   in
   w ^ ". " ^ link
   
@@ -625,7 +625,9 @@ let possible_family_dup_homonmous conf base fam p =
       (print_someone base @@ poi base @@ curr)
       (print_someone base @@ poi base @@ hom)
   in
-  let txt = transl conf "click here to merge these persons and their unions" in
+  let txt = transl conf "click here to merge these persons and their unions"
+            |> Utf8.capitalize_fst
+  in
   let link = merge_dup_link conf curr txt in
   (*
   let iper = Gwdb.string_of_iper curr in
