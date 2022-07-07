@@ -615,7 +615,7 @@ let possible_family_dup_homonmous conf base fam p =
   let f = foi base fam in
   let father = get_father f in
   let mother = get_mother f in
-  let curr, hom =
+  let hom, curr  =
     if eq_iper father (get_iper p) then mother, father
     else father, mother
   in
