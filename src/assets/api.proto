@@ -481,14 +481,18 @@ message WarningParentTooYoung {
 }
 
 message WarningPossibleDuplicateFam {
-  required FullFamily family1 = 1;
-  required FullFamily family2 = 2;
+  required WarningPerson father1 = 1;
+  required WarningPerson mother1 = 2;
+  required WarningPerson father2 = 3;
+  required WarningPerson mother2 = 4;
 }
 
 message WarningPossibleDuplicateFamHomonymous {
-  required FullFamily family1 = 1;
-  required FullFamily family2 = 2;
-  required WarningPerson homonymous = 3;
+  required WarningPerson father1 = 1;
+  required WarningPerson mother1 = 2;
+  required WarningPerson father2 = 3;
+  required WarningPerson mother2 = 4;
+  required WarningPerson homonymous = 5;
 }
 
 message WarningTitleDatesError {
