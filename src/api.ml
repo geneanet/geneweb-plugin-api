@@ -623,6 +623,14 @@ let print_updt_image conf base =
     pers_img_l;
   Gwdb.commit_patches base
 
+exception WarningFound
+let table_contains_warning base tbl w =
+  try Hashtbl.iter (fun w' _ ->
+          if Util.eq_warning base w w'
+          then raise WarningFound) tbl;
+      false
+  with WarningFound -> true
+
 let print_base_warnings conf base =
   let filters = get_filters conf in
   let errors = ref [] in
@@ -630,7 +638,7 @@ let print_base_warnings conf base =
   Check.check_base base
     (fun e -> errors := e :: !errors)
     (fun w ->
-       if not @@ Hashtbl.mem warnings w
+       if not @@ table_contains_warning base warnings w
        then Hashtbl.add warnings w true)
     ignore ;
   let data =
