@@ -583,7 +583,7 @@ let empty_death_pevent () =
 
 (**/**) (* Fonctions qui renvoie le ModificationStatus. *)
 let print_someone base p =
-  sou base (get_first_name p) ^ " " ^ sou base (get_surname p)
+  !!  (Util.escape_html @@ sou base (get_first_name p) ^ " " ^ sou base (get_surname p))
 
 let print_someone_dates conf base p =
   print_someone base p ^ " " ^ !!(DateDisplay.short_dates_text conf base p)
