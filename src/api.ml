@@ -89,7 +89,7 @@ let print_loop conf base =
   in
   let p =
     if !base_loop then
-      pers_to_piqi_person conf base !pers (fun _ -> Sosa.zero) false
+      pers_to_piqi_person conf base !pers (fun _ -> Sosa.zero)
     else
       let ref_pers = empty_reference_person in
       empty_piqi_person conf ref_pers
@@ -120,7 +120,7 @@ let print_info_ind conf base =
     | Some ip ->
         let p = pget conf base ip in
         if apply_filters_p conf filters compute_sosa p then
-          pers_to_piqi_person conf base p compute_sosa false
+          pers_to_piqi_person conf base p compute_sosa
         else
           empty_piqi_person conf ref_person
     | None -> empty_piqi_person conf ref_person
@@ -514,8 +514,8 @@ let print_img conf base =
     let () = load_image_ht conf in
     let list =
       Gwdb.Collection.fold begin fun acc p ->
-        match Api_util.find_image_file conf base p with
-        | Some img -> fp p img :: acc
+        match Image.get_portrait_path conf base p with
+        | Some (`Path img) -> fp p img :: acc
         | None -> acc
       end [] (Gwdb.persons base)
     in
@@ -530,14 +530,14 @@ let print_img conf base =
   if p_getenvbin conf.env "full_infos" = Some "1" then
     aux
       (fun p img ->
-         let p = pers_to_piqi_person_full conf base p compute_sosa true in
+         let p = pers_to_piqi_person_full conf base p compute_sosa in
          M.Full_image.({person = p; img }))
       (fun list ->
          Mext.gen_list_full_images @@ M.List_full_images.({images = list}) )
   else
     aux
       (fun p img ->
-         let p = pers_to_piqi_person_light conf base p compute_sosa true in
+         let p = pers_to_piqi_person_light conf base p compute_sosa in
          M.Image.({person = p; img}))
       (fun list ->
          Mext.gen_list_images @@ M.List_images.({list_images = list}) )
@@ -549,12 +549,8 @@ let print_img_all conf base =
   let aux fp fl =
     let list =
       Gwdb.Collection.fold begin fun acc p ->
-        if not (is_empty_string (get_image p)) then
-          let img = sou base (get_image p) in
-          fp p img :: acc
-        else
-          match Api_util.find_image_file conf base p with
-          | Some img -> fp p img :: acc
+          match Image.get_portrait conf base p with
+          | Some src -> fp p (Image.src_to_string src) :: acc
           | None -> acc
       end [] (Gwdb.persons base)
     in
@@ -569,13 +565,13 @@ let print_img_all conf base =
   if p_getenvbin conf.env "full_infos" = Some "1" then
     aux
       (fun p img ->
-         let p = pers_to_piqi_person_full conf base p compute_sosa false in
+         let p = pers_to_piqi_person_full conf base p compute_sosa in
          M.Full_image.({person = p; img = img;}))
       (fun list -> Mext.gen_list_full_images @@ M.List_full_images.({images = list}) )
   else
     aux
       (fun p img ->
-         let p = pers_to_piqi_person_light conf base p compute_sosa false in
+         let p = pers_to_piqi_person_light conf base p compute_sosa in
          M.Image.({person = p; img}))
       (fun list ->
          Mext.gen_list_images @@ M.List_images.({list_images = list}))
@@ -587,12 +583,9 @@ let print_img_person conf base =
   let ip = Gwdb.iper_of_string @@ Int32.to_string id.M.Index.index in
   let p = poi base ip in
   let img_addr =
-    match sou base (get_image p) with
-    | "" ->
-        (match Util.auto_image_file conf base p with
-        | Some file -> file
-        | None -> "")
-    | s -> s
+    match Image.get_portrait conf base p with
+    | Some src -> Image.src_to_string src
+    | None -> ""
   in
   let img_from_ip = M.Image_address.({img = img_addr}) in
   let data = Mext.gen_image_address img_from_ip in

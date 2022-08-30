@@ -336,14 +336,7 @@ let pers_to_piqi_person_tree conf base p more_info gen max_gen base_prefix =
       else person_firstname_surname_txt base p
     in
     let dates = short_dates_text conf base p in
-    let image =
-      if has_image conf base p then
-        let img = sou base (get_image p) in
-        if img <> "" then img
-        else if Api_util.find_image_file conf base p <> None
-        then "1" else ""
-      else ""
-    in
+    let image = Image.get_portrait conf base p |> Option.map Image.src_to_string in
     let has_more_infos =
       match more_info with
       | Root -> false
@@ -373,7 +366,7 @@ let pers_to_piqi_person_tree conf base p more_info gen max_gen base_prefix =
       p = fn;
       occ = occ;
       dates = if dates = "" then None else Some dates;
-      image = if image = "" then None else Some image;
+      image;
       sosa = sosa;
       has_more_infos = has_more_infos;
       baseprefix = base_prefix
@@ -524,15 +517,7 @@ let pers_to_piqi_simple_person conf base p base_prefix =
         (birth, birth_raw, !!birth_place, death, death_raw, !!death_place)
       else ("", "", "", "", "", "")
     in
-    let image =
-      if has_image conf base p then
-        let img = sou base (get_image p) in
-        if img <> "" then img
-        else if Api_util.find_image_file conf base p <> None
-        then "1"
-        else ""
-      else ""
-    in
+    let image = Image.get_portrait conf base p |> Option.map Image.src_to_string in
     let has_parent = get_parents p <> None in
     let has_spouse = Array.length (get_family p) >= 1 in
     let has_child =
@@ -559,7 +544,7 @@ let pers_to_piqi_simple_person conf base p base_prefix =
       death_short_date = if death_short = "" then None else Some death_short;
       death_date_raw = if death_raw = "" then None else Some death_raw;
       death_place = if death_place = "" then None else Some death_place;
-      image = if image = "" then None else Some image;
+      image;
       sosa = sosa;
       sosa_nb = sosa_nb;
       visible_for_visitors = visible_for_visitors;
@@ -1122,14 +1107,6 @@ let fam_to_piqi_family conf base p ifam =
   in
   get_family_piqi base conf ifam p base_prefix spouse_to_piqi witnesses_to_piqi child_to_piqi family_constructor
 
-let fill_image conf base p =
-  if has_image conf base p then
-        let img = sou base (get_image p) in
-        if img <> "" then img
-        else if Api_util.find_image_file conf base p <> None then "1"
-        else ""
-  else ""
-
 let fill_birth_place conf p_auth gen_p =
   if p_auth then !!(Util.string_of_place conf gen_p.birth_place) else ""
 
@@ -1615,7 +1592,7 @@ let pers_to_piqi_person conf base p base_prefix is_main_person =
       qualifiers = fill_qualifiers p_auth gen_p;
       firstname_aliases = fill_firstname_aliases p_auth gen_p;
       surname_aliases = fill_surname_aliases p_auth gen_p;
-      image = transform_empty_string_to_None (fill_image conf base p);
+      image = Image.get_portrait conf base p |> Option.map Image.src_to_string;
       birth_date = transform_empty_string_to_None birth_date;
       birth_date_conv = transform_empty_string_to_None birth_date_conv;
       birth_date_cal = birth_cal;
@@ -1768,7 +1745,7 @@ let rec pers_to_piqi_fiche_person conf base p base_prefix is_main_person nb_asc 
         death_src = transform_empty_string_to_None death_src;
         death_type = death_type;
         index = fill_index conf p p_auth;
-        image = transform_empty_string_to_None (fill_image conf base p);
+        image = Image.get_portrait conf base p |> Option.map Image.src_to_string;
         firstname = fill_firstname conf p p_auth gen_p;
         lastname = fill_surname conf p p_auth gen_p;
         qualifiers = if (not simple_graph_info) || is_main_person then fill_qualifiers p_auth gen_p else [];

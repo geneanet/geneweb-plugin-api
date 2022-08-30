@@ -99,17 +99,6 @@ let load_image_ht conf =
 
 let find_image_ht name = try Hashtbl.find ht_img name with Not_found -> ""
 
-(* Cas inverse, on teste que pour une personne donc pas besoin *)
-(* de charger toute la Hashtbl.                                *)
-let find_image_file conf base p =
-  let s = default_image_name base p in
-  let f = Filename.concat (base_path ["images"] conf.bname) s in
-  if Sys.file_exists (f ^ ".gif") then Some (s ^ ".gif")
-  else if Sys.file_exists (f ^ ".jpg") then Some (s ^ ".jpg")
-  else if Sys.file_exists (f ^ ".png") then Some (s ^ ".png")
-  else None
-
-
 (* BIENTOT DEPRECATED *)
 let string_of_prec_dmy d =
   let s =
@@ -764,7 +753,7 @@ let empty_piqi_person conf ref_person =
       - Person : Retourne une personne dont tous les champs sont complétés.
     [Rem] : Non exporté en clair hors de ce module.                           *)
 (* ************************************************************************** *)
-let spouse_to_piqi_spouse conf base p fam compute_sosa load_img =
+let spouse_to_piqi_spouse conf base p fam compute_sosa =
   let gen_p = Util.string_gen_person base (gen_person_of_person p) in
   let p_auth = authorized_age conf base p in
   let ifath = get_father fam in
@@ -793,22 +782,9 @@ let spouse_to_piqi_spouse conf base p fam compute_sosa load_img =
   let occ = Int32.of_int (get_occ p) in
   let publicname = if gen_p.public_name = "" then None else Some gen_p.public_name in
   let image =
-    if has_image conf base p then
-      begin
-        if not (gen_p.image = "") then gen_p.image
-        else
-          begin
-            if load_img then
-              find_image_ht
-                (Util.default_image_name_of_key
-                   gen_p.first_name gen_p.surname gen_p.occ)
-            else
-              match find_image_file conf base p with
-              | Some s -> s
-              | None -> ""
-          end
-      end
-    else ""
+    match Image.get_portrait_path conf base p with
+    | Some (`Path s) -> if not (gen_p.image = "") then gen_p.image else s
+    | None -> ""
   in
   let birth =
     match Adef.od_of_cdate gen_p.birth with
@@ -919,7 +895,7 @@ let spouse_to_piqi_spouse conf base p fam compute_sosa load_img =
       - Person : Retourne une personne dont tous les champs sont complétés.
     [Rem] : Non exporté en clair hors de ce module.                           *)
 (* ************************************************************************** *)
-let pers_to_piqi_person_light conf base p compute_sosa load_img =
+let pers_to_piqi_person_light conf base p compute_sosa =
   let gen_p = Util.string_gen_person base (gen_person_of_person p) in
   let p_auth = authorized_age conf base p in
   let sosa_p = Sosa.to_string (compute_sosa p) in
@@ -942,22 +918,9 @@ let pers_to_piqi_person_light conf base p compute_sosa load_img =
   let occ = Int32.of_int (get_occ p) in
   let publicname = if gen_p.public_name = "" then None else Some gen_p.public_name in
   let image =
-    if has_image conf base p then
-      begin
-        if not (gen_p.image = "") then gen_p.image
-        else
-          begin
-            if load_img then
-              find_image_ht
-                (Util.default_image_name_of_key
-                   gen_p.first_name gen_p.surname gen_p.occ)
-            else
-              match find_image_file conf base p with
-              | Some s -> s
-              | None -> ""
-          end
-      end
-    else ""
+    match Image.get_portrait_path conf base p with
+    | Some (`Path s) -> if not (gen_p.image = "") then gen_p.image else s
+    | None -> ""
   in
   let birth =
     match Adef.od_of_cdate gen_p.birth with
@@ -1019,7 +982,7 @@ let pers_to_piqi_person_light conf base p compute_sosa load_img =
   let sl =
     List.map
       (fun (p, fam) ->
-        spouse_to_piqi_spouse conf base p fam compute_sosa load_img)
+        spouse_to_piqi_spouse conf base p fam compute_sosa)
       sl
   in
   let ascend = get_parents p <> None in
@@ -1077,7 +1040,7 @@ let pers_to_piqi_person_light conf base p compute_sosa load_img =
       - Person : Retourne une personne dont tous les champs sont complétés.
     [Rem] : Non exporté en clair hors de ce module.                           *)
 (* ************************************************************************** *)
-let pers_to_piqi_person_full conf base p compute_sosa load_img =
+let pers_to_piqi_person_full conf base p compute_sosa =
   let gen_p = Util.string_gen_person base (gen_person_of_person p) in
   let p_auth = authorized_age conf base p in
   let sosa_p = Sosa.to_string (compute_sosa p) in
@@ -1108,22 +1071,9 @@ let pers_to_piqi_person_full conf base p compute_sosa load_img =
   let firstname_aliases = gen_p.first_names_aliases in
   let surname_aliases = gen_p.surnames_aliases in
   let image =
-    if has_image conf base p then
-      begin
-        if not (gen_p.image = "") then gen_p.image
-        else
-          begin
-            if load_img then
-              find_image_ht
-                (Util.default_image_name_of_key
-                   gen_p.first_name gen_p.surname gen_p.occ)
-            else
-              match find_image_file conf base p with
-              | Some s -> s
-              | None -> ""
-          end
-      end
-    else ""
+    match Image.get_portrait_path conf base p with
+    | Some (`Path s) -> if not (gen_p.image = "") then gen_p.image else s
+    | None -> ""
   in
   let birth =
     match Adef.od_of_cdate gen_p.birth with
@@ -1280,10 +1230,10 @@ let pers_to_piqi_person_full conf base p compute_sosa load_img =
   }
 
 
-let pers_to_piqi_person conf base p compute_sosa load_img =
+let pers_to_piqi_person conf base p compute_sosa =
   if p_getenvbin conf.env "full_infos" = Some "1"
-  then PFull (pers_to_piqi_person_full conf base p compute_sosa load_img)
-  else PLight (pers_to_piqi_person_light conf base p compute_sosa load_img)
+  then PFull (pers_to_piqi_person_full conf base p compute_sosa)
+  else PLight (pers_to_piqi_person_light conf base p compute_sosa)
 
 
 (* ********************************************************************* *)
@@ -1444,18 +1394,18 @@ let data_person p =
   | PLight p -> Mext.gen_person p
   | PFull p -> Mext.gen_full_person p
 
-let person_map conf base l compute_sosa load_img =
+let person_map conf base l compute_sosa =
   if p_getenvbin conf.env "full_infos" = Some "1" then
     PFull
       (List.map
-         (fun p -> pers_to_piqi_person_full conf base p compute_sosa load_img)
+         (fun p -> pers_to_piqi_person_full conf base p compute_sosa)
          l)
   else
     PLight
       (List.map
-         (fun p -> pers_to_piqi_person_light conf base p compute_sosa load_img)
+         (fun p -> pers_to_piqi_person_light conf base p compute_sosa)
          l)
-  
+
 let conv_data_list_person conf base filters l =
   let len = List.length l in
   if filters.nb_results then
@@ -1463,11 +1413,7 @@ let conv_data_list_person conf base filters l =
     Mext.gen_internal_int32 len
   else
     let compute_sosa = compute_sosa conf base (len <= 1) in
-    let load_img =
-      if len > 20 then let () = load_image_ht conf in true
-      else false
-    in
-    let l = person_map conf base l compute_sosa load_img in
+    let l = person_map conf base l compute_sosa in
     match l with
     | PLight pl ->
         let list = M.List_persons.({list_persons = pl}) in
@@ -1479,10 +1425,6 @@ let conv_data_list_person conf base filters l =
 let data_list_person_option conf base filters l =
   let len = List.length l in
   let compute_sosa = compute_sosa conf base (len <= 1) in
-  let load_img =
-    if len > 20 then let () = load_image_ht conf in true
-    else false
-  in
   if filters.nb_results then
     let len = M.Internal_int32.({value = Int32.of_int len}) in
     Mext.gen_internal_int32 len
@@ -1495,7 +1437,7 @@ let data_list_person_option conf base filters l =
               match p with
               | PFull p ->
                   if apply_filters_p conf filters compute_sosa p then
-                    pers_to_piqi_person_full conf base p compute_sosa load_img
+                    pers_to_piqi_person_full conf base p compute_sosa
                   else
                     let ref_p = person_to_reference_person base p in
                     empty_piqi_person_full conf ref_p
@@ -1508,7 +1450,7 @@ let data_list_person_option conf base filters l =
               match p with
               | PFull p ->
                   if apply_filters_p conf filters compute_sosa p then
-                    pers_to_piqi_person_light conf base p compute_sosa load_img
+                    pers_to_piqi_person_light conf base p compute_sosa
                   else
                     let ref_p = person_to_reference_person base p in
                     empty_piqi_person_light conf ref_p
@@ -1526,17 +1468,13 @@ let data_list_person_option conf base filters l =
 let person_node_map conf base l =
   let len = List.length l in
   let compute_sosa = compute_sosa conf base (len <= 1) in
-  let load_img =
-    if len > 20 then let () = load_image_ht conf in true
-    else false
-  in
   if p_getenvbin conf.env "full_infos" = Some "1" then
     PFull
       (List.rev_map
          (fun p ->
            let id = Int64.of_string @@ Gwdb.string_of_iper (get_iper p) in
            let p =
-             pers_to_piqi_person_full conf base p compute_sosa load_img
+             pers_to_piqi_person_full conf base p compute_sosa
            in
            M.Full_node.({
              id = id;
@@ -1549,7 +1487,7 @@ let person_node_map conf base l =
          (fun p ->
            let id = Int64.of_string @@ Gwdb.string_of_iper (get_iper p) in
            let p =
-             pers_to_piqi_person_light conf base p compute_sosa load_img
+             pers_to_piqi_person_light conf base p compute_sosa
            in
            M.Node.({
              id = id;
@@ -1560,16 +1498,12 @@ let person_node_map conf base l =
 let person_node_map_lia conf base l =
   let compute_sosa = (fun _ -> Sosa.zero) in
   (* TODO ? *)
-  let load_img =
-    if List.length l > 20 then let () = load_image_ht conf in true
-    else false
-  in
   if p_getenvbin conf.env "full_infos" = Some "1" then
     PFull
       (List.rev_map
          (fun (id, p) ->
            let p =
-             pers_to_piqi_person_full conf base p compute_sosa load_img
+             pers_to_piqi_person_full conf base p compute_sosa
            in
            M.Full_node.({
              id = id;
@@ -1581,7 +1515,7 @@ let person_node_map_lia conf base l =
       (List.rev_map
          (fun (id, p) ->
            let p =
-             pers_to_piqi_person_light conf base p compute_sosa load_img
+             pers_to_piqi_person_light conf base p compute_sosa
            in
            M.Node.({
              id = id;
