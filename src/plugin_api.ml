@@ -24,7 +24,7 @@ let w_lock =
   GWD.Request.w_lock
     ~onerror:(fun conf _ ->
         let err = Update.string_of_error conf Update.UERR_locked_base in
-        Api_util.print_error conf `conflict err
+        Api_util.print_error conf `conflict (err : Adef.safe_string :> string)
       )
 
 let w_base =

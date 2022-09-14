@@ -4,7 +4,7 @@ open Config
 
 let p_getenvbin env label =
   let decode_varenv = Mutil.gen_decode false in
-  try Some (decode_varenv (List.assoc (decode_varenv label) env))
+  try Some (decode_varenv (List.assoc label env))
   with Not_found -> None
 
 module Date
@@ -87,12 +87,12 @@ module Date
         prec = None;
         dmy = None;
         dmy2 = None;
-        text = Some (Util.safe_html txt);
+        text = Some txt;
       }
 
   let date_of_piqi_date date =
     match date.M.Date.text with
-    | Some txt -> Dtext (Util.safe_html txt)
+    | Some txt -> Dtext txt
     | _ ->
       let cal =
         match date.M.Date.cal with
@@ -256,7 +256,7 @@ let print_result conf data =
   in
   let data = data output in
   Util.html ~content_type conf ;
-  Output.print_string conf data
+  Output.print_sstring conf data
 
 let from_piqi_status = function
   | `bad_request -> Def.Bad_Request

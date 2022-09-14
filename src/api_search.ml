@@ -175,14 +175,14 @@ let select_start_with conf base ini_n ini_p =
   in
   List.rev_append list_maj list_min
 
-let aux_ini s =
-  let rec loop s acc =
-    if String.contains s '+' then
-      let index = String.index s '+' in
+let aux_ini (s : string) : string list =
+  let rec loop (s : Adef.encoded_string) acc =
+    if String.contains (s :> string) '+' then
+      let index = String.index (s :> string) '+' in
       let start = index + 1 in
-      let len = String.length s - start in
-      let ns = String.sub s start len in
-      loop ns (Mutil.decode (String.sub s 0 index) :: acc)
+      let len = String.length (s :> string) - start in
+      let ns = Adef.encoded @@ String.sub (s :> string) start len in
+      loop ns (Mutil.decode (Adef.encoded @@ String.sub (s :> string) 0 index) :: acc)
     else (Mutil.decode s :: acc)
   in
   loop (Mutil.encode s) []
@@ -417,112 +417,72 @@ let select_start_with_person base get_field ini =
       else list
   end [] (Gwdb.persons base)
 
-let select_start_with_auto_complete base mode max_res ini =
-  let name =
+let matching_nameset base stop max_res istr name_f name first_letter =
+  let rec aux n istr set =
+    let s = sou base istr in
+    let k = Util.name_key base s in
+    if n < max_res && (stop && String.sub k 0 1 = first_letter || not stop) then
+      let n, set =
+        if string_incl_start_with (Name.lower name) (Name.lower k) then
+          n + 1, StrSet.add s set
+        else n, set
+      in
+      match spi_next name_f istr with
+      | exception Not_found -> n, set
+      | istr -> aux n istr set
+    else n, set
+  in
+  aux 0 istr StrSet.empty
+
+let matching_nameset' base stop max_res name_f name first_letter =
+  match spi_first name_f first_letter with
+  | exception Not_found -> 0, StrSet.empty
+  | istr -> matching_nameset base stop max_res istr name_f name first_letter
+
+let matching_nameset_of_input base stop uppercase name_f max_res name =
+  let name' = Mutil.tr '_' ' ' name in
+  let first_letter = String.sub name' 0 1 in
+  let first_letter =
+    if uppercase then String.uppercase_ascii first_letter
+    else String.lowercase_ascii first_letter
+ in
+ matching_nameset' base stop max_res name_f name first_letter
+
+let select_start_with_auto_complete base mode max_res input =
+  let name_f =
     match mode with
     | `lastname -> persons_of_surname base
     | `firstname -> persons_of_first_name base
     | `place -> failwith "cannot use select_start_with_auto_complete"
     | `source -> failwith "cannot use select_start_with_auto_complete"
   in
-  let string_set = ref StrSet.empty in
-  let nb_res = ref 0 in
   (* Si la base est grosse > 100 000, on fait un vrai start_with. *)
   if Gwdb.nb_of_persons base > 100000 then
     begin
-      (* majuscule *)
-      let ini =
+      let name =
         match mode with
-        | `lastname -> Util.name_key base ini
-        | `firstname -> ini
+        | `lastname -> Util.name_key base input
+        | `firstname -> input
         | `place -> failwith "cannot use select_start_with_auto_complete"
         | `source -> failwith "cannot use select_start_with_auto_complete"
       in
-      let start_k = Mutil.tr '_' ' ' ini in
-      let letter = String.uppercase_ascii (String.sub start_k 0 1) in
-      match spi_first name letter with
-      | istr ->
-          let rec loop istr =
-            let s = sou base istr in
-            let k = Util.name_key base s in
-            if string_start_with (Name.lower ini) (Name.lower k) then
-              begin
-                string_set := StrSet.add s !string_set;
-                incr nb_res;
-                match spi_next name istr with
-                | istr when !nb_res < max_res && (String.sub k 0 1) = letter -> loop istr
-                | _ -> ()
-                | exception Not_found -> ()
-              end
-            else
-              match spi_next name istr with
-              | istr when !nb_res < max_res && (String.sub k 0 1) = letter -> loop istr
-              | _ -> ()
-              | exception Not_found -> ()
-          in loop istr
-      | exception Not_found -> ();
-      (* minuscule *)
-      if !nb_res < max_res then
-        let ini =
-          match mode with
-          | `lastname -> Util.name_key base ini
-          | `firstname -> ini
-          | `place -> failwith "cannot use select_start_with_auto_complete"
-          | `source -> failwith "cannot use select_start_with_auto_complete"
-        in
-        let start_k = Mutil.tr '_' ' ' ini in
-        let letter = String.lowercase_ascii (String.sub start_k 0 1) in
-        match spi_first name letter with
-        | istr ->
-            let rec loop istr =
-              let s = sou base istr in
-              let k = Util.name_key base s in
-              if string_start_with (Name.lower ini) (Name.lower k) then
-                begin
-                  string_set := StrSet.add s !string_set;
-                  incr nb_res;
-                  match spi_next name istr with
-                  | exception Not_found -> ()
-                  | istr when !nb_res < max_res && (String.sub k 0 1) = letter -> loop istr
-                  | _ -> ()
-                end
-              else
-                match spi_next name istr with
-                | exception Not_found -> ()
-                | istr when !nb_res < max_res && (String.sub k 0 1) = letter -> loop istr
-                | _ -> ()
-            in loop istr
-        | exception Not_found -> ()
+      (* uppercase *)
+      let nb_res, maj_set = matching_nameset_of_input base true true name_f max_res name in
+      (* lowercase *)
+      let _, min_set = matching_nameset_of_input base true false name_f (max_res - nb_res) name in
+      StrSet.union maj_set min_set
     end
   else
     begin
       (* On commence à ? comme ça on fait MAJ et MIN. *)
-      let start_k = Mutil.tr '_' ' ' "?" in
-      let letter = String.uppercase_ascii (String.sub start_k 0 1) in
-      match spi_first name letter with
-      | exception Not_found -> ()
-      | istr ->
-          let rec loop istr list =
-            let s = sou base istr in
-            let k = Util.name_key base s in
-            if string_incl_start_with (Name.lower ini) (Name.lower k) then
-              begin
-                string_set := StrSet.add (sou base istr) !string_set;
-                incr nb_res;
-                match spi_next name istr with
-                | exception Not_found -> ()
-                | istr when !nb_res < max_res -> loop istr list
-                | _ -> ()
-              end
-            else
-              match spi_next name istr with
-              | exception Not_found -> ()
-              | istr when !nb_res < max_res -> loop istr list
-              | _ -> ()
-          in loop istr []
-    end;
-  List.sort Gutil.alphabetic_order (StrSet.elements !string_set)
+      let starting_letter = "\000" in
+      snd @@ matching_nameset' base false max_res name_f input starting_letter
+    end
 
+let select_start_with_auto_complete base mode max_res ini =
+  let s = select_start_with_auto_complete base mode max_res ini in
+  let l = StrSet.elements s in
+  List.sort Gutil.alphabetic_order l
 
 let select_all_auto_complete _ base get_field max_res ini =
   let find p x = kmp x (sou base (get_field p)) in
@@ -599,7 +559,7 @@ let complete_with_dico assets conf nb max mode ini list =
   match mode with
   | Some mode when !nb < max ->
     let format =
-      match p_getenv conf.base_env "places_format" with
+      match List.assoc_opt "places_format" conf.base_env with
       | None -> []
       | Some s ->
         List.map begin function
@@ -624,7 +584,7 @@ let complete_with_dico assets conf nb max mode ini list =
 
 let search_auto_complete assets conf base mode place_mode max n =
   let aux data compare =
-    let conf = { conf with env = ("data", data) :: conf.env } in
+    let conf = { conf with env = ("data", Mutil.encode data) :: conf.env } in
     UpdateData.get_all_data conf base
     |> List.rev_map (sou base)
     |> List.sort compare

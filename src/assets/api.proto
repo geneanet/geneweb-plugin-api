@@ -481,8 +481,18 @@ message WarningParentTooYoung {
 }
 
 message WarningPossibleDuplicateFam {
-  required FullFamily family1 = 1;
-  required FullFamily family2 = 2;
+  required WarningPerson father1 = 1;
+  required WarningPerson mother1 = 2;
+  required WarningPerson father2 = 3;
+  required WarningPerson mother2 = 4;
+}
+
+message WarningPossibleDuplicateFamHomonymous {
+  required WarningPerson father1 = 1;
+  required WarningPerson mother1 = 2;
+  required WarningPerson father2 = 3;
+  required WarningPerson mother2 = 4;
+  required WarningPerson homonymous = 5;
 }
 
 message WarningTitleDatesError {
@@ -583,6 +593,7 @@ message BaseWarnings {
   repeated WarningOldForMarriage warning_old_for_marriage = 27;
   repeated WarningDistantChildren warning_distant_children = 28;
   repeated WarningEventOrder warning_event_order = 29;
+  repeated WarningPossibleDuplicateFamHomonymous warning_possible_duplicate_fam_homonymous = 30;
 }
 
 message FilterDate {

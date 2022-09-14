@@ -5,7 +5,6 @@ module Mwrite = Api_saisie_write_piqi
 module Mext_write = Api_saisie_write_piqi_ext
 
 open Geneweb
-open Config
 open Def
 open Gwdb
 open Util
@@ -485,9 +484,9 @@ let child_of_parent conf base p =
   (* alors on l'affiche, sinon on n'affiche que le prénom.   *)
   let print_father fath =
     if not (eq_istr (get_surname p) (get_surname fath)) then
-      person_text_no_html conf base fath
+      gen_person_text ~escape:false ~html:false conf base fath
     else
-      gen_person_text_no_html (p_first_name, (fun _ _ -> "")) conf base fath
+      gen_person_text ~escape:false ~html:false ~sn:false conf base fath
   in
   let a = pget conf base (get_iper p) in
   let ifam =
@@ -511,16 +510,19 @@ let child_of_parent conf base p =
       let s =
         match (fath, moth) with
         | (Some fath, None) -> print_father fath
-        | (None, Some moth) -> person_text_no_html conf base moth
+        | (None, Some moth) -> gen_person_text ~escape:false ~html:false conf base moth
         | (Some fath, Some moth) ->
-            print_father fath ^ " " ^ transl_nth conf "and" 0 ^ " " ^
-              person_text_no_html conf base moth
-        | _ -> ""
+            print_father fath
+            ^^^ " " ^<^ transl_nth conf "and" 0 ^<^ " "
+            ^<^ gen_person_text ~escape:false ~html:false conf base moth
+        | _ -> Adef.safe ""
       in
       let is = index_of_sex (get_sex p) in
       translate_eval
         (transl_a_of_gr_eq_gen_lev conf
-           (transl_nth conf "son/daughter/child" is) s s)
+           (transl_nth conf "son/daughter/child" is)
+           (s :> string)
+           (s :> string))
 
 let husband_wife conf base p =
   let rec loop i =
@@ -534,7 +536,8 @@ let husband_wife conf base p =
           Printf.sprintf (relation_txt conf (get_sex p) fam) (fun () -> "")
         in
         translate_eval
-          (relation ^ " " ^ (person_text_no_html conf base conjoint))
+          (relation ^<^ " " ^<^ (gen_person_text ~escape:false ~html:false conf base conjoint)
+           :> string)
       else loop (i + 1)
     else ""
   in
@@ -575,27 +578,29 @@ let pers_to_piqi_simple_person conf base p =
     let (birth, death, _) = Gutil.get_birth_death_date p in
     let birth =
       match birth with
-      | Some d -> DateDisplay.string_slash_of_date conf d
+      | Some d -> !!(DateDisplay.string_slash_of_date conf d)
       | None -> ""
     in
     let birth_place =
       let birth_place = sou base (get_birth_place p) in
-      if birth_place <> "" then Util.string_of_place conf birth_place
+      if birth_place <> ""
+      then !!(Util.string_of_place conf birth_place)
       else
         let baptism_place = sou base (get_baptism_place p) in
-        Util.string_of_place conf baptism_place
+        !!(Util.string_of_place conf baptism_place)
     in
     let death =
       match death with
-      | Some d -> DateDisplay.string_slash_of_date conf d
+      | Some d -> !!(DateDisplay.string_slash_of_date conf d)
       | None -> ""
     in
     let death_place =
       let death_place = sou base (get_death_place p) in
-      if death_place <> "" then Util.string_of_place conf death_place
+      if death_place <> ""
+      then !!(Util.string_of_place conf death_place)
       else
         let burial_place = sou base (get_burial_place p) in
-        Util.string_of_place conf burial_place
+        !!(Util.string_of_place conf burial_place)
     in
     (birth, birth_place, death, death_place)
   in
@@ -724,60 +729,23 @@ let pers_to_piqi_person_search_info conf base p =
       | None -> ""
       *)
   in
-  let occupation =
-    let s = sou base (get_occupation p) in
-    let s =
-      let wi =
-        {Wiki.wi_mode = "NOTES";
-         Wiki.wi_file_path = Notes.file_path conf base;
-         Wiki.wi_person_exists = person_exists conf base;
-         Wiki.wi_always_show_link = conf.wizard || conf.friend}
-      in
-      Wiki.syntax_links conf wi s
-    in
-    string_with_macros conf [] s
-  in
+  let occupation = !!(Notes.source conf base (sou base (get_occupation p))) in
   let events =
     List.map
       (fun (name, date, place, note, src, w, isp) ->
         let name =
           match name with
-          | Perso.Pevent name -> Util.string_of_pevent_name conf base name
-          | Perso.Fevent name -> Util.string_of_fevent_name conf base name
+          | Perso.Pevent name -> !!(Util.string_of_pevent_name conf base name)
+          | Perso.Fevent name -> !!(Util.string_of_fevent_name conf base name)
         in
         let (date, _, date_conv, _, date_cal) =
           match Adef.od_of_cdate date with
           | Some d -> Api_saisie_read.string_of_date_and_conv conf d
           | _ -> ("", "", "", "", None)
         in
-        let place = Util.string_of_place conf (sou base place) in
-        let note =
-          let env = [('i', fun () -> Util.default_image_name base p)] in
-          let s = sou base note in
-          let s = string_with_macros conf env s in
-          let lines = Wiki.html_of_tlsw conf s in
-          let wi =
-            {Wiki.wi_mode = "NOTES";
-             Wiki.wi_file_path = Notes.file_path conf base;
-             Wiki.wi_person_exists = person_exists conf base;
-             Wiki.wi_always_show_link = conf.wizard || conf.friend}
-          in
-          Wiki.syntax_links conf wi (String.concat "\n" lines)
-        in
-        let src =
-          let s = sou base src in
-          let env = [('i', fun () -> Util.default_image_name base p)] in
-          let s =
-            let wi =
-              {Wiki.wi_mode = "NOTES";
-               Wiki.wi_file_path = Notes.file_path conf base;
-               Wiki.wi_person_exists = person_exists conf base;
-               Wiki.wi_always_show_link = conf.wizard || conf.friend}
-            in
-            Wiki.syntax_links conf wi s
-          in
-          string_with_macros conf env s
-        in
+        let place = !!(Util.raw_string_of_place conf (sou base place) |> Adef.safe) in
+        let note = !!(Notes.person_note conf base p (sou base note)) in
+        let src = !!(Notes.source conf base (sou base src)) in
         let spouse =
           match isp with
           | Some ip ->
@@ -807,37 +775,14 @@ let pers_to_piqi_person_search_info conf base p =
         })
       (Perso.events_list conf base p)
   in
-  let notes =
-    let env = [('i', fun () -> Util.default_image_name base p)] in
-    let s = sou base (get_notes p) in
-    let s = string_with_macros conf env s in
-    let lines = Wiki.html_of_tlsw conf s in
-    let wi =
-      {Wiki.wi_mode = "NOTES";
-       Wiki.wi_file_path = Notes.file_path conf base;
-       Wiki.wi_person_exists = person_exists conf base;
-       Wiki.wi_always_show_link = conf.wizard || conf.friend}
-    in
-    Wiki.syntax_links conf wi (String.concat "\n" lines)
-  in
-  let psources =
-    let s = sou base (get_psources p) in
-    let env = [('i', fun () -> Util.default_image_name base p)] in
-    let s =
-      let wi =
-        {Wiki.wi_mode = "NOTES";
-         Wiki.wi_file_path = Notes.file_path conf base;
-         Wiki.wi_person_exists = person_exists conf base;
-         Wiki.wi_always_show_link = conf.wizard || conf.friend}
-      in
-      Wiki.syntax_links conf wi s
-    in
-    string_with_macros conf env s
-  in
+  let notes = !!(Notes.person_note conf base p (sou base (get_notes p))) in
+  let psources = !!(Notes.source conf base (sou base (get_psources p))) in
   let has_sources = psources <> "" in
   let titles = Perso.nobility_titles_list conf base p in
   let titles =
-    List.map (Perso.string_of_title ~link:false conf base "" p) titles
+    List.map (fun x ->
+        !!(Perso.string_of_title ~safe:true ~link:false conf base (Adef.safe "") p x)
+      ) titles
   in
   let related =
     let list =
