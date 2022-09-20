@@ -13,7 +13,7 @@ open Util
 open Api_def
 
 (* Convert safe_string to string *)
-let (!!) (x : _ Adef.astring) : string = (Obj.magic x : string)
+let (!!) = Adef.as_string
 
 (* ... utils ... *)
 
@@ -40,10 +40,10 @@ let is_empty_or_quest_name p =
 let has_base_loop conf base =
   try let _ = (Util.create_topological_sort conf base) in false
   with (Consang.TopologicalSortError _) -> true
-                                         
+
 let has_sosa_ref conf base =
   Util.find_sosa_ref conf base <> None
-  
+
 let compute_sosa conf base single_sosa =
   if not (has_sosa_ref conf base) then fun _ -> Sosa.zero
   else if has_base_loop conf base then fun _ -> Sosa.zero
@@ -52,7 +52,6 @@ let compute_sosa conf base single_sosa =
     Perso.get_sosa_person
   else (Perso.get_single_sosa conf base)
 
-  
 (* Pour aller plus vite et ne pas tester l'existance de fichier    *)
 (* plusieurs fois en fonction des extensions, on prend le problème *)
 (* à l'envers et on charge tous les fichiers qui existe. Ensuite,  *)
@@ -781,10 +780,10 @@ let spouse_to_piqi_spouse conf base p fam compute_sosa =
   let fn = Name.lower first_name in
   let occ = Int32.of_int (get_occ p) in
   let publicname = if gen_p.public_name = "" then None else Some gen_p.public_name in
-  let image =
-    match Image.get_portrait_path conf base p with
-    | Some (`Path s) -> if not (gen_p.image = "") then gen_p.image else s
-    | None -> ""
+  let image = if gen_p.image <> "" then gen_p.image
+    else match Image.get_portrait_path conf base p with
+      | Some (`Path s) -> s
+      | None -> ""
   in
   let birth =
     match Adef.od_of_cdate gen_p.birth with
@@ -917,10 +916,10 @@ let pers_to_piqi_person_light conf base p compute_sosa =
   let fn = Name.lower first_name in
   let occ = Int32.of_int (get_occ p) in
   let publicname = if gen_p.public_name = "" then None else Some gen_p.public_name in
-  let image =
-    match Image.get_portrait_path conf base p with
-    | Some (`Path s) -> if not (gen_p.image = "") then gen_p.image else s
-    | None -> ""
+  let image = if gen_p.image <> "" then gen_p.image
+    else match Image.get_portrait_path conf base p with
+      | Some (`Path s) -> s
+      | None -> ""
   in
   let birth =
     match Adef.od_of_cdate gen_p.birth with
@@ -1070,10 +1069,10 @@ let pers_to_piqi_person_full conf base p compute_sosa =
   in
   let firstname_aliases = gen_p.first_names_aliases in
   let surname_aliases = gen_p.surnames_aliases in
-  let image =
-    match Image.get_portrait_path conf base p with
-    | Some (`Path s) -> if not (gen_p.image = "") then gen_p.image else s
-    | None -> ""
+  let image = if gen_p.image <> "" then gen_p.image
+    else match Image.get_portrait_path conf base p with
+      | Some (`Path s) -> s
+      | None -> ""
   in
   let birth =
     match Adef.od_of_cdate gen_p.birth with
