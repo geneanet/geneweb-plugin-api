@@ -560,15 +560,8 @@ let rec infer_surname conf base p ifam =
         | NoChild -> infer_surname_from_parents base surname p
       else infer_surname_from_parents base surname p
 
-(* FIXME: factorize *)
-let piqi_death_type_of_death = function
-  | NotDead -> `not_dead
-  | DontKnowIfDead -> `dont_know_if_dead
-  | OfCourseDead -> `of_course_dead
-  | _ -> assert false
-
 let infer_death conf base p =
-  piqi_death_type_of_death (Update.infer_death conf base p)
+  Api_util.piqi_death_type_of_death (Update.infer_death conf base p)
 
 let empty_death_pevent () =
   { Mwrite.Pevent.pevent_type = Some `epers_death;
@@ -1128,11 +1121,11 @@ let set_parents_fields conf base p linked created =
   created.Mwrite.Person.access <- `access_iftitles;
   created.Mwrite.Person.create_link <- `create_default_occ;
   created.Mwrite.Person.digest <- "";
-  match infer_death conf base p with
-  | `of_course_dead ->
-    created.Mwrite.Person.death_type <- `of_course_dead ;
+  let death_status = infer_death conf base p in
+  created.Mwrite.Person.death_type <- death_status;
+  begin if death_status = `of_course_dead then
     created.Mwrite.Person.pevents <- created.Mwrite.Person.pevents @ [ empty_death_pevent () ]
-  | x -> created.Mwrite.Person.death_type <- x
+  end
 
 (* ************************************************************************ *)
 (*  [Fonc] compute_add_family : config -> base -> person -> Family (piqi)   *)
@@ -1643,18 +1636,16 @@ let print_add_parents conf base =
   (* On met à jour les sexes. *)
   father.Mwrite.Person.sex <- `male;
   mother.Mwrite.Person.sex <- `female;
-  (* On calcul si les parents sont décédés
+  (* On donne aux parents le death_type infere sur p
      et ajoute les évènements nécessaires. *)
   let () =
-    match infer_death conf base p with
-    | `of_course_dead as x ->
-      father.Mwrite.Person.death_type <- x ;
-      mother.Mwrite.Person.death_type <- x ;
+    let death_status = infer_death conf base p in
+    father.Mwrite.Person.death_type <- death_status;
+    mother.Mwrite.Person.death_type <- death_status;
+    begin if death_status = `of_course_dead then
       father.Mwrite.Person.pevents <- father.Mwrite.Person.pevents @ [ empty_death_pevent () ];
       mother.Mwrite.Person.pevents <- mother.Mwrite.Person.pevents @ [ empty_death_pevent () ]
-    | x ->
-      father.Mwrite.Person.death_type <- x ;
-      mother.Mwrite.Person.death_type <- x
+    end
   in
   father.Mwrite.Person.lastname <- surname ;
   let add_parents =
@@ -1705,7 +1696,7 @@ let do_mod_fam_add_child_aux conf base name ip mod_c mod_f fn =
             then begin
               let ifam = Gwdb.ifam_of_string @@ Int32.to_string mod_f.Mwrite.Family.index in
               mod_c.Mwrite.Person.death_type <-
-                piqi_death_type_of_death (Update.infer_death_from_parents conf base @@ foi base ifam)
+                Api_util.piqi_death_type_of_death (Update.infer_death_from_parents conf base @@ foi base ifam)
             end ;
             begin match Api_update_person.print_mod conf base mod_c with
               | Api_update_util.UpdateSuccess (wl, ml, hr) -> (all_wl @ wl, all_ml @ ml, all_hr @ hr)
@@ -1863,6 +1854,11 @@ let print_add_parents_ok conf base =
     let data = compute_modification_status conf base ip Gwdb.dummy_ifam resp in
     print_result conf data
 
+let i32_of_ifam i = Int32.of_string @@ Gwdb.string_of_ifam i
+let i32_of_iper i = Int32.of_string @@ Gwdb.string_of_iper i
+let iper_of_i32 i = Gwdb.iper_of_string @@ Int32.to_string i
+let ifam_of_i32 i = Gwdb.ifam_of_string @@ Int32.to_string i
+
 (* ************************************************************************ *)
 (*  [Fonc] print_add_child : config -> base -> AddChild                     *)
 (** [Description] : Renvoie un enfant vide pour lequel on calcul son nom
@@ -1876,17 +1872,19 @@ let print_add_parents_ok conf base =
 (* ************************************************************************ *)
 let print_add_child conf base =
   let params = get_params conf Mext_write.parse_add_child_request in
-  let ip = Gwdb.iper_of_string @@ Int32.to_string params.Mwrite.Add_child_request.index in
-  let ifam = params.Mwrite.Add_child_request.index_family in
+  let ip = iper_of_i32 params.Mwrite.Add_child_request.index in
+  let ifam_i32_opt = params.Mwrite.Add_child_request.index_family in
+  let ifam_opt = Option.map ifam_of_i32 ifam_i32_opt in
   let p = poi base ip in
+  let families = get_family p in
   let family_spouse =
     Array.fold_right
       (fun ifam accu ->
          let cpl = foi base ifam in
          let isp = Gutil.spouse ip cpl in
          let sp = poi base isp in
-         let index_family = Int32.of_string @@ Gwdb.string_of_ifam ifam in
-         let index_person = Int32.of_string @@ Gwdb.string_of_iper isp in
+         let index_family = i32_of_ifam ifam in
+         let index_person = i32_of_iper isp in
          let sex =
            match get_sex sp with
            | Male -> `male
@@ -1916,7 +1914,7 @@ let print_add_child conf base =
            }
          in
          family_spouse :: accu)
-      (get_family p) []
+       families []
   in
   let surname = sou base (get_surname p) in
   let first_name = sou base (get_first_name p) in
@@ -1925,7 +1923,7 @@ let print_add_child conf base =
   (* On supprime le digest car on créé un enfant *)
   child.Mwrite.Person.digest <- "";
   (* Les index négatifs ne marchent pas ! *)
-  child.Mwrite.Person.index <- Int32.of_string @@ Gwdb.string_of_iper Gwdb.dummy_iper;
+  child.Mwrite.Person.index <- i32_of_iper Gwdb.dummy_iper;
   (* Par défaut, les access sont en Private, on passe en Iftitles. *)
   child.Mwrite.Person.access <- `access_iftitles;
   (* On met l'enfant en mode Create. *)
@@ -1936,16 +1934,28 @@ let print_add_child conf base =
     | Some sex -> child.Mwrite.Person.sex <- sex
     | None -> ()
   in
-  (* On calcul si l'enfant est décédé. *)
+  (* On infere le death status de l'enfant*)
   let () =
-    match infer_death conf base p with
-    | `of_course_dead ->
-      child.Mwrite.Person.death_type <- `dont_know_if_dead;
-      child.Mwrite.Person.pevents <- child.Mwrite.Person.pevents @ [ empty_death_pevent () ];
-    | x -> child.Mwrite.Person.death_type <- x
+    let make_death_status fam =
+      let death_status =
+        piqi_death_type_of_death @@
+          Update.infer_death_from_parents conf base (foi base fam) in
+      child.Mwrite.Person.death_type <- death_status;
+      begin if death_status = `of_course_dead then
+        child.Mwrite.Person.pevents <- child.Mwrite.Person.pevents @ [ empty_death_pevent () ]
+      end
+    in
+    match ifam_opt with
+    | None ->
+        (* if for some reason ifam is None
+           we try with families (wich comes from get_family) *)
+        begin if Array.length families > 0 then
+          make_death_status families.(0)
+        end
+    | Some fam -> make_death_status fam
   in
   (* On prend le nom du père *)
-  let child_surname = infer_surname conf base p @@ Option.map Int32.to_string ifam in
+  let child_surname = infer_surname conf base p @@ Option.map Int32.to_string ifam_i32_opt in
   child.Mwrite.Person.lastname <- child_surname;
   let add_child =
     Mwrite.Add_child.({
@@ -1971,11 +1981,8 @@ let print_add_child conf base =
 (* ************************************************************************ *)
 let print_add_sibling conf base =
   let params = get_params conf Mext_write.parse_add_sibling_request in
-  let ip = Gwdb.iper_of_string @@ Int32.to_string params.Mwrite.Add_sibling_request.index in
+  let ip = iper_of_i32 params.Mwrite.Add_sibling_request.index in
   let p = poi base ip in
-  let father =
-    Option.map (fun ifam -> poi base @@ get_father @@ foi base ifam) (get_parents p)
-  in
   let surname = sou base (get_surname p) in
   let first_name = sou base (get_first_name p) in
   let empty_sibling = Gwdb.empty_person base Gwdb.dummy_iper in
@@ -1983,28 +1990,30 @@ let print_add_sibling conf base =
   (* On supprime le digest car on créé un enfant *)
   sibling.Mwrite.Person.digest <- "";
   (* Les index négatifs ne marchent pas ! *)
-  sibling.Mwrite.Person.index <- Int32.of_string @@ Gwdb.string_of_iper Gwdb.dummy_iper;
+  sibling.Mwrite.Person.index <- i32_of_iper Gwdb.dummy_iper;
   (* Par défaut, les access sont en Private, on passe en Iftitles. *)
   sibling.Mwrite.Person.access <- `access_iftitles;
   (* On met le frère/soeur en mode Create. *)
   sibling.Mwrite.Person.create_link <- `create_default_occ;
   (* On met à jour le sex *)
-  Option.iter (fun s -> sibling.Mwrite.Person.sex <- s) params.Mwrite.Add_sibling_request.sex;
-  (* On calcul si l'enfant est décédé. *)
+  Option.iter (fun s -> sibling.Mwrite.Person.sex <- s) params.Mwrite.Add_sibling_request.sex ;
+  let fam_opt = Option.map (foi base) (get_parents p) in
+  (* On infere un death_type *)
   let () =
-    match father with
-    | Some father ->
-      begin match infer_death conf base father with
-        | `of_course_dead ->
-          sibling.Mwrite.Person.death_type <- `of_course_dead ;
-          sibling.Mwrite.Person.pevents <- sibling.Mwrite.Person.pevents @ [ empty_death_pevent () ] ;
-        | x -> sibling.Mwrite.Person.death_type <- x
-      end
+    match fam_opt with
     | None -> sibling.Mwrite.Person.death_type <- `not_dead
+    | Some fam ->
+      let death_status =
+        piqi_death_type_of_death @@
+          Update.infer_death_from_parents conf base fam in
+      sibling.Mwrite.Person.death_type <- death_status;
+      begin if death_status = `of_course_dead then
+        sibling.Mwrite.Person.pevents <- sibling.Mwrite.Person.pevents @ [ empty_death_pevent () ] ;
+      end
   in
   (* On prend le nom du père *)
   let sibling_surname =
-    match father with
+    match Option.map (fun fam -> poi base @@ get_father fam) fam_opt with
     | Some father -> infer_surname conf base father None
     | None -> surname
   in
@@ -2035,7 +2044,7 @@ let print_add_sibling conf base =
 (* ************************************************************************ *)
 let print_add_sibling_ok conf base =
   let add_sibling_ok = get_params conf Mext_write.parse_add_sibling_ok in
-  let ip = Gwdb.iper_of_string @@ Int32.to_string add_sibling_ok.Mwrite.Add_sibling_ok.index_person in
+  let ip = iper_of_i32 add_sibling_ok.Mwrite.Add_sibling_ok.index_person in
   let mod_c = add_sibling_ok.Mwrite.Add_sibling_ok.sibling in
   let p = poi base ip in
   (* Le nouvel enfant à créer. *)
