@@ -1548,7 +1548,7 @@ let witness_kind_of_piqi = function
   | `witness_attending        -> Witness_Attending
   | `witness_mentioned        -> Witness_Mentioned
   | `witness_other            -> Witness_Other
-                               
+
 let piqi_of_witness_kind = function
   | Witness                  -> `witness
   | Witness_GodParent        -> `witness_godparent
@@ -1558,7 +1558,7 @@ let piqi_of_witness_kind = function
   | Witness_Attending        -> `witness_attending
   | Witness_Mentioned        -> `witness_mentioned
   | Witness_Other            -> `witness_other
-                              
+
 let translate_witness conf witness_kind =
   Util.string_of_witness_kind conf Def.Neuter witness_kind
 
@@ -1572,6 +1572,13 @@ let witness_kinds = [
     Witness_Mentioned;
     Witness_Other
   ]
+
+let piqi_death_type_of_death = function
+  | NotDead -> `not_dead
+  | DontKnowIfDead -> `dont_know_if_dead
+  | OfCourseDead -> `of_course_dead
+  | Death _ | DeadDontKnowWhen -> `dead
+  | DeadYoung -> `dead_young
 
 let opt_of_string = function
   | "" -> None

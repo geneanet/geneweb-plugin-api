@@ -1020,14 +1020,7 @@ let pers_to_piqi_mod_person conf base p =
   let firstname_aliases = List.map (sou base) (get_first_names_aliases p) in
   let surname_aliases = List.map (sou base) (get_surnames_aliases p) in
   let image = get_portrait conf base p in
-  let death_type =
-    match get_death p with
-    | NotDead -> `not_dead
-    | Death _ | DeadDontKnowWhen -> `dead
-    | DeadYoung -> `dead_young
-    | DontKnowIfDead -> `dont_know_if_dead
-    | OfCourseDead -> `of_course_dead
-  in
+  let death_type = Api_util.piqi_death_type_of_death (get_death p) in
   let occupation = sou base (get_occupation p) in
   let psources = sou base (get_psources p) in
   let notes = sou base (get_notes p) in
