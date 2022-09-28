@@ -582,11 +582,7 @@ let print_img_person conf base =
   let id = get_params conf Mext.parse_index in
   let ip = Gwdb.iper_of_string @@ Int32.to_string id.M.Index.index in
   let p = poi base ip in
-  let img_addr =
-    match Image.get_portrait conf base p with
-    | Some src -> Image.src_to_string src
-    | None -> ""
-  in
+  let img_addr = get_portrait conf base p |> Option.value ~default:"" in
   let img_from_ip = M.Image_address.({img = img_addr}) in
   let data = Mext.gen_image_address img_from_ip in
   print_result conf data

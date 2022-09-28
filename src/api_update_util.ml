@@ -604,7 +604,7 @@ let pers_to_piqi_simple_person conf base p =
     in
     (birth, birth_place, death, death_place)
   in
-  let image = Image.get_portrait conf base p |> Option.map Image.src_to_string in
+  let image = get_portrait conf base p in
   {
     Mwrite.Simple_person.index = index;
     sex = sex;
@@ -649,7 +649,7 @@ let pers_to_piqi_person_search conf base p =
     Api_saisie_read.person_firstname_surname_txt base p
   in
   let dates = Api_saisie_read.short_dates_text conf base p in
-  let image = Image.get_portrait conf base p |> Option.map Image.src_to_string in
+  let image = get_portrait conf base p in
   let family =
     let hw = husband_wife conf base p in
     if hw <> "" then hw
@@ -702,7 +702,7 @@ let pers_to_piqi_person_search_info conf base p =
   let firstname_aliases = List.map (sou base) (get_first_names_aliases p) in
   let surname_aliases = List.map (sou base) (get_surnames_aliases p) in
   let occupation = !!(Notes.source conf base (sou base (get_occupation p))) in
-  let image = Image.get_portrait conf base p |> Option.map Image.src_to_string in
+  let image = get_portrait conf base p in
   let events =
     List.map
       (fun (name, date, place, note, src, w, isp) ->
@@ -1019,7 +1019,7 @@ let pers_to_piqi_mod_person conf base p =
   let qualifiers = List.map (sou base) (get_qualifiers p) in
   let firstname_aliases = List.map (sou base) (get_first_names_aliases p) in
   let surname_aliases = List.map (sou base) (get_surnames_aliases p) in
-  let image = Image.get_portrait conf base p |> Option.map Image.src_to_string in
+  let image = get_portrait conf base p in
   let death_type =
     match get_death p with
     | NotDead -> `not_dead

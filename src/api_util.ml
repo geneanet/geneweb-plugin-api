@@ -24,6 +24,14 @@ let is_empty_or_quest_name p =
   is_empty_string (get_surname p) || is_quest_string (get_surname p) ||
   is_empty_string (get_first_name p) || is_quest_string (get_first_name p)
 
+let get_portrait conf base p = Image.get_portrait conf base p |> Option.map Image.src_to_string
+
+let get_portrait_path conf base p =
+  match Image.get_portrait_path conf base p with
+  | Some (`Path s) -> s
+  | None -> ""
+
+
 (**/**)
 
 
@@ -781,9 +789,7 @@ let spouse_to_piqi_spouse conf base p fam compute_sosa =
   let occ = Int32.of_int (get_occ p) in
   let publicname = if gen_p.public_name = "" then None else Some gen_p.public_name in
   let image = if gen_p.image <> "" then gen_p.image
-    else match Image.get_portrait_path conf base p with
-      | Some (`Path s) -> s
-      | None -> ""
+    else get_portrait_path conf base p
   in
   let birth =
     match Adef.od_of_cdate gen_p.birth with
@@ -1070,9 +1076,7 @@ let pers_to_piqi_person_full conf base p compute_sosa =
   let firstname_aliases = gen_p.first_names_aliases in
   let surname_aliases = gen_p.surnames_aliases in
   let image = if gen_p.image <> "" then gen_p.image
-    else match Image.get_portrait_path conf base p with
-      | Some (`Path s) -> s
-      | None -> ""
+    else get_portrait_path conf base p
   in
   let birth =
     match Adef.od_of_cdate gen_p.birth with
