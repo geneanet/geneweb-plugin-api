@@ -26,10 +26,10 @@ let is_empty_or_quest_name p =
 
 let get_portrait conf base p = Image.get_portrait conf base p |> Option.map Image.src_to_string
 
-let get_portrait_path conf base p =
-  match Image.get_portrait_path conf base p with
-  | Some (`Path s) -> s
-  | None -> ""
+(* FIXME this should NOT use Gwdb.get_image but Image.get_portrait_path instead.
+ It appears that [conf] permissions are incorrectly set*)
+let get_portrait_path _conf base p = sou base (get_image p)
+
 
 
 (**/**)
