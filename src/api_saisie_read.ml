@@ -686,7 +686,7 @@ let fill_events conf base p base_prefix p_auth pers_to_piqi witness_constructor 
         in
         let witnesses =
           Mutil.array_to_list_map
-            (fun (ip, wk) ->
+            (fun (ip, wk, _ (*wnote*)) ->
                let witness_type = Api_util.piqi_of_witness_kind wk in
                let witness = poi base ip in
                let witness = pers_to_piqi conf base witness base_prefix in
@@ -989,17 +989,16 @@ let get_events_witnesses conf base p base_prefix gen_p p_auth has_relations pers
               let c = pget conf base ic in
               List.iter
                 (fun ((name, _, _, _, _, wl, _) as evt) ->
-                  match Util.array_mem_witn conf base (get_iper p) wl with
-                  | Some wk ->
+                  let (mem, wk, _(*wnote*)) = Util.array_mem_witn conf base (get_iper p) wl in
+                  if mem then
                     (* Attention aux doublons pour les evenements famille. *)
-                    begin match name with
+                    match name with
                     | Event.Fevent _ ->
                         if get_sex c = Male then
                           list := (c, wk, evt) :: !list
                         else ()
                     | _ -> list := (c, wk, evt) :: !list
-                    end
-                  | None -> ())
+                  else ())
                 (Event.sorted_events conf base c);
               make_list icl
           | [] -> ()

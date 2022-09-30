@@ -166,7 +166,7 @@ let check_person_conflict base original_pevents sp =
   ignore @@
   List.fold_left begin fun created evt ->
     let _, created =
-      Array.fold_left begin fun (j, created) ((f, s, o, create, var, force_create), _) ->
+      Array.fold_left begin fun (j, created) ((f, s, o, create, var, force_create), _, _) ->
         match error_conflict_person_link base created (f, s, o, create, var, force_create) with
         | true, _ ->
           let pos = Mutil.list_index evt original_pevents in
@@ -728,7 +728,7 @@ let pers_to_piqi_person_search_info conf base p =
         in
         let witnesses =
           Mutil.array_to_list_map
-            (fun (ip, wk) ->
+            (fun (ip, wk, _(* wnote *)) ->
               let witness_type = Api_util.piqi_of_witness_kind wk in
                let witness = pers_to_piqi_simple_person conf base @@ poi base ip in
                Mwrite.Witness_event.{ witness_type ; witness })
@@ -1125,7 +1125,7 @@ let pers_to_piqi_mod_person conf base p =
          let src = sou base evt.epers_src in
          let witnesses =
            Mutil.array_to_list_map
-             (fun (ip, wk) ->
+             (fun (ip, wk, _(*wnote*)) ->
                 let witness_type = Api_util.piqi_of_witness_kind wk in
                 let p = poi base ip in
                 let person_link = pers_to_piqi_person_link conf base p in

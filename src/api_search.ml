@@ -575,7 +575,7 @@ let complete_with_dico assets conf nb max mode ini list =
     in
     let dico =
       begin match dico_fname assets conf.lang mode with
-        | Some fn -> Mutil.read_or_create_value fn (fun () : dico -> [||])
+        | Some fn -> Files.read_or_create_value fn (fun () : dico -> [||])
         | None -> [||]
       end |> reduce_dico mode list format
     in
