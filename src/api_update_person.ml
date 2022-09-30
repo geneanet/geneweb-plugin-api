@@ -201,7 +201,7 @@ let reconstitute_person conf base mod_p
       match witness.Mwrite.Witness.person with
       | Some person ->
         let wk = Api_util.witness_kind_of_piqi witness.Mwrite.Witness.witness_type in
-        let wit = (reconstitute_somebody base person, wk) in
+        let wit = (reconstitute_somebody base person, wk, "" (* wnote *)) in
         wit :: accu
       | None -> accu
     end evt.Mwrite.Pevent.witnesses []
@@ -223,8 +223,8 @@ let reconstitute_person conf base mod_p
       | e ->
         Some { e
                with epers_witnesses =
-                      Array.map begin fun ((f, s, o, create, var, _), wk) ->
-                        ((f, s, o, create, var), wk)
+                      Array.map begin fun ((f, s, o, create, var, _), wk, wnote) ->
+                        ((f, s, o, create, var), wk, wnote)
                       end e.epers_witnesses
              }
     end p.pevents
