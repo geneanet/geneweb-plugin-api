@@ -63,7 +63,7 @@ let () =
     ; ( "API_ALL_FAMILIES"
       , aux @@ w_base @@ Api.print_all_families)
     ; ( "API_BASE_WARNINGS"
-      , aux @@ friend @@ w_base @@ w_lock @@ Api.print_base_warnings)
+      , aux @@ friend @@ w_lock @@ w_base @@ Api.print_base_warnings)
     ; ( "API_CLOSE_PERSONS"
       , aux @@ w_base @@ Api_graph.print_close_person_relations)
     ; ( "API_CPL_REL"
@@ -89,7 +89,7 @@ let () =
     ; ( "API_IMAGE_PERSON"
       , aux @@ w_base @@ Api.print_img_person)
     ; ( "API_IMAGE_UPDATE"
-      , aux @@ wiz @@ w_base @@ w_lock @@ Api.print_updt_image)
+      , aux @@ wiz @@ w_lock @@ w_base @@ Api.print_updt_image)
     ; ( "API_LAST_MODIFIED_PERSONS"
       , aux @@ w_base @@ Api.print_last_modified_persons)
     ; ( "API_LAST_VISITED_PERSONS"
@@ -125,39 +125,39 @@ let () =
     ; ( "API_ADD_CHILD"
       , aux @@ wiz @@ w_base @@ Api_saisie_write.print_add_child)
     ; ( "API_ADD_CHILD_OK"
-      , aux @@ wiz @@ w_base @@ w_lock @@ Api_saisie_write.print_add_child_ok)
+      , aux @@ wiz @@ w_lock @@ w_base @@ Api_saisie_write.print_add_child_ok)
     ; ( "API_ADD_FAMILY"
       , aux @@ wiz @@ w_base @@ Api_saisie_write.print_add_family)
     ; ( "API_ADD_FAMILY_OK"
-      , aux @@ wiz @@ w_base @@ w_lock @@ Api_saisie_write.print_add_family_ok)
+      , aux @@ wiz @@ w_lock @@ w_base @@ Api_saisie_write.print_add_family_ok)
     ; ( "API_ADD_FIRST_FAM_OK"
-      , aux @@ wiz @@ w_base @@ w_lock @@ Api_saisie_write.print_add_first_fam_ok)
+      , aux @@ wiz @@ w_lock @@ w_base @@ Api_saisie_write.print_add_first_fam_ok)
     ; ( "API_ADD_PARENTS"
       , aux @@ wiz @@ w_base @@ Api_saisie_write.print_add_parents)
     ; ( "API_ADD_PARENTS_OK"
-      , aux @@ wiz @@ w_base @@ w_lock @@ Api_saisie_write.print_add_parents_ok)
+      , aux @@ wiz @@ w_lock @@ w_base @@ Api_saisie_write.print_add_parents_ok)
     ; ( "API_ADD_PERSON_OK"
-      , aux @@ wiz @@ w_base @@ w_lock @@ Api_saisie_write.print_add_ind_ok)
+      , aux @@ wiz @@ w_lock @@ w_base @@ Api_saisie_write.print_add_ind_ok)
     ; ( "API_ADD_PERSON_START_OK"
-      , aux @@ wiz @@ w_base @@ w_lock @@ Api_saisie_write.print_add_ind_start_ok)
+      , aux @@ wiz @@ w_lock @@ w_base @@ Api_saisie_write.print_add_ind_start_ok)
     ; ( "API_ADD_SIBLING"
       , aux @@ wiz @@ w_base @@ Api_saisie_write.print_add_sibling)
     ; ( "API_ADD_SIBLING_OK"
-      , aux @@ wiz @@ w_base @@ w_lock @@ Api_saisie_write.print_add_sibling_ok)
+      , aux @@ wiz @@ w_lock @@ w_base @@ Api_saisie_write.print_add_sibling_ok)
     ; ( "API_EDIT_FAMILY_REQUEST"
       , aux @@ wiz @@ w_base @@ Api_saisie_write.print_mod_family_request)
     ; ( "API_EDIT_FAMILY"
       , aux @@ wiz @@ w_base @@ Api_saisie_write.print_mod_family)
     ; ( "API_EDIT_FAMILY_OK"
-      , aux @@ wiz @@ w_base @@ w_lock @@ Api_saisie_write.print_mod_family_ok)
+      , aux @@ wiz @@ w_lock @@ w_base @@ Api_saisie_write.print_mod_family_ok)
     ; ( "API_EDIT_PERSON"
       , aux @@ wiz @@ w_base @@ Api_saisie_write.print_mod_ind)
     ; ( "API_EDIT_PERSON_OK"
-      , aux @@ wiz @@ w_base @@ w_lock @@ Api_saisie_write.print_mod_ind_ok)
+      , aux @@ wiz @@ w_lock @@ w_base @@ Api_saisie_write.print_mod_ind_ok)
     ; ( "API_DEL_FAMILY_OK"
-      , aux @@ wiz @@ w_base @@ w_lock @@ Api_saisie_write.print_del_fam_ok)
+      , aux @@ wiz @@ w_lock @@ w_base @@ Api_saisie_write.print_del_fam_ok)
     ; ( "API_DEL_PERSON_OK"
-      , aux @@ wiz @@ w_base @@ w_lock @@ Api_saisie_write.print_del_ind_ok)
+      , aux @@ wiz @@ w_lock @@ w_base @@ Api_saisie_write.print_del_ind_ok)
     ; ( "API_NAME_FREQUENCY"
       , aux @@ w_base @@ Api.name_frequency)
     ; ( "API_PERSON_WARNINGS"
