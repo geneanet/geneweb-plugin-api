@@ -1635,3 +1635,6 @@ let witness_kinds = [
     Witness_Other
   ]
 
+let opt_of_string = function
+  | "" -> None
+  | s -> Some s

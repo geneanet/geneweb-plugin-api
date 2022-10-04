@@ -271,7 +271,7 @@ let from_piqi_status = function
 let print_error conf code msg =
   let piqi_error = Api_piqi.default_error () in
   piqi_error.Api_piqi.Error.code <- code ;
-  piqi_error.Api_piqi.Error.message <- Opt.of_string msg ;
+  piqi_error.Api_piqi.Error.message <- (match msg with | "" -> None | s -> Some s);
   let data = Api_piqi_ext.gen_error piqi_error in
   Output.status conf (from_piqi_status code) ;
   print_result conf data ;

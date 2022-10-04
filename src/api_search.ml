@@ -508,7 +508,7 @@ let get_field mode =
 type dico = string array
 
 let dico_fname assets lang k =
-  Opt.map (Filename.concat assets) @@ match k with
+  Option.map (Filename.concat assets) @@ match k with
   | `town -> Some ("dico.town." ^ lang ^ ".bin~")
   | `area_code -> Some ("dico.area_code." ^ lang ^ ".bin~")
   | `county -> Some ("dico.county." ^ lang ^ ".bin~")
