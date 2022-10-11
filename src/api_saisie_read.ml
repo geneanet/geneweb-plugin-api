@@ -662,9 +662,9 @@ let fill_events conf base p base_prefix p_auth pers_to_piqi witness_constructor 
       (fun (name, date, place, note, src, w, isp) ->
         let (name, type_) =
           match name with
-          | Perso.Pevent name -> ( !!(Util.string_of_pevent_name conf base name)
+          | Event.Pevent name -> ( !!(Util.string_of_pevent_name conf base name)
                                  , event_to_piqi_event (Some name) None)
-          | Perso.Fevent name -> ( !!(Util.string_of_fevent_name conf base name)
+          | Event.Fevent name -> ( !!(Util.string_of_fevent_name conf base name)
                                  , event_to_piqi_event None (Some name) )
         in
         let (date, date_long, date_conv, date_conv_long, date_cal, date_raw) =
@@ -696,7 +696,7 @@ let fill_events conf base p base_prefix p_auth pers_to_piqi witness_constructor 
         in
           event_constructor name type_ date date_long date_raw date_conv date_conv_long date_cal place note src spouse witnesses
         )
-      (Perso.events_list conf base p)
+      (Event.sorted_events conf base p)
   else []
 
 
@@ -989,17 +989,18 @@ let get_events_witnesses conf base p base_prefix gen_p p_auth has_relations pers
               let c = pget conf base ic in
               List.iter
                 (fun ((name, _, _, _, _, wl, _) as evt) ->
-                  let (mem, wk) = Util.array_mem_witn conf base (get_iper p) wl in
-                  if mem then
+                  match Util.array_mem_witn conf base (get_iper p) wl with
+                  | Some wk ->
                     (* Attention aux doublons pour les evenements famille. *)
-                    match name with
-                    | Perso.Fevent _ ->
+                    begin match name with
+                    | Event.Fevent _ ->
                         if get_sex c = Male then
                           list := (c, wk, evt) :: !list
                         else ()
                     | _ -> list := (c, wk, evt) :: !list
-                  else ())
-                (Perso.events_list conf base c);
+                    end
+                  | None -> ())
+                (Event.sorted_events conf base c);
               make_list icl
           | [] -> ()
         in
@@ -1008,11 +1009,9 @@ let get_events_witnesses conf base p base_prefix gen_p p_auth has_relations pers
       in
       (* On tri les témoins dans le même ordre que les évènements. *)
       let events_witnesses =
-        CheckItem.sort_events
+        Event.sort_events
           (fun (_, _, (name, _, _, _, _, _, _)) ->
-             match name with
-             | Perso.Pevent n -> CheckItem.Psort n
-             | Perso.Fevent n -> CheckItem.Fsort n)
+            name)
           (fun (_, _, (_, date, _, _, _, _, _)) -> date)
           events_witnesses
       in
@@ -1025,10 +1024,10 @@ let get_events_witnesses conf base p base_prefix gen_p p_auth has_relations pers
           in
           let witnesses_name =
             match name with
-            | Perso.Pevent name ->
+            | Event.Pevent name ->
                 if p_auth then !!(Util.string_of_pevent_name conf base name)
                 else  ""
-            | Perso.Fevent name ->
+            | Event.Fevent name ->
                 if p_auth then !!(Util.string_of_fevent_name conf base name)
                 else  ""
           in
