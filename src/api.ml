@@ -615,7 +615,7 @@ let print_updt_image conf base =
 exception WarningFound
 let table_contains_warning base tbl w =
   try Hashtbl.iter (fun w' _ ->
-          if Util.eq_warning base w w'
+          if CheckItem.eq_warning base w w'
           then raise WarningFound) tbl;
       false
   with WarningFound -> true
@@ -655,7 +655,7 @@ let print_base_warnings conf base =
 let person_warnings conf base p =
   List.fold_left begin fun acc x ->
     Api_warnings.add_warning_to_piqi_warning_list conf base acc x
-  end Api_warnings.empty (Util.person_warnings conf base p)
+  end Api_warnings.empty (CheckItem.person_warnings conf base p)
 
 let print_person_warnings conf base =
   let ref_person = Api_piqi_util.get_params conf Api_piqi_ext.parse_reference_person_i in

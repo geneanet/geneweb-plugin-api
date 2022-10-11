@@ -708,8 +708,8 @@ let pers_to_piqi_person_search_info conf base p =
       (fun (name, date, place, note, src, w, isp) ->
         let name =
           match name with
-          | Perso.Pevent name -> !!(Util.string_of_pevent_name conf base name)
-          | Perso.Fevent name -> !!(Util.string_of_fevent_name conf base name)
+          | Event.Pevent name -> !!(Util.string_of_pevent_name conf base name)
+          | Event.Fevent name -> !!(Util.string_of_fevent_name conf base name)
         in
         let (date, _, date_conv, _, date_cal) =
           match Adef.od_of_cdate date with
@@ -746,7 +746,7 @@ let pers_to_piqi_person_search_info conf base p =
           spouse = spouse;
           witnesses = witnesses;
         })
-      (Perso.events_list conf base p)
+      (Event.sorted_events conf base p)
   in
   let notes = !!(Notes.person_note conf base p (sou base (get_notes p))) in
   let psources = !!(Notes.source conf base (sou base (get_psources p))) in
