@@ -23,10 +23,10 @@ let print_close_person_aux conf base filters cpp =
   let sn = cpp.M.Close_persons_params.person.M.Reference_person.n in
   let occ = cpp.M.Close_persons_params.person.M.Reference_person.oc in
   let asc =
-    Opt.map_default 2 (fun n -> max 1 (Int32.to_int n)) cpp.M.Close_persons_params.nb_gen_asc
+    Option.fold ~none:2 ~some:(fun n -> max 1 (Int32.to_int n)) cpp.M.Close_persons_params.nb_gen_asc
   in
   let desc =
-    Opt.map_default (-3) (fun n -> - (max 1 (Int32.to_int n))) cpp.M.Close_persons_params.nb_gen_desc
+    Option.fold ~none:(-3) ~some:(fun n -> - (max 1 (Int32.to_int n))) cpp.M.Close_persons_params.nb_gen_desc
   in
   let sp = cpp.M.Close_persons_params.spouse_ascend in
   match Gwdb.person_of_key base fn sn (Int32.to_int occ) with

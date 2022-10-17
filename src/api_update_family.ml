@@ -86,7 +86,7 @@ let reconstitute_family conf base mod_f =
     opt_only_printable_or_nl_stripped mod_f.Mwrite.Family.comment
   in
   let fsources = opt_only_printable mod_f.Mwrite.Family.fsources in
-  let origin_file = Opt.to_string mod_f.Mwrite.Family.origin_file in
+  let origin_file = Option.value ~default:"" mod_f.Mwrite.Family.origin_file in
   let fam_index = Gwdb.ifam_of_string @@ Int32.to_string mod_f.Mwrite.Family.index in
   let parents =
     let father = mod_f.Mwrite.Family.father in

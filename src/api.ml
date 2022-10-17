@@ -28,7 +28,7 @@ let print_info_base conf base =
      | None -> (None, None)
   in
   let last_modified_person =
-    let default () = Opt.map (fun p -> Gwdb.string_of_iper (get_iper p)) sosa_p in
+    let default () = Option.map (fun p -> Gwdb.string_of_iper (get_iper p)) sosa_p in
     try
       let ic = Secure.open_in_bin (History.file_name conf) in
       let (_, pos, wiz) = (1, in_channel_length ic, "") in
@@ -59,7 +59,7 @@ let print_info_base conf base =
       nb_persons = Int64.of_int (Gwdb.nb_of_persons base);
       nb_families = Int64.of_int (Gwdb.nb_of_families base);
       sosa = sosa;
-      last_modified_person = Opt.map Int64.of_string last_modified_person;
+      last_modified_person = Option.map Int64.of_string last_modified_person;
       real_nb_persons = Some (Int64.of_int (Gwdb.nb_of_real_persons base));
     })
   in
@@ -159,7 +159,7 @@ let print_list_ref_person conf base =
   let data =
     data_list_person_option conf base filters pl
   in
-  print_result conf data 
+  print_result conf data
 
 (* ******************************************************************** *)
 (*  [Fonc] print_ref_person_from_ip : config -> base -> unit            *)

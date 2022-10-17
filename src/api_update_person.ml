@@ -21,11 +21,11 @@ let reconstitute_person_aux conf fn_occ fn_rparents fn_pevt_witnesses mod_p =
     else (first_name, surname)
   in
   let occ = fn_occ mod_p in
-  let image = Opt.map_default "" only_printable mod_p.Mwrite.Person.image in
+  let image = Option.fold ~none:"" ~some:only_printable mod_p.Mwrite.Person.image in
   let strings_aux = List.map only_printable in
   let first_names_aliases = strings_aux mod_p.Mwrite.Person.firstname_aliases in
   let surnames_aliases = strings_aux mod_p.Mwrite.Person.surname_aliases in
-  let public_name = Opt.to_string mod_p.Mwrite.Person.public_name |> only_printable in
+  let public_name = Option.value ~default:"" mod_p.Mwrite.Person.public_name |> only_printable in
   let qualifiers = strings_aux mod_p.Mwrite.Person.qualifiers in
   let aliases = strings_aux mod_p.Mwrite.Person.aliases in
   let titles =
@@ -60,7 +60,7 @@ let reconstitute_person_aux conf fn_occ fn_rparents fn_pevt_witnesses mod_p =
   in
   let rparents = fn_rparents mod_p in
   let access = Api_piqi_util.piqi_access_to_access mod_p.Mwrite.Person.access in
-  let occupation = Opt.map_default "" only_printable mod_p.Mwrite.Person.occupation in
+  let occupation = Option.fold ~none:"" ~some:only_printable mod_p.Mwrite.Person.occupation in
   let sex =
     match mod_p.Mwrite.Person.sex with
     | `male -> Male
@@ -76,10 +76,10 @@ let reconstitute_person_aux conf fn_occ fn_rparents fn_pevt_witnesses mod_p =
     | `dont_know_if_dead -> DontKnowIfDead
     | `of_course_dead -> OfCourseDead
   in
-  let psources = Opt.map_default "" only_printable mod_p.Mwrite.Person.psources in
+  let psources = Option.fold ~none:"" ~some:only_printable mod_p.Mwrite.Person.psources in
   let notes =
-    Opt.map_default ""
-      (fun s -> only_printable_or_nl (Mutil.strip_all_trailing_spaces s))
+    Option.fold ~none:""
+      ~some:(fun s -> only_printable_or_nl (Mutil.strip_all_trailing_spaces s))
       mod_p.Mwrite.Person.notes
   in
   let original_pevents =
@@ -98,14 +98,14 @@ let reconstitute_person_aux conf fn_occ fn_rparents fn_pevt_witnesses mod_p =
         | Some date -> Api_update_util.date_of_piqi_date conf date
         | None -> None
       in
-      let place = Opt.map_default "" (fun p -> only_printable p) evt.Mwrite.Pevent.place in
-      let reason = Opt.map_default "" (fun r -> only_printable r) evt.Mwrite.Pevent.reason in
+      let place = Option.fold ~none:"" ~some:(fun p -> only_printable p) evt.Mwrite.Pevent.place in
+      let reason = Option.fold ~none:"" ~some:(fun r -> only_printable r) evt.Mwrite.Pevent.reason in
       let note =
-        Opt.map_default
-          "" (fun n -> only_printable_or_nl (Mutil.strip_all_trailing_spaces n))
+        Option.fold
+          ~none:"" ~some:(fun n -> only_printable_or_nl (Mutil.strip_all_trailing_spaces n))
           evt.Mwrite.Pevent.note
       in
-      let src = Opt.map_default "" only_printable evt.Mwrite.Pevent.src in
+      let src = Option.fold ~none:"" ~some:only_printable evt.Mwrite.Pevent.src in
       let witnesses = fn_pevt_witnesses evt in
       { epers_name = name; epers_date = Adef.cdate_of_od date;
         epers_place = place; epers_reason = reason; epers_note = note;
@@ -164,7 +164,7 @@ let reconstitute_person conf base mod_p
       Api_update_util.api_find_free_occ base fn sn
     | _ ->
       (* Cas par défaut, i.e. modifier personne sans changer le occ. *)
-      Opt.map_default 0 Int32.to_int mod_p.Mwrite.Person.occ
+      Option.fold ~none:0 ~some:Int32.to_int mod_p.Mwrite.Person.occ
   in
   let fn_rparents mod_p =
     List.fold_right begin fun r accu ->

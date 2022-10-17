@@ -697,7 +697,7 @@ let fill_events conf base p base_prefix p_auth pers_to_piqi witness_constructor 
         in
         let src = !!(Notes.source conf base (sou base src)) in
         let spouse =
-          Opt.map (fun ip -> pers_to_piqi conf base (poi base ip) base_prefix) isp
+          Option.map (fun ip -> pers_to_piqi conf base (poi base ip) base_prefix) isp
         in
         let witnesses =
           Mutil.array_to_list_map

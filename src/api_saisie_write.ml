@@ -1438,14 +1438,13 @@ let print_mod_family_request conf base =
          in
          let lastname = sou base (get_surname sp) in
          let firstname = sou base (get_first_name sp) in
-         let dates = Opt.of_string (Api_saisie_read.short_dates_text conf base sp) in
+         let dates = opt_of_string @@ Api_saisie_read.short_dates_text conf base sp in
          let image =
-           Opt.of_string @@
            let img = sou base (get_image sp) in
-           if img <> "" then img
+           if img <> "" then Some img
            else if Api_util.find_image_file conf base sp <> None
-           then "1"
-           else ""
+           then Some "1"
+           else None
          in
          let sosa =
            let sosa_nb = Perso.get_single_sosa conf base sp in
@@ -1700,7 +1699,7 @@ let do_mod_fam_add_child_aux conf base name ip mod_c mod_f fn =
         Api_update_util.UpdateSuccess (all_wl, all_ml, all_hr)
       else
         let (all_wl, all_ml, all_hr) =
-          let occ = Opt.map_default 0 Int32.to_int child.Mwrite.Person_link.occ in
+          let occ = Option.fold ~none:0 ~some:Int32.to_int child.Mwrite.Person_link.occ in
           match person_of_key base mod_c.Mwrite.Person.firstname mod_c.Mwrite.Person.lastname occ with
           | Some ip_child ->
             mod_c.Mwrite.Person.index <- Int32.of_string @@ Gwdb.string_of_iper ip_child;
@@ -1958,7 +1957,7 @@ let print_add_child conf base =
     | x -> child.Mwrite.Person.death_type <- x
   in
   (* On prend le nom du père *)
-  let child_surname = infer_surname conf base p @@ Opt.map Int32.to_string ifam in
+  let child_surname = infer_surname conf base p @@ Option.map Int32.to_string ifam in
   child.Mwrite.Person.lastname <- child_surname;
   let add_child =
     Mwrite.Add_child.({
@@ -1987,7 +1986,7 @@ let print_add_sibling conf base =
   let ip = Gwdb.iper_of_string @@ Int32.to_string params.Mwrite.Add_sibling_request.index in
   let p = poi base ip in
   let father =
-    Opt.map (fun ifam -> poi base @@ get_father @@ foi base ifam) (get_parents p)
+    Option.map (fun ifam -> poi base @@ get_father @@ foi base ifam) (get_parents p)
   in
   let surname = sou base (get_surname p) in
   let first_name = sou base (get_first_name p) in
@@ -2002,7 +2001,7 @@ let print_add_sibling conf base =
   (* On met le frère/soeur en mode Create. *)
   sibling.Mwrite.Person.create_link <- `create_default_occ;
   (* On met à jour le sex *)
-  Opt.iter (fun s -> sibling.Mwrite.Person.sex <- s) params.Mwrite.Add_sibling_request.sex ;
+  Option.iter (fun s -> sibling.Mwrite.Person.sex <- s) params.Mwrite.Add_sibling_request.sex;
   (* On calcul si l'enfant est décédé. *)
   let () =
     match father with
