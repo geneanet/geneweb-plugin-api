@@ -1439,13 +1439,7 @@ let print_mod_family_request conf base =
          let lastname = sou base (get_surname sp) in
          let firstname = sou base (get_first_name sp) in
          let dates = opt_of_string @@ Api_saisie_read.short_dates_text conf base sp in
-         let image =
-           let img = sou base (get_image sp) in
-           if img <> "" then Some img
-           else if Api_util.find_image_file conf base sp <> None
-           then Some "1"
-           else None
-         in
+         let image = get_portrait conf base p in
          let sosa =
            let sosa_nb = Perso.get_single_sosa conf base sp in
            if Sosa.eq sosa_nb Sosa.zero then `no_sosa
@@ -1902,13 +1896,7 @@ let print_add_child conf base =
          let surname = sou base (get_surname sp) in
          let first_name = sou base (get_first_name sp) in
          let dates = Api_saisie_read.short_dates_text conf base sp in
-         let image =
-           let img = sou base (get_image sp) in
-           if img <> "" then img
-           else if Api_util.find_image_file conf base sp <> None
-           then "1"
-           else ""
-         in
+         let image = get_portrait conf base p in
          let sosa =
            let sosa_nb = Perso.get_single_sosa conf base sp in
            if Sosa.eq sosa_nb Sosa.zero then `no_sosa
@@ -1923,7 +1911,7 @@ let print_add_child conf base =
              lastname = surname;
              firstname = first_name;
              dates = if dates = "" then None else Some dates;
-             image = if image = "" then None else Some image;
+             image;
              sosa = sosa;
            }
          in

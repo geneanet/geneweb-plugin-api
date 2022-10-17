@@ -604,16 +604,7 @@ let pers_to_piqi_simple_person conf base p =
     in
     (birth, birth_place, death, death_place)
   in
-  let image =
-    let img = sou base (get_image p) in
-    if img <> "" then img
-    else ""
-      (* On veut pas vraiment vérifier les images fichiers ...
-      match Api_util.find_image_file conf base p with
-      | Some s -> "1"
-      | None -> ""
-      *)
-  in
+  let image = get_portrait conf base p in
   {
     Mwrite.Simple_person.index = index;
     sex = sex;
@@ -623,7 +614,7 @@ let pers_to_piqi_simple_person conf base p =
     birth_place = if birth_place = "" then None else Some birth_place;
     death_short_date = if death_short = "" then None else Some death_short;
     death_place = if death_place = "" then None else Some death_place;
-    image = if image = "" then None else Some image;
+    image;
     sosa = sosa;
   }
 
@@ -658,16 +649,7 @@ let pers_to_piqi_person_search conf base p =
     Api_saisie_read.person_firstname_surname_txt base p
   in
   let dates = Api_saisie_read.short_dates_text conf base p in
-  let image =
-    let img = sou base (get_image p) in
-    if img <> "" then img
-    else ""
-      (* On veut pas vraiment vérifier les images fichiers ...
-      match Api_util.find_image_file conf base p with
-      | Some s -> "1"
-      | None -> ""
-      *)
-  in
+  let image = get_portrait conf base p in
   let family =
     let hw = husband_wife conf base p in
     if hw <> "" then hw
@@ -679,7 +661,7 @@ let pers_to_piqi_person_search conf base p =
     lastname = surname;
     firstname = first_name;
     dates = if dates = "" then None else Some dates;
-    image = if image = "" then None else Some image;
+    image;
     sosa = sosa;
     family = family;
   }
@@ -719,17 +701,8 @@ let pers_to_piqi_person_search_info conf base p =
   let qualifiers = List.map (sou base) (get_qualifiers p) in
   let firstname_aliases = List.map (sou base) (get_first_names_aliases p) in
   let surname_aliases = List.map (sou base) (get_surnames_aliases p) in
-  let image =
-    let img = sou base (get_image p) in
-    if img <> "" then img
-    else ""
-      (* On veut pas vraiment vérifier les images fichiers ...
-      match Api_util.find_image_file conf base p with
-      | Some s -> "1"
-      | None -> ""
-      *)
-  in
   let occupation = !!(Notes.source conf base (sou base (get_occupation p))) in
+  let image = get_portrait conf base p in
   let events =
     List.map
       (fun (name, date, place, note, src, w, isp) ->
@@ -950,7 +923,7 @@ let pers_to_piqi_person_search_info conf base p =
     qualifiers = qualifiers;
     firstname_aliases = firstname_aliases;
     surname_aliases = surname_aliases;
-    image = if image = "" then None else Some image;
+    image;
     events = events;
     occupation = if occupation = "" then None else Some occupation;
     notes = if notes = "" then None else Some notes;
@@ -1046,7 +1019,7 @@ let pers_to_piqi_mod_person conf base p =
   let qualifiers = List.map (sou base) (get_qualifiers p) in
   let firstname_aliases = List.map (sou base) (get_first_names_aliases p) in
   let surname_aliases = List.map (sou base) (get_surnames_aliases p) in
-  let image = sou base (get_image p) in
+  let image = get_portrait conf base p in
   let death_type =
     match get_death p with
     | NotDead -> `not_dead
@@ -1334,7 +1307,7 @@ let pers_to_piqi_mod_person conf base p =
     qualifiers = qualifiers;
     firstname_aliases = firstname_aliases;
     surname_aliases = surname_aliases;
-    image = if image = "" then None else Some image;
+    image;
     death_type = death_type;
     occupation = if occupation = "" then None else Some occupation;
     psources = if psources = "" then None else Some psources;

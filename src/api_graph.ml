@@ -55,7 +55,7 @@ let event_aux_pers_to_piqi_person conf base =
     if base_loop then fun _ -> Sosa.zero
     else Perso.get_sosa_person
   in
-  Api_util.pers_to_piqi_person_light conf base p compute_sosa false
+  Api_util.pers_to_piqi_person_light conf base p compute_sosa
 
 let pevents_aux conf base filter acc p =
   match get_pevents p with
