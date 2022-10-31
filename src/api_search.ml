@@ -271,7 +271,7 @@ let print_list conf base filters list =
       (List.fold_left
          begin fun acc p ->
            let p = poi base p in
-           if apply_filters_p conf filters Perso.get_sosa_person p
+           if apply_filters_p conf filters SosaCache.get_sosa_person p
            then PersonSet.add p acc
            else acc
          end

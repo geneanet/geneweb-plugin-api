@@ -566,7 +566,7 @@ let pers_to_piqi_simple_person conf base p =
     | Neuter -> `unknown
   in
   let sosa =
-    let sosa_nb = Perso.get_single_sosa conf base p in
+    let sosa_nb = SosaCache.get_single_sosa conf base p in
     if Sosa.eq sosa_nb Sosa.zero then `no_sosa
     else if Sosa.eq sosa_nb Sosa.one then `sosa_ref
     else `sosa
@@ -640,7 +640,7 @@ let pers_to_piqi_person_search conf base p =
     | Neuter -> `unknown
   in
   let sosa =
-    let sosa_nb = Perso.get_sosa_person p in
+    let sosa_nb = SosaCache.get_sosa_person p in
     if Sosa.eq sosa_nb Sosa.zero then `no_sosa
     else if Sosa.eq sosa_nb Sosa.one then `sosa_ref
     else `sosa
@@ -689,7 +689,7 @@ let pers_to_piqi_person_search_info conf base p =
     | Neuter -> `unknown
   in
   let sosa =
-    let sosa_nb = Perso.get_single_sosa conf base p in
+    let sosa_nb = SosaCache.get_single_sosa conf base p in
     if Sosa.eq sosa_nb Sosa.zero then `no_sosa
     else if Sosa.eq sosa_nb Sosa.one then `sosa_ref
     else `sosa

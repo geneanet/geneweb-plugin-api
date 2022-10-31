@@ -348,7 +348,7 @@ let print_last_modified_persons conf base =
       with Sys_error _ -> None
     with
     | Some ic ->
-        let () = Perso.build_sosa_ht conf base in
+        let () = SosaCache.build_sosa_ht conf base in
         let pos = in_channel_length ic in
         let vv = (ref (Bytes.create 0), ref 0) in
         let rec loop list res pos =
@@ -374,7 +374,7 @@ let print_last_modified_persons conf base =
                                     let p = poi base ip in
                                     if not (is_empty_or_quest_name p) &&
                                       apply_filters_p
-                                        conf filters (Perso.get_sosa_person) p &&
+                                        conf filters (SosaCache.get_sosa_person) p &&
                                       not (p_mem ip list)
                                     then loop (p :: list) (res - 1) pos
                                     else loop list res pos
@@ -423,7 +423,7 @@ let print_last_visited_persons conf base =
     List.fold_right begin fun (ip, _) acc ->
       if Gwdb.iper_exists base ip then
         let p = poi base ip in
-        if apply_filters_p conf filters (Perso.get_single_sosa conf base) p
+        if apply_filters_p conf filters (SosaCache.get_single_sosa conf base) p
         then p :: acc
         else acc
       else acc
@@ -510,7 +510,7 @@ let print_max_ancestors =
 let print_img conf base =
   let filters = get_filters conf in
   let aux fp fl =
-    let () = Perso.build_sosa_ht conf base in
+    let () = SosaCache.build_sosa_ht conf base in
     let () = load_image_ht conf in
     let list =
       Gwdb.Collection.fold begin fun acc p ->
@@ -690,10 +690,10 @@ let print_all_persons conf base =
     | (None, Some l) -> (0, Int32.to_int l)
     | (None, None) -> (0, nb_of_persons base - 1)
   in
-  let () = Perso.build_sosa_ht conf base in
+  let () = SosaCache.build_sosa_ht conf base in
   let list =
     Gwdb.Collection.fold ~from ~until (fun acc i ->
-        let pass_filters = apply_filters_p conf filters Perso.get_sosa_person i in
+        let pass_filters = apply_filters_p conf filters SosaCache.get_sosa_person i in
         if pass_filters then i :: acc else acc
       ) [] (Gwdb.persons base)
   in
@@ -713,7 +713,7 @@ let print_all_families conf base =
     | (None, Some l) -> (0, Int32.to_int l)
     | (None, None) -> (0, nb_families)
   in
-  let () = Perso.build_sosa_ht conf base in
+  let () = SosaCache.build_sosa_ht conf base in
   let len = limit - from in
   let list =
     Gwdb.Collection.fold_until

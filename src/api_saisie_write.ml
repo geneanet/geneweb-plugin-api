@@ -89,7 +89,7 @@ let print_person_search_list conf base =
   in
   (* On préfère limiter la liste ici, même si on perd un peu en performance. *)
   let list = Util.reduce_list max_res list in
-  let () = Perso.build_sosa_ht conf base in
+  let () = SosaCache.build_sosa_ht conf base in
   let list =
     List.map
       (fun ip ->
@@ -1441,7 +1441,7 @@ let print_mod_family_request conf base =
          let dates = opt_of_string @@ Api_saisie_read.short_dates_text conf base sp in
          let image = get_portrait conf base p in
          let sosa =
-           let sosa_nb = Perso.get_single_sosa conf base sp in
+           let sosa_nb = SosaCache.get_single_sosa conf base sp in
            if Sosa.eq sosa_nb Sosa.zero then `no_sosa
            else if Sosa.eq sosa_nb Sosa.one then `sosa_ref
            else `sosa
@@ -1898,7 +1898,7 @@ let print_add_child conf base =
          let dates = Api_saisie_read.short_dates_text conf base sp in
          let image = get_portrait conf base p in
          let sosa =
-           let sosa_nb = Perso.get_single_sosa conf base sp in
+           let sosa_nb = SosaCache.get_single_sosa conf base sp in
            if Sosa.eq sosa_nb Sosa.zero then `no_sosa
            else if Sosa.eq sosa_nb Sosa.one then `sosa_ref
            else `sosa

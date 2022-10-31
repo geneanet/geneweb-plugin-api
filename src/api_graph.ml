@@ -13,7 +13,7 @@ let close_person_relation conf base ips gen_desc filters =
   let desc = Util.select_mascdesc conf base ips gen_desc in
   Hashtbl.fold
     (fun _k v acc ->
-       if apply_filters_p conf filters Perso.get_sosa_person v
+       if apply_filters_p conf filters SosaCache.get_sosa_person v
        then v :: acc
        else acc)
     desc []
@@ -53,7 +53,7 @@ let event_aux_pers_to_piqi_person conf base =
   let base_loop = has_base_loop conf base in
   let compute_sosa =
     if base_loop then fun _ -> Sosa.zero
-    else Perso.get_sosa_person
+    else SosaCache.get_sosa_person
   in
   Api_util.pers_to_piqi_person_light conf base p compute_sosa
 
@@ -170,7 +170,7 @@ let print_close_person_events conf base params close_persons_params =
     families
 
 let print_select_events conf base =
-  Perso.build_sosa_ht conf base ;
+  SosaCache.build_sosa_ht conf base ;
   load_image_ht conf ;
   let params = get_params conf Mext.parse_events_query_params in
   let events =
@@ -494,7 +494,7 @@ let print_cpl_relation conf base =
             in
             List.fold_left
               (fun acc (p, _) ->
-                if apply_filters_p conf filters Perso.get_sosa_person p
+                if apply_filters_p conf filters SosaCache.get_sosa_person p
                 then p :: acc
                 else [])
               [] list
