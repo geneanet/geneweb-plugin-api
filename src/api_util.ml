@@ -56,9 +56,9 @@ let compute_sosa conf base single_sosa =
   if not (has_sosa_ref conf base) then fun _ -> Sosa.zero
   else if has_base_loop conf base then fun _ -> Sosa.zero
   else if not single_sosa then
-    let () = Perso.build_sosa_ht conf base in
-    Perso.get_sosa_person
-  else (Perso.get_single_sosa conf base)
+    let () = SosaCache.build_sosa_ht conf base in
+    SosaCache.get_sosa_person
+  else (SosaCache.get_single_sosa conf base)
 
 (* Pour aller plus vite et ne pas tester l'existance de fichier    *)
 (* plusieurs fois en fonction des extensions, on prend le problème *)
@@ -754,8 +754,8 @@ let empty_piqi_person conf ref_person =
       - p         : person
       - fam       : family
       - base_loop : booléen pour savoir s'il y a une boucle dans la base.
-      - compute_sosa : appel de soit Perso.get_single_sosa,
-                                soit Perso.get_sosa_person
+      - compute_sosa : appel de soit SosaCache.get_single_sosa,
+                                soit SosaCache.get_sosa_person
     [Retour] :
       - Person : Retourne une personne dont tous les champs sont complétés.
     [Rem] : Non exporté en clair hors de ce module.                           *)
@@ -894,8 +894,8 @@ let spouse_to_piqi_spouse conf base p fam compute_sosa =
       - base      : base de donnée
       - p         : person
       - base_loop : booléen pour savoir s'il y a une boucle dans la base.
-      - compute_sosa : appel de soit Perso.get_single_sosa,
-                                soit Perso.get_sosa_person
+      - compute_sosa : appel de soit SosaCache.get_single_sosa,
+                                soit SosaCache.get_sosa_person
     [Retour] :
       - Person : Retourne une personne dont tous les champs sont complétés.
     [Rem] : Non exporté en clair hors de ce module.                           *)
@@ -1039,8 +1039,8 @@ let pers_to_piqi_person_light conf base p compute_sosa =
       - base      : base de donnée
       - p         : person
       - base_loop : booléen pour savoir s'il y a une boucle dans la base.
-      - compute_sosa : appel de soit Perso.get_single_sosa,
-                                soit Perso.get_sosa_person
+      - compute_sosa : appel de soit SosaCache.get_single_sosa,
+                                soit SosaCache.get_sosa_person
     [Retour] :
       - Person : Retourne une personne dont tous les champs sont complétés.
     [Rem] : Non exporté en clair hors de ce module.                           *)
