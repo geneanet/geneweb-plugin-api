@@ -26,12 +26,6 @@ let is_empty_or_quest_name p =
 
 let get_portrait conf base p = Image.get_portrait conf base p |> Option.map Image.src_to_string
 
-(* FIXME this should NOT use Gwdb.get_image but Image.get_portrait_path instead.
- It appears that [conf] permissions are incorrectly set*)
-let get_portrait_path _conf base p = sou base (get_image p)
-
-
-
 (**/**)
 
 
@@ -788,8 +782,11 @@ let spouse_to_piqi_spouse conf base p fam compute_sosa =
   let fn = Name.lower first_name in
   let occ = Int32.of_int (get_occ p) in
   let publicname = if gen_p.public_name = "" then None else Some gen_p.public_name in
-  let image = if gen_p.image <> "" then gen_p.image
-    else get_portrait_path conf base p
+  let image =
+    match Image.get_portrait_path conf base p with
+    | Some (`Path s) ->
+        if gen_p.image <> "" then gen_p.image else s
+    | None -> ""
   in
   let birth =
     match Adef.od_of_cdate gen_p.birth with
@@ -922,10 +919,11 @@ let pers_to_piqi_person_light conf base p compute_sosa =
   let fn = Name.lower first_name in
   let occ = Int32.of_int (get_occ p) in
   let publicname = if gen_p.public_name = "" then None else Some gen_p.public_name in
-  let image = if gen_p.image <> "" then gen_p.image
-    else match Image.get_portrait_path conf base p with
-      | Some (`Path s) -> s
-      | None -> ""
+  let image =
+    match Image.get_portrait_path conf base p with
+    | Some (`Path s) ->
+        if gen_p.image <> "" then gen_p.image else s
+    | None -> ""
   in
   let birth =
     match Adef.od_of_cdate gen_p.birth with
@@ -1075,8 +1073,11 @@ let pers_to_piqi_person_full conf base p compute_sosa =
   in
   let firstname_aliases = gen_p.first_names_aliases in
   let surname_aliases = gen_p.surnames_aliases in
-  let image = if gen_p.image <> "" then gen_p.image
-    else get_portrait_path conf base p
+  let image =
+    match Image.get_portrait_path conf base p with
+    | Some (`Path s) ->
+        if gen_p.image <> "" then gen_p.image else s
+    | None -> ""
   in
   let birth =
     match Adef.od_of_cdate gen_p.birth with
