@@ -514,8 +514,8 @@ let print_img conf base =
     let () = load_image_ht conf in
     let list =
       Gwdb.Collection.fold begin fun acc p ->
-        match Image.get_portrait_path conf base p with
-        | Some (`Path img) -> fp p img :: acc
+        match Image.get_portrait conf base p with
+        | Some src -> fp p (Image.src_to_string src) :: acc
         | None -> acc
       end [] (Gwdb.persons base)
     in
