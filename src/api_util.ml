@@ -783,9 +783,9 @@ let spouse_to_piqi_spouse conf base p fam compute_sosa =
   let occ = Int32.of_int (get_occ p) in
   let publicname = if gen_p.public_name = "" then None else Some gen_p.public_name in
   let image =
-    match Image.get_portrait_path conf base p with
-    | Some (`Path s) ->
-        if gen_p.image <> "" then gen_p.image else s
+    match Image.get_portrait conf base p with
+    | Some src ->
+        if gen_p.image <> "" then gen_p.image else Image.src_to_string src
     | None -> ""
   in
   let birth =
@@ -920,9 +920,9 @@ let pers_to_piqi_person_light conf base p compute_sosa =
   let occ = Int32.of_int (get_occ p) in
   let publicname = if gen_p.public_name = "" then None else Some gen_p.public_name in
   let image =
-    match Image.get_portrait_path conf base p with
-    | Some (`Path s) ->
-        if gen_p.image <> "" then gen_p.image else s
+    match Image.get_portrait conf base p with
+    | Some src ->
+        if gen_p.image <> "" then gen_p.image else Image.src_to_string src
     | None -> ""
   in
   let birth =
@@ -1074,9 +1074,9 @@ let pers_to_piqi_person_full conf base p compute_sosa =
   let firstname_aliases = gen_p.first_names_aliases in
   let surname_aliases = gen_p.surnames_aliases in
   let image =
-    match Image.get_portrait_path conf base p with
-    | Some (`Path s) ->
-        if gen_p.image <> "" then gen_p.image else s
+    match Image.get_portrait conf base p with
+    | Some src ->
+        if gen_p.image <> "" then gen_p.image else Image.src_to_string src
     | None -> ""
   in
   let birth =
