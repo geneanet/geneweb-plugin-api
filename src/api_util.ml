@@ -188,12 +188,12 @@ let title_to_piqi_title t =
   let title = t.t_ident in
   let fief = t.t_place in
   let date_begin =
-    match Adef.od_of_cdate t.t_date_start with
+    match Date.od_of_cdate t.t_date_start with
     | Some d -> Some (string_of_date d)
     | None -> None
   in
   let date_end =
-    match Adef.od_of_cdate t.t_date_end with
+    match Date.od_of_cdate t.t_date_end with
     | Some d -> Some (string_of_date d)
     | None -> None
   in
@@ -562,7 +562,7 @@ let apply_filters_p conf filters compute_sosa p =
       match filters.date_birth with
       | Some (date_begin, date_end, prec) ->
           is_date_included
-            prec (Adef.od_of_cdate (get_birth p)) date_begin date_end
+            prec (Date.od_of_cdate (get_birth p)) date_begin date_end
       | None -> filter
     else filter
   in
@@ -594,7 +594,7 @@ let get_filters = Filter.get_filters
 let print_result = Api_piqi_util.print_result
 
 let date_to_opt_string d =
-  match Adef.od_of_cdate d with
+  match Date.od_of_cdate d with
   | Some d -> Some (string_of_date d)
   | _ -> None
 
@@ -789,7 +789,7 @@ let spouse_to_piqi_spouse conf base p fam compute_sosa =
     | None -> ""
   in
   let birth =
-    match Adef.od_of_cdate gen_p.birth with
+    match Date.od_of_cdate gen_p.birth with
     | Some d when p_auth -> string_of_date d
     | _ -> ""
   in
@@ -798,7 +798,7 @@ let spouse_to_piqi_spouse conf base p fam compute_sosa =
     else ""
   in
   let baptism =
-    match Adef.od_of_cdate gen_p.baptism with
+    match Date.od_of_cdate gen_p.baptism with
     | Some d when p_auth -> string_of_date d
     | _ -> ""
   in
@@ -827,7 +827,7 @@ let spouse_to_piqi_spouse conf base p fam compute_sosa =
   let burial =
     match gen_p.burial with
     | Buried cod | Cremated cod ->
-        (match Adef.od_of_cdate cod with
+        (match Date.od_of_cdate cod with
         | Some d when p_auth -> string_of_date d
         | _ -> "")
     | _ -> ""
@@ -837,7 +837,7 @@ let spouse_to_piqi_spouse conf base p fam compute_sosa =
     else ""
   in
   let marriage_date =
-    match Adef.od_of_cdate (get_marriage fam) with
+    match Date.od_of_cdate (get_marriage fam) with
     | Some d when m_auth -> string_of_date d
     | _ -> ""
   in
@@ -926,7 +926,7 @@ let pers_to_piqi_person_light conf base p compute_sosa =
     | None -> ""
   in
   let birth =
-    match Adef.od_of_cdate gen_p.birth with
+    match Date.od_of_cdate gen_p.birth with
     | Some d when p_auth -> string_of_date d
     | _ -> ""
   in
@@ -935,7 +935,7 @@ let pers_to_piqi_person_light conf base p compute_sosa =
     else ""
   in
   let baptism =
-    match Adef.od_of_cdate gen_p.baptism with
+    match Date.od_of_cdate gen_p.baptism with
     | Some d when p_auth -> string_of_date d
     | _ -> ""
   in
@@ -964,7 +964,7 @@ let pers_to_piqi_person_light conf base p compute_sosa =
   let burial =
     match gen_p.burial with
     | Buried cod | Cremated cod ->
-        (match Adef.od_of_cdate cod with
+        (match Date.od_of_cdate cod with
         | Some d when p_auth -> string_of_date d
         | _ -> "")
     | _ -> ""
@@ -1080,7 +1080,7 @@ let pers_to_piqi_person_full conf base p compute_sosa =
     | None -> ""
   in
   let birth =
-    match Adef.od_of_cdate gen_p.birth with
+    match Date.od_of_cdate gen_p.birth with
     | Some d when p_auth -> Some (string_of_date d)
     | _ -> None
   in
@@ -1093,7 +1093,7 @@ let pers_to_piqi_person_full conf base p compute_sosa =
     else None
   in
   let baptism =
-    match Adef.od_of_cdate gen_p.baptism with
+    match Date.od_of_cdate gen_p.baptism with
     | Some d when p_auth -> Some (string_of_date d)
     | _ -> None
   in
@@ -1130,7 +1130,7 @@ let pers_to_piqi_person_full conf base p compute_sosa =
   let burial =
     match get_burial p with
     | Buried cod | Cremated cod ->
-        (match Adef.od_of_cdate cod with
+        (match Date.od_of_cdate cod with
         | Some d when p_auth -> Some (string_of_date d)
         | _ -> None)
     | _ -> None
@@ -1266,7 +1266,7 @@ let fam_to_piqi_family conf base ifam =
     else None
   in
   let marriage =
-    match Adef.od_of_cdate gen_f.marriage with
+    match Date.od_of_cdate gen_f.marriage with
     | Some d when m_auth -> Some (string_of_date d)
     | _ -> None
   in
@@ -1296,7 +1296,7 @@ let fam_to_piqi_family conf base ifam =
     match gen_f.divorce with
     | NotDivorced -> (`not_divorced, None)
     | Divorced cod ->
-        (match Adef.od_of_cdate cod with
+        (match Date.od_of_cdate cod with
          | Some d when m_auth -> (`divorced, Some (string_of_date d))
          | _ -> (`divorced, None))
     | Separated -> (`separated, None)
@@ -1341,7 +1341,7 @@ let fam_to_piqi_family_link base (ifath, imoth) ifam fam =
   let index = (Int32.of_string @@ Gwdb.string_of_ifam ifam) in
   let fsources = None in
   let marriage =
-    match Adef.od_of_cdate gen_f.marriage with
+    match Date.od_of_cdate gen_f.marriage with
     | Some d -> Some (string_of_date d)
     | _ -> None
   in
@@ -1365,7 +1365,7 @@ let fam_to_piqi_family_link base (ifath, imoth) ifam fam =
     match gen_f.divorce with
     | NotDivorced -> (`not_divorced, None)
     | Divorced cod ->
-        (match Adef.od_of_cdate cod with
+        (match Date.od_of_cdate cod with
          | Some d -> (`divorced, Some (string_of_date d))
          | _ -> (`divorced, None))
     | Separated -> (`separated, None)

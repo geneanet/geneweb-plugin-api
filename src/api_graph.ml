@@ -128,12 +128,12 @@ let events_filters_aux params =
   in
   ( (fun e ->
         List.mem e.epers_name filter_pevents
-        && match Adef.od_of_cdate e.epers_date with
+        && match Date.od_of_cdate e.epers_date with
         | Some d -> filter_start_date d && filter_stop_date d
         | None -> false)
   , (fun e ->
        List.mem e.efam_name filter_fevents
-       && match Adef.od_of_cdate e.efam_date with
+       && match Date.od_of_cdate e.efam_date with
         | Some d -> filter_start_date d && filter_stop_date d
         | None -> false)
   )
