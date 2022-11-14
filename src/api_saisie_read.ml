@@ -574,7 +574,7 @@ let fam_to_piqi_family_link conf base (ifath : Gwdb.iper) imoth sp ifam fam base
   let gen_f = Util.string_gen_family base (gen_family_of_family fam) in
   let index = Int32.of_string @@ Gwdb.string_of_ifam gen_f.fam_index in
   let (marriage_date, marriage_date_long, marriage_date_conv, marriage_date_conv_long, marriage_cal, marriage_date_raw) =
-    match (m_auth, Adef.od_of_cdate gen_f.marriage) with
+    match (m_auth, Date.od_of_cdate gen_f.marriage) with
     | (true, Some d) ->
       let (marriage_date, marriage_date_long, marriage_date_conv, marriage_date_conv_long, marriage_cal) = string_of_date_and_conv conf d in
       (marriage_date, marriage_date_long, marriage_date_conv, marriage_date_conv_long, marriage_cal, string_of_date_raw conf d)
@@ -605,7 +605,7 @@ let fam_to_piqi_family_link conf base (ifath : Gwdb.iper) imoth sp ifam fam base
     match gen_f.divorce with
     | NotDivorced -> (`not_divorced, "", "", "", "", None, "")
     | Divorced cod ->
-        (match Adef.od_of_cdate cod with
+        (match Date.od_of_cdate cod with
          | Some d when m_auth ->
              let (divorce_date, divorce_date_long, divorce_date_conv, divorce_date_conv_long, divorce_cal) =
                string_of_date_and_conv conf d
@@ -668,7 +668,7 @@ let fill_events conf base p base_prefix p_auth pers_to_piqi witness_constructor 
                                  , event_to_piqi_event None (Some name) )
         in
         let (date, date_long, date_conv, date_conv_long, date_cal, date_raw) =
-          match Adef.od_of_cdate date with
+          match Date.od_of_cdate date with
           | Some d ->
             let (date, date_long, date_conv, date_conv_long, date_cal) = string_of_date_and_conv conf d in
             (date, date_long, date_conv, date_conv_long, date_cal, string_of_date_raw conf d)
@@ -747,13 +747,13 @@ let get_related_piqi conf base p base_prefix gen_p has_relations pers_to_piqi re
       List.sort
         (fun (c1, _) (c2, _) ->
            let d1 =
-             match Adef.od_of_cdate (get_baptism c1) with
-             | None -> Adef.od_of_cdate (get_birth c1)
+             match Date.od_of_cdate (get_baptism c1) with
+             | None -> Date.od_of_cdate (get_birth c1)
              | x -> x
            in
            let d2 =
-             match Adef.od_of_cdate (get_baptism c2) with
-             | None -> Adef.od_of_cdate (get_birth c2)
+             match Date.od_of_cdate (get_baptism c2) with
+             | None -> Date.od_of_cdate (get_birth c2)
              | x -> x
            in
            match (d1, d2) with
@@ -808,7 +808,7 @@ let get_family_piqi base conf ifam p base_prefix spouse_to_piqi witnesses_to_piq
   let gen_f = Util.string_gen_family base (gen_family_of_family fam) in
   let index = Int32.of_string @@ Gwdb.string_of_ifam gen_f.fam_index in
   let (marriage_date, marriage_date_long, marriage_date_conv, marriage_date_conv_long, marriage_cal, marriage_date_raw) =
-    match (m_auth, Adef.od_of_cdate gen_f.marriage) with
+    match (m_auth, Date.od_of_cdate gen_f.marriage) with
     | (true, Some d) ->
       let (marriage_date, marriage_date_long, marriage_date_conv, marriage_date_conv_long, marriage_cal) = string_of_date_and_conv conf d in
       (marriage_date, marriage_date_long, marriage_date_conv, marriage_date_conv_long, marriage_cal, string_of_date_raw conf d)
@@ -839,7 +839,7 @@ let get_family_piqi base conf ifam p base_prefix spouse_to_piqi witnesses_to_piq
     match gen_f.divorce with
     | NotDivorced -> (`not_divorced, "", "", "", "", None, "")
     | Divorced cod ->
-        (match Adef.od_of_cdate cod with
+        (match Date.od_of_cdate cod with
          | Some d when m_auth ->
              let (divorce_date, divorce_date_long, divorce_date_conv, divorce_date_conv_long, divorce_cal) =
                string_of_date_and_conv conf d
@@ -1018,7 +1018,7 @@ let get_events_witnesses conf base p base_prefix gen_p p_auth has_relations pers
       List.map
         (fun (p, wk, (name, date, _, _, _, _, isp)) ->
           let witness_date =
-            match Adef.od_of_cdate date with
+            match Date.od_of_cdate date with
             | Some (Dgreg (dmy, _)) -> " (" ^ DateDisplay.year_text dmy ^ ")"
             | _ -> ""
           in
@@ -1144,19 +1144,19 @@ let fill_death conf p_auth gen_p =
       | _ -> (`dont_know_if_dead, "", "", None)
 
 let fill_birth conf p_auth gen_p =
-  match (p_auth, Adef.od_of_cdate gen_p.birth) with
+  match (p_auth, Date.od_of_cdate gen_p.birth) with
       | (true, Some d) -> string_of_date_and_conv conf d
       | _ -> ("", "", "", "", None)
 
 let fill_baptism conf p_auth gen_p =
-  match (p_auth, Adef.od_of_cdate gen_p.baptism) with
+  match (p_auth, Date.od_of_cdate gen_p.baptism) with
       | (true, Some d) -> string_of_date_and_conv conf d
       | _ -> ("", "", "", "", None)
 
 let fill_burial conf p_auth gen_p =
   match (p_auth, gen_p.burial) with
       | (true, Buried cod) | (true, Cremated cod) ->
-          (match Adef.od_of_cdate cod with
+          (match Date.od_of_cdate cod with
           | Some d -> string_of_date_and_conv conf d
           | _ -> ("", "", "", "", None))
       | _ -> ("", "", "", "", None)
@@ -1457,12 +1457,12 @@ let transform_empty_string_to_None string =
   if string = "" then None else Some string
 
 let fill_birth_date_raw conf p_auth gen_p =
-  match (p_auth, Adef.od_of_cdate gen_p.birth) with
+  match (p_auth, Date.od_of_cdate gen_p.birth) with
     | (true, Some d) -> string_of_date_raw conf d
     | _ -> ""
 
 let fill_baptism_date_raw conf p_auth gen_p =
-  match (p_auth, Adef.od_of_cdate gen_p.baptism) with
+  match (p_auth, Date.od_of_cdate gen_p.baptism) with
     | (true, Some d) -> string_of_date_raw conf d
     | _ -> ""
 
@@ -1477,7 +1477,7 @@ let fill_burial_date_raw_if_is_main_person conf p_auth gen_p is_main_person =
   if is_main_person then
     match (p_auth, gen_p.burial) with
     | (true, Buried cod) | (true, Cremated cod) ->
-        (match Adef.od_of_cdate cod with
+        (match Date.od_of_cdate cod with
         | Some d -> string_of_date_raw conf d
         | _ -> "")
     | _ -> ""

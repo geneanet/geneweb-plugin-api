@@ -1339,11 +1339,11 @@ let print_all_stats conf base =
                   let fam = foi base ifam in
                   if not @@ Util.authorized_age conf base (poi base (Gutil.spouse (get_iper p) fam))
                   then loop (i + 1)
-                  else begin match Adef.od_of_cdate (get_marriage fam) with
+                  else begin match Date.od_of_cdate (get_marriage fam) with
                     | Some (Dgreg ({ prec = Sure } as dmy, _)) ->
                       begin match get_divorce fam with
                         | Divorced co ->
-                          begin match Adef.od_of_cdate co with
+                          begin match Date.od_of_cdate co with
                             | Some (Dgreg ({ prec = Sure } as dmy2, _)) ->
                               if dmy2.year >= dmy.year
                               then aux1 ht_marr_time dmy Neuter (Date.time_elapsed dmy dmy2).year ;
@@ -1374,7 +1374,7 @@ let print_all_stats conf base =
                           end else begin
                             let ifam2 = Array.unsafe_get fams (i + 1) in
                             let fam2 = foi base ifam2 in
-                            match Adef.od_of_cdate (get_marriage fam2) with
+                            match Date.od_of_cdate (get_marriage fam2) with
                             | Some (Dgreg ({ prec = Sure } as dmy2, _)) ->
                               if dmy.year <= dmy2.year
                               then aux1 ht_marr_time dmy Neuter (Date.time_elapsed dmy dmy2).year ;
@@ -1422,7 +1422,7 @@ let print_all_stats conf base =
     let m = poi base (get_mother fam) in
     if Util.authorized_age conf base f
     && Util.authorized_age conf base m
-    then begin match Adef.od_of_cdate (get_marriage fam) with
+    then begin match Date.od_of_cdate (get_marriage fam) with
       | Some (Dgreg ({ prec = Sure } as dmy, _) as d) -> begin
 
           (* Age at wedding *)

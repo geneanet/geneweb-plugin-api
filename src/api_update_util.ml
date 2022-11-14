@@ -712,7 +712,7 @@ let pers_to_piqi_person_search_info conf base p =
           | Event.Fevent name -> !!(Util.string_of_fevent_name conf base name)
         in
         let (date, _, date_conv, _, date_cal) =
-          match Adef.od_of_cdate date with
+          match Date.od_of_cdate date with
           | Some d -> Api_saisie_read.string_of_date_and_conv conf d
           | _ -> ("", "", "", "", None)
         in
@@ -782,13 +782,13 @@ let pers_to_piqi_person_search_info conf base p =
       List.sort
         (fun (c1, _) (c2, _) ->
            let d1 =
-             match Adef.od_of_cdate (get_baptism c1) with
-             | None -> Adef.od_of_cdate (get_birth c1)
+             match Date.od_of_cdate (get_baptism c1) with
+             | None -> Date.od_of_cdate (get_birth c1)
              | x -> x
            in
            let d2 =
-             match Adef.od_of_cdate (get_baptism c2) with
-             | None -> Adef.od_of_cdate (get_birth c2)
+             match Date.od_of_cdate (get_baptism c2) with
+             | None -> Date.od_of_cdate (get_birth c2)
              | x -> x
            in
            match (d1, d2) with
@@ -880,8 +880,8 @@ let pers_to_piqi_person_search_info conf base p =
       List.sort
         (fun (_, fam1) (_, fam2) ->
            match
-             (Adef.od_of_cdate (get_marriage fam1),
-              Adef.od_of_cdate (get_marriage fam2))
+             (Date.od_of_cdate (get_marriage fam1),
+              Date.od_of_cdate (get_marriage fam2))
            with
            | (Some d1, Some d2) -> Date.compare_date d1 d2
            | _ -> 0 )
@@ -1044,12 +1044,12 @@ let pers_to_piqi_mod_person conf base p =
         let title = sou base t.t_ident in
         let fief = sou base t.t_place in
         let date_begin =
-          match Adef.od_of_cdate t.t_date_start with
+          match Date.od_of_cdate t.t_date_start with
           | Some d -> Some (piqi_date_of_date d)
           | None -> None
         in
         let date_end =
-          match Adef.od_of_cdate t.t_date_end with
+          match Date.od_of_cdate t.t_date_end with
           | Some d -> Some (piqi_date_of_date d)
           | None -> None
         in
@@ -1122,7 +1122,7 @@ let pers_to_piqi_mod_person conf base p =
            | Epers_Name n -> (None, Some (sou base n))
          in
          let date =
-           match Adef.od_of_cdate evt.epers_date with
+           match Date.od_of_cdate evt.epers_date with
            | Some d -> Some (piqi_date_of_date d)
            | _ -> None
          in
@@ -1357,7 +1357,7 @@ let fam_to_piqi_mod_family conf base ifam fam =
            | Efam_Name n -> (None, Some (sou base n))
          in
          let date =
-           match Adef.od_of_cdate evt.efam_date with
+           match Date.od_of_cdate evt.efam_date with
            | Some d -> Some (piqi_date_of_date d)
            | _ -> None
          in

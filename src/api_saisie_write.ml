@@ -76,8 +76,8 @@ let print_person_search_list conf base =
           let cmp_fn = Gutil.alphabetic_order fn1 fn2 in
           if cmp_fn = 0 then
             (match
-              (Adef.od_of_cdate (get_birth p1),
-               Adef.od_of_cdate (get_birth p2))
+              (Date.od_of_cdate (get_birth p1),
+               Date.od_of_cdate (get_birth p2))
              with
              | (Some d1, Some d2) -> Date.compare_date d1 d2
              | (Some _, _) -> -1
@@ -880,10 +880,10 @@ let compute_warnings conf base resp =
                   (fun _ ->
                      Printf.sprintf "%s %s %s-%s"
                        (sou base t.t_ident) (sou base t.t_place)
-                       (match Adef.od_of_cdate t.t_date_start with
+                       (match Date.od_of_cdate t.t_date_start with
                         | Some d -> !!(DateDisplay.string_of_date conf d)
                         | _ -> "" )
-                       (match Adef.od_of_cdate t.t_date_end with
+                       (match Date.od_of_cdate t.t_date_end with
                         | Some d -> !!(DateDisplay.string_of_date conf d)
                         | _ -> "" ))
                 in

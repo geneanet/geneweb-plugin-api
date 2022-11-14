@@ -131,7 +131,7 @@ let reconstitute_person_aux conf fn_occ fn_rparents fn_pevt_witnesses mod_p =
   let death =
     match death with
     | DontKnowIfDead ->
-      Update.infer_death_bb conf (Adef.od_of_cdate birth) (Adef.od_of_cdate baptism)
+      Update.infer_death_bb conf (Date.od_of_cdate birth) (Date.od_of_cdate baptism)
     | _ -> death
   in
   ( original_pevents
