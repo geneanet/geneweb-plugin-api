@@ -1134,7 +1134,7 @@ let fill_death conf p_auth gen_p =
   match (p_auth, gen_p.death) with
       | (true, NotDead) -> (`not_dead, "", "", None)
       | (true, Death (_, cd)) ->
-          let d = Adef.date_of_cdate cd in
+          let d = Date.date_of_cdate cd in
           let (death, _, death_conv, _, death_cal) = string_of_date_and_conv conf d in
           (`dead, death, death_conv, death_cal)
       | (true, DeadYoung) -> (`dead_young, "", "", None)
@@ -1469,7 +1469,7 @@ let fill_baptism_date_raw conf p_auth gen_p =
 let fill_death_date_raw conf p_auth gen_p =
   match (p_auth, gen_p.death) with
       | (true, Death (_, cd)) ->
-          let d = Adef.date_of_cdate cd in
+          let d = Date.date_of_cdate cd in
           string_of_date_raw conf d
       | _ -> ""
 
