@@ -571,7 +571,7 @@ let apply_filters_p conf filters compute_sosa p =
     | Some (date_begin, date_end, prec) ->
       let death =
         match get_death p with
-        | Death (_, cd) -> Some (Adef.date_of_cdate cd)
+        | Death (_, cd) -> Some (Date.date_of_cdate cd)
         | _ -> None
       in
       is_date_included prec death date_begin date_end
@@ -811,7 +811,7 @@ let spouse_to_piqi_spouse conf base p fam compute_sosa =
       match gen_p.death with
       | NotDead -> (`not_dead, "")
       | Death (_, cd) ->
-          let d = Adef.date_of_cdate cd in
+          let d = Date.date_of_cdate cd in
           (`dead, string_of_date d)
       | DeadYoung -> (`dead_young, "")
       | DeadDontKnowWhen -> (`dead_dont_know_when, "")
@@ -948,7 +948,7 @@ let pers_to_piqi_person_light conf base p compute_sosa =
       match gen_p.death with
       | NotDead -> (`not_dead, "")
       | Death (_, cd) ->
-          let d = Adef.date_of_cdate cd in
+          let d = Date.date_of_cdate cd in
           (`dead, string_of_date d)
       | DeadYoung -> (`dead_young, "")
       | DeadDontKnowWhen -> (`dead_dont_know_when, "")
@@ -1110,7 +1110,7 @@ let pers_to_piqi_person_full conf base p compute_sosa =
       match gen_p.death with
       | NotDead -> (`not_dead, None)
       | Death (_, cd) ->
-          let d = Adef.date_of_cdate cd in
+          let d = Date.date_of_cdate cd in
           (`dead, Some (string_of_date d))
       | DeadYoung -> (`dead_young, None)
       | DeadDontKnowWhen -> (`dead_dont_know_when, None)
