@@ -44,12 +44,12 @@ let reconstitute_person_aux conf fn_occ fn_rparents fn_pevt_witnesses mod_p =
           | None -> ""
         end
       ; t_date_start = begin match t.Mwrite.Title.date_begin with
-          | Some date -> Api_update_util.date_of_piqi_date conf date |> Adef.cdate_of_od
-          | None -> Adef.cdate_None
+          | Some date -> Api_update_util.date_of_piqi_date conf date |> Date.cdate_of_od
+          | None -> Date.cdate_None
         end
       ; t_date_end = begin match t.Mwrite.Title.date_end with
-          | Some date -> Api_update_util.date_of_piqi_date conf date |> Adef.cdate_of_od
-          | None -> Adef.cdate_None
+          | Some date -> Api_update_util.date_of_piqi_date conf date |> Date.cdate_of_od
+          | None -> Date.cdate_None
         end
       ; t_nth = begin match t.Mwrite.Title.nth with
           | Some i -> Int32.to_int i
@@ -107,7 +107,7 @@ let reconstitute_person_aux conf fn_occ fn_rparents fn_pevt_witnesses mod_p =
       in
       let src = Option.fold ~none:"" ~some:only_printable evt.Mwrite.Pevent.src in
       let witnesses = fn_pevt_witnesses evt in
-      { epers_name = name; epers_date = Adef.cdate_of_od date;
+      { epers_name = name; epers_date = Date.cdate_of_od date;
         epers_place = place; epers_reason = reason; epers_note = note;
         epers_src = src; epers_witnesses = Array.of_list witnesses }
     end mod_p.Mwrite.Person.pevents
@@ -116,8 +116,8 @@ let reconstitute_person_aux conf fn_occ fn_rparents fn_pevt_witnesses mod_p =
     (* [reconstitute_from_pevents] sorts pevents.
        We need to keep the original pevents list in case of error.  *)
     UpdateIndOk.reconstitute_from_pevents original_pevents false
-      (Adef.cdate_None, "", "", "")
-      (Adef.cdate_None, "", "", "")
+      (Date.cdate_None, "", "", "")
+      (Date.cdate_None, "", "", "")
       (death, "", "", "")
       (UnknownBurial, "", "", "")
   in
@@ -219,7 +219,7 @@ let reconstitute_person conf base mod_p
         ; epers_witnesses = [||]
         ; epers_date
         }
-        when epers_date = Adef.cdate_None && p.death = DontKnowIfDead -> None
+        when epers_date = Date.cdate_None && p.death = DontKnowIfDead -> None
       | e ->
         Some { e
                with epers_witnesses =
@@ -396,7 +396,7 @@ let reconstitute_person_nobase conf mod_p =
         || e.epers_note <> ""
         || e.epers_src <> ""
         || e.epers_witnesses <> [||]
-        || e.epers_date <> Adef.cdate_None
+        || e.epers_date <> Date.cdate_None
         || p.death = DontKnowIfDead
       end p.pevents }
 

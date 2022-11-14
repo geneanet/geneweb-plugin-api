@@ -77,7 +77,7 @@ let reconstitute_family conf base mod_f =
               | None -> accu)
             evt.Mwrite.Fevent.witnesses []
         in
-        { efam_name = name; efam_date = Adef.cdate_of_od date;
+        { efam_name = name; efam_date = Date.cdate_of_od date;
           efam_place = place; efam_reason = reason; efam_note = note;
           efam_src = src; efam_witnesses = Array.of_list witnesses })
       mod_f.Mwrite.Family.fevents
