@@ -213,7 +213,7 @@ let check_family_conflict base sfam scpl sdes =
     (* Vérification des fevents. *)
     List.fold_left begin fun (i, created) evt ->
       let _, created =
-        Array.fold_left begin fun (j, created) ((f, s, o, create, var, force_create), _) ->
+        Array.fold_left begin fun (j, created) ((f, s, o, create, var, force_create), _wkind, _wnote) ->
           match error_conflict_person_link base created (f, s, o, create, var, force_create) with
           | true, _ ->
             let conflict =
@@ -1360,7 +1360,7 @@ let fam_to_piqi_mod_family conf base ifam fam =
          let src = sou base evt.efam_src in
          let witnesses =
            Mutil.array_to_list_map
-             (fun (ip, wk) ->
+             (fun (ip, wk, _wnote) ->
                 let witness_type = Api_util.piqi_of_witness_kind wk in
                 let p = poi base ip in
                 let person_link = pers_to_piqi_person_link conf base p in
