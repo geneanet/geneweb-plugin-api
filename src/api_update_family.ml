@@ -72,7 +72,7 @@ let reconstitute_family conf base mod_f =
               match witness.Mwrite.Witness.person with
               | Some person ->
                   let wk = Api_util.witness_kind_of_piqi witness.Mwrite.Witness.witness_type in
-                  let wit = (reconstitute_somebody base person, wk) in
+                  let wit = (reconstitute_somebody base person, wk, "" (* TODO get witness note here*) ) in
                   wit :: accu
               | None -> accu)
             evt.Mwrite.Fevent.witnesses []
@@ -270,8 +270,8 @@ let reconstitute_family conf base mod_f =
       (fun e ->
         let w =
           Array.map
-            (fun ((f, s, o, create, var, _), wk) ->
-              ((f, s, o, create, var), wk))
+            (fun ((f, s, o, create, var, _), wk, _wnote) ->
+              ((f, s, o, create, var), wk, _wnote))
             e.efam_witnesses
         in
         {(e) with efam_witnesses = w})
