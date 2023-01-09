@@ -686,11 +686,12 @@ let fill_events conf base p base_prefix p_auth pers_to_piqi witness_constructor 
         in
         let witnesses =
           Mutil.array_to_list_map
-            (fun (ip, wk, _ (*wnote*)) ->
+            (fun (ip, wk, wnote) ->
                let witness_type = Api_util.piqi_of_witness_kind wk in
                let witness = poi base ip in
                let witness = pers_to_piqi conf base witness base_prefix in
-               witness_constructor witness_type witness
+               let wnote = sou base wnote in
+               witness_constructor witness_type witness wnote
                )
             w
         in
@@ -1298,16 +1299,18 @@ let fiche_event_constructor name type_ date date_long date_raw date_conv date_co
       witnesses = witnesses;
   }
 
-let simple_witness_constructor witness_type witness =
+let simple_witness_constructor witness_type witness witness_note =
   Mread.Witness_event.({
-    witness_type = witness_type;
-    witness = witness;
+    witness_type;
+    witness;
+    witness_note
   })
 
-let fiche_witness_constructor witness_type witness =
+let fiche_witness_constructor witness_type witness witness_note =
   Mread.Witness_fiche_event.({
-    witness_type = witness_type;
-    witness = witness;
+    witness_type;
+    witness;
+    witness_note
   })
 
 let simple_event_witness_constructor event_witness_type husband wife =
