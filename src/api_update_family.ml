@@ -72,7 +72,8 @@ let reconstitute_family conf base mod_f =
               match witness.Mwrite.Witness.person with
               | Some person ->
                   let wk = Api_util.witness_kind_of_piqi witness.Mwrite.Witness.witness_type in
-                  let wit = (reconstitute_somebody base person, wk, "" (* TODO get witness note here*) ) in
+                  let wnote = witness.Mwrite.Witness.witness_note in
+                  let wit = (reconstitute_somebody base person, wk, wnote) in
                   wit :: accu
               | None -> accu)
             evt.Mwrite.Fevent.witnesses []
