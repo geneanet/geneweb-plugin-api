@@ -280,12 +280,14 @@ message EventWitness {
   required string event_witness_type = 1;
   required SimplePerson husband = 2;
   optional SimplePerson wife = 3;
+  required string witness_note = 4;
 }
 
 message EventFicheWitness {
   required string event_witness_type = 1;
   required Person husband = 2;
   optional Person wife = 3;
+  required string witness_note = 4;
 }
 
 message Person {

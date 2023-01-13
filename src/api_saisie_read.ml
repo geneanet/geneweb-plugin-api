@@ -990,15 +990,15 @@ let get_events_witnesses conf base p base_prefix gen_p p_auth has_relations pers
               let c = pget conf base ic in
               List.iter
                 (fun ((name, _, _, _, _, wl, _) as evt) ->
-                  let (mem, wk, _(*wnote*)) = Util.array_mem_witn conf base (get_iper p) wl in
+                  let (mem, wk, wnote) = Util.array_mem_witn conf base (get_iper p) wl in
                   if mem then
                     (* Attention aux doublons pour les evenements famille. *)
                     match name with
                     | Event.Fevent _ ->
                         if get_sex c = Male then
-                          list := (c, wk, evt) :: !list
+                          list := (c, wk, wnote, evt) :: !list
                         else ()
-                    | _ -> list := (c, wk, evt) :: !list
+                    | _ -> list := (c, wk, wnote, evt) :: !list
                   else ())
                 (Event.sorted_events conf base c);
               make_list icl
@@ -1010,13 +1010,13 @@ let get_events_witnesses conf base p base_prefix gen_p p_auth has_relations pers
       (* On tri les témoins dans le même ordre que les évènements. *)
       let events_witnesses =
         Event.sort_events
-          (fun (_, _, (name, _, _, _, _, _, _)) ->
+          (fun (_, _, _, (name, _, _, _, _, _, _)) ->
             name)
-          (fun (_, _, (_, date, _, _, _, _, _)) -> date)
+          (fun (_, _, _, (_, date, _, _, _, _, _)) -> date)
           events_witnesses
       in
       List.map
-        (fun (p, wk, (name, date, _, _, _, _, isp)) ->
+        (fun (p, wk, wnote, (name, date, _, _, _, _, isp)) ->
           let witness_date =
             match Date.od_of_cdate date with
             | Some (Dgreg (dmy, _)) -> " (" ^ DateDisplay.year_text dmy ^ ")"
@@ -1042,7 +1042,7 @@ let get_events_witnesses conf base p base_prefix gen_p p_auth has_relations pers
                 Some (pers_to_piqi conf base sp base_prefix )
             | None -> None
           in
-          event_witness_constructor event_witness_type husband wife
+          event_witness_constructor event_witness_type husband wife wnote
           )
         events_witnesses
     end
@@ -1311,18 +1311,20 @@ let fiche_witness_constructor witness_type witness witness_note =
     witness_note
   })
 
-let simple_event_witness_constructor event_witness_type husband wife =
+let simple_event_witness_constructor event_witness_type husband wife witness_note =
       Mread.Event_witness.({
         event_witness_type = event_witness_type;
         husband = husband;
         wife = wife;
+        witness_note
       })
 
-let fiche_event_witness_constructor event_witness_type husband wife =
+let fiche_event_witness_constructor event_witness_type husband wife witness_note =
   Mread.Event_fiche_witness.({
     event_witness_type = event_witness_type;
     husband = husband;
     wife = wife;
+    witness_note
   })
 
 let fill_notes conf base p p_auth is_main_person gen_p =
