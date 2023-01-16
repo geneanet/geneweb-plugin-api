@@ -407,7 +407,7 @@ message Family {
   optional string divorce_date_conv = 13;
   optional string divorce_date_conv_long = 22;
   optional Calendar divorce_date_cal = 14;
-  repeated SimplePerson witnesses = 15;
+  repeated WitnessEvent witnesses = 15;
   optional string notes = 16;
   optional string fsources = 17;
   repeated SimplePerson children = 18;
@@ -433,7 +433,7 @@ message FicheFamily {
   optional string divorce_date_conv = 13;
   optional string divorce_date_conv_long = 22;
   optional Calendar divorce_date_cal = 14;
-  repeated Person witnesses = 15;
+  repeated WitnessFicheEvent witnesses = 15;
   optional string notes = 16;
   optional string fsources = 17;
   repeated Person children = 18;

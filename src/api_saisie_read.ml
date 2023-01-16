@@ -258,6 +258,14 @@ type graph_more_info =
   | Ancestor
   | Spouse
 
+let simple_witness_constructor witness_type witness witness_note =
+  Mread.Witness_event.({
+    witness_type;
+    witness;
+    witness_note
+  })
+
+
 (* ************************************************************************** *)
 (*  [Fonc] event_to_piqi_event : string -> event_type                         *)
 (** [Description] : Retourne à partir d'un évènement (gwdb) un évènement (piqi)
@@ -616,8 +624,11 @@ let fam_to_piqi_family_link conf base (ifath : Gwdb.iper) imoth sp ifam fam base
   in
   let witnesses =
     Mutil.array_to_list_map
-      (fun ip -> witness_to_piqi conf base (poi base ip) base_prefix)
-      gen_f.witnesses
+      (fun (ip, wkind, wnote) ->
+         let p = poi base ip in
+         let wnote = sou base wnote in
+         witness_to_piqi conf base p wkind wnote base_prefix
+      ) (Perso.get_marriage_witnesses fam)
   in
   let notes =
     if m_auth && not conf.no_note
@@ -851,8 +862,12 @@ let get_family_piqi base conf ifam p base_prefix spouse_to_piqi witnesses_to_piq
   in
   let witnesses =
     Mutil.array_to_list_map
-      (fun ip -> witnesses_to_piqi conf base (poi base ip) base_prefix)
-      gen_f.witnesses
+      (fun (ip, wkind, wnote) ->
+         let p = poi base ip in
+         let wnote = sou base wnote in
+         witnesses_to_piqi conf base p wkind wnote base_prefix
+      )
+      (Perso.get_marriage_witnesses fam)
   in
   let notes =
     if m_auth && not conf.no_note
@@ -1065,8 +1080,10 @@ let fam_to_piqi_family conf base p ifam =
   let spouse_to_piqi conf base p base_prefix =
       pers_to_piqi_simple_person conf base p base_prefix
   in
-  let witnesses_to_piqi conf base p base_prefix =
-      pers_to_piqi_simple_person conf base p base_prefix
+  let witnesses_to_piqi conf base p wkind wnote base_prefix =
+    let p = pers_to_piqi_simple_person conf base p base_prefix in
+    let wkind = Api_util.piqi_of_witness_kind wkind in
+    simple_witness_constructor wkind p wnote
   in
   let child_to_piqi conf base p base_prefix =
       pers_to_piqi_simple_person conf base p base_prefix
@@ -1297,13 +1314,6 @@ let fiche_event_constructor name type_ date date_long date_raw date_conv date_co
       witnesses = witnesses;
   }
 
-let simple_witness_constructor witness_type witness witness_note =
-  Mread.Witness_event.({
-    witness_type;
-    witness;
-    witness_note
-  })
-
 let fiche_witness_constructor witness_type witness witness_note =
   Mread.Witness_fiche_event.({
     witness_type;
@@ -1349,15 +1359,17 @@ let fill_families conf base p =
   let spouse_to_piqi conf base p base_prefix =
       pers_to_piqi_simple_person conf base p base_prefix
   in
-  let witnesses_to_piqi conf base p base_prefix =
-      pers_to_piqi_simple_person conf base p base_prefix
+  let witnesses_to_piqi conf base p wkind wnote base_prefix =
+    let p = pers_to_piqi_simple_person conf base p base_prefix in
+    let wkind = Api_util.piqi_of_witness_kind wkind in
+    simple_witness_constructor wkind p wnote
   in
   let child_to_piqi conf base p base_prefix =
       pers_to_piqi_simple_person conf base p base_prefix
   in
   let family_constructor index spouse marriage_date marriage_date_long marriage_date_raw marriage_date_conv marriage_date_conv_long marriage_cal
        marriage_date_text marriage_place marriage_src marriage_type divorce_type divorce_date divorce_date_long divorce_date_raw divorce_date_conv
-       divorce_date_conv_long divorce_cal witnesses notes fsources children =
+       divorce_date_conv_long divorce_cal witnesses notes fsources children =    
     {
       Mread.Family.index = index;
       spouse = spouse;
@@ -1397,18 +1409,21 @@ let fill_fiche_families conf base p base_prefix nb_asc nb_desc nb_desc_max pers_
     let spouse_to_piqi conf base p base_prefix =
       pers_to_piqi_person conf base p base_prefix false 0 1 0 0 false simple_graph_info no_event
     in
-    let witnesses_to_piqi conf base p base_prefix =
-      if not simple_graph_info then
-        pers_to_piqi_person conf base p base_prefix false 0 1 0 0 false simple_graph_info no_event
-      else
-        Mread.default_person()
+    let witnesses_to_piqi conf base p wkind wnote base_prefix =
+      let p = if not simple_graph_info then
+          pers_to_piqi_person conf base p base_prefix false 0 1 0 0 false simple_graph_info no_event
+        else Mread.default_person ()
+      in
+      let wkind = Api_util.piqi_of_witness_kind wkind in
+      fiche_witness_constructor wkind p wnote 
     in
     let child_to_piqi conf base p base_prefix =
       pers_to_piqi_person conf base p base_prefix false 0 0 (nb_desc+1) nb_desc_max false simple_graph_info no_event
     in
     let family_constructor index spouse marriage_date marriage_date_long marriage_date_raw marriage_date_conv marriage_date_conv_long marriage_cal
     marriage_date_text marriage_place marriage_src marriage_type divorce_type divorce_date divorce_date_long divorce_date_raw divorce_date_conv
-    divorce_date_conv_long divorce_cal witnesses notes fsources children =
+    divorce_date_conv_long divorce_cal witnesses notes fsources children
+      =
       {
         Mread.Fiche_family.index = index;
         spouse = spouse;
