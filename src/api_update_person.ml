@@ -202,6 +202,7 @@ let reconstitute_person conf base mod_p
       | Some person ->
         let wk = Api_util.witness_kind_of_piqi witness.Mwrite.Witness.witness_type in
         let wnote = witness.Mwrite.Witness.witness_note in
+        let wnote = Option.fold ~none:"" ~some:(fun x -> x) wnote in
         let wit = (reconstitute_somebody base person, wk, wnote) in
         wit :: accu
       | None -> accu
