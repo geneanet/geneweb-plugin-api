@@ -731,8 +731,9 @@ let pers_to_piqi_person_search_info conf base p =
             (fun (ip, wk, wnote) ->
               let witness_type = Api_util.piqi_of_witness_kind wk in
                let witness = pers_to_piqi_simple_person conf base @@ poi base ip in
-               let witness_note = sou base wnote in
-               Mwrite.Witness_event.{ witness_type ; witness ; witness_note})
+              let witness_note = sou base wnote in
+              let witness_note = if witness_note = "" then None else Some witness_note in
+              Mwrite.Witness_event.{ witness_type ; witness ; witness_note})
             w
         in
         {
@@ -1131,6 +1132,7 @@ let pers_to_piqi_mod_person conf base p =
                 let p = poi base ip in
                 let person_link = pers_to_piqi_person_link conf base p in
                 let witness_note = sou base wnote in
+                let witness_note = if witness_note = "" then None else Some witness_note in
                 Mwrite.Witness.{ witness_type ; person = Some person_link; witness_note })
              evt.epers_witnesses
          in
@@ -1367,6 +1369,7 @@ let fam_to_piqi_mod_family conf base ifam fam =
                 let p = poi base ip in
                 let person_link = pers_to_piqi_person_link conf base p in
                 let witness_note = sou base wnote in
+                let witness_note = if witness_note = "" then None else Some witness_note in
                 Mwrite.Witness.{ witness_type; person = Some person_link ; witness_note})
              evt.efam_witnesses
          in
