@@ -621,6 +621,11 @@ let table_contains_warning base tbl w =
   with WarningFound -> true
 
 let print_base_warnings conf base =
+  Wserver.set_on_timeout (fun _ ->
+      let empty = Api_warnings.empty in
+      let data = Mext.gen_base_warnings empty in
+      print_result conf data
+  );
   let filters = get_filters conf in
   let errors = ref [] in
   let warnings = Hashtbl.create 0 in
