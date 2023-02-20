@@ -1282,7 +1282,7 @@ let has_relations conf base p p_auth is_main_person =
       List.fold_left
         (fun l ip ->
            let rp = pget conf base ip in
-           if is_hidden rp then l else (ip :: l))
+           if is_empty_person rp then l else (ip :: l))
       [] (get_related p)
     in
     get_rparents p <> [] || related <> []
@@ -1924,7 +1924,7 @@ let print_result_fiche_person conf base ip nb_asc_max nb_desc_max simple_graph_i
 (* ********************************************************************* *)
 let is_private_person conf base ip =
     let p = pget conf base ip in
-    is_hidden p || ((is_hide_names conf p) && not(authorized_age conf base p))
+    is_empty_person p || ((is_hide_names conf p) && not(authorized_age conf base p))
 
 (* ********************************************************************* *)
 (*  [Fonc] print_from_identifier_person : conf -> base ->                *)
