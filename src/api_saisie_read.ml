@@ -1841,7 +1841,7 @@ let print_result_fiche_person conf base ip nb_asc_max nb_desc_max simple_graph_i
 (* ********************************************************************* *)
 let is_private_person conf base ip =
     let p = pget conf base ip in
-    is_hidden p || ((is_hide_names conf p) && not(authorized_age conf base p))
+    is_empty_person p || ((is_hide_names conf p) && not(authorized_age conf base p))
 
 (* ********************************************************************* *)
 (*  [Fonc] print_from_identifier_person : conf -> base ->                *)
