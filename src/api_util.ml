@@ -453,24 +453,13 @@ let reduce_to_recent conf l =
   in loop l []
 
 
-(* *********************************************************************** *)
-(*  [Fonc] is_visible : config -> base -> person -> bool                   *)
-(** [Description] : Renvoie vrai si l'on peut afficher les informations
-                    d'une personne. Une personne est visible si elle n'est
-                    pas privée OU si elle n'est plus contemporaine.
-    [Args] :
-      - conf : configuration de la base
-      - base : base de donnée
-      - p    : person
-    [Retour] : string
-    [Rem] : Exporté en clair hors de ce module.                            *)
-(* *********************************************************************** *)
-let is_visible conf base p =
-  let tmp_conf = {(conf) with wizard = false; friend = false} in
-  Util.authorized_age tmp_conf base p
-
+(** [get_visibility conf base p] is the visibility of [p] as defined by geneanet's rules.
+    - [`public] if [p] is fully visible for a visitor
+    - [`half_private] if [p] is hidden but with some information such as names still visible
+    - [`private_] if [p] is fully hidden to a visitor
+*)
 let get_visibility conf base p =
-  if is_visible conf base p then `public
+  if Util.is_fully_visible_to_visitors conf base p then `public
   else if conf.hide_private_names || get_access p = Private then `private_
   else `half_private
 
