@@ -462,12 +462,11 @@ let pers_to_piqi_simple_person conf base p base_prefix =
     restricted_person.Mread.Simple_person.index <- Int32.of_string @@ Gwdb.string_of_iper Gwdb.dummy_iper;
     restricted_person.Mread.Simple_person.lastname <- "x";
     restricted_person.Mread.Simple_person.firstname <- "x";
-    restricted_person.Mread.Simple_person.visible_for_visitors <- false;
+    restricted_person.Mread.Simple_person.visible_for_visitors <- `private_;
     restricted_person
   else
     let p_auth = authorized_age conf base p in
     let index = Int32.of_string @@ Gwdb.string_of_iper (get_iper p) in
-    let visible_for_visitors = is_visible conf base p in
     let sex =
       match get_sex p with
       | Male -> `male
@@ -564,7 +563,7 @@ let pers_to_piqi_simple_person conf base p base_prefix =
       image;
       sosa = sosa;
       sosa_nb = sosa_nb;
-      visible_for_visitors = visible_for_visitors;
+      visible_for_visitors = get_visibility conf base p;
       baseprefix = base_prefix;
       has_parent = has_parent;
       has_spouse = has_spouse;
@@ -1661,7 +1660,7 @@ let rec pers_to_piqi_fiche_person conf base p base_prefix is_main_person nb_asc 
         piqi_fiche_person.Mread.Fiche_person.linked_page_death <- linked_page_death;
         piqi_fiche_person.Mread.Fiche_person.linked_page_head <- linked_page_head;
         piqi_fiche_person.Mread.Fiche_person.linked_page_occu <- linked_page_occu;
-        piqi_fiche_person.Mread.Fiche_person.visible_for_visitors <- is_visible conf base p;
+        piqi_fiche_person.Mread.Fiche_person.visible_for_visitors <- get_visibility conf base p;
         piqi_fiche_person.Mread.Fiche_person.related <- if is_main_person && not simple_graph_info then get_related_piqi conf base p base_prefix gen_p pers_to_piqi_fiche_person_only fiche_relation_person_constructor else [];
         piqi_fiche_person.Mread.Fiche_person.rparents <- if is_main_person && not simple_graph_info then get_rparents_piqi base conf base_prefix gen_p pers_to_piqi_fiche_person_only fiche_relation_person_constructor else [];
         if not no_event then
