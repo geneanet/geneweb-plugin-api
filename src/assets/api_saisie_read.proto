@@ -175,6 +175,12 @@ enum EventType {
   EFAM_CUSTOM = 112;
 }
 
+enum Visibility {
+  PUBLIC = 0;
+  HALF_PRIVATE = 1;
+  PRIVATE_ = 2;
+}
+
 message FicheParameters {
   required IdentifierPerson identifier_person = 1;
   optional int32 nb_asc_max = 2;
@@ -261,7 +267,7 @@ message SimplePerson {
   required Sosa sosa = 13;
   required string baseprefix = 14;
   optional string sosa_nb = 17;
-  required bool visible_for_visitors = 18;
+  required Visibility visible_for_visitors = 18;
   required bool has_parent = 19;
   required bool has_spouse = 20;
   required bool has_child = 21;
@@ -377,7 +383,7 @@ message FichePerson {
   required string linked_page_death = 19;
   required string linked_page_head = 20;
   required string linked_page_occu = 21;
-  required bool visible_for_visitors = 22;
+  required Visibility visible_for_visitors = 22;
   optional Person father = 23;
   optional Person mother = 24;
   repeated FicheFamily families = 25;
