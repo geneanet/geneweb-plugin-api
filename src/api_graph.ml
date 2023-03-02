@@ -69,12 +69,12 @@ let pevents_aux conf base filter acc p =
           begin
             { M.Event_query_result.p = pers_to_piqi_person p
             ; sp = None
-            ; pevent_name = Some (Api_piqi_util.piqi_pevent_name_of_pevent_name e.epers_name)
+            ; pevent_name = Some (Api_piqi_util.piqi_pevent_name_of_pevent_name (Event.get_name e)
             ; fevent_name = None
-            ; date = piqi_date_of_date @@ Date.date_of_cdate e.epers_date
-            ; place = sou base e.epers_place
-            ; note = sou base e.epers_note
-            ; src = sou base e.epers_src
+            ; date = piqi_date_of_date @@ Date.date_of_cdate (Event.get_date e)
+            ; place = sou base (Event.get_place e)
+            ; note = sou base (Event.get_note e)
+            ; src = sou base (Event.get_src e)
             } :: acc
         end
       else acc
@@ -92,11 +92,11 @@ let fevents_aux conf base filter acc f =
           { M.Event_query_result.p = pers_to_piqi_person @@ poi base @@ Gwdb.get_father f
           ; sp = Some (pers_to_piqi_person @@ poi base @@ Gwdb.get_mother f)
           ; pevent_name = None
-          ; fevent_name = Some (Api_piqi_util.piqi_fevent_name_of_fevent_name e.efam_name)
-          ; date = piqi_date_of_date @@ Date.date_of_cdate e.efam_date
-          ; place = sou base e.efam_place
-          ; note = sou base e.efam_note
-          ; src = sou base e.efam_src
+          ; fevent_name = Some (Api_piqi_util.piqi_fevent_name_of_fevent_name (Event.get_name e))
+          ; date = piqi_date_of_date @@ Date.date_of_cdate (Event.get_date e)
+          ; place = sou base (Event.get_place e)
+          ; note = sou base (Event.get_note e)
+          ; src = sou base (Event.get_src e)
           } :: acc
         else acc
       end acc events
@@ -127,13 +127,13 @@ let events_filters_aux params =
     | None -> fun _ -> true
   in
   ( (fun e ->
-        List.mem e.epers_name filter_pevents
-        && match Date.od_of_cdate e.epers_date with
+        List.mem (Event.get_name e) filter_pevents
+        && match Date.od_of_cdate (Event.get_date e) with
         | Some d -> filter_start_date d && filter_stop_date d
         | None -> false)
   , (fun e ->
-       List.mem e.efam_name filter_fevents
-       && match Date.od_of_cdate e.efam_date with
+       List.mem (Event.get_name e) filter_fevents
+       && match Date.od_of_cdate (Event.get_date e) with
         | Some d -> filter_start_date d && filter_stop_date d
         | None -> false)
   )
