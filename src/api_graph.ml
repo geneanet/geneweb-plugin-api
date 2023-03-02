@@ -92,11 +92,11 @@ let fevents_aux conf base filter acc f =
           { M.Event_query_result.p = pers_to_piqi_person @@ poi base @@ Gwdb.get_father f
           ; sp = Some (pers_to_piqi_person @@ poi base @@ Gwdb.get_mother f)
           ; pevent_name = None
-          ; fevent_name = Some (Api_piqi_util.piqi_fevent_name_of_fevent_name (Event.get_name e))
-          ; date = piqi_date_of_date @@ Date.date_of_cdate (Event.get_date e)
-          ; place = sou base (Event.get_place e)
-          ; note = sou base (Event.get_note e)
-          ; src = sou base (Event.get_src e)
+          ; fevent_name = Some (Api_piqi_util.piqi_fevent_name_of_fevent_name (get_fevent_name e))
+          ; date = piqi_date_of_date @@ Date.date_of_cdate (get_fevent_date e)
+          ; place = sou base (get_fevent_place e)
+          ; note = sou base (get_fevent_note e)
+          ; src = sou base (get_fevent_src e)
           } :: acc
         else acc
       end acc events
