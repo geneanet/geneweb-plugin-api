@@ -649,7 +649,7 @@ let print_base_warnings conf base =
       in
       let result =
         (* Make the warning list uniq *)
-        Hashtbl.fold begin fun x _ acc ->
+        Hashtbl.fold begin fun (x : CheckItem.base_warning) _ acc ->
           Api_warnings.add_warning_to_piqi_warning_list conf base acc x
         end warnings result
       in
