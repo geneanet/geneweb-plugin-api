@@ -875,7 +875,7 @@ let get_family_piqi base conf ifam p base_prefix spouse_to_piqi witnesses_to_piq
          let wnote = sou base wnote in
          witnesses_to_piqi conf base p wkind wnote base_prefix
       )
-      (Perso.get_marriage_witnesses fam)
+      (Perso.get_marriage_witnesses_and_notes fam)
   in
   let notes =
     if m_auth && not conf.no_note
