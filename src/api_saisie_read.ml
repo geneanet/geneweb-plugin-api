@@ -1012,11 +1012,13 @@ let get_events_witnesses conf base p base_prefix gen_p p_auth has_relations pers
           | ic :: icl ->
               let c = pget conf base ic in
               List.iter
-                (fun ((name, _, _, _, _, wl, _) as evt) ->
-                  let (mem, wk, wnote) = Util.array_mem_witn conf base (get_iper p) wl in
+                (fun evt ->
+                   let witnesses = Event.get_witnesses evt in
+                   let wnotes = Event.get_witness_notes evt in
+                  let (mem, wk, wnote) = Util.array_mem_witn conf base (get_iper p) witnesses wnotes in
                   if mem then
                     (* Attention aux doublons pour les evenements famille. *)
-                    match name with
+                    match Event.get_name evt with
                     | Event.Fevent _ ->
                         if get_sex c = Male then
                           list := (c, wk, wnote, evt) :: !list
@@ -1033,20 +1035,19 @@ let get_events_witnesses conf base p base_prefix gen_p p_auth has_relations pers
       (* On tri les témoins dans le même ordre que les évènements. *)
       let events_witnesses =
         Event.sort_events
-          (fun (_, _, _, (name, _, _, _, _, _, _)) ->
-            name)
-          (fun (_, _, _, (_, date, _, _, _, _, _)) -> date)
+          (fun (_, _, _, evt) -> Event.get_name evt)
+          (fun (_, _, _, evt) -> Event.get_date evt)
           events_witnesses
       in
       List.map
-        (fun (p, wk, wnote, (name, date, _, _, _, _, isp)) ->
+        (fun (p, wk, wnote, evt) ->
           let witness_date =
-            match Date.od_of_cdate date with
+            match Date.od_of_cdate (Event.get_date evt) with
             | Some (Dgreg (dmy, _)) -> " (" ^ DateDisplay.year_text dmy ^ ")"
             | _ -> ""
           in
           let witnesses_name =
-            match name with
+            match Event.get_name evt with
             | Event.Pevent name ->
                 if p_auth then !!(Util.string_of_pevent_name conf base name)
                 else  ""
@@ -1059,7 +1060,7 @@ let get_events_witnesses conf base p base_prefix gen_p p_auth has_relations pers
           in
           let husband = pers_to_piqi conf base p base_prefix in
           let wife =
-            match isp with
+            match Event.get_spouse_iper evt with
             | Some isp ->
                 let sp = poi base isp in
                 Some (pers_to_piqi conf base sp base_prefix )
