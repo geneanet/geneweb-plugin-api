@@ -628,7 +628,7 @@ let fam_to_piqi_family_link conf base (ifath : Gwdb.iper) imoth sp ifam fam base
          let p = poi base ip in
          let wnote = sou base wnote in
          witness_to_piqi conf base p wkind wnote base_prefix
-      ) (Perso.get_marriage_witnesses fam)
+      ) (Perso.get_marriage_witnesses_and_notes fam)
   in
   let notes =
     if m_auth && not conf.no_note

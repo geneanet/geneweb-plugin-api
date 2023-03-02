@@ -1398,8 +1398,8 @@ let print_all_stats conf base =
                   | None -> Hashtbl.add ht_occupation k (s, 1)
               end (String.split_on_char ',' (sou base (get_occupation p)));
               List.iter begin fun e ->
-                if e.epers_name = Epers_Occupation then
-                  let s = sou base e.epers_note in
+                if get_pevent_name e = Epers_Occupation then
+                  let s = sou base (get_pevent_note e) in
                   let k = Name.lower s in
                   if k <> "" then match Hashtbl.find_opt ht_occupation k with
                     | Some (s, n) -> Hashtbl.replace ht_occupation k (s, (n + 1))
