@@ -756,8 +756,8 @@ let compute_warnings conf base resp =
                   Printf.sprintf
                     (ftransl conf "%t's %s before his/her %s")
                     (fun _ -> print_someone_dates p)
-                    !!(Util.string_of_fevent_name conf base (Event.get_name e1))
-                    !!(Util.string_of_fevent_name conf base (Event.get_name e2))
+                    !!(Util.string_of_fevent_name conf base (get_fevent_name e1))
+                    !!(Util.string_of_fevent_name conf base (get_fevent_name e2))
                 in
                 w :: wl
             | FWitnessEventAfterDeath (p, e, _) ->
@@ -765,7 +765,7 @@ let compute_warnings conf base resp =
                   Printf.sprintf
                     (ftransl conf "%t witnessed the %s after his/her death")
                     (fun _ -> print_someone_dates p)
-                    !!(Util.string_of_fevent_name conf base (Event.get_name e))
+                    !!(Util.string_of_fevent_name conf base (get_fevent_name e))
                 in
                 w :: wl
             | FWitnessEventBeforeBirth (p, e, _) ->
@@ -773,7 +773,7 @@ let compute_warnings conf base resp =
                   Printf.sprintf
                     (ftransl conf "%t witnessed the %s before his/her birth")
                     (fun _ -> print_someone_dates p)
-                    !!(Util.string_of_fevent_name conf base (Event.get_name e))
+                    !!(Util.string_of_fevent_name conf base (get_fevent_name e))
                 in
                 w :: wl
             | IncoherentSex (p, _, _) ->
@@ -845,8 +845,8 @@ let compute_warnings conf base resp =
                   Printf.sprintf
                     (ftransl conf "%t's %s before his/her %s")
                     (fun _ -> print_someone_dates p)
-                    !!(Util.string_of_pevent_name conf base (Event.get_name e1))
-                    !!(Util.string_of_pevent_name conf base (Event.get_name e2))
+                    !!(Util.string_of_pevent_name conf base (get_pevent_name e1))
+                    !!(Util.string_of_pevent_name conf base (get_pevent_name e2))
                 in
                 w :: wl
             | PWitnessEventAfterDeath (p, e, _) ->
@@ -854,7 +854,7 @@ let compute_warnings conf base resp =
                   Printf.sprintf
                     (ftransl conf "%t witnessed the %s after his/her death")
                     (fun _ -> print_someone_dates p)
-                    !!(Util.string_of_pevent_name conf base (Event.get_name e))
+                    !!(Util.string_of_pevent_name conf base (get_pevent_name e))
                 in
                 w :: wl
             | PWitnessEventBeforeBirth (p, e, _) ->
@@ -862,7 +862,7 @@ let compute_warnings conf base resp =
                   Printf.sprintf
                     (ftransl conf "%t witnessed the %s before his/her birth")
                     (fun _ -> print_someone_dates p)
-                    !!(Util.string_of_pevent_name conf base (Event.get_name e))
+                    !!(Util.string_of_pevent_name conf base (get_pevent_name e))
                 in
                 w :: wl
             | TitleDatesError (p, t) ->
