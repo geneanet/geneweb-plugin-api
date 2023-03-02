@@ -1093,7 +1093,7 @@ let print_ind_stats conf base =
                   sl;
                   List.iter
                     (fun e ->
-                      let s = sou base e.epers_note in
+                      let s = sou base (get_pevent_note e) in
                       let k = Name.lower s in
                       if k = "" then ()
                       else
@@ -1101,7 +1101,7 @@ let print_ind_stats conf base =
                           let (s, n) = Hashtbl.find ht k in
                           Hashtbl.replace ht k (s, (n + 1))
                         with Not_found -> Hashtbl.add ht k (s, 1))
-                    (List.filter (fun e -> e.epers_name = Epers_Occupation) (get_pevents p));
+                    (List.filter (fun e -> get_pevent_name e = Epers_Occupation) (get_pevents p));
               end
             else ())
           l)
