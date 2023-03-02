@@ -45,7 +45,7 @@ let create_cache base mode cache_file =
       Gwdb.Collection.fold
         (fun acc f ->
            let acc = add acc (get_fsources f) in
-           List.fold_left (fun acc e -> add acc (get_fevent_src e) acc (get_fevents f) )
+           List.fold_left (fun acc e -> add acc (get_fevent_src e)) acc (get_fevents f) )
         acc
         (Gwdb.families base)
   in
