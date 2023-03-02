@@ -705,7 +705,7 @@ let pers_to_piqi_person_search_info conf base p =
   let image = get_portrait conf base p in
   let events =
     List.map
-      (fun (name, date, place, note, src, w, isp) evt ->
+      (fun evt ->
         let name =
           match Event.get_name evt with
           | Event.Pevent name -> !!(Util.string_of_pevent_name conf base name)
