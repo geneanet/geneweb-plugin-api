@@ -705,22 +705,22 @@ let pers_to_piqi_person_search_info conf base p =
   let image = get_portrait conf base p in
   let events =
     List.map
-      (fun (name, date, place, note, src, w, isp) ->
+      (fun (name, date, place, note, src, w, isp) evt ->
         let name =
-          match name with
+          match Event.get_name evt with
           | Event.Pevent name -> !!(Util.string_of_pevent_name conf base name)
           | Event.Fevent name -> !!(Util.string_of_fevent_name conf base name)
         in
         let (date, _, date_conv, _, date_cal) =
-          match Date.od_of_cdate date with
+          match Date.od_of_cdate (Event.get_date evt) with
           | Some d -> Api_saisie_read.string_of_date_and_conv conf d
           | _ -> ("", "", "", "", None)
         in
-        let place = !!(Util.raw_string_of_place conf (sou base place) |> Adef.safe) in
-        let note = !!(Notes.person_note conf base p (sou base note)) in
-        let src = !!(Notes.source conf base (sou base src)) in
+        let place = !!(Util.raw_string_of_place conf (sou base (Event.get_place evt)) |> Adef.safe) in
+        let note = !!(Notes.person_note conf base p (sou base (Event.get_note evt))) in
+        let src = !!(Notes.source conf base (sou base (Event.get_src evt))) in
         let spouse =
-          match isp with
+          match Event.get_spouse_iper evt with
           | Some ip ->
               let sp = poi base ip in
               Some (pers_to_piqi_simple_person conf base sp)
@@ -734,7 +734,7 @@ let pers_to_piqi_person_search_info conf base p =
               let witness_note = sou base wnote in
               let witness_note = if witness_note = "" then None else Some witness_note in
               Mwrite.Witness_event.{ witness_type ; witness ; witness_note})
-            w
+            (Event.get_witnesses_and_notes evt)
         in
         {
           Mwrite.Event.name = name;
