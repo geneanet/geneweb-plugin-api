@@ -670,8 +670,16 @@ let fam_to_piqi_family_link conf base (ifath : Gwdb.iper) imoth sp ifam fam base
 let fill_events conf base p base_prefix p_auth pers_to_piqi witness_constructor event_constructor =
   if p_auth then
     List.map
-      (fun (name, date, place, note, src, w, isp) ->
-        let (name, type_) =
+      (*      (fun (name, date, place, note, src, w, isp) ->*)
+      (fun evt ->
+         let name = Event.get_name evt in
+         let date = Event.get_date evt in
+         let place = Event.get_place evt in
+         let note = Event.get_note evt in
+         let src = Event.get_src evt in
+         let w = Event.get_witnesses_and_notes evt in
+         let isp = Event.get_spouse_iper evt in
+         let (name, type_) =
           match name with
           | Event.Pevent name -> ( !!(Util.string_of_pevent_name conf base name)
                                  , event_to_piqi_event (Some name) None)
