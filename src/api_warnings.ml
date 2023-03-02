@@ -57,14 +57,14 @@ let add_error_to_piqi_warning_list base (w : M.Base_warnings.t) = function
 let fevent_to_warning_event e =
   { M.Warning_event.pevent = None
   ; fevent =
-      try Some (Api_piqi_util.piqi_fevent_name_of_fevent_name e.efam_name)
+      try Some (Api_piqi_util.piqi_fevent_name_of_fevent_name (get_fevent_name e))
       with _ -> None
   }
 
 let pevent_to_warning_event e =
   { M.Warning_event.fevent = None
   ; pevent =
-      try Some (Api_piqi_util.piqi_pevent_name_of_pevent_name e.epers_name)
+      try Some (Api_piqi_util.piqi_pevent_name_of_pevent_name (get_pevent_name e))
       with _ -> None
   }
 
