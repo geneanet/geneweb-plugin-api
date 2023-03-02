@@ -69,12 +69,12 @@ let pevents_aux conf base filter acc p =
           begin
             { M.Event_query_result.p = pers_to_piqi_person p
             ; sp = None
-            ; pevent_name = Some (Api_piqi_util.piqi_pevent_name_of_pevent_name (Event.get_name e)
+            ; pevent_name = Some (Api_piqi_util.piqi_pevent_name_of_pevent_name (get_pevent_name e))
             ; fevent_name = None
-            ; date = piqi_date_of_date @@ Date.date_of_cdate (Event.get_date e)
-            ; place = sou base (Event.get_place e)
-            ; note = sou base (Event.get_note e)
-            ; src = sou base (Event.get_src e)
+            ; date = piqi_date_of_date @@ Date.date_of_cdate (get_pevent_date e)
+            ; place = sou base (get_pevent_place e)
+            ; note = sou base (get_pevent_note e)
+            ; src = sou base (get_pevent_src e)
             } :: acc
         end
       else acc
