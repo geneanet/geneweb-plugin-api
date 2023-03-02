@@ -263,16 +263,16 @@ let add_warning_to_piqi_warning_list conf base =
                  M.Warning_event_order.{
                    person = p2wp base p
                  ; pevents = []
-                 ; fevents = [ Api_piqi_util.piqi_fevent_name_of_fevent_name e1.efam_name
-                             ; Api_piqi_util.piqi_fevent_name_of_fevent_name e2.efam_name ]
+                 ; fevents = [ Api_piqi_util.piqi_fevent_name_of_fevent_name (get_fevent_name e1)
+                             ; Api_piqi_util.piqi_fevent_name_of_fevent_name (get_fevent_name e2) ]
                  } :: w.warning_event_order }
       [@warning "-45"]
     | PEventOrder (p, e1, e2) ->
       { w with warning_event_order =
                  M.Warning_event_order.{
                    person = p2wp base p
-                 ; pevents = [ Api_piqi_util.piqi_pevent_name_of_pevent_name e1.epers_name
-                             ; Api_piqi_util.piqi_pevent_name_of_pevent_name e2.epers_name ]
+                 ; pevents = [ Api_piqi_util.piqi_pevent_name_of_pevent_name (get_pevent_name e1)
+                             ; Api_piqi_util.piqi_pevent_name_of_pevent_name (get_pevent_name e2) ]
                  ; fevents = []
                  } :: w.warning_event_order }
       [@warning "-45"]
