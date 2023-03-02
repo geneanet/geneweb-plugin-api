@@ -1063,7 +1063,7 @@ let pers_to_piqi_mod_person conf base p =
     List.map
       (fun evt ->
          let (pevent_type, event_perso) =
-           match evt.epers_name with
+           match get_pevent_name evt with
            | Epers_Birth -> (Some `epers_birth, None)
            | Epers_Baptism -> (Some `epers_baptism, None)
            | Epers_Death -> (Some `epers_death, None)
@@ -1117,14 +1117,14 @@ let pers_to_piqi_mod_person conf base p =
            | Epers_Name n -> (None, Some (sou base n))
          in
          let date =
-           match Date.od_of_cdate evt.epers_date with
+           match Date.od_of_cdate (get_pevent_date evt) with
            | Some d -> Some (piqi_date_of_date d)
            | _ -> None
          in
-         let place = sou base evt.epers_place in
+         let place = sou base (get_pevent_place evt) in
          let reason = None in
-         let note = sou base evt.epers_note in
-         let src = sou base evt.epers_src in
+         let note = sou base (get_pevent_note evt) in
+         let src = sou base (get_pevent_src evt) in
          let witnesses =
            Mutil.array_to_list_map
              (fun (ip, wk, wnote) ->
@@ -1134,7 +1134,7 @@ let pers_to_piqi_mod_person conf base p =
                 let witness_note = sou base wnote in
                 let witness_note = if witness_note = "" then None else Some witness_note in
                 Mwrite.Witness.{ witness_type ; person = Some person_link; witness_note })
-             evt.epers_witnesses
+             (get_pevent_witnesses_and_notes evt)
          in
          {
            Mwrite.Pevent.pevent_type = pevent_type;
@@ -1186,8 +1186,8 @@ let pers_to_piqi_mod_person conf base p =
       let (has_birth, has_death) =
         List.fold_left
           (fun (has_birth, has_death) evt ->
-            (has_birth || evt.epers_name = Epers_Birth,
-             has_death || evt.epers_name = Epers_Death))
+            (has_birth || get_pevent_name evt = Epers_Birth,
+             has_death || get_pevent_name evt = Epers_Death))
           (false, false) (get_pevents p)
       in
       let pevents =
@@ -1338,7 +1338,7 @@ let fam_to_piqi_mod_family conf base ifam fam =
     List.map
       (fun evt ->
          let (fevent_type, event_perso) =
-           match evt.efam_name with
+           match get_fevent_name evt with
            | Efam_Marriage -> (Some `efam_marriage, None)
            | Efam_NoMarriage -> (Some `efam_no_marriage, None)
            | Efam_NoMention -> (Some `efam_no_mention, None)
@@ -1354,14 +1354,14 @@ let fam_to_piqi_mod_family conf base ifam fam =
            | Efam_Name n -> (None, Some (sou base n))
          in
          let date =
-           match Date.od_of_cdate evt.efam_date with
+           match Date.od_of_cdate (get_fevent_date evt) with
            | Some d -> Some (piqi_date_of_date d)
            | _ -> None
          in
-         let place = sou base evt.efam_place in
+         let place = sou base (get_fevent_place evt) in
          let reason = None in
-         let note = sou base evt.efam_note in
-         let src = sou base evt.efam_src in
+         let note = sou base (get_fevent_note evt) in
+         let src = sou base (get_fevent_src evt) in
          let witnesses =
            Mutil.array_to_list_map
              (fun (ip, wk, wnote) ->
@@ -1371,7 +1371,7 @@ let fam_to_piqi_mod_family conf base ifam fam =
                 let witness_note = sou base wnote in
                 let witness_note = if witness_note = "" then None else Some witness_note in
                 Mwrite.Witness.{ witness_type; person = Some person_link ; witness_note})
-             evt.efam_witnesses
+             (get_fevent_witnesses_and_notes evt)
          in
          {
            Mwrite.Fevent.fevent_type = fevent_type;
