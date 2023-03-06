@@ -637,6 +637,8 @@ let possible_family_dup_homonmous conf base fam p =
   w ^ ". " ^ link
   
 let compute_warnings conf base resp =
+  let get_pevent_name e = e.epers_name in
+  let get_fevent_name e = e.efam_name in
   let print_someone = print_someone base in
   let print_someone_dates = print_someone_dates conf base in
   match resp with
