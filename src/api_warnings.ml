@@ -55,6 +55,7 @@ let add_error_to_piqi_warning_list base (w : M.Base_warnings.t) = function
                :: w.warning_bad_sex_of_married_person }
 
 let fevent_to_warning_event e =
+  let get_fevent_name e = e.efam_name in
   { M.Warning_event.pevent = None
   ; fevent =
       try Some (Api_piqi_util.piqi_fevent_name_of_fevent_name (get_fevent_name e))
@@ -62,6 +63,7 @@ let fevent_to_warning_event e =
   }
 
 let pevent_to_warning_event e =
+  let get_pevent_name e = e.epers_name in
   { M.Warning_event.fevent = None
   ; pevent =
       try Some (Api_piqi_util.piqi_pevent_name_of_pevent_name (get_pevent_name e))
