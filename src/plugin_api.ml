@@ -64,7 +64,7 @@ let () =
   let aux' fn conf base =
     fn { conf with api_mode = true } base ; true
   in
-  let aux'' fn _assets conf =
+  let aux'' fn _assets conf (_base : string option) =
     fn { conf with api_mode = true } ; true
   in
   GWD.GwdPlugin.register ~ns
