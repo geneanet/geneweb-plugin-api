@@ -11,6 +11,15 @@ let friend fn conf base =
   then fn conf base
   else Gwd_lib.Request.incorrect_request conf
 
+let wiz' fn conf =
+  if conf.wizard then
+    fn conf
+  else if conf.just_friend_wizard then
+    Api_util.print_error conf `forbidden ""
+  else
+    (* FIXME: Needs auth headers *)
+    Api_util.print_error conf `unauthorized ""
+
 let wiz fn conf base =
   if conf.wizard then
     fn conf base
@@ -120,7 +129,7 @@ let () =
     ; ( "API_AUTO_COMPLETE"
       , fun a -> aux' @@ wiz @@ w_base @@ Api_saisie_write.print_auto_complete a)
     ; ( "API_GET_CONFIG"
-      , aux'' @@ wiz @@ Api_saisie_write.print_config)
+      , aux'' @@ wiz' @@ Api_saisie_write.print_config)
     ; ( "API_PERSON_SEARCH_LIST"
       , aux @@ wiz @@ w_base @@ Api_saisie_write.print_person_search_list)
     ; ( "API_GET_PERSON_SEARCH_INFO"
