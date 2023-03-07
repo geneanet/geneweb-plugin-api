@@ -55,6 +55,9 @@ let () =
   let aux' fn conf base =
     fn { conf with api_mode = true } base ; true
   in
+  let aux'' fn _assets conf =
+    fn { conf with api_mode = true } ; true
+  in
   GWD.GwdPlugin.register ~ns
     [ ( "API_ADD_FIRST_FAM"
       , aux @@ fun conf _ -> Api_saisie_write.print_add_first_fam conf)
@@ -117,7 +120,7 @@ let () =
     ; ( "API_AUTO_COMPLETE"
       , fun a -> aux' @@ wiz @@ w_base @@ Api_saisie_write.print_auto_complete a)
     ; ( "API_GET_CONFIG"
-      , aux @@ wiz @@ Api_saisie_write.print_config)
+      , aux'' @@ wiz @@ Api_saisie_write.print_config)
     ; ( "API_PERSON_SEARCH_LIST"
       , aux @@ wiz @@ w_base @@ Api_saisie_write.print_person_search_list)
     ; ( "API_GET_PERSON_SEARCH_INFO"
