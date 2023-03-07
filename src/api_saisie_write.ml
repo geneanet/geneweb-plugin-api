@@ -136,7 +136,7 @@ let print_person_search_info conf base =
                                                                            *)
 (* ************************************************************************ *)
 
-let print_config conf base =
+let print_config conf =
   let transl_cal =
     List.map
       (fun cal ->
@@ -237,7 +237,7 @@ let print_config conf base =
       (fun evt ->
         let (pos, sval) =
           ( Api_piqi_util.piqi_fevent_name_of_fevent_name evt
-          , Util.string_of_fevent_name conf base evt )
+          , Util.string_of_fevent_name_without_base conf evt )
         in
         Mwrite.Transl_fevent_name.({
           pos = pos;
@@ -258,7 +258,7 @@ let print_config conf base =
       (fun evt ->
         let (pos, sval) =
           ( Api_piqi_util.piqi_pevent_name_of_pevent_name evt
-          , Util.string_of_pevent_name conf base evt )
+          , Util.string_of_pevent_name_without_base conf evt )
         in
         Mwrite.Transl_pevent_name.({
           pos = pos;
@@ -271,7 +271,7 @@ let print_config conf base =
       (fun evt ->
         let (pos, sval) =
           ( Api_piqi_util.piqi_pevent_name_of_pevent_name evt
-          , Util.string_of_pevent_name conf base evt )
+          , Util.string_of_pevent_name_without_base conf evt )
         in
         Mwrite.Transl_pevent_name.({
           pos = pos;
@@ -303,7 +303,7 @@ let print_config conf base =
       (fun evt ->
         let (pos, sval) =
           ( Api_piqi_util.piqi_pevent_name_of_pevent_name evt
-          , Util.string_of_pevent_name conf base evt )
+          , Util.string_of_pevent_name_without_base conf evt )
         in
         Mwrite.Transl_pevent_name.({
           pos = pos;

@@ -117,7 +117,7 @@ let () =
     ; ( "API_AUTO_COMPLETE"
       , fun a -> aux' @@ wiz @@ w_base @@ Api_saisie_write.print_auto_complete a)
     ; ( "API_GET_CONFIG"
-      , aux @@ wiz @@ w_base @@ Api_saisie_write.print_config)
+      , aux @@ wiz @@ Api_saisie_write.print_config)
     ; ( "API_PERSON_SEARCH_LIST"
       , aux @@ wiz @@ w_base @@ Api_saisie_write.print_person_search_list)
     ; ( "API_GET_PERSON_SEARCH_INFO"
