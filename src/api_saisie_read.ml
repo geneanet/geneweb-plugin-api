@@ -4,6 +4,7 @@ module Mext_read = Api_saisie_read_piqi_ext
 open Geneweb
 open Config
 open Def
+open Date
 open Gwdb
 open Util
 open Api_util
@@ -158,7 +159,7 @@ let gregorian_precision conf d is_long =
   if d.delta = 0 then string_of_dmy conf d is_long
   else
     let d2 =
-      Calendar.gregorian_of_sdn d.prec (Calendar.sdn_of_gregorian d + d.delta)
+      Date.gregorian_of_sdn ~prec:d.prec (Date.to_sdn ~from:Dgregorian d + d.delta)
     in
     transl conf "between (date)"
     ^ " " ^ string_of_dmy conf d is_long
@@ -199,7 +200,7 @@ let string_of_date_and_conv conf d =
       let date_conv_long =
         if d.year < 1582 then "" else gregorian_precision conf d true
       in
-      let d1 = Calendar.julian_of_gregorian d in
+      let d1 = Date.convert ~from:Dgregorian ~to_:Djulian d in
       let year_prec =
         if d1.month > 0 && d1.month < 3 ||
            d1.month = 3 && d1.day > 0 && d1.day < 25 then
@@ -213,14 +214,14 @@ let string_of_date_and_conv conf d =
       in
       (date, date, date_conv, date_conv_long, Some `julian)
   | Dgreg (d, Dfrench) ->
-      let d1 = Calendar.french_of_gregorian d in
+      let d1 = Date.convert ~from:Dgregorian ~to_:Dfrench d in
       let date = string_of_french_dmy conf d1 in
       let date_long = !!(DateDisplay.string_of_on_french_dmy conf d1) in
       let date_conv = gregorian_precision conf d false in
       let date_conv_long = !!(DateDisplay.string_of_dmy conf d) in
       (date, date_long, date_conv, date_conv_long, Some `french)
   | Dgreg (d, Dhebrew) ->
-      let d1 = Calendar.hebrew_of_gregorian d in
+      let d1 = Date.convert ~from:Dgregorian ~to_:Dhebrew d in
       let date = string_of_hebrew_dmy conf d1 in
       let date_long = !!(DateDisplay.string_of_on_hebrew_dmy conf d1) in
       let date_conv = gregorian_precision conf d false in

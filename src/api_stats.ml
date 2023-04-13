@@ -4,6 +4,7 @@ module Mext_stats = Api_stats_piqi_ext
 open Geneweb
 open Config
 open Def
+open Date
 open Gwdb
 open Api_util
 
@@ -23,8 +24,8 @@ let list_uniq l =
 
 let wday conf = function
   | Dgreg ({ prec = Sure ; delta = 0 } as d, _) when d.day <> 0 && d.month <> 0 ->
-    let jd = Calendar.sdn_of_gregorian d in
-    let jd_today = Calendar.sdn_of_gregorian conf.today in
+    let jd = Date.to_sdn ~from:Dgregorian d in
+    let jd_today = Date.to_sdn ~from:Dgregorian conf.today in
     let x = conf.today_wd - jd_today + jd in
     ((if x < 0 then 6 + (x + 1) mod 7 else x mod 7) + 6) mod 7
   | _ -> -1
@@ -1312,8 +1313,8 @@ let print_all_stats conf base =
             (* Moon phase *)
             if dmy1.delta = 0 && dmy1.day > 0 then
               aux2 ht_moon dmy1 s_sex begin
-                let jd = Calendar.sdn_of_gregorian dmy1 in
-                let (mp, md) = Calendar.moon_phase_of_sdn jd in
+                let jd = Date.to_sdn ~from:Dgregorian dmy1 in
+                let (mp, md) = Calendars.moon_phase_of_sdn jd in
                 match mp with
                 | None ->
                   let md = float_of_int md in
@@ -1322,10 +1323,10 @@ let print_all_stats conf base =
                   else if md <= 18.45 then 3
                   else if md <= 25.83 then 4
                   else 1
-                | Some (Calendar.NewMoon, _, _) -> 1
-                | Some (Calendar.FirstQuarter, _, _) -> 2
-                | Some (Calendar.FullMoon, _, _) -> 3
-                | Some (Calendar.LastQuarter, _, _) -> 4
+                | Some (Calendars.NewMoon, _, _) -> 1
+                | Some (Calendars.FirstQuarter, _, _) -> 2
+                | Some (Calendars.FullMoon, _, _) -> 3
+                | Some (Calendars.LastQuarter, _, _) -> 4
               end ;
 
             (* Average union duration *)

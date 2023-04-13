@@ -1,5 +1,6 @@
 open Geneweb
 open Def
+open Date
 open Config
 
 let p_getenvbin env label =

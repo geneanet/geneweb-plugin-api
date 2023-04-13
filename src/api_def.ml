@@ -10,8 +10,8 @@ type filters =
     only_recent : bool;
     filter_sex : Def.sex option;
     nb_results : bool;
-    date_birth : (dmy * dmy * bool) option;
-    date_death : (dmy * dmy * bool) option;
+    date_birth : (Date.dmy * Date.dmy * bool) option;
+    date_death : (Date.dmy * Date.dmy * bool) option;
   }
 ;;
 

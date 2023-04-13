@@ -6,6 +6,7 @@ module Mext_write = Api_saisie_write_piqi_ext
 
 open Geneweb
 open Def
+open Date
 open Gwdb
 open Util
 open Api_util
@@ -270,11 +271,12 @@ let piqi_date_of_date date =
   match date with
   | Dgreg (dmy, cal) ->
       let (cal, dmy) =
+        let d = Date.convert ~from:Dgregorian ~to_:cal dmy in
         match cal with
         | Dgregorian -> (None, dmy)
-        | Djulian -> (Some `julian, Calendar.julian_of_gregorian dmy)
-        | Dfrench -> (Some `french, Calendar.french_of_gregorian dmy)
-        | Dhebrew -> (Some `hebrew, Calendar.hebrew_of_gregorian dmy)
+        | Djulian -> (Some `julian, d)
+        | Dfrench -> (Some `french, d)
+        | Dhebrew -> (Some `hebrew, d)
       in
       let (prec, dmy, dmy2) =
         let d = Some (Int32.of_int dmy.day) in
@@ -460,13 +462,12 @@ let date_of_piqi_date conf date =
                       {day = 0; month = 0; year = 0; prec = Sure; delta = 0}
                 in
                 let dmy =
-                  match cal with
+                  begin match cal with
                   | Dgregorian ->
-                      let _check_date = Update.check_greg_day conf dmy in
-                      dmy
-                  | Djulian -> Calendar.gregorian_of_julian dmy
-                  | Dfrench -> Calendar.gregorian_of_french dmy
-                  | Dhebrew -> Calendar.gregorian_of_hebrew dmy
+                      Update.check_greg_day conf dmy
+                  | Djulian | Dfrench | Dhebrew -> ()
+                  end;
+                  Date.convert ~from:cal ~to_:Dgregorian dmy
                 in
                 Some (Dgreg (dmy, cal))
           | None -> None

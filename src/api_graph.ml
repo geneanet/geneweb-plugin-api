@@ -110,8 +110,9 @@ let events_filters_aux params =
       let b = date_of_piqi_date b in
       fun d ->
         begin
-          try Date.compare_date ~strict:true d b >= 0
-          with Date.Not_comparable -> false
+          match Date.compare_date_strict d b with
+          | None -> false
+          | Some v -> v >= 0
         end
     | None -> fun _ -> true
   in
@@ -121,8 +122,9 @@ let events_filters_aux params =
       let b = date_of_piqi_date b in
       fun d ->
         begin
-          try Date.compare_date ~strict:true d b <= 0
-          with Date.Not_comparable -> false
+          match Date.compare_date_strict d b with
+          | None -> false
+          | Some v -> v <= 0
         end
     | None -> fun _ -> true
   in

@@ -649,7 +649,7 @@ let compute_warnings conf base resp =
         List.fold_right
           (fun w wl ->
             match w with
-            | BigAgeBetweenSpouses (p1, p2, a) ->
+            | Warning.BigAgeBetweenSpouses (p1, p2, a) ->
                 let w =
                   (Printf.sprintf
                      (fcapitale
@@ -905,7 +905,7 @@ let compute_warnings conf base resp =
         List.fold_right
           (fun m ml ->
             match m with
-            | MissingSources ->
+            | Warning.MissingSources ->
                 let m = Utf8.capitalize_fst (transl conf "missing sources") in
                 m :: ml)
           ml []
@@ -1845,7 +1845,7 @@ let print_add_parents_ok conf base =
         let all_wl = match existing_fam with
           | Some ifam ->
             let ifam' = Gwdb.ifam_of_string @@ Int32.to_string mod_family.Mwrite.Family.index in
-            Def.PossibleDuplicateFam (ifam, ifam') :: all_wl
+            Warning.PossibleDuplicateFam (ifam, ifam') :: all_wl
           | _ -> all_wl
         in
         Api_update_util.UpdateSuccess (all_wl, all_ml, all_hr)

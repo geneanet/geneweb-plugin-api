@@ -8,6 +8,7 @@ module Mext = Api_piqi_ext
 open Geneweb
 open Config
 open Def
+open Date
 open Gwdb
 open Util
 open Api_def
@@ -166,10 +167,10 @@ let string_of_date2 date =
          | x -> x)
   in
   match date with
-  | Dgreg (d, Dgregorian) -> string_of_dmy d
-  | Dgreg (d, Djulian) -> string_of_dmy (Calendar.julian_of_gregorian d) ^ "J"
-  | Dgreg (d, Dfrench) -> string_of_dmy (Calendar.french_of_gregorian d) ^ "F"
-  | Dgreg (d, Dhebrew) -> string_of_dmy (Calendar.hebrew_of_gregorian d) ^ "H"
+  | Date.Dgreg (d, Dgregorian) -> string_of_dmy d
+  | Dgreg (d, Djulian) -> string_of_dmy (Date.convert ~from:Dgregorian ~to_:Djulian d) ^ "J"
+  | Dgreg (d, Dfrench) -> string_of_dmy (Date.convert ~from:Dgregorian ~to_:Dfrench d) ^ "F"
+  | Dgreg (d, Dhebrew) -> string_of_dmy (Date.convert ~from:Dgregorian ~to_:Dhebrew d) ^ "H"
   | Dtext t -> Printf.sprintf "0(%s)" (spaces_to_underscore t)
 
 
