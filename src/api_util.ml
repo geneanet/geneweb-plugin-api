@@ -511,6 +511,16 @@ let is_recent conf p =
 (* ********************************************************************* *)
 let check_sex p sex = get_sex p = sex
 
+let piqi_sex_of_sex = function
+  | Male -> `male
+  | Female -> `female
+  | Neuter -> `unknown
+
+let sex_of_piqi_sex = function
+  | `male -> Male
+  | `female -> Female
+  | `unknown -> (* FIXME *) Neuter
+
 
 (* ********************************************************************* *)
 (*  [Fonc] is_date_included : bool -> date -> date -> date -> bool       *)
@@ -765,12 +775,7 @@ let spouse_to_piqi_spouse conf base p fam compute_sosa =
     authorized_age conf base (pget conf base imoth)
   in
   let sosa_p = Sosa.to_string (compute_sosa p) in
-  let sex =
-    match gen_p.sex with
-    | Male -> `male
-    | Female -> `female
-    | Neuter -> `unknown
-  in
+  let sex = piqi_sex_of_sex gen_p.sex in
   let surname =
     if not p_auth && (is_hide_names conf p) then ""
     else gen_p.surname
@@ -902,12 +907,7 @@ let pers_to_piqi_person_light conf base p compute_sosa =
   let gen_p = Util.string_gen_person base (gen_person_of_person p) in
   let p_auth = authorized_age conf base p in
   let sosa_p = Sosa.to_string (compute_sosa p) in
-  let sex =
-    match gen_p.sex with
-    | Male -> `male
-    | Female -> `female
-    | Neuter -> `unknown
-  in
+  let sex = piqi_sex_of_sex gen_p.sex in
   let surname =
     if not p_auth && (is_hide_names conf p) then ""
     else gen_p.surname
@@ -1048,12 +1048,7 @@ let pers_to_piqi_person_full conf base p compute_sosa =
   let gen_p = Util.string_gen_person base (gen_person_of_person p) in
   let p_auth = authorized_age conf base p in
   let sosa_p = Sosa.to_string (compute_sosa p) in
-  let sex =
-    match gen_p.sex with
-    | Male -> `male
-    | Female -> `female
-    | Neuter -> `unknown
-  in
+  let sex = piqi_sex_of_sex gen_p.sex in
   let surname =
     if not p_auth && (is_hide_names conf p) then ""
     else gen_p.surname

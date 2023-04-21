@@ -317,12 +317,7 @@ let pers_to_piqi_person_tree conf base p more_info gen max_gen base_prefix =
   else
     let p_auth = authorized_age conf base p in
     let index = Int32.of_string @@ Gwdb.string_of_iper (get_iper p) in
-    let sex =
-      match get_sex p with
-      | Male -> `male
-      | Female -> `female
-      | Neuter -> `unknown
-    in
+    let sex = piqi_sex_of_sex (get_sex p) in
     let sosa =
       if conf.bname <> chop_base_prefix base_prefix then `no_sosa
       else
@@ -389,11 +384,7 @@ let get_restricted_person () =
   restricted_person.Mread.Person.firstname <- "x";
   restricted_person
 
-let fill_sex p =
-      match get_sex p with
-      | Male -> `male
-      | Female -> `female
-      | Neuter -> `unknown
+let fill_sex p = piqi_sex_of_sex (get_sex p)
 
 let fill_sosa p =
   let sosa_nb = SosaCache.get_sosa_person p in
@@ -460,12 +451,7 @@ let pers_to_piqi_simple_person conf base p base_prefix =
     let p_auth = authorized_age conf base p in
     let index = Int32.of_string @@ Gwdb.string_of_iper (get_iper p) in
     let visible_for_visitors = is_visible conf base p in
-    let sex =
-      match get_sex p with
-      | Male -> `male
-      | Female -> `female
-      | Neuter -> `unknown
-    in
+    let sex = piqi_sex_of_sex (get_sex p) in
     let sosa_nb_num = SosaCache.get_sosa_person p in
     let sosa =
       if Sosa.eq sosa_nb_num Sosa.zero then `no_sosa

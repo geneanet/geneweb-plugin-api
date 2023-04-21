@@ -560,12 +560,7 @@ let husband_wife conf base p =
 (* ************************************************************************** *)
 let pers_to_piqi_simple_person conf base p =
   let index = Int32.of_string @@ Gwdb.string_of_iper (get_iper p) in
-  let sex =
-    match get_sex p with
-    | Male -> `male
-    | Female -> `female
-    | Neuter -> `unknown
-  in
+  let sex = piqi_sex_of_sex (get_sex p) in
   let sosa =
     let sosa_nb = SosaCache.get_single_sosa conf base p in
     if Sosa.eq sosa_nb Sosa.zero then `no_sosa
@@ -634,12 +629,7 @@ let pers_to_piqi_simple_person conf base p =
 (* ************************************************************************** *)
 let pers_to_piqi_person_search conf base p =
   let index = Int32.of_string @@ Gwdb.string_of_iper (get_iper p) in
-  let sex =
-    match get_sex p with
-    | Male -> `male
-    | Female -> `female
-    | Neuter -> `unknown
-  in
+  let sex = piqi_sex_of_sex (get_sex p) in
   let sosa =
     let sosa_nb = SosaCache.get_sosa_person p in
     if Sosa.eq sosa_nb Sosa.zero then `no_sosa
@@ -683,12 +673,7 @@ let pers_to_piqi_person_search conf base p =
 (* ************************************************************************** *)
 let pers_to_piqi_person_search_info conf base p =
   let index = Int32.of_string @@ Gwdb.string_of_iper (get_iper p) in
-  let sex =
-    match get_sex p with
-    | Male -> `male
-    | Female -> `female
-    | Neuter -> `unknown
-  in
+  let sex = piqi_sex_of_sex (get_sex p) in
   let sosa =
     let sosa_nb = SosaCache.get_single_sosa conf base p in
     if Sosa.eq sosa_nb Sosa.zero then `no_sosa
@@ -958,12 +943,7 @@ let pers_to_piqi_person_search_info conf base p =
 let pers_to_piqi_person_link conf base p =
   let create_link = `link in
   let index = Int32.of_string @@ Gwdb.string_of_iper (get_iper p) in
-  let sex =
-    match get_sex p with
-    | Male -> `male
-    | Female -> `female
-    | Neuter -> `unknown
-  in
+  let sex = piqi_sex_of_sex (get_sex p) in
   let first_name = sou base (get_first_name p) in
   let surname = sou base (get_surname p) in
   let occ = get_occ p in
@@ -999,12 +979,7 @@ let pers_to_piqi_mod_person conf base p =
   let digest = Update.digest_person (UpdateInd.string_person_of base p) in
   let create_link = `link in
   let index = Int32.of_string @@ Gwdb.string_of_iper (get_iper p) in
-  let sex =
-    match get_sex p with
-    | Male -> `male
-    | Female -> `female
-    | Neuter -> `unknown
-  in
+  let sex = piqi_sex_of_sex (get_sex p) in
   let surname = sou base (get_surname p) in
   let first_name = sou base (get_first_name p) in
   let occ = get_occ p in
@@ -1542,12 +1517,7 @@ let reconstitute_somebody base person =
       let occ = get_occ p in
       (fn, sn, occ, Update.Link, "", false)
     | _ ->
-      let sex =
-        match person.Mwrite.Person_link.sex with
-          | `male -> Male
-          | `female -> Female
-          | `unknown -> Neuter
-      in
+      let sex = sex_of_piqi_sex person.Mwrite.Person_link.sex in
       let fn = person.Mwrite.Person_link.firstname in
       let sn = person.Mwrite.Person_link.lastname in
       let (occ, force_create) = match create_link with

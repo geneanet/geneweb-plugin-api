@@ -1425,12 +1425,7 @@ let print_mod_family_request conf base =
          let sp = poi base isp in
          let index_family = Int32.of_string @@ Gwdb.string_of_ifam ifam in
          let index_person = Int32.of_string @@ Gwdb.string_of_iper isp in
-         let sex =
-           match get_sex sp with
-           | Male -> `male
-           | Female -> `female
-           | Neuter -> `unknown
-         in
+         let sex = piqi_sex_of_sex (get_sex sp) in
          let lastname = sou base (get_surname sp) in
          let firstname = sou base (get_first_name sp) in
          let dates = opt_of_string @@ Api_saisie_read.short_dates_text conf base sp in
@@ -1887,12 +1882,7 @@ let print_add_child conf base =
          let sp = poi base isp in
          let index_family = i32_of_ifam ifam in
          let index_person = i32_of_iper isp in
-         let sex =
-           match get_sex sp with
-           | Male -> `male
-           | Female -> `female
-           | Neuter -> `unknown
-         in
+         let sex = piqi_sex_of_sex (get_sex sp) in
          let surname = sou base (get_surname sp) in
          let first_name = sou base (get_first_name sp) in
          let dates = Api_saisie_read.short_dates_text conf base sp in

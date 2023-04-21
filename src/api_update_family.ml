@@ -16,6 +16,43 @@ let opt_only_printable_or_nl_stripped = function
   | Some x -> only_printable_or_nl (Mutil.strip_all_trailing_spaces x)
   | None -> ""
 
+let make_person_tuple base person =
+  let sex = Api_util.sex_of_piqi_sex person.Mwrite.Person.sex in
+  match person.Mwrite.Person.create_link with
+  | `create_default_occ ->
+      let fn = person.Mwrite.Person.firstname in
+      let sn = person.Mwrite.Person.lastname in
+      let occ =
+        match person.Mwrite.Person.occ with
+        | Some occ -> Int32.to_int occ
+        | None -> 0
+      in
+      (fn, sn, occ, Update.Create (sex, None), "", false)
+  | `create ->
+      (* TODO use Name.purge on fn/sn? *)
+      let fn = person.Mwrite.Person.firstname in
+      let sn = person.Mwrite.Person.lastname in
+      let occ = Api_update_util.api_find_free_occ base fn sn in
+      (* On met à jour parce que si on veut le rechercher, *)
+      (* il faut qu'on connaisse son occ.                  *)
+      let () =
+        if occ = 0 then person.Mwrite.Person.occ <- None
+        else person.Mwrite.Person.occ <- Some (Int32.of_int occ)
+      in
+      (fn, sn, occ, Update.Create (sex, None), "", true)
+  | `link ->
+      let ip = Gwdb.iper_of_string @@ Int32.to_string person.Mwrite.Person.index in
+      let p = poi base ip in
+      let fn = sou base (get_first_name p) in
+      let sn = sou base (get_surname p) in
+      let occ =
+        (* TODO use a fonction to check if empty/dummy person *)
+        if fn = "?" || sn = "?"
+        then int_of_string @@ Gwdb.string_of_iper (get_iper p)
+        else get_occ p
+      in
+      (fn, sn, occ, Update.Link, "", false)
+
 let reconstitute_family conf base mod_f =
   (* Attention, si witnesses est vide, on va supprimer des témoins (qui sont
      en double parce que dans GeneWeb, ils sont récupérés une fois dans fevents
@@ -41,21 +78,10 @@ let reconstitute_family conf base mod_f =
         let name =
           match evt.Mwrite.Fevent.event_perso with
           | Some n -> Efam_Name (only_printable n)
-          | _ ->
+          | None ->
               match evt.Mwrite.Fevent.fevent_type with
-              | Some `efam_marriage -> Efam_Marriage
-              | Some `efam_no_marriage -> Efam_NoMarriage
-              | Some `efam_no_mention -> Efam_NoMention
-              | Some `efam_engage -> Efam_Engage
-              | Some `efam_divorce -> Efam_Divorce
-              | Some `efam_separated -> Efam_Separated
-              | Some `efam_annulation -> Efam_Annulation
-              | Some `efam_marriage_bann -> Efam_MarriageBann
-              | Some `efam_marriage_contract -> Efam_MarriageContract
-              | Some `efam_marriage_license -> Efam_MarriageLicense
-              | Some `efam_pacs -> Efam_PACS
-              | Some `efam_residence -> Efam_Residence
-              | _ -> Efam_Name ""
+              | None -> Efam_Name ""
+              | Some efam -> Api_piqi_util.fevent_name_of_piqi_fevent_name efam
         in
         let date =
           match evt.Mwrite.Fevent.date with
@@ -68,15 +94,15 @@ let reconstitute_family conf base mod_f =
         let src = opt_only_printable evt.Mwrite.Fevent.src  in
         let witnesses =
           List.fold_right
-            (fun witness accu ->
+            (fun witness acc ->
               match witness.Mwrite.Witness.person with
+              | None -> acc
               | Some person ->
                   let wk = Api_util.witness_kind_of_piqi witness.Mwrite.Witness.witness_type in
                   let wnote = witness.Mwrite.Witness.witness_note in
-                  let wnote = Option.fold ~none:"" ~some:(fun x -> x) wnote in
+                  let wnote = Option.fold ~none:"" ~some:Fun.id wnote in
                   let wit = (reconstitute_somebody base person, wk, wnote) in
-                  wit :: accu
-              | None -> accu)
+                  wit :: acc)
             evt.Mwrite.Fevent.witnesses []
         in
         { efam_name = name; efam_date = Date.cdate_of_od date;
@@ -91,101 +117,16 @@ let reconstitute_family conf base mod_f =
   let origin_file = Option.value ~default:"" mod_f.Mwrite.Family.origin_file in
   let fam_index = Gwdb.ifam_of_string @@ Int32.to_string mod_f.Mwrite.Family.index in
   let parents =
-    let father = mod_f.Mwrite.Family.father in
-    let sex =
-      match father.Mwrite.Person.sex with
-      | `male -> Male
-      | `female -> Female
-      | `unknown -> Neuter
-    in
-    let father =
-      match father.Mwrite.Person.create_link with
-      | `create_default_occ ->
-          let fn = father.Mwrite.Person.firstname in
-          let sn = father.Mwrite.Person.lastname in
-          let occ =
-            match father.Mwrite.Person.occ with
-            | Some occ -> Int32.to_int occ
-            | None -> 0
-          in
-          (fn, sn, occ, Update.Create (sex, None), "", false)
-      | `create ->
-          let fn = father.Mwrite.Person.firstname in
-          let sn = father.Mwrite.Person.lastname in
-          let occ = Api_update_util.api_find_free_occ base fn sn in
-          (* On met à jour parce que si on veut le rechercher, *)
-          (* il faut qu'on connaisse son occ.                  *)
-          let () =
-            if occ = 0 then father.Mwrite.Person.occ <- None
-            else father.Mwrite.Person.occ <- Some (Int32.of_int occ)
-          in
-          (fn, sn, occ, Update.Create (sex, None), "", true)
-      | `link ->
-          let ip = Gwdb.iper_of_string @@ Int32.to_string father.Mwrite.Person.index in
-          let p = poi base ip in
-          let fn = sou base (get_first_name p) in
-          let sn = sou base (get_surname p) in
-          let occ =
-            if fn = "?" || sn = "?"
-            then int_of_string @@ Gwdb.string_of_iper (get_iper p)
-            else get_occ p
-          in
-          (fn, sn, occ, Update.Link, "", false)
-    in
-    let mother = mod_f.Mwrite.Family.mother in
-    let sex =
-      match mother.Mwrite.Person.sex with
-      | `male -> Male
-      | `female -> Female
-      | `unknown -> Neuter
-    in
-    let mother =
-      match mother.Mwrite.Person.create_link with
-      | `create_default_occ ->
-          let fn = mother.Mwrite.Person.firstname in
-          let sn = mother.Mwrite.Person.lastname in
-          let occ =
-            match mother.Mwrite.Person.occ with
-            | Some occ -> Int32.to_int occ
-            | None -> 0
-          in
-          (fn, sn, occ, Update.Create (sex, None), "", false)
-      | `create ->
-          let fn = mother.Mwrite.Person.firstname in
-          let sn = mother.Mwrite.Person.lastname in
-          let occ = Api_update_util.api_find_free_occ base fn sn in
-          (* On met à jour parce que si on veut le rechercher, *)
-          (* il faut qu'on connaisse son occ.                  *)
-          let () =
-            if occ = 0 then mother.Mwrite.Person.occ <- None
-            else mother.Mwrite.Person.occ <- Some (Int32.of_int occ)
-          in
-          (fn, sn, occ, Update.Create (sex, None), "", true)
-      | `link ->
-          let ip = Gwdb.iper_of_string @@ Int32.to_string mother.Mwrite.Person.index in
-          let p = poi base ip in
-          let fn = sou base (get_first_name p) in
-          let sn = sou base (get_surname p) in
-          let occ =
-            if fn = "?" || sn = "?"
-            then int_of_string @@ Gwdb.string_of_iper (get_iper p)
-            else get_occ p
-          in
-          (fn, sn, occ, Update.Link, "", false)
-    in
-    [father; mother]
+    let father = make_person_tuple base (mod_f.Mwrite.Family.father) in
+    let mother = make_person_tuple base (mod_f.Mwrite.Family.mother) in
+    [|father; mother|]
   in
   let children =
     List.map
       (fun child ->
          match child.Mwrite.Person_link.create_link with
          | `create_default_occ ->
-             let sex =
-               match child.Mwrite.Person_link.sex with
-               | `male -> Male
-               | `female -> Female
-               | `unknown -> Neuter
-             in
+             let sex = Api_util.sex_of_piqi_sex child.Mwrite.Person_link.sex in
              let fn = child.Mwrite.Person_link.firstname in
              let sn = child.Mwrite.Person_link.lastname in
              let occ =
@@ -195,12 +136,7 @@ let reconstitute_family conf base mod_f =
              in
              (fn, sn, occ, Update.Create (sex, None), "", false)
          | `create ->
-             let sex =
-               match child.Mwrite.Person_link.sex with
-               | `male -> Male
-               | `female -> Female
-               | `unknown -> Neuter
-             in
+             let sex = Api_util.sex_of_piqi_sex child.Mwrite.Person_link.sex in
              let fn = child.Mwrite.Person_link.firstname in
              let sn = child.Mwrite.Person_link.lastname in
              let occ = Api_update_util.api_find_free_occ base fn sn in
@@ -226,7 +162,7 @@ let reconstitute_family conf base mod_f =
   in
   (* Attention, surtout pas les witnesses, parce que si on en créé un, *)
   (* on le créé aussi dans witness et on ne pourra jamais valider.     *)
-  let (marr, div, _) =
+  let (marr, divorce, _) =
     UpdateFamOk.reconstitute_from_fevents (p_getenv conf.env "nsck" = Some "on") "" fevents
   in
   let (relation, marriage, marriage_place,
@@ -245,20 +181,20 @@ let reconstitute_family conf base mod_f =
     | _ -> relation
   in
   (* => pour l'instant, CheckItem ne vérifie pas le sex des parents. *)
-  let divorce = div in
   let fam =
-    {marriage = marriage; marriage_place = marriage_place;
-     marriage_note = marriage_note; marriage_src = marriage_src;
-     fevents = fevents; witnesses = Array.of_list witnesses;
-     relation = relation; divorce = divorce; comment = comment;
-     origin_file = origin_file; fsources = fsources; fam_index = fam_index}
-  and cpl = Futil.parent conf.multi_parents (Array.of_list parents)
-  and des = {children = Array.of_list children} in
+    {marriage; marriage_place;
+     marriage_note; marriage_src;
+     fevents; witnesses = Array.of_list witnesses;
+     relation; divorce; comment;
+     origin_file; fsources; fam_index}
+  in
+  let cpl = Futil.parent conf.multi_parents parents in
+  let des = {children = Array.of_list children} in
   (* On vérifie s'il y a des conflits de personne. *)
   (* Normalement, il ne doit plus y avoir de lever *)
   (* de conflits par les autres modules : update,  *)
   (* updateIndOk et updateFamOk.                   *)
-  let _err = Api_update_util.check_family_conflict base fam cpl des in
+  Api_update_util.check_family_conflict base fam cpl des;
   (* Maintenant qu'on a fini les conflit, on remet l'objet person *)
   (* tel que pour GeneWeb, c'est à dire qu'on supprime l'option   *)
   (* force_create.                                                *)
@@ -280,7 +216,7 @@ let reconstitute_family conf base mod_f =
       fevents
   in
   let parents_gw =
-    List.map
+    Array.map
       (fun (f, s, o, create, var, _) -> (f, s, o, create, var))
       parents
   in
@@ -292,7 +228,7 @@ let reconstitute_family conf base mod_f =
   let fam =
     {(fam) with witnesses = Array.of_list witnesses_gw; fevents = fevents_gw}
   in
-  let cpl = Futil.parent conf.multi_parents (Array.of_list parents_gw) in
+  let cpl = Futil.parent conf.multi_parents parents_gw in
   let des = {children = Array.of_list children_gw} in
   ((fam : (Update.key, ifam, string) gen_family), cpl, des)
 
@@ -314,8 +250,8 @@ let print_add conf base mod_f mod_fath mod_moth =
             let (ifam, fam, cpl, des) =
               UpdateFamOk.effective_add conf base true sfam scpl sdes
             in
-            let () = UpdateFamOk.patch_parent_with_pevents base cpl in
-            let () = UpdateFamOk.patch_children_with_pevents base des in
+            UpdateFamOk.patch_parent_with_pevents base cpl;
+            UpdateFamOk.patch_children_with_pevents base des;
             (* On met à jour les index ! et le digest ! *)
             let () =
               let fam = family_of_gen_family base (fam, cpl, des) in
@@ -424,12 +360,7 @@ let print_mod conf base ip mod_f =
         let sl =
           [fam.comment; fam.fsources; fam.marriage_note; fam.marriage_src]
         in
-        let rec loop l accu =
-          match l with
-          | [] -> accu
-          | evt :: l -> loop l (evt.efam_note :: evt.efam_src :: accu)
-        in
-        let sl = loop (fam.fevents) sl in
+        let sl = List.fold_left (fun acc evt -> evt.efam_note :: evt.efam_src :: acc) sl fam.fevents in
         String.concat " " (List.map (sou base) sl)
       in
       Notes.update_notes_links_db base (NLDB.PgFam ifam) s;

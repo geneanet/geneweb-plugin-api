@@ -9,17 +9,11 @@ open Api_update_util
 
 let reconstitute_person_aux conf fn_occ fn_rparents fn_pevt_witnesses mod_p =
   let key_index = Gwdb.iper_of_string @@ Int32.to_string mod_p.Mwrite.Person.index in
-  let first_name = only_printable mod_p.Mwrite.Person.firstname in
-  let surname = only_printable mod_p.Mwrite.Person.lastname in
   (* S'il y a des caractères interdits, on les supprime *)
   let (first_name, surname) =
-    let contain_fn = String.contains first_name in
-    let contain_sn = String.contains surname in
-    if (List.exists contain_fn Name.forbidden_char)
-    || (List.exists contain_sn Name.forbidden_char)
-    then (Name.purge first_name, Name.purge surname)
-    else (first_name, surname)
-  in
+    let first_name = only_printable mod_p.Mwrite.Person.firstname in
+    let surname = only_printable mod_p.Mwrite.Person.lastname in
+    (Name.purge first_name, Name.purge surname) in
   let occ = fn_occ mod_p in
   let image = Option.fold ~none:"" ~some:only_printable mod_p.Mwrite.Person.image in
   let strings_aux = List.map only_printable in
@@ -61,12 +55,7 @@ let reconstitute_person_aux conf fn_occ fn_rparents fn_pevt_witnesses mod_p =
   let rparents = fn_rparents mod_p in
   let access = Api_piqi_util.piqi_access_to_access mod_p.Mwrite.Person.access in
   let occupation = Option.fold ~none:"" ~some:only_printable mod_p.Mwrite.Person.occupation in
-  let sex =
-    match mod_p.Mwrite.Person.sex with
-    | `male -> Male
-    | `female -> Female
-    | `unknown -> Neuter
-  in
+  let sex = Api_util.sex_of_piqi_sex mod_p.Mwrite.Person.sex in
   let death =
     match mod_p.Mwrite.Person.death_type with
     | `not_dead -> NotDead
@@ -88,10 +77,10 @@ let reconstitute_person_aux conf fn_occ fn_rparents fn_pevt_witnesses mod_p =
       let name =
         match evt.Mwrite.Pevent.event_perso with
         | Some n -> Epers_Name (only_printable n)
-        | _ ->
+        | None ->
           match evt.Mwrite.Pevent.pevent_type with
           | Some x -> Api_piqi_util.pevent_name_of_piqi_pevent_name x
-          | _ -> Epers_Name ""
+          | None -> Epers_Name ""
       in
       let date =
         match evt.Mwrite.Pevent.date with
@@ -130,9 +119,9 @@ let reconstitute_person_aux conf fn_occ fn_rparents fn_pevt_witnesses mod_p =
   (* FIXME: do no use the _bb version *)
   let death =
     match death with
+    | NotDead | Death _ | DeadYoung | DeadDontKnowWhen | OfCourseDead -> death
     | DontKnowIfDead ->
       Update.infer_death_bb conf (Date.od_of_cdate birth) (Date.od_of_cdate baptism)
-    | _ -> death
   in
   ( original_pevents
   , { first_name ; surname ; occ ; sex ; access
@@ -167,8 +156,9 @@ let reconstitute_person conf base mod_p
       Option.fold ~none:0 ~some:Int32.to_int mod_p.Mwrite.Person.occ
   in
   let fn_rparents mod_p =
-    List.fold_right begin fun r accu ->
+    List.fold_right begin fun r acc ->
       match r.Mwrite.Relation_parent.person with
+      | None -> acc
       | Some person ->
         let r_type =
           match r.Mwrite.Relation_parent.rpt_type with
@@ -181,31 +171,28 @@ let reconstitute_person conf base mod_p
         let (r_fath, r_moth) =
           match person.Mwrite.Person_link.sex with
           | `female -> (None, Some (reconstitute_somebody base person))
-          | _ -> (Some (reconstitute_somebody base person), None)
+          | `male | `unknown (* FIXME this consider `unkwown to be `male *) ->
+              (Some (reconstitute_somebody base person), None)
         in
         let r_sources =
           match r.Mwrite.Relation_parent.source with
           | Some s -> s
           | None -> ""
         in
-        let r =
-          { r_type = r_type; r_fath = r_fath;
-            r_moth = r_moth; r_sources = r_sources }
-        in
-        r :: accu
-      | None -> accu
+        let r = {r_type; r_fath; r_moth; r_sources} in
+        r :: acc
     end mod_p.Mwrite.Person.rparents []
   in
   let fn_pevt_witnesses evt =
-    List.fold_right begin fun witness accu ->
+    List.fold_right begin fun witness acc ->
       match witness.Mwrite.Witness.person with
+      | None -> acc
       | Some person ->
         let wk = Api_util.witness_kind_of_piqi witness.Mwrite.Witness.witness_type in
         let wnote = witness.Mwrite.Witness.witness_note in
-        let wnote = Option.fold ~none:"" ~some:(fun x -> x) wnote in
+        let wnote = Option.fold ~none:"" ~some:Fun.id wnote in
         let wit = (reconstitute_somebody base person, wk, wnote) in
-        wit :: accu
-      | None -> accu
+        wit :: acc
     end evt.Mwrite.Pevent.witnesses []
   in
   let original_pevents, p = reconstitute_person_aux conf fn_occ fn_rparents fn_pevt_witnesses mod_p in
@@ -341,6 +328,7 @@ let print_mod ?(no_check_name = false) ?(fexclude = []) conf base mod_p =
       let hr =
         [(fun () -> History.record conf base changed "mp");
          (fun () ->
+           (* TODO use a function to check if empty/dummy person *)
            if not (is_quest_string p.surname) &&
               not (is_quest_string p.first_name) &&
               not (is_old_person conf p)
@@ -356,22 +344,19 @@ let print_mod ?(no_check_name = false) ?(fexclude = []) conf base mod_p =
 
 (**/**) (* Fonctions pour la première saisie, i.e. on n'a pas de base ! *)
 
-
-(* Comme on n'a pas de base, on va garder une hashtbl des occurrences. *)
-let ht_occ = Hashtbl.create 7 ;;
-
-let find_free_occ_nobase fn sn =
-  let key = Name.lower fn ^ " #@# " ^ Name.lower sn in
-  try
-    let occ = Hashtbl.find ht_occ key in
-    Hashtbl.replace ht_occ key (succ occ);
-    occ
-  with Not_found ->
-    begin
+let find_free_occ_nobase =
+  (* Comme on n'a pas de base, on va garder une hashtbl des occurrences. *)
+  let ht_occ = Hashtbl.create 7 in
+  fun fn sn ->
+    let key = Name.lower fn ^ " #@# " ^ Name.lower sn in
+    match Hashtbl.find_opt ht_occ key with
+    | Some occ ->
+      Hashtbl.replace ht_occ key (succ occ);
+      occ
+    | None ->
       let occ = 0 in
       Hashtbl.add ht_occ key (succ occ);
       occ
-    end
 
 let reconstitute_person_nobase conf mod_p =
   let fn_occ mod_p =
@@ -390,7 +375,7 @@ let reconstitute_person_nobase conf mod_p =
   in
   let fn_rparents _ = [] in
   let fn_pevt_witnesses _ = [] in
-  let _, p = reconstitute_person_aux conf fn_occ fn_rparents fn_pevt_witnesses mod_p in
+  let _original_pevents, p = reconstitute_person_aux conf fn_occ fn_rparents fn_pevt_witnesses mod_p in
   { p with pevents = List.filter begin fun e ->
         e.epers_name <> Epers_Death
         || e.epers_place <> ""
