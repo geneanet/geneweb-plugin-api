@@ -579,14 +579,17 @@ let complete_with_dico assets conf nb max mode ini list =
         | None -> [||]
       end |> reduce_dico mode list format
     in
-    List.rev_append list (List.sort Place.compare_places dico)
-  | _ -> List.rev list
+    let append l1 l2 =
+      List.fold_left (fun l hd -> hd :: l) l2 (List.rev l1)
+    in
+    append list (List.sort Place.compare_places dico)
+  | _ -> list
 
 let search_auto_complete assets conf base mode place_mode max n =
   let aux data compare =
     let conf = { conf with env = ("data", Mutil.encode data) :: conf.env } in
     UpdateData.get_all_data conf base
-    |> List.rev_map (sou base)
+    |> List.map (sou base)
     |> List.sort compare
   in
   match mode with
