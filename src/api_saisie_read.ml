@@ -1912,20 +1912,6 @@ let print_result_fiche_person conf base ip nb_asc_max nb_desc_max simple_graph_i
   end
 
 (* ********************************************************************* *)
-(*  [Fonc] is_private_person : conf -> base -> ip -> bool                 *)
-(** [Description] : Indique si une personne est privée ou non.
-    [Args] :
-      - conf  : configuration de la base
-      - base  : base de donnée
-      - ip    : index de la personne
-    [Retour] : Bool
-    [Rem] : Non exporté en clair hors de ce module.                      *)
-(* ********************************************************************* *)
-let is_private_person conf base ip =
-    let p = pget conf base ip in
-    is_empty_person p || ((is_hide_names conf p) && not(authorized_age conf base p))
-
-(* ********************************************************************* *)
 (*  [Fonc] print_from_identifier_person : conf -> base ->                *)
 (*   print_result_from_ip -> Identifier_person -> unit                   *)
 (** [Description] : Utilise un identifiant de personne pour appeler une
@@ -1959,8 +1945,7 @@ let print_from_identifier_person conf base print_result_from_ip identifier_perso
           begin
             match Gwdb.person_of_key base fn sn (Int32.to_int oc) with
             | Some ip ->
-              if is_private_person conf base ip
-              then
+              if Api_util.get_visibility conf base ip = `private_ then
                 print_error conf `not_found ""
               else
                 (if identifier_person.Mread.Identifier_person.track_visit
