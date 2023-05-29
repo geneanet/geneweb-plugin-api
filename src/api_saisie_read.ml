@@ -798,6 +798,54 @@ let get_related_piqi conf base p base_prefix gen_p has_relations pers_to_piqi re
       list
   else []
 
+(* TODO should be in geneweb *)
+let get_related_witness_piqi conf base p base_prefix _gen_p has_related pers_to_piqi =
+  if not has_related then [] else
+    let related = List.sort_uniq compare (get_related p) in
+    let events_witnesses =
+      let list = ref [] in
+      (let rec make_list = function
+         | ic :: icl ->
+             let c = pget conf base ic in
+             List.iter
+               (fun event_item ->
+                 match
+                   Util.array_mem_witn conf base (get_iper p)
+                     (Event.get_witnesses event_item)
+                     (Event.get_witness_notes event_item)
+                 with
+                 | None -> ()
+                 | Some (wk, wnote) -> (
+                   match Event.get_name event_item with
+                   | Event.Fevent _ ->
+                       if get_sex c = Male then
+                         list := (c, wk, wnote, event_item) :: !list
+                   | _ -> list := (c, wk, wnote, event_item) :: !list))
+               (Event.events conf base c);
+             make_list icl
+         | [] -> ()
+       in
+       make_list related);
+      !list
+    in
+    (* On tri les témoins dans le même ordre que les évènements. *)
+    let events_witnesses =
+      Event.sort_events
+        (fun (_, _, _, ei) -> Event.get_name ei)
+        (fun (_, _, _, ei) -> Event.get_date ei)
+        events_witnesses
+    in
+    List.map
+      (fun (p, wk, _wnote, _evt) ->
+        let wk = piqi_of_witness_kind wk in
+        let p = pers_to_piqi conf base p base_prefix in
+        {
+          Mread.Witness_relation_fiche_person.w_type = wk;
+          person = p
+        }
+        )
+      events_witnesses
+
 (* ********************************************************************* *)
 (*  [Fonc] get_family_piqi                                               *)
 (** [Description] : Returns a family built by a family_constructor.
@@ -1016,8 +1064,9 @@ let get_events_witnesses conf base p base_prefix gen_p p_auth has_relations pers
                 (fun evt ->
                    let witnesses = Event.get_witnesses evt in
                    let wnotes = Event.get_witness_notes evt in
-                  let (mem, wk, wnote) = Util.array_mem_witn conf base (get_iper p) witnesses wnotes in
-                  if mem then
+                    match Util.array_mem_witn conf base (get_iper p) witnesses wnotes with
+                    | None -> ()
+                    | Some (wk, wnote) -> (
                     (* Attention aux doublons pour les evenements famille. *)
                     match Event.get_name evt with
                     | Event.Fevent _ ->
@@ -1025,7 +1074,7 @@ let get_events_witnesses conf base p base_prefix gen_p p_auth has_relations pers
                           list := (c, wk, wnote, evt) :: !list
                         else ()
                     | _ -> list := (c, wk, wnote, evt) :: !list
-                  else ())
+                    ))
                 (Event.sorted_events conf base c);
               make_list icl
           | [] -> ()
@@ -1042,6 +1091,7 @@ let get_events_witnesses conf base p base_prefix gen_p p_auth has_relations pers
       in
       List.map
         (fun (p, wk, wnote, evt) ->
+          let wk = string_of_witness_kind conf (get_sex p) wk in
           let witness_date =
             match Date.od_of_cdate (Event.get_date evt) with
             | Some (Dgreg (dmy, _)) -> " (" ^ DateDisplay.year_text dmy ^ ")"
@@ -1276,17 +1326,19 @@ let fill_fiche_parents conf base p base_prefix nb_asc nb_asc_max with_parent_fam
   else
     (None, None)
 
-let has_relations conf base p p_auth is_main_person =
-  if p_auth && conf.use_restrict && is_main_person  then
-    let related =
-      List.fold_left
-        (fun l ip ->
+(* TODO use function defined in geneweb instead for has_relations and has_related *)
+let has_relations _conf _base p p_auth =
+  p_auth && get_rparents p <> []
+
+let has_related conf base p p_auth is_main_person =
+  p_auth &&
+  if conf.use_restrict && is_main_person  then
+      List.exists
+        (fun ip ->
            let rp = pget conf base ip in
-           if is_hidden rp then l else (ip :: l))
-      [] (get_related p)
-    in
-    get_rparents p <> [] || related <> []
-  else p_auth && (get_rparents p <> [] || get_related p <> [])
+           not (is_hidden rp))
+      (get_related p)
+    else  get_related p <> []
 
 let get_event_constructor name type_ date date_long date_raw date_conv date_conv_long date_cal place note src spouse witnesses =
       {
@@ -1590,7 +1642,7 @@ let pers_to_piqi_person conf base p base_prefix is_main_person =
   else
     let p_auth = authorized_age conf base p in
     let gen_p = Util.string_gen_person base (gen_person_of_person p) in
-    let has_relations = has_relations conf base p p_auth is_main_person in
+    let has_relations = has_relations conf base p p_auth in
 
     let (baptism_date, _, baptism_date_conv, _, baptism_cal) = fill_baptism conf p_auth gen_p in
     let (birth_date, _, birth_date_conv, _, birth_cal) = fill_birth conf p_auth gen_p in
@@ -1711,7 +1763,7 @@ let rec pers_to_piqi_fiche_person conf base p base_prefix is_main_person nb_asc 
       let sosa_nb = SosaCache.get_sosa_person p in
       let (fiche_father, fiche_mother) = if is_main_person || not simple_graph_info then fill_fiche_parents conf base p base_prefix nb_asc nb_asc_max with_parent_families pers_to_piqi_fiche_person simple_graph_info no_event else (None, None) in
       let (father, mother) = if with_parent_families then fill_parents conf base p base_prefix else (None, None) in
-      let has_relations = if is_main_person then has_relations conf base p p_auth is_main_person else false in
+      let has_relations = is_main_person && has_relations conf base p p_auth in
       (* Returns simple person attributes only when nb of desc is 0. *)
       let return_simple_attributes = (nb_desc_max == 0) in
       let (ref_index, ref_person) = fill_ref_if_is_main_person conf base is_main_person in

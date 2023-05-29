@@ -271,10 +271,17 @@ message RelationPerson {
   required RelationType r_type = 1;
   required SimplePerson person = 2;
 }
+
 message RelationFichePerson {
   required RelationType r_type = 1;
   required Person person = 2;
 }
+
+message WitnessRelationFichePerson {
+  required WitnessType w_type = 1;
+  required Person person = 2;
+}
+
 
 message EventWitness {
   required string event_witness_type = 1;
@@ -385,6 +392,7 @@ message FichePerson {
   repeated RelationFichePerson rparents = 27;
   repeated EventFicheWitness events_witnesses = 28;
   repeated FicheEvent events = 29;
+  repeated WitnessRelationFichePerson witness_related = 30;
 }
 
 message Family {
