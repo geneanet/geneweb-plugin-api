@@ -614,9 +614,10 @@ let search_auto_complete assets conf base mode place_mode max n =
           in
           if !nb < max then loop acc tl else acc
       in
-      loop [] list
+      List.rev @@ loop [] list
     in
-    complete_with_dico assets conf nb max place_mode ini (reduce_perso list)
+    let reduced_list = reduce_perso list in
+    complete_with_dico assets conf nb max place_mode ini reduced_list
 
   | `source ->
     let list = aux "src" Gutil.alphabetic_order in
