@@ -307,7 +307,7 @@ let print_add conf base mod_f mod_fath mod_moth =
       | (Some err, _) | (_, Some err) ->
           (* Correspond au cas ou fn/sn = ""/"?" *)
           (* => ne devrait pas se produire       *)
-          Api_update_util.UpdateError err
+          None, Api_update_util.UpdateError err
       | (None, None) ->
           begin
             let (sfam, sdes) = UpdateFamOk.strip_family sfam sdes in
@@ -383,11 +383,11 @@ let print_add conf base mod_f mod_fath mod_moth =
               [(fun () -> History.record conf base changed act);
                (fun () -> Update.delete_topological_sort conf base)]
             in
-            Api_update_util.UpdateSuccess (wl, ml, hr)
+            Some ifam, Api_update_util.UpdateSuccess (wl, ml, hr)
           end)
   with
-  | Update.ModErr s -> Api_update_util.UpdateError s
-  | Api_update_util.ModErrApiConflict c -> Api_update_util.UpdateErrorConflict c)
+  | Update.ModErr s -> None, Api_update_util.UpdateError s
+  | Api_update_util.ModErrApiConflict c -> None, Api_update_util.UpdateErrorConflict c)
 
 
 let print_mod_aux conf base mod_f callback =
