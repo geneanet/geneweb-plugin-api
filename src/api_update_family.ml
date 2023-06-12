@@ -321,15 +321,26 @@ let print_add conf base mod_f mod_fath mod_moth =
               let fam = family_of_gen_family base (fam, cpl, des) in
               let ifath = get_father fam in
               let imoth = get_mother fam in
+
+              (!GWPARAM.syslog) `LOG_ERR ("IFATH " ^ (Gwdb.string_of_iper ifath));
+              (!GWPARAM.syslog) `LOG_ERR ("IMOTH " ^ (Gwdb.string_of_iper imoth));
+              
               let father = poi base ifath in
               let mother = poi base imoth in
               mod_f.Mwrite.Family.index <- Int32.of_string @@ Gwdb.string_of_ifam ifam;
               mod_fath.Mwrite.Person.index <- Int32.of_string @@ Gwdb.string_of_iper ifath;
               let fath_occ = get_occ father in
+
+              (!GWPARAM.syslog) `LOG_ERR ("FATHOCC " ^ (string_of_int fath_occ));
+              
               mod_fath.Mwrite.Person.occ <-
                 if fath_occ = 0 then None else Some (Int32.of_int fath_occ);
               mod_moth.Mwrite.Person.index <- Int32.of_string @@ Gwdb.string_of_iper imoth;
+
               let moth_occ = get_occ mother in
+              (!GWPARAM.syslog) `LOG_ERR ("MOTHOCC " ^ (string_of_int moth_occ));
+
+              
               mod_moth.Mwrite.Person.occ <-
                 if moth_occ = 0 then None else Some (Int32.of_int moth_occ);
               let digest_father =
