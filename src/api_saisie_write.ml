@@ -912,7 +912,7 @@ let compute_warnings conf base resp =
       in
       (true, warning, misc, None, hr)
 
-let compute_modification_status conf base ip ifam resp =
+let compute_modification_status' conf base ip ifam resp =
   let (surname, first_name, occ, index_person, surname_str, first_name_str) =
     if ip = Gwdb.dummy_iper then ("", "", None, None, None, None)
     else
@@ -964,8 +964,12 @@ let compute_modification_status conf base ip ifam resp =
       p = fn;
     }
   in
-  Mext_write.gen_modification_status response 
+  response
 
+let compute_modification_status conf base ip fam resp =
+  let response = compute_modification_status' conf base ip fam resp in
+  Mext_write.gen_modification_status response  
+  
 (**/**) (* Fonctions d'ajout de la première personne. *)
 
 
@@ -1399,17 +1403,48 @@ let print_add_family_ok conf base =
   let add_family_ok = get_params conf Mext_write.parse_add_family_ok in
   let ip = Gwdb.iper_of_string @@ Int32.to_string add_family_ok.Mwrite.Add_family_ok.index_person in
   let mod_family = add_family_ok.Mwrite.Add_family_ok.family in
+  
+  let father = mod_family.Mwrite.Family.father in
+  let fath_occ = father.Mwrite.Person.occ in
+
+  let mother = mod_family.Mwrite.Family.mother in
+  let moth_occ = mother.Mwrite.Person.occ in
+
+  let mod_person p =
+    let fn = p.Mwrite.Person.firstname in
+    let sn = p.Mwrite.Person.lastname in
+    let occ = Option.value ~default:(Int32.of_int (-1)) p.Mwrite.Person.occ |> Int32.to_int in
+    let ipo = Gwdb.person_of_key base fn sn occ in
+    let ipos = Option.value ~default:(Gwdb.iper_of_string "-1") ipo |> Gwdb.string_of_iper in
+    (!GWPARAM.syslog) `LOG_ERR @@ "IPO " ^ fn ^ sn ^ (string_of_int occ) ^ " : " ^ ipos;
+    match ipo with
+    | Some _iper -> {p with Mwrite.Person.create_link = `link}
+    | None -> p
+  in
+  
+  let mod_family = if fath_occ = None then mod_family
+    else {mod_family with Mwrite.Family.father = mod_person father}
+  in
+  let mod_family = if moth_occ = None then mod_family
+    else {mod_family with Mwrite.Family.mother = mod_person mother}
+  in
+
   let ifam_opt, resp = compute_add_family_ok' conf base mod_family in
   let ifam = Option.value ifam_opt ~default:(Gwdb.ifam_of_string @@ Int32.to_string mod_family.Mwrite.Family.index) in
+
   let is_dummy = Gwdb.eq_iper Gwdb.dummy_iper in
-  let ip = if is_dummy ip then
+  let ip' = if is_dummy ip then
       let fam = Gwdb.foi base ifam in
       let ifath = Gwdb.get_father fam in
       if not (is_dummy ifath) then ifath
       else Gwdb.get_mother fam
     else ip
   in
-  let data = compute_modification_status conf base ip ifam resp in
+
+  let response = compute_modification_status' conf base ip ifam resp in
+  let index_person = Some (Int32.of_string @@ Gwdb.string_of_iper ip') in
+  let response = { response with Mwrite.Modification_status.index_person } in
+  let data = Mext_write.gen_modification_status response in
   print_result conf data
 
 
