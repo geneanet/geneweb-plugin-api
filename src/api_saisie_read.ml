@@ -964,16 +964,12 @@ let get_rparents_piqi base conf base_prefix gen_p has_relations pers_to_piqi rel
       - Array of events
                                                                          *)
 (* ********************************************************************* *)
-let get_events_witnesses conf base p base_prefix gen_p p_auth has_relations pers_to_piqi event_witness_constructor =
+let get_events_witnesses conf base p base_prefix _gen_p p_auth has_relations pers_to_piqi event_witness_constructor =
   if has_relations then
       let events_witnesses = Relation.get_event_witnessed conf base p in
       List.map
         (fun (p, wk, wnote, evt) ->
-          let witness_date =
-            match Date.od_of_cdate (Event.get_date evt) with
-            | Some (Dgreg (dmy, _)) -> " (" ^ DateDisplay.year_text dmy ^ ")"
-            | _ -> ""
-          in
+          let wk = string_of_witness_kind conf (get_sex p) wk in
           let witnesses_name =
             match Event.get_name evt with
             | Event.Pevent name ->
@@ -983,8 +979,15 @@ let get_events_witnesses conf base p base_prefix gen_p p_auth has_relations pers
                 if p_auth then !!(Util.string_of_fevent_name conf base name)
                 else  ""
           in
+          (* TODO event_witness_type is not the witness_type but the string to print... *)
           let event_witness_type =
-            Utf8.capitalize_fst !!(wk) ^ witness_date ^ ": " ^ witnesses_name
+            match Date.cdate_to_dmy_opt (Event.get_date evt) with
+            | None ->
+                Printf.sprintf "(%s) : %s"
+                !!(wk) witnesses_name
+            | Some dmy ->
+                Printf.sprintf "%s (%s) : %s"
+                (DateDisplay.year_text dmy) !!(wk) witnesses_name
           in
           let husband = pers_to_piqi conf base p base_prefix in
           let wife =
