@@ -966,42 +966,7 @@ let get_rparents_piqi base conf base_prefix gen_p has_relations pers_to_piqi rel
 (* ********************************************************************* *)
 let get_events_witnesses conf base p base_prefix gen_p p_auth has_relations pers_to_piqi event_witness_constructor =
   if has_relations then
-    begin
-      let related = List.sort_uniq compare gen_p.related in
-      let events_witnesses =
-        let list = ref [] in
-        let rec make_list =
-          function
-          | ic :: icl ->
-              let c = pget conf base ic in
-              List.iter
-                (fun evt ->
-                   let witnesses = Event.get_witnesses evt in
-                   let wnotes = Event.get_witness_notes evt in
-                  let (mem, wk, wnote) = Util.array_mem_witn conf base (get_iper p) witnesses wnotes in
-                  if mem then
-                    (* Attention aux doublons pour les evenements famille. *)
-                    match Event.get_name evt with
-                    | Event.Fevent _ ->
-                        if get_sex c = Male then
-                          list := (c, wk, wnote, evt) :: !list
-                        else ()
-                    | _ -> list := (c, wk, wnote, evt) :: !list
-                  else ())
-                (Event.sorted_events conf base c);
-              make_list icl
-          | [] -> ()
-        in
-        make_list related;
-        !list
-      in
-      (* On tri les témoins dans le même ordre que les évènements. *)
-      let events_witnesses =
-        Event.sort_events
-          (fun (_, _, _, evt) -> Event.get_name evt)
-          (fun (_, _, _, evt) -> Event.get_date evt)
-          events_witnesses
-      in
+      let events_witnesses = Relation.get_event_witnessed conf base p in
       List.map
         (fun (p, wk, wnote, evt) ->
           let witness_date =
@@ -1032,7 +997,6 @@ let get_events_witnesses conf base p base_prefix gen_p p_auth has_relations pers
           event_witness_constructor event_witness_type husband wife wnote
           )
         events_witnesses
-    end
   else []
 
 (* ********************************************************************* *)
@@ -1341,7 +1305,7 @@ let fill_families conf base p =
   in
   let family_constructor index spouse marriage_date marriage_date_long marriage_date_raw marriage_date_conv marriage_date_conv_long marriage_cal
        marriage_date_text marriage_place marriage_src marriage_type divorce_type divorce_date divorce_date_long divorce_date_raw divorce_date_conv
-       divorce_date_conv_long divorce_cal witnesses notes fsources children =    
+       divorce_date_conv_long divorce_cal witnesses notes fsources children =
     {
       Mread.Family.index = index;
       spouse = spouse;
@@ -1387,7 +1351,7 @@ let fill_fiche_families conf base p base_prefix nb_asc nb_desc nb_desc_max pers_
         else Mread.default_person ()
       in
       let wkind = Api_util.piqi_of_witness_kind wkind in
-      fiche_witness_constructor wkind p wnote 
+      fiche_witness_constructor wkind p wnote
     in
     let child_to_piqi conf base p base_prefix =
       pers_to_piqi_person conf base p base_prefix false 0 0 (nb_desc+1) nb_desc_max false simple_graph_info no_event
