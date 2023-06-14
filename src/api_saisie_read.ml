@@ -742,46 +742,8 @@ let fill_events_if_is_main_person conf base p base_prefix p_auth is_main_person 
       - Array of related person
                                                                          *)
 (* ********************************************************************* *)
-let get_related_piqi conf base p base_prefix gen_p has_relations pers_to_piqi relation_person_constructor =
+let get_related_piqi conf base p base_prefix _gen_p has_relations pers_to_piqi relation_person_constructor =
   if has_relations then
-    let list =
-      let list = List.sort_uniq compare gen_p.related in
-      List.fold_left
-        (fun list ic ->
-           let c = pget conf base ic in
-           let rec loop list =
-             function
-             | r :: rl ->
-                 (match r.r_fath with
-                 | Some ip when ip = get_iper p ->
-                     loop ((c, r) :: list) rl
-                 | _ ->
-                     (match r.r_moth with
-                     | Some ip when ip = get_iper p ->
-                         loop ((c, r) :: list) rl
-                     | _ -> loop list rl))
-             | [] -> list
-           in loop list (get_rparents c))
-        [] list
-    in
-    let list =
-      List.sort
-        (fun (c1, _) (c2, _) ->
-           let d1 =
-             match Date.od_of_cdate (get_baptism c1) with
-             | None -> Date.od_of_cdate (get_birth c1)
-             | x -> x
-           in
-           let d2 =
-             match Date.od_of_cdate (get_baptism c2) with
-             | None -> Date.od_of_cdate (get_birth c2)
-             | x -> x
-           in
-           match (d1, d2) with
-           | (Some d1, Some d2) -> Date.compare_date d1 d2
-           | _ -> -1 )
-      (List.rev list)
-    in
     List.map
       (fun (p, rp) ->
         let p = pers_to_piqi conf base p base_prefix in
@@ -795,7 +757,7 @@ let get_related_piqi conf base p base_prefix gen_p has_relations pers_to_piqi re
         in
         relation_person_constructor r_type p
         )
-      list
+      (Relation.get_related_parents conf base p)
   else []
 
 (* ********************************************************************* *)
