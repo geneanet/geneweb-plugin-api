@@ -559,7 +559,8 @@ let pers_to_piqi_simple_person conf base p base_prefix =
       baseprefix = base_prefix;
       has_parent = has_parent;
       has_spouse = has_spouse;
-      has_child = has_child
+      has_child = has_child;
+      is_contemporary = !GWPARAM.is_contemporary conf base p;
     }
 
 
@@ -1945,7 +1946,7 @@ let print_from_identifier_person conf base print_result_from_ip identifier_perso
           begin
             match Gwdb.person_of_key base fn sn (Int32.to_int oc) with
             | Some ip ->
-              if Api_util.get_visibility conf base ip = `private_ then
+              if Api_util.get_visibility conf base (Gwdb.poi base ip) = `private_ then
                 print_error conf `not_found ""
               else
                 (if identifier_person.Mread.Identifier_person.track_visit

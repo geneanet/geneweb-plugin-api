@@ -149,6 +149,7 @@ message Person {
   required Visibility visible_for_visitors = 22;
   required string baseprefix = 23;
   required int32 index = 24;
+  required bool is_contemporary = 25;
 }
 
 message FullPerson {
@@ -188,6 +189,7 @@ message FullPerson {
   optional int32 parents = 36;
   repeated int32 families = 37;
   required string baseprefix = 38;
+  required bool is_contemporary = 39;
 }
 
 message FullFamily {

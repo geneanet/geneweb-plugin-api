@@ -271,6 +271,7 @@ message SimplePerson {
   required bool has_parent = 19;
   required bool has_spouse = 20;
   required bool has_child = 21;
+  required bool is_contemporary = 22;
 }
 
 message RelationPerson {
@@ -391,6 +392,7 @@ message FichePerson {
   repeated RelationFichePerson rparents = 27;
   repeated EventFicheWitness events_witnesses = 28;
   repeated FicheEvent events = 29;
+  required bool is_contemporary = 30;
 }
 
 message Family {
