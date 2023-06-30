@@ -970,7 +970,7 @@ let get_events_witnesses conf base p base_prefix _gen_p p_auth has_relations per
       List.map
         (fun (p, wk, wnote, evt) ->
           let wk = string_of_witness_kind conf (get_sex p) wk in
-          let witnesses_name =
+          let event_name =
             match Event.get_name evt with
             | Event.Pevent name ->
                 if p_auth then !!(Util.string_of_pevent_name conf base name)
@@ -979,16 +979,16 @@ let get_events_witnesses conf base p base_prefix _gen_p p_auth has_relations per
                 if p_auth then !!(Util.string_of_fevent_name conf base name)
                 else  ""
           in
-          (* TODO event_witness_type is not the witness_type but the string to print... *)
-          let event_witness_type =
+          let s =
             match Date.cdate_to_dmy_opt (Event.get_date evt) with
             | None ->
                 Printf.sprintf "(%s) : %s"
-                !!(wk) witnesses_name
+                !!(wk) event_name
             | Some dmy ->
                 Printf.sprintf "%s (%s) : %s"
-                (DateDisplay.year_text dmy) !!(wk) witnesses_name
+                (DateDisplay.year_text dmy) !!(wk) event_name
           in
+          let event_witness_type = Util.translate_eval (transl_a_of_b conf s "" "") in
           let husband = pers_to_piqi conf base p base_prefix in
           let wife =
             match Event.get_spouse_iper evt with
