@@ -1415,8 +1415,6 @@ let print_add_family_ok conf base =
     let sn = p.Mwrite.Person.lastname in
     let occ = Option.value ~default:(Int32.of_int (-1)) p.Mwrite.Person.occ |> Int32.to_int in
     let ipo = Gwdb.person_of_key base fn sn occ in
-    let ipos = Option.value ~default:(Gwdb.iper_of_string "-1") ipo |> Gwdb.string_of_iper in
-    (!GWPARAM.syslog) `LOG_ERR @@ "IPO " ^ fn ^ sn ^ (string_of_int occ) ^ " : " ^ ipos;
     match ipo with
     | Some _iper -> {p with Mwrite.Person.create_link = `link}
     | None -> p
@@ -1430,20 +1428,68 @@ let print_add_family_ok conf base =
   in
 
   let ifam_opt, resp = compute_add_family_ok' conf base mod_family in
-  let ifam = Option.value ifam_opt ~default:(Gwdb.ifam_of_string @@ Int32.to_string mod_family.Mwrite.Family.index) in
-
-  let is_dummy = Gwdb.eq_iper Gwdb.dummy_iper in
-  let ip' = if is_dummy ip then
-      let fam = Gwdb.foi base ifam in
-      let ifath = Gwdb.get_father fam in
-      if not (is_dummy ifath) then ifath
-      else Gwdb.get_mother fam
-    else ip
+  let ifam = Option.value ifam_opt
+      ~default:(Gwdb.ifam_of_string @@ Int32.to_string mod_family.Mwrite.Family.index)
   in
 
+  
+  let is_dummy = Gwdb.eq_iper Gwdb.dummy_iper in
+  let get_infos iper =
+    if is_dummy iper then None else
+      let p = Gwdb.poi base iper in
+      let fn = Gwdb.get_first_name p in
+      let sn = Gwdb.get_surname p in
+      Some (fn, sn, iper)
+  in
+  
+  let infos =
+    if is_dummy ip then
+      let fam = Gwdb.foi base ifam in
+      match get_infos (Gwdb.get_father fam) with
+      | Some _ as infos -> infos
+      | None -> get_infos (Gwdb.get_mother fam)
+    else None
+  in
+
+  let fn, sn, ip' = match infos with
+    | Some (fn, sn, iper) -> fn, sn, iper
+    | None ->  Gwdb.empty_string, Gwdb.empty_string, ip
+  in
+  
   let response = compute_modification_status' conf base ip ifam resp in
+
   let index_person = Some (Int32.of_string @@ Gwdb.string_of_iper ip') in
-  let response = { response with Mwrite.Modification_status.index_person } in
+
+  let firstname =
+    if Gwdb.is_empty_string fn then
+      response.Mwrite.Modification_status.firstname
+    else Gwdb.sou base fn
+  in
+  let lastname =
+    if Gwdb.is_empty_string sn then
+      response.Mwrite.Modification_status.lastname
+    else Gwdb.sou base sn
+  in
+  let firstname_str =
+    if Gwdb.is_empty_string fn then
+      response.Mwrite.Modification_status.firstname_str
+    else Some firstname
+  in
+  let lastname_str =
+    if Gwdb.is_empty_string sn then
+      response.Mwrite.Modification_status.lastname_str
+    else Some lastname
+  in
+
+  let response =
+    { response with Mwrite.Modification_status.index_person;
+                    Mwrite.Modification_status.lastname;
+                    Mwrite.Modification_status.firstname;
+                    Mwrite.Modification_status.lastname_str;
+                    Mwrite.Modification_status.firstname_str;
+    }
+  in
+  
   let data = Mext_write.gen_modification_status response in
   print_result conf data
 
