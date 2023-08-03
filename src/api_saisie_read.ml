@@ -1864,7 +1864,8 @@ let print_from_identifier_person conf base print_result_from_ip identifier_perso
           begin
             match Gwdb.person_of_key base fn sn (Int32.to_int oc) with
             | Some ip ->
-              if Api_util.get_visibility conf base (Gwdb.poi base ip) = `private_ then
+              let p = Gwdb.poi base ip in
+              if is_empty_person p || ((is_hide_names conf p) && not(authorized_age conf base p)) then
                 print_error conf `not_found ""
               else
                 (if identifier_person.Mread.Identifier_person.track_visit
