@@ -964,43 +964,41 @@ let get_rparents_piqi base conf base_prefix gen_p has_relations pers_to_piqi rel
       - Array of events
                                                                          *)
 (* ********************************************************************* *)
-let get_events_witnesses conf base p base_prefix _gen_p p_auth has_relations pers_to_piqi event_witness_constructor =
-  if has_relations then
-      let events_witnesses = Relation.get_event_witnessed conf base p in
-      List.map
-        (fun (p, wk, wnote, evt) ->
-          let wk = string_of_witness_kind conf (get_sex p) wk in
-          let event_name =
-            match Event.get_name evt with
-            | Event.Pevent name ->
-                if p_auth then !!(Util.string_of_pevent_name conf base name)
-                else  ""
-            | Event.Fevent name ->
-                if p_auth then !!(Util.string_of_fevent_name conf base name)
-                else  ""
-          in
-          let s =
-            match Date.cdate_to_dmy_opt (Event.get_date evt) with
-            | None ->
-                Printf.sprintf "(%s) : %s"
-                !!(wk) event_name
-            | Some dmy ->
-                Printf.sprintf "%s (%s) : %s"
-                (DateDisplay.year_text dmy) !!(wk) event_name
-          in
-          let event_witness_type = Util.translate_eval (transl_a_of_b conf s "" "") in
-          let husband = pers_to_piqi conf base p base_prefix in
-          let wife =
-            match Event.get_spouse_iper evt with
-            | Some isp ->
-                let sp = poi base isp in
-                Some (pers_to_piqi conf base sp base_prefix )
-            | None -> None
-          in
-          event_witness_constructor event_witness_type husband wife wnote
-          )
-        events_witnesses
-  else []
+let get_events_witnesses conf base p base_prefix _gen_p p_auth pers_to_piqi event_witness_constructor =
+    let events_witnesses = Relation.get_event_witnessed conf base p in
+    List.map
+      (fun (p, wk, wnote, evt) ->
+        let wk = string_of_witness_kind conf (get_sex p) wk in
+        let event_name =
+          match Event.get_name evt with
+          | Event.Pevent name ->
+              if p_auth then !!(Util.string_of_pevent_name conf base name)
+              else  ""
+          | Event.Fevent name ->
+              if p_auth then !!(Util.string_of_fevent_name conf base name)
+              else  ""
+        in
+        let s =
+          match Date.cdate_to_dmy_opt (Event.get_date evt) with
+          | None ->
+              Printf.sprintf "(%s) : %s"
+              !!(wk) event_name
+          | Some dmy ->
+              Printf.sprintf "%s (%s) : %s"
+              (DateDisplay.year_text dmy) !!(wk) event_name
+        in
+        let event_witness_type = Util.translate_eval (transl_a_of_b conf s "" "") in
+        let husband = pers_to_piqi conf base p base_prefix in
+        let wife =
+          match Event.get_spouse_iper evt with
+          | Some isp ->
+              let sp = poi base isp in
+              Some (pers_to_piqi conf base sp base_prefix )
+          | None -> None
+        in
+        event_witness_constructor event_witness_type husband wife wnote
+        )
+      events_witnesses
 
 (* ********************************************************************* *)
 (*  [Fonc] fam_to_piqi_family : config -> base -> ifam -> Family         *)
@@ -1206,16 +1204,7 @@ let fill_fiche_parents conf base p base_prefix nb_asc nb_asc_max with_parent_fam
     (None, None)
 
 let has_relations conf base p p_auth is_main_person =
-  if p_auth && conf.use_restrict && is_main_person  then
-    let related =
-      List.fold_left
-        (fun l ip ->
-           let rp = pget conf base ip in
-           if is_hidden rp then l else (ip :: l))
-      [] (get_related p)
-    in
-    get_rparents p <> [] || related <> []
-  else p_auth && (get_rparents p <> [] || get_related p <> [])
+  p_auth && is_main_person && Relation.get_related_parents conf base p <> []
 
 let get_event_constructor name type_ date date_long date_raw date_conv date_conv_long date_cal place note src spouse witnesses =
       {
@@ -1583,7 +1572,7 @@ let pers_to_piqi_person conf base p base_prefix is_main_person =
       families = fill_families conf base p;
       sosa = fill_sosa p;
       events = fill_events conf base p base_prefix p_auth pers_to_piqi_simple_person simple_witness_constructor get_event_constructor;
-      events_witnesses = get_events_witnesses conf base p base_prefix gen_p p_auth has_relations pers_to_piqi_simple_person simple_event_witness_constructor;
+      events_witnesses = get_events_witnesses conf base p base_prefix gen_p p_auth pers_to_piqi_simple_person simple_event_witness_constructor;
       baseprefix = base_prefix;
       fiche_person_person = None;
     }
@@ -1677,7 +1666,7 @@ let rec pers_to_piqi_fiche_person conf base p base_prefix is_main_person nb_asc 
         piqi_fiche_person.Mread.Fiche_person.related <- if is_main_person && not simple_graph_info then get_related_piqi conf base p base_prefix gen_p has_relations pers_to_piqi_fiche_person_only fiche_relation_person_constructor else [];
         piqi_fiche_person.Mread.Fiche_person.rparents <- if is_main_person && not simple_graph_info then get_rparents_piqi base conf base_prefix gen_p has_relations pers_to_piqi_fiche_person_only fiche_relation_person_constructor else [];
         if not no_event then
-          piqi_fiche_person.Mread.Fiche_person.events_witnesses <- if is_main_person then get_events_witnesses conf base p base_prefix gen_p p_auth has_relations pers_to_piqi_fiche_person_only fiche_event_witness_constructor else [];
+          piqi_fiche_person.Mread.Fiche_person.events_witnesses <- if is_main_person then get_events_witnesses conf base p base_prefix gen_p p_auth pers_to_piqi_fiche_person_only fiche_event_witness_constructor else [];
         if not no_event then
           piqi_fiche_person.Mread.Fiche_person.events <- fill_events_if_is_main_person conf base p base_prefix p_auth is_main_person pers_to_piqi_fiche_person_only fiche_witness_constructor fiche_event_constructor;
         piqi_fiche_person
@@ -1730,7 +1719,7 @@ let rec pers_to_piqi_fiche_person conf base p base_prefix is_main_person nb_asc 
         burial_date_conv = None;
         burial_date_cal = None;
         events = if return_simple_attributes && not no_event then fill_events conf base p base_prefix p_auth pers_to_piqi_simple_person simple_witness_constructor get_event_constructor else [];
-        events_witnesses = if return_simple_attributes && not no_event then get_events_witnesses conf base p base_prefix gen_p p_auth has_relations pers_to_piqi_simple_person simple_event_witness_constructor else [];
+        events_witnesses = if return_simple_attributes && not no_event then get_events_witnesses conf base p base_prefix gen_p p_auth pers_to_piqi_simple_person simple_event_witness_constructor else [];
         families = if return_simple_attributes && not simple_graph_info then fill_families conf base p else [];
         father = if return_simple_attributes then father else None;
         mother = if return_simple_attributes then mother else None;
