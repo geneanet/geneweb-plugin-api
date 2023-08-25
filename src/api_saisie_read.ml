@@ -757,7 +757,7 @@ let get_related_piqi conf base p base_prefix _gen_p has_relations pers_to_piqi r
         in
         relation_person_constructor r_type p
         )
-      (Relation.get_related_parents conf base p)
+      (Relation.get_others_related conf base p)
   else []
 
 (* ********************************************************************* *)
@@ -1204,7 +1204,7 @@ let fill_fiche_parents conf base p base_prefix nb_asc nb_asc_max with_parent_fam
     (None, None)
 
 let has_relations conf base p p_auth is_main_person =
-  p_auth && is_main_person && Relation.get_related_parents conf base p <> []
+  p_auth && is_main_person && Relation.get_others_related conf base p <> []
 
 let get_event_constructor name type_ date date_long date_raw date_conv date_conv_long date_cal place note src spouse witnesses =
       {
