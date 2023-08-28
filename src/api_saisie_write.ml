@@ -1340,6 +1340,35 @@ let compute_add_family_ok' conf base mod_family =
         in
         ifam_opt, Api_update_util.UpdateSuccess (all_wl, all_ml, all_hr)
       | ((`create | `create_default_occ), (`create | `create_default_occ)) ->
+(*
+        let (all_wl, all_ml, all_hr) =
+          if mod_father.Mwrite.Person.lastname = "" ||
+             mod_father.Mwrite.Person.firstname = ""
+          then
+            ([], [], [])
+          else
+            match Api_update_person.print_add conf base mod_father with
+            | Api_update_util.UpdateSuccess (wl, ml, hr) -> (wl, ml, hr)
+            | Api_update_util.UpdateError s -> raise (Update.ModErr s)
+            | Api_update_util.UpdateErrorConflict c ->
+              raise (Api_update_util.ModErrApiConflict c)
+        in
+
+        let (all_wl, all_ml, all_hr) =
+          if mod_mother.Mwrite.Person.lastname = "" ||
+             mod_mother.Mwrite.Person.firstname = ""
+          then
+            (all_wl, all_ml, all_hr)
+          else
+            match Api_update_person.print_add conf base mod_mother with
+            | Api_update_util.UpdateSuccess (wl, ml, hr) -> (all_wl @ wl, all_ml @ ml, all_hr @ hr)
+            | Api_update_util.UpdateError s -> raise (Update.ModErr s)
+            | Api_update_util.UpdateErrorConflict c ->
+              (* On dit que c'est le formulaire de la femme. *)
+              c.Mwrite.Create_conflict.form <- Some `person_form2;
+              raise (Api_update_util.ModErrApiConflict c)
+        in*)
+
         let ifam_opt, (all_wl, all_ml, all_hr) =
           match Api_update_family.print_add
                   conf base mod_family mod_father mod_mother
@@ -1349,37 +1378,7 @@ let compute_add_family_ok' conf base mod_family =
           | _, Api_update_util.UpdateErrorConflict c ->
             raise (Api_update_util.ModErrApiConflict c)
         in
-        (* Dans le cas d'ajout d'un enfant avec nouveau conjoint, *)
-        (* le parent créé vaut ??, donc on ne pourra JAMAIS lui   *)
-        (* apporter de modifications.                             *)
-        let (all_wl, all_ml, all_hr) =
-          if mod_father.Mwrite.Person.lastname = "" ||
-             mod_father.Mwrite.Person.firstname = ""
-          then
-            (all_wl, all_ml, all_hr)
-          else
-            match Api_update_person.print_mod conf base mod_father with
-            | Api_update_util.UpdateSuccess (wl, ml, hr) -> (all_wl @ wl, all_ml @ ml, all_hr @ hr)
-            | Api_update_util.UpdateError s -> raise (Update.ModErr s)
-            | Api_update_util.UpdateErrorConflict c ->
-              (* On dit que c'est le formulaire de la femme. *)
-              c.Mwrite.Create_conflict.form <- Some `person_form2;
-              raise (Api_update_util.ModErrApiConflict c)
-        in
-        let (all_wl, all_ml, all_hr) =
-          if mod_mother.Mwrite.Person.lastname = "" ||
-             mod_mother.Mwrite.Person.firstname = ""
-          then
-            (all_wl, all_ml, all_hr)
-          else
-            match Api_update_person.print_mod conf base mod_mother with
-            | Api_update_util.UpdateSuccess (wl, ml, hr) -> (all_wl @ wl, all_ml @ ml, all_hr @ hr)
-            | Api_update_util.UpdateError s -> raise (Update.ModErr s)
-            | Api_update_util.UpdateErrorConflict c ->
-              (* On dit que c'est le formulaire de la femme. *)
-              c.Mwrite.Create_conflict.form <- Some `person_form2;
-              raise (Api_update_util.ModErrApiConflict c)
-        in
+
         ifam_opt, Api_update_util.UpdateSuccess (all_wl, all_ml, all_hr)
     end
   with
@@ -1405,12 +1404,27 @@ let print_add_family_ok conf base =
   let mod_family = add_family_ok.Mwrite.Add_family_ok.family in
   
   let father = mod_family.Mwrite.Family.father in
-  let fath_occ = father.Mwrite.Person.occ in
+  let _fath_occ = father.Mwrite.Person.occ in
 
   let mother = mod_family.Mwrite.Family.mother in
-  let moth_occ = mother.Mwrite.Person.occ in
+  let _moth_occ = mother.Mwrite.Person.occ in
 
-  let mod_person p =
+  let log_person p =
+    let fn = p.Mwrite.Person.firstname in
+    let sn = p.Mwrite.Person.lastname in
+    let occ = Option.map (fun i -> Int32.to_int i |> string_of_int) p.Mwrite.Person.occ in
+    let occ = Option.value ~default:"None" occ in
+    let link = p.Mwrite.Person.create_link in
+    let s = "fn : " ^ fn ^ " sn : " ^ sn ^ " occ : " ^ occ ^ " lnk : " ^
+            (match link with `link -> "link" | `create -> "create" | `create_default_occ -> "create_default_occ") in
+    (!GWPARAM.syslog) `LOG_DEBUG s
+  in
+  (!GWPARAM.syslog) `LOG_DEBUG "father";
+  log_person father;
+  (!GWPARAM.syslog) `LOG_DEBUG "mother";
+  log_person mother;
+  
+  let _mod_person p =
     let fn = p.Mwrite.Person.firstname in
     let sn = p.Mwrite.Person.lastname in
     let occ = Option.value ~default:(Int32.of_int (-1)) p.Mwrite.Person.occ |> Int32.to_int in
@@ -1419,13 +1433,13 @@ let print_add_family_ok conf base =
     | Some _iper -> {p with Mwrite.Person.create_link = `link}
     | None -> p
   in
-  
+  (*
   let mod_family = if fath_occ = None then mod_family
     else {mod_family with Mwrite.Family.father = mod_person father}
   in
   let mod_family = if moth_occ = None then mod_family
     else {mod_family with Mwrite.Family.mother = mod_person mother}
-  in
+  in*)
 
   let ifam_opt, resp = compute_add_family_ok' conf base mod_family in
   let ifam = Option.value ifam_opt
