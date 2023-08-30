@@ -742,8 +742,7 @@ let fill_events_if_is_main_person conf base p base_prefix p_auth is_main_person 
       - Array of related person
                                                                          *)
 (* ********************************************************************* *)
-let get_related_piqi conf base p base_prefix _gen_p has_relations pers_to_piqi relation_person_constructor =
-  if has_relations then
+let get_related_piqi conf base p base_prefix _gen_p pers_to_piqi relation_person_constructor =
     List.map
       (fun (p, rp) ->
         let p = pers_to_piqi conf base p base_prefix in
@@ -758,7 +757,6 @@ let get_related_piqi conf base p base_prefix _gen_p has_relations pers_to_piqi r
         relation_person_constructor r_type p
         )
       (Relation.get_others_related conf base p)
-  else []
 
 (* ********************************************************************* *)
 (*  [Fonc] get_family_piqi                                               *)
@@ -917,8 +915,7 @@ let get_families_piqi base conf p base_prefix spouse_to_piqi witnesses_to_piqi c
       - Array of related parents
                                                                          *)
 (* ********************************************************************* *)
-let get_rparents_piqi base conf base_prefix gen_p has_relations pers_to_piqi relation_person_constructor =
-  if has_relations then
+let get_rparents_piqi base conf base_prefix gen_p pers_to_piqi relation_person_constructor =
     List.fold_left
       (fun rl rp ->
         let r_type =
@@ -945,7 +942,6 @@ let get_rparents_piqi base conf base_prefix gen_p has_relations pers_to_piqi rel
         | Some ip -> to_relation_person conf base ip :: rl
         | None -> rl)
       [] gen_p.rparents
-  else []
 
 (* ********************************************************************* *)
 (*  [Fonc] get_events_witnesses                                          *)
@@ -957,7 +953,6 @@ let get_rparents_piqi base conf base_prefix gen_p has_relations pers_to_piqi rel
       - base_prefix               : the name of the base of the person
       - gen_p                     : the generation of the person
       - p_auth                    : private informations are returned
-      - has_relations             : indicate if the main person has relations
       - pers_to_piqi              : function to call to create a person object
       - event_witness_constructor : function to call to create a event witness object
     [Returns] :
@@ -1202,9 +1197,6 @@ let fill_fiche_parents conf base p base_prefix nb_asc nb_asc_max with_parent_fam
       (aux !GWPARAM_ITL.get_father, aux !GWPARAM_ITL.get_mother)
   else
     (None, None)
-
-let has_relations conf base p p_auth is_main_person =
-  p_auth && is_main_person && Relation.get_others_related conf base p <> []
 
 let get_event_constructor name type_ date date_long date_raw date_conv date_conv_long date_cal place note src spouse witnesses =
       {
@@ -1508,7 +1500,6 @@ let pers_to_piqi_person conf base p base_prefix is_main_person =
   else
     let p_auth = authorized_age conf base p in
     let gen_p = Util.string_gen_person base (gen_person_of_person p) in
-    let has_relations = has_relations conf base p p_auth is_main_person in
 
     let (baptism_date, _, baptism_date_conv, _, baptism_cal) = fill_baptism conf p_auth gen_p in
     let (birth_date, _, birth_date_conv, _, birth_cal) = fill_birth conf p_auth gen_p in
@@ -1565,8 +1556,8 @@ let pers_to_piqi_person conf base p base_prefix is_main_person =
       psources = transform_empty_string_to_None psources;
       has_sources = has_sources;
       titles = fill_titles conf base p;
-      related = get_related_piqi conf base p base_prefix gen_p has_relations pers_to_piqi_simple_person simple_relation_person_constructor;
-      rparents = get_rparents_piqi base conf base_prefix gen_p has_relations pers_to_piqi_simple_person simple_relation_person_constructor;
+      related = get_related_piqi conf base p base_prefix gen_p pers_to_piqi_simple_person simple_relation_person_constructor;
+      rparents = get_rparents_piqi base conf base_prefix gen_p pers_to_piqi_simple_person simple_relation_person_constructor;
       father = father;
       mother = mother;
       families = fill_families conf base p;
@@ -1629,7 +1620,6 @@ let rec pers_to_piqi_fiche_person conf base p base_prefix is_main_person nb_asc 
       let sosa_nb = SosaCache.get_sosa_person p in
       let (fiche_father, fiche_mother) = if is_main_person || not simple_graph_info then fill_fiche_parents conf base p base_prefix nb_asc nb_asc_max with_parent_families pers_to_piqi_fiche_person simple_graph_info no_event else (None, None) in
       let (father, mother) = if with_parent_families then fill_parents conf base p base_prefix else (None, None) in
-      let has_relations = if is_main_person then has_relations conf base p p_auth is_main_person else false in
       (* Returns simple person attributes only when nb of desc is 0. *)
       let return_simple_attributes = (nb_desc_max == 0) in
       let (ref_index, ref_person) = fill_ref_if_is_main_person conf base is_main_person in
@@ -1663,8 +1653,8 @@ let rec pers_to_piqi_fiche_person conf base p base_prefix is_main_person nb_asc 
         piqi_fiche_person.Mread.Fiche_person.linked_page_head <- linked_page_head;
         piqi_fiche_person.Mread.Fiche_person.linked_page_occu <- linked_page_occu;
         piqi_fiche_person.Mread.Fiche_person.visible_for_visitors <- is_visible conf base p;
-        piqi_fiche_person.Mread.Fiche_person.related <- if is_main_person && not simple_graph_info then get_related_piqi conf base p base_prefix gen_p has_relations pers_to_piqi_fiche_person_only fiche_relation_person_constructor else [];
-        piqi_fiche_person.Mread.Fiche_person.rparents <- if is_main_person && not simple_graph_info then get_rparents_piqi base conf base_prefix gen_p has_relations pers_to_piqi_fiche_person_only fiche_relation_person_constructor else [];
+        piqi_fiche_person.Mread.Fiche_person.related <- if is_main_person && not simple_graph_info then get_related_piqi conf base p base_prefix gen_p pers_to_piqi_fiche_person_only fiche_relation_person_constructor else [];
+        piqi_fiche_person.Mread.Fiche_person.rparents <- if is_main_person && not simple_graph_info then get_rparents_piqi base conf base_prefix gen_p pers_to_piqi_fiche_person_only fiche_relation_person_constructor else [];
         if not no_event then
           piqi_fiche_person.Mread.Fiche_person.events_witnesses <- if is_main_person then get_events_witnesses conf base p base_prefix gen_p p_auth pers_to_piqi_fiche_person_only fiche_event_witness_constructor else [];
         if not no_event then
@@ -1724,8 +1714,8 @@ let rec pers_to_piqi_fiche_person conf base p base_prefix is_main_person nb_asc 
         father = if return_simple_attributes then father else None;
         mother = if return_simple_attributes then mother else None;
         titles = if not simple_graph_info then fill_titles conf base p else [];
-        related = if return_simple_attributes then get_related_piqi conf base p base_prefix gen_p has_relations pers_to_piqi_simple_person simple_relation_person_constructor else [];
-        rparents = if return_simple_attributes then get_rparents_piqi base conf base_prefix gen_p has_relations pers_to_piqi_simple_person simple_relation_person_constructor else [];
+        related = if return_simple_attributes then get_related_piqi conf base p base_prefix gen_p pers_to_piqi_simple_person simple_relation_person_constructor else [];
+        rparents = if return_simple_attributes then get_rparents_piqi base conf base_prefix gen_p pers_to_piqi_simple_person simple_relation_person_constructor else [];
         baseprefix = base_prefix;
       }
     end
