@@ -962,7 +962,7 @@ let get_rparents_piqi base conf base_prefix gen_p pers_to_piqi relation_person_c
 let get_events_witnesses conf base p base_prefix _gen_p p_auth pers_to_piqi event_witness_constructor =
     let events_witnesses = Relation.get_event_witnessed conf base p in
     List.map
-      (fun (p, wk, wnote, evt) ->
+      (fun (witness, wk, wnote, evt) ->
         let wk = string_of_witness_kind conf (get_sex p) wk in
         let event_name =
           match Event.get_name evt with
@@ -983,7 +983,7 @@ let get_events_witnesses conf base p base_prefix _gen_p p_auth pers_to_piqi even
               (DateDisplay.year_text dmy) !!(wk) event_name
         in
         let event_witness_type = Util.translate_eval (transl_a_of_b conf s "" "") in
-        let husband = pers_to_piqi conf base p base_prefix in
+        let husband = pers_to_piqi conf base witness base_prefix in
         let wife =
           match Event.get_spouse_iper evt with
           | Some isp ->
