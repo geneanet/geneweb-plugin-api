@@ -1350,6 +1350,23 @@ let compute_add_family_ok' conf base mod_family =
             raise (Api_update_util.ModErrApiConflict c)
         in
 
+        let (all_wl, all_ml, all_hr) =
+          match Api_update_person.print_mod conf base mod_father with
+          | Api_update_util.UpdateSuccess (wl, ml, hr) -> (all_wl @ wl, all_ml @ ml, all_hr @ hr)
+          | Api_update_util.UpdateError s -> raise (Update.ModErr s)
+          | Api_update_util.UpdateErrorConflict c ->
+            raise (Api_update_util.ModErrApiConflict c)
+        in
+        let (all_wl, all_ml, all_hr) =
+          match Api_update_person.print_mod conf base mod_mother with
+          | Api_update_util.UpdateSuccess (wl, ml, hr) -> (all_wl @ wl, all_ml @ ml, all_hr @ hr)
+          | Api_update_util.UpdateError s -> raise (Update.ModErr s)
+          | Api_update_util.UpdateErrorConflict c ->
+            (* On dit que c'est le formulaire de la femme. *)
+            c.Mwrite.Create_conflict.form <- Some `person_form2;
+            raise (Api_update_util.ModErrApiConflict c)
+        in
+        
         ifam_opt, Api_update_util.UpdateSuccess (all_wl, all_ml, all_hr)
     end
   with
@@ -1380,38 +1397,27 @@ let print_add_family_ok conf base =
   let mother = mod_family.Mwrite.Family.mother in
   let _moth_occ = mother.Mwrite.Person.occ in
 
-  (*let log_person p =
+(*  let log_person p =
     let fn = p.Mwrite.Person.firstname in
     let sn = p.Mwrite.Person.lastname in
     let occ = Option.map (fun i -> Int32.to_int i |> string_of_int) p.Mwrite.Person.occ in
     let occ = Option.value ~default:"None" occ in
     let link = p.Mwrite.Person.create_link in
+    let events = p.Mwrite.Person.pevents in
+    let s_e = match events with [] -> "no_evt" | evts ->
+      List.fold_left (fun s e ->
+          s ^ match e.Mwrite.Pevent.pevent_type with
+          | Some _name -> "an event; "
+          | None -> "no_name; "
+        ) "evts : " evts
+    in
     let s = "fn : " ^ fn ^ " sn : " ^ sn ^ " occ : " ^ occ ^ " lnk : " ^
-            (match link with `link -> "link" | `create -> "create" | `create_default_occ -> "create_default_occ") in
+            (match link with `link -> "link" | `create -> "create" | `create_default_occ -> "create_default_occ") ^ " " ^ s_e ^ " " ^ (match p.Mwrite.Person.occupation with None -> "" | Some s -> s) in
     (!GWPARAM.syslog) `LOG_DEBUG s
   in
-  (!GWPARAM.syslog) `LOG_DEBUG "father";
   log_person father;
-  (!GWPARAM.syslog) `LOG_DEBUG "mother";
-    log_person mother;*)
-  
-(*  let _mod_person p =
-    let fn = p.Mwrite.Person.firstname in
-    let sn = p.Mwrite.Person.lastname in
-    let occ = Option.value ~default:(Int32.of_int (-1)) p.Mwrite.Person.occ |> Int32.to_int in
-    let ipo = Gwdb.person_of_key base fn sn occ in
-    match ipo with
-    | Some _iper -> {p with Mwrite.Person.create_link = `link}
-    | None -> p
-    in*)
-  (*
-  let mod_family = if fath_occ = None then mod_family
-    else {mod_family with Mwrite.Family.father = mod_person father}
-  in
-  let mod_family = if moth_occ = None then mod_family
-    else {mod_family with Mwrite.Family.mother = mod_person mother}
-  in*)
-
+  log_person mother;
+*)
   let ifam_opt, resp = compute_add_family_ok' conf base mod_family in
   let ifam = Option.value ifam_opt
       ~default:(Gwdb.ifam_of_string @@ Int32.to_string mod_family.Mwrite.Family.index)
