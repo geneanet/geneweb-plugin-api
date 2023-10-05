@@ -1340,6 +1340,7 @@ let compute_add_family_ok' conf base mod_family =
         in
         ifam_opt, Api_update_util.UpdateSuccess (all_wl, all_ml, all_hr)
       | ((`create | `create_default_occ), (`create | `create_default_occ)) ->
+
         let ifam_opt, (all_wl, all_ml, all_hr) =
           match Api_update_family.print_add
                   conf base mod_family mod_father mod_mother
@@ -1350,6 +1351,8 @@ let compute_add_family_ok' conf base mod_family =
             raise (Api_update_util.ModErrApiConflict c)
         in
 
+        if mod_father.Mwrite.Person.lastname = "" then mod_father.Mwrite.Person.lastname <- "?";
+        if mod_father.Mwrite.Person.firstname = "" then mod_father.Mwrite.Person.firstname <- "?";
         let (all_wl, all_ml, all_hr) =
           match Api_update_person.print_mod conf base mod_father with
           | Api_update_util.UpdateSuccess (wl, ml, hr) -> (all_wl @ wl, all_ml @ ml, all_hr @ hr)
@@ -1357,6 +1360,10 @@ let compute_add_family_ok' conf base mod_family =
           | Api_update_util.UpdateErrorConflict c ->
             raise (Api_update_util.ModErrApiConflict c)
         in
+
+
+        if mod_mother.Mwrite.Person.lastname = "" then mod_mother.Mwrite.Person.lastname <- "?";
+        if mod_mother.Mwrite.Person.firstname = "" then mod_mother.Mwrite.Person.firstname <- "?";
         let (all_wl, all_ml, all_hr) =
           match Api_update_person.print_mod conf base mod_mother with
           | Api_update_util.UpdateSuccess (wl, ml, hr) -> (all_wl @ wl, all_ml @ ml, all_hr @ hr)
@@ -1366,7 +1373,7 @@ let compute_add_family_ok' conf base mod_family =
             c.Mwrite.Create_conflict.form <- Some `person_form2;
             raise (Api_update_util.ModErrApiConflict c)
         in
-        
+                
         ifam_opt, Api_update_util.UpdateSuccess (all_wl, all_ml, all_hr)
     end
   with
