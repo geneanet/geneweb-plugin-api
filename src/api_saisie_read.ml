@@ -1668,6 +1668,7 @@ let rec pers_to_piqi_fiche_person conf base p base_prefix is_main_person nb_asc 
           piqi_fiche_person.Mread.Fiche_person.events_witnesses <- if is_main_person then get_events_witnesses conf base p base_prefix gen_p p_auth pers_to_piqi_fiche_person_only fiche_event_witness_constructor else [];
         if not no_event then
           piqi_fiche_person.Mread.Fiche_person.events <- fill_events_if_is_main_person conf base p base_prefix p_auth is_main_person pers_to_piqi_fiche_person_only fiche_witness_constructor fiche_event_constructor;
+        piqi_fiche_person.Mread.Fiche_person.is_contemporary <- !GWPARAM.is_contemporary conf base p;
         piqi_fiche_person
       in
       {
