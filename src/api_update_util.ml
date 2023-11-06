@@ -1147,7 +1147,11 @@ let pers_to_piqi_mod_person conf base p =
            witnesses = witnesses;
            event_perso = event_perso;
          })
-      (get_pevents p)
+      (Event.sort_events
+         (fun e -> Event.Pevent (Gwdb.get_pevent_name e))
+         (fun e -> Gwdb.get_pevent_date e)
+         (get_pevents p)
+      )
   in
   (* Si la personne n'a aucun évènement et/ou est décédée mais *)
   (* sans évènement, on ajoute les évènements nécessaires.     *)
@@ -1384,7 +1388,11 @@ let fam_to_piqi_mod_family conf base ifam fam =
            witnesses = witnesses;
            event_perso = event_perso;
          })
-      (get_fevents fam)
+      (Event.sort_events
+         (fun e -> Event.Fevent (Gwdb.get_fevent_name e))
+         (fun e -> Gwdb.get_fevent_date e)
+         (get_fevents fam)
+      )
   in
   let fsources = sou base (get_fsources fam) in
   let origin_file = sou base (get_origin_file fam) in
