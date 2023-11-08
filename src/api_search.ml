@@ -520,12 +520,13 @@ let dico_fname assets lang k =
     Assume that [list] is already sorted, but reversed.
 *)
 let complete_with_dico assets conf nb max mode ini list =
-  let split_country_code str =
-    let row = Api_csv.row_of_string str |> List.rev in
-    match row with
-    | country_code :: row ->
-      List.rev row |> String.concat ", ", country_code
-    | _ -> assert false
+  let split_country_code row =
+    let rec aux acc l = match l with
+      | [country_code] -> country_code, List.rev acc
+      | x :: xs -> aux (x::acc) xs
+      | _ -> assert false
+    in
+    aux [] row
   in
   let belongs_to_preferred_countries country_code =
     match conf.preferred_countries with
@@ -539,33 +540,32 @@ let complete_with_dico assets conf nb max mode ini list =
       then acc
       else
         let hd = Array.unsafe_get list i in
-        let hd, country_code = split_country_code hd in
         let acc =
-          if belongs_to_preferred_countries country_code then begin
-            let k =  Mutil.tr '_' ' ' hd in
-            let k = if mode <> `subdivision then Place.without_suburb k else k in
-            if string_start_with ini (Name.lower k) then begin
-              let hd =
-                if format <> []
-                then
-                  let expl_hd = Api_csv.row_of_string hd in
-                  String.concat ", " @@
-                  Mutil.filter_map begin function
-                    | `town -> List.nth_opt expl_hd 0
-                    | `area_code -> List.nth_opt expl_hd 1
-                    | `county -> List.nth_opt expl_hd 2
-                    | `region -> List.nth_opt expl_hd 3
-                    | `country -> List.nth_opt expl_hd 4
-                    | _ -> None
-                  end
-                    format
-                else
-                  hd
-              in
-              if List.mem hd ignored then acc
-              else begin incr nb ; hd :: acc end
-            end
-            else acc
+          let k =  Mutil.tr '_' ' ' hd in
+          let k = if mode <> `subdivision then Place.without_suburb k else k in
+          if string_start_with ini (Name.lower k) then begin
+            let row = Api_csv.row_of_string hd in
+            let country_code, expl_hd = split_country_code row in
+            let hd_opt =
+              if belongs_to_preferred_countries country_code then
+                if format <> [] then
+                  Some (String.concat ", " @@
+                        Mutil.filter_map begin function
+                          | `town -> List.nth_opt expl_hd 0
+                          | `area_code -> List.nth_opt expl_hd 1
+                          | `county -> List.nth_opt expl_hd 2
+                          | `region -> List.nth_opt expl_hd 3
+                          | `country -> List.nth_opt expl_hd 4
+                          | _ -> None
+                        end
+                          format)
+                else Some (String.concat ", " expl_hd)
+              else None
+            in
+            if Option.is_none hd_opt
+            || List.mem (Option.get hd_opt) ignored
+            then acc
+            else begin incr nb ; Option.get hd_opt :: acc end
           end
           else acc
         in
