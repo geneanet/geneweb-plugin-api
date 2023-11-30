@@ -1,6 +1,5 @@
 open Geneweb
 open Config
-open Def
 open Gwdb
 open Util
 
@@ -27,25 +26,25 @@ let create_cache base mode cache_file =
         Gwdb.Collection.fold
           (fun acc p ->
              List.fold_left
-               (fun acc e -> add acc e.epers_place) acc (get_pevents p) )
+               (fun acc e -> add acc (get_pevent_place e)) acc (get_pevents p) )
           IstrSet.empty (Gwdb.persons base)
       in
       Gwdb.Collection.fold
-        (fun acc f -> List.fold_left (fun acc e -> add acc e.efam_place) acc (get_fevents f) )
+        (fun acc f -> List.fold_left (fun acc e -> add acc (get_fevent_place e)) acc (get_fevents f) )
         acc (Gwdb.families base)
     | `source ->
       let acc =
         Gwdb.Collection.fold
           (fun acc p ->
              let acc = add acc (get_psources p) in
-             List.fold_left (fun acc e -> add acc e.epers_src) acc (get_pevents p) )
+             List.fold_left (fun acc e -> add acc (get_pevent_src e)) acc (get_pevents p) )
           IstrSet.empty
           (Gwdb.persons base)
       in
       Gwdb.Collection.fold
         (fun acc f ->
            let acc = add acc (get_fsources f) in
-           List.fold_left (fun acc e -> add acc e.efam_src) acc (get_fevents f) )
+           List.fold_left (fun acc e -> add acc (get_fevent_src e)) acc (get_fevents f) )
         acc
         (Gwdb.families base)
   in

@@ -136,7 +136,7 @@ let print_person_search_info conf base =
                                                                            *)
 (* ************************************************************************ *)
 
-let print_config conf base =
+let print_config conf =
   let transl_cal =
     List.map
       (fun cal ->
@@ -237,7 +237,7 @@ let print_config conf base =
       (fun evt ->
         let (pos, sval) =
           ( Api_piqi_util.piqi_fevent_name_of_fevent_name evt
-          , Util.string_of_fevent_name conf base evt )
+          , Util.string_of_fevent_name_without_base conf evt )
         in
         Mwrite.Transl_fevent_name.({
           pos = pos;
@@ -258,7 +258,7 @@ let print_config conf base =
       (fun evt ->
         let (pos, sval) =
           ( Api_piqi_util.piqi_pevent_name_of_pevent_name evt
-          , Util.string_of_pevent_name conf base evt )
+          , Util.string_of_pevent_name_without_base conf evt )
         in
         Mwrite.Transl_pevent_name.({
           pos = pos;
@@ -271,7 +271,7 @@ let print_config conf base =
       (fun evt ->
         let (pos, sval) =
           ( Api_piqi_util.piqi_pevent_name_of_pevent_name evt
-          , Util.string_of_pevent_name conf base evt )
+          , Util.string_of_pevent_name_without_base conf evt )
         in
         Mwrite.Transl_pevent_name.({
           pos = pos;
@@ -303,7 +303,7 @@ let print_config conf base =
       (fun evt ->
         let (pos, sval) =
           ( Api_piqi_util.piqi_pevent_name_of_pevent_name evt
-          , Util.string_of_pevent_name conf base evt )
+          , Util.string_of_pevent_name_without_base conf evt )
         in
         Mwrite.Transl_pevent_name.({
           pos = pos;
@@ -637,6 +637,8 @@ let possible_family_dup_homonmous conf base fam p =
   w ^ ". " ^ link
   
 let compute_warnings conf base resp =
+  let get_pevent_name e = e.epers_name in
+  let get_fevent_name e = e.efam_name in
   let print_someone = print_someone base in
   let print_someone_dates = print_someone_dates conf base in
   match resp with
@@ -647,7 +649,7 @@ let compute_warnings conf base resp =
         List.fold_right
           (fun w wl ->
             match w with
-            | BigAgeBetweenSpouses (p1, p2, a) ->
+            | Warning.BigAgeBetweenSpouses (p1, p2, a) ->
                 let w =
                   (Printf.sprintf
                      (fcapitale
@@ -756,8 +758,8 @@ let compute_warnings conf base resp =
                   Printf.sprintf
                     (ftransl conf "%t's %s before his/her %s")
                     (fun _ -> print_someone_dates p)
-                    !!(Util.string_of_fevent_name conf base e1.efam_name)
-                    !!(Util.string_of_fevent_name conf base e2.efam_name)
+                    !!(Util.string_of_fevent_name conf base (get_fevent_name e1))
+                    !!(Util.string_of_fevent_name conf base (get_fevent_name e2))
                 in
                 w :: wl
             | FWitnessEventAfterDeath (p, e, _) ->
@@ -765,7 +767,7 @@ let compute_warnings conf base resp =
                   Printf.sprintf
                     (ftransl conf "%t witnessed the %s after his/her death")
                     (fun _ -> print_someone_dates p)
-                    !!(Util.string_of_fevent_name conf base e.efam_name)
+                    !!(Util.string_of_fevent_name conf base (get_fevent_name e))
                 in
                 w :: wl
             | FWitnessEventBeforeBirth (p, e, _) ->
@@ -773,7 +775,7 @@ let compute_warnings conf base resp =
                   Printf.sprintf
                     (ftransl conf "%t witnessed the %s before his/her birth")
                     (fun _ -> print_someone_dates p)
-                    !!(Util.string_of_fevent_name conf base e.efam_name)
+                    !!(Util.string_of_fevent_name conf base (get_fevent_name e))
                 in
                 w :: wl
             | IncoherentSex (p, _, _) ->
@@ -845,8 +847,8 @@ let compute_warnings conf base resp =
                   Printf.sprintf
                     (ftransl conf "%t's %s before his/her %s")
                     (fun _ -> print_someone_dates p)
-                    !!(Util.string_of_pevent_name conf base e1.epers_name)
-                    !!(Util.string_of_pevent_name conf base e2.epers_name)
+                    !!(Util.string_of_pevent_name conf base (get_pevent_name e1))
+                    !!(Util.string_of_pevent_name conf base (get_pevent_name e2))
                 in
                 w :: wl
             | PWitnessEventAfterDeath (p, e, _) ->
@@ -854,7 +856,7 @@ let compute_warnings conf base resp =
                   Printf.sprintf
                     (ftransl conf "%t witnessed the %s after his/her death")
                     (fun _ -> print_someone_dates p)
-                    !!(Util.string_of_pevent_name conf base e.epers_name)
+                    !!(Util.string_of_pevent_name conf base (get_pevent_name e))
                 in
                 w :: wl
             | PWitnessEventBeforeBirth (p, e, _) ->
@@ -862,7 +864,7 @@ let compute_warnings conf base resp =
                   Printf.sprintf
                     (ftransl conf "%t witnessed the %s before his/her birth")
                     (fun _ -> print_someone_dates p)
-                    !!(Util.string_of_pevent_name conf base e.epers_name)
+                    !!(Util.string_of_pevent_name conf base (get_pevent_name e))
                 in
                 w :: wl
             | TitleDatesError (p, t) ->
@@ -903,7 +905,7 @@ let compute_warnings conf base resp =
         List.fold_right
           (fun m ml ->
             match m with
-            | MissingSources ->
+            | Warning.MissingSources ->
                 let m = Utf8.capitalize_fst (transl conf "missing sources") in
                 m :: ml)
           ml []
@@ -1843,7 +1845,7 @@ let print_add_parents_ok conf base =
         let all_wl = match existing_fam with
           | Some ifam ->
             let ifam' = Gwdb.ifam_of_string @@ Int32.to_string mod_family.Mwrite.Family.index in
-            Def.PossibleDuplicateFam (ifam, ifam') :: all_wl
+            Warning.PossibleDuplicateFam (ifam, ifam') :: all_wl
           | _ -> all_wl
         in
         Api_update_util.UpdateSuccess (all_wl, all_ml, all_hr)

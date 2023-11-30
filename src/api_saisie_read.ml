@@ -4,6 +4,7 @@ module Mext_read = Api_saisie_read_piqi_ext
 open Geneweb
 open Config
 open Def
+open Date
 open Gwdb
 open Util
 open Api_util
@@ -158,7 +159,7 @@ let gregorian_precision conf d is_long =
   if d.delta = 0 then string_of_dmy conf d is_long
   else
     let d2 =
-      Calendar.gregorian_of_sdn d.prec (Calendar.sdn_of_gregorian d + d.delta)
+      Date.gregorian_of_sdn ~prec:d.prec (Date.to_sdn ~from:Dgregorian d + d.delta)
     in
     transl conf "between (date)"
     ^ " " ^ string_of_dmy conf d is_long
@@ -199,7 +200,7 @@ let string_of_date_and_conv conf d =
       let date_conv_long =
         if d.year < 1582 then "" else gregorian_precision conf d true
       in
-      let d1 = Calendar.julian_of_gregorian d in
+      let d1 = Date.convert ~from:Dgregorian ~to_:Djulian d in
       let year_prec =
         if d1.month > 0 && d1.month < 3 ||
            d1.month = 3 && d1.day > 0 && d1.day < 25 then
@@ -213,14 +214,14 @@ let string_of_date_and_conv conf d =
       in
       (date, date, date_conv, date_conv_long, Some `julian)
   | Dgreg (d, Dfrench) ->
-      let d1 = Calendar.french_of_gregorian d in
+      let d1 = Date.convert ~from:Dgregorian ~to_:Dfrench d in
       let date = string_of_french_dmy conf d1 in
       let date_long = !!(DateDisplay.string_of_on_french_dmy conf d1) in
       let date_conv = gregorian_precision conf d false in
       let date_conv_long = !!(DateDisplay.string_of_dmy conf d) in
       (date, date_long, date_conv, date_conv_long, Some `french)
   | Dgreg (d, Dhebrew) ->
-      let d1 = Calendar.hebrew_of_gregorian d in
+      let d1 = Date.convert ~from:Dgregorian ~to_:Dhebrew d in
       let date = string_of_hebrew_dmy conf d1 in
       let date_long = !!(DateDisplay.string_of_on_hebrew_dmy conf d1) in
       let date_conv = gregorian_precision conf d false in
@@ -257,6 +258,14 @@ type graph_more_info =
   | Children
   | Ancestor
   | Spouse
+
+let simple_witness_constructor witness_type witness witness_note =
+  Mread.Witness_event.({
+    witness_type;
+    witness;
+    witness_note
+  })
+
 
 (* ************************************************************************** *)
 (*  [Fonc] event_to_piqi_event : string -> event_type                         *)
@@ -445,12 +454,11 @@ let pers_to_piqi_simple_person conf base p base_prefix =
     restricted_person.Mread.Simple_person.index <- Int32.of_string @@ Gwdb.string_of_iper Gwdb.dummy_iper;
     restricted_person.Mread.Simple_person.lastname <- "x";
     restricted_person.Mread.Simple_person.firstname <- "x";
-    restricted_person.Mread.Simple_person.visible_for_visitors <- false;
+    restricted_person.Mread.Simple_person.visible_for_visitors <- `private_;
     restricted_person
   else
     let p_auth = authorized_age conf base p in
     let index = Int32.of_string @@ Gwdb.string_of_iper (get_iper p) in
-    let visible_for_visitors = is_visible conf base p in
     let sex =
       match get_sex p with
       | Male -> `male
@@ -547,11 +555,12 @@ let pers_to_piqi_simple_person conf base p base_prefix =
       image;
       sosa = sosa;
       sosa_nb = sosa_nb;
-      visible_for_visitors = visible_for_visitors;
+      visible_for_visitors = get_visibility conf base p;
       baseprefix = base_prefix;
       has_parent = has_parent;
       has_spouse = has_spouse;
-      has_child = has_child
+      has_child = has_child;
+      is_contemporary = !GWPARAM.is_contemporary conf base p;
     }
 
 
@@ -616,8 +625,11 @@ let fam_to_piqi_family_link conf base (ifath : Gwdb.iper) imoth sp ifam fam base
   in
   let witnesses =
     Mutil.array_to_list_map
-      (fun ip -> witness_to_piqi conf base (poi base ip) base_prefix)
-      gen_f.witnesses
+      (fun (ip, wkind, wnote) ->
+         let p = poi base ip in
+         let wnote = sou base wnote in
+         witness_to_piqi conf base p wkind wnote base_prefix
+      ) (Perso.get_marriage_witnesses_and_notes fam)
   in
   let notes =
     if m_auth && not conf.no_note
@@ -659,8 +671,16 @@ let fam_to_piqi_family_link conf base (ifath : Gwdb.iper) imoth sp ifam fam base
 let fill_events conf base p base_prefix p_auth pers_to_piqi witness_constructor event_constructor =
   if p_auth then
     List.map
-      (fun (name, date, place, note, src, w, isp) ->
-        let (name, type_) =
+      (*      (fun (name, date, place, note, src, w, isp) ->*)
+      (fun evt ->
+         let name = Event.get_name evt in
+         let date = Event.get_date evt in
+         let place = Event.get_place evt in
+         let note = Event.get_note evt in
+         let src = Event.get_src evt in
+         let w = Event.get_witnesses_and_notes evt in
+         let isp = Event.get_spouse_iper evt in
+         let (name, type_) =
           match name with
           | Event.Pevent name -> ( !!(Util.string_of_pevent_name conf base name)
                                  , event_to_piqi_event (Some name) None)
@@ -686,11 +706,12 @@ let fill_events conf base p base_prefix p_auth pers_to_piqi witness_constructor 
         in
         let witnesses =
           Mutil.array_to_list_map
-            (fun (ip, wk) ->
+            (fun (ip, wk, wnote) ->
                let witness_type = Api_util.piqi_of_witness_kind wk in
                let witness = poi base ip in
                let witness = pers_to_piqi conf base witness base_prefix in
-               witness_constructor witness_type witness
+               let wnote = sou base wnote in
+               witness_constructor witness_type witness wnote
                )
             w
         in
@@ -850,8 +871,12 @@ let get_family_piqi base conf ifam p base_prefix spouse_to_piqi witnesses_to_piq
   in
   let witnesses =
     Mutil.array_to_list_map
-      (fun ip -> witnesses_to_piqi conf base (poi base ip) base_prefix)
-      gen_f.witnesses
+      (fun (ip, wkind, wnote) ->
+         let p = poi base ip in
+         let wnote = sou base wnote in
+         witnesses_to_piqi conf base p wkind wnote base_prefix
+      )
+      (Perso.get_marriage_witnesses_and_notes fam)
   in
   let notes =
     if m_auth && not conf.no_note
@@ -988,18 +1013,19 @@ let get_events_witnesses conf base p base_prefix gen_p p_auth has_relations pers
           | ic :: icl ->
               let c = pget conf base ic in
               List.iter
-                (fun ((name, _, _, _, _, wl, _) as evt) ->
-                  match Util.array_mem_witn conf base (get_iper p) wl with
-                  | Some wk ->
+                (fun evt ->
+                   let witnesses = Event.get_witnesses evt in
+                   let wnotes = Event.get_witness_notes evt in
+                  let (mem, wk, wnote) = Util.array_mem_witn conf base (get_iper p) witnesses wnotes in
+                  if mem then
                     (* Attention aux doublons pour les evenements famille. *)
-                    begin match name with
+                    match Event.get_name evt with
                     | Event.Fevent _ ->
                         if get_sex c = Male then
-                          list := (c, wk, evt) :: !list
+                          list := (c, wk, wnote, evt) :: !list
                         else ()
-                    | _ -> list := (c, wk, evt) :: !list
-                    end
-                  | None -> ())
+                    | _ -> list := (c, wk, wnote, evt) :: !list
+                  else ())
                 (Event.sorted_events conf base c);
               make_list icl
           | [] -> ()
@@ -1010,20 +1036,19 @@ let get_events_witnesses conf base p base_prefix gen_p p_auth has_relations pers
       (* On tri les témoins dans le même ordre que les évènements. *)
       let events_witnesses =
         Event.sort_events
-          (fun (_, _, (name, _, _, _, _, _, _)) ->
-            name)
-          (fun (_, _, (_, date, _, _, _, _, _)) -> date)
+          (fun (_, _, _, evt) -> Event.get_name evt)
+          (fun (_, _, _, evt) -> Event.get_date evt)
           events_witnesses
       in
       List.map
-        (fun (p, wk, (name, date, _, _, _, _, isp)) ->
+        (fun (p, wk, wnote, evt) ->
           let witness_date =
-            match Date.od_of_cdate date with
+            match Date.od_of_cdate (Event.get_date evt) with
             | Some (Dgreg (dmy, _)) -> " (" ^ DateDisplay.year_text dmy ^ ")"
             | _ -> ""
           in
           let witnesses_name =
-            match name with
+            match Event.get_name evt with
             | Event.Pevent name ->
                 if p_auth then !!(Util.string_of_pevent_name conf base name)
                 else  ""
@@ -1036,13 +1061,13 @@ let get_events_witnesses conf base p base_prefix gen_p p_auth has_relations pers
           in
           let husband = pers_to_piqi conf base p base_prefix in
           let wife =
-            match isp with
+            match Event.get_spouse_iper evt with
             | Some isp ->
                 let sp = poi base isp in
                 Some (pers_to_piqi conf base sp base_prefix )
             | None -> None
           in
-          event_witness_constructor event_witness_type husband wife
+          event_witness_constructor event_witness_type husband wife wnote
           )
         events_witnesses
     end
@@ -1065,8 +1090,10 @@ let fam_to_piqi_family conf base p ifam =
   let spouse_to_piqi conf base p base_prefix =
       pers_to_piqi_simple_person conf base p base_prefix
   in
-  let witnesses_to_piqi conf base p base_prefix =
-      pers_to_piqi_simple_person conf base p base_prefix
+  let witnesses_to_piqi conf base p wkind wnote base_prefix =
+    let p = pers_to_piqi_simple_person conf base p base_prefix in
+    let wkind = Api_util.piqi_of_witness_kind wkind in
+    simple_witness_constructor wkind p wnote
   in
   let child_to_piqi conf base p base_prefix =
       pers_to_piqi_simple_person conf base p base_prefix
@@ -1255,7 +1282,7 @@ let has_relations conf base p p_auth is_main_person =
       List.fold_left
         (fun l ip ->
            let rp = pget conf base ip in
-           if is_hidden rp then l else (ip :: l))
+           if is_empty_person rp then l else (ip :: l))
       [] (get_related p)
     in
     get_rparents p <> [] || related <> []
@@ -1297,30 +1324,27 @@ let fiche_event_constructor name type_ date date_long date_raw date_conv date_co
       witnesses = witnesses;
   }
 
-let simple_witness_constructor witness_type witness =
-  Mread.Witness_event.({
-    witness_type = witness_type;
-    witness = witness;
-  })
-
-let fiche_witness_constructor witness_type witness =
+let fiche_witness_constructor witness_type witness witness_note =
   Mread.Witness_fiche_event.({
-    witness_type = witness_type;
-    witness = witness;
+    witness_type;
+    witness;
+    witness_note
   })
 
-let simple_event_witness_constructor event_witness_type husband wife =
+let simple_event_witness_constructor event_witness_type husband wife witness_note =
       Mread.Event_witness.({
         event_witness_type = event_witness_type;
         husband = husband;
         wife = wife;
+        witness_note
       })
 
-let fiche_event_witness_constructor event_witness_type husband wife =
+let fiche_event_witness_constructor event_witness_type husband wife witness_note =
   Mread.Event_fiche_witness.({
     event_witness_type = event_witness_type;
     husband = husband;
     wife = wife;
+    witness_note
   })
 
 let fill_notes conf base p p_auth is_main_person gen_p =
@@ -1345,15 +1369,17 @@ let fill_families conf base p =
   let spouse_to_piqi conf base p base_prefix =
       pers_to_piqi_simple_person conf base p base_prefix
   in
-  let witnesses_to_piqi conf base p base_prefix =
-      pers_to_piqi_simple_person conf base p base_prefix
+  let witnesses_to_piqi conf base p wkind wnote base_prefix =
+    let p = pers_to_piqi_simple_person conf base p base_prefix in
+    let wkind = Api_util.piqi_of_witness_kind wkind in
+    simple_witness_constructor wkind p wnote
   in
   let child_to_piqi conf base p base_prefix =
       pers_to_piqi_simple_person conf base p base_prefix
   in
   let family_constructor index spouse marriage_date marriage_date_long marriage_date_raw marriage_date_conv marriage_date_conv_long marriage_cal
        marriage_date_text marriage_place marriage_src marriage_type divorce_type divorce_date divorce_date_long divorce_date_raw divorce_date_conv
-       divorce_date_conv_long divorce_cal witnesses notes fsources children =
+       divorce_date_conv_long divorce_cal witnesses notes fsources children =    
     {
       Mread.Family.index = index;
       spouse = spouse;
@@ -1393,18 +1419,21 @@ let fill_fiche_families conf base p base_prefix nb_asc nb_desc nb_desc_max pers_
     let spouse_to_piqi conf base p base_prefix =
       pers_to_piqi_person conf base p base_prefix false 0 1 0 0 false simple_graph_info no_event
     in
-    let witnesses_to_piqi conf base p base_prefix =
-      if not simple_graph_info then
-        pers_to_piqi_person conf base p base_prefix false 0 1 0 0 false simple_graph_info no_event
-      else
-        Mread.default_person()
+    let witnesses_to_piqi conf base p wkind wnote base_prefix =
+      let p = if not simple_graph_info then
+          pers_to_piqi_person conf base p base_prefix false 0 1 0 0 false simple_graph_info no_event
+        else Mread.default_person ()
+      in
+      let wkind = Api_util.piqi_of_witness_kind wkind in
+      fiche_witness_constructor wkind p wnote 
     in
     let child_to_piqi conf base p base_prefix =
       pers_to_piqi_person conf base p base_prefix false 0 0 (nb_desc+1) nb_desc_max false simple_graph_info no_event
     in
     let family_constructor index spouse marriage_date marriage_date_long marriage_date_raw marriage_date_conv marriage_date_conv_long marriage_cal
     marriage_date_text marriage_place marriage_src marriage_type divorce_type divorce_date divorce_date_long divorce_date_raw divorce_date_conv
-    divorce_date_conv_long divorce_cal witnesses notes fsources children =
+    divorce_date_conv_long divorce_cal witnesses notes fsources children
+      =
       {
         Mread.Fiche_family.index = index;
         spouse = spouse;
@@ -1715,13 +1744,14 @@ let rec pers_to_piqi_fiche_person conf base p base_prefix is_main_person nb_asc 
         piqi_fiche_person.Mread.Fiche_person.linked_page_death <- linked_page_death;
         piqi_fiche_person.Mread.Fiche_person.linked_page_head <- linked_page_head;
         piqi_fiche_person.Mread.Fiche_person.linked_page_occu <- linked_page_occu;
-        piqi_fiche_person.Mread.Fiche_person.visible_for_visitors <- is_visible conf base p;
+        piqi_fiche_person.Mread.Fiche_person.visible_for_visitors <- get_visibility conf base p;
         piqi_fiche_person.Mread.Fiche_person.related <- if is_main_person && not simple_graph_info then get_related_piqi conf base p base_prefix gen_p has_relations pers_to_piqi_fiche_person_only fiche_relation_person_constructor else [];
         piqi_fiche_person.Mread.Fiche_person.rparents <- if is_main_person && not simple_graph_info then get_rparents_piqi base conf base_prefix gen_p has_relations pers_to_piqi_fiche_person_only fiche_relation_person_constructor else [];
         if not no_event then
           piqi_fiche_person.Mread.Fiche_person.events_witnesses <- if is_main_person then get_events_witnesses conf base p base_prefix gen_p p_auth has_relations pers_to_piqi_fiche_person_only fiche_event_witness_constructor else [];
         if not no_event then
           piqi_fiche_person.Mread.Fiche_person.events <- fill_events_if_is_main_person conf base p base_prefix p_auth is_main_person pers_to_piqi_fiche_person_only fiche_witness_constructor fiche_event_constructor;
+        piqi_fiche_person.Mread.Fiche_person.is_contemporary <- !GWPARAM.is_contemporary conf base p;
         piqi_fiche_person
       in
       {
@@ -1884,20 +1914,6 @@ let print_result_fiche_person conf base ip nb_asc_max nb_desc_max simple_graph_i
   end
 
 (* ********************************************************************* *)
-(*  [Fonc] is_private_person : conf -> base -> ip -> bool                 *)
-(** [Description] : Indique si une personne est privée ou non.
-    [Args] :
-      - conf  : configuration de la base
-      - base  : base de donnée
-      - ip    : index de la personne
-    [Retour] : Bool
-    [Rem] : Non exporté en clair hors de ce module.                      *)
-(* ********************************************************************* *)
-let is_private_person conf base ip =
-    let p = pget conf base ip in
-    is_hidden p || ((is_hide_names conf p) && not(authorized_age conf base p))
-
-(* ********************************************************************* *)
 (*  [Fonc] print_from_identifier_person : conf -> base ->                *)
 (*   print_result_from_ip -> Identifier_person -> unit                   *)
 (** [Description] : Utilise un identifiant de personne pour appeler une
@@ -1931,8 +1947,8 @@ let print_from_identifier_person conf base print_result_from_ip identifier_perso
           begin
             match Gwdb.person_of_key base fn sn (Int32.to_int oc) with
             | Some ip ->
-              if is_private_person conf base ip
-              then
+              let p = Gwdb.poi base ip in
+              if is_empty_person p || ((is_hide_names conf p) && not(authorized_age conf base p)) then
                 print_error conf `not_found ""
               else
                 (if identifier_person.Mread.Identifier_person.track_visit

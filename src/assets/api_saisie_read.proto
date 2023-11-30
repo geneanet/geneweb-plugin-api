@@ -175,6 +175,12 @@ enum EventType {
   EFAM_CUSTOM = 112;
 }
 
+enum Visibility {
+  PUBLIC = 0;
+  HALF_PRIVATE = 1;
+  PRIVATE_ = 2;
+}
+
 message FicheParameters {
   required IdentifierPerson identifier_person = 1;
   optional int32 nb_asc_max = 2;
@@ -186,10 +192,12 @@ message FicheParameters {
 message WitnessEvent {
   required WitnessType witness_type = 1;
   required SimplePerson witness = 2;
+  required string witness_note = 3;
 }
 message WitnessFicheEvent {
   required WitnessType witness_type = 1;
   required Person witness = 2;
+  required string witness_note = 3;
 }
 
 message Event {
@@ -259,10 +267,11 @@ message SimplePerson {
   required Sosa sosa = 13;
   required string baseprefix = 14;
   optional string sosa_nb = 17;
-  required bool visible_for_visitors = 18;
+  required Visibility visible_for_visitors = 18;
   required bool has_parent = 19;
   required bool has_spouse = 20;
   required bool has_child = 21;
+  required bool is_contemporary = 22;
 }
 
 message RelationPerson {
@@ -278,12 +287,14 @@ message EventWitness {
   required string event_witness_type = 1;
   required SimplePerson husband = 2;
   optional SimplePerson wife = 3;
+  required string witness_note = 4;
 }
 
 message EventFicheWitness {
   required string event_witness_type = 1;
   required Person husband = 2;
   optional Person wife = 3;
+  required string witness_note = 4;
 }
 
 message Person {
@@ -373,7 +384,7 @@ message FichePerson {
   required string linked_page_death = 19;
   required string linked_page_head = 20;
   required string linked_page_occu = 21;
-  required bool visible_for_visitors = 22;
+  required Visibility visible_for_visitors = 22;
   optional Person father = 23;
   optional Person mother = 24;
   repeated FicheFamily families = 25;
@@ -381,6 +392,7 @@ message FichePerson {
   repeated RelationFichePerson rparents = 27;
   repeated EventFicheWitness events_witnesses = 28;
   repeated FicheEvent events = 29;
+  required bool is_contemporary = 30;
 }
 
 message Family {
@@ -403,7 +415,7 @@ message Family {
   optional string divorce_date_conv = 13;
   optional string divorce_date_conv_long = 22;
   optional Calendar divorce_date_cal = 14;
-  repeated SimplePerson witnesses = 15;
+  repeated WitnessEvent witnesses = 15;
   optional string notes = 16;
   optional string fsources = 17;
   repeated SimplePerson children = 18;
@@ -429,7 +441,7 @@ message FicheFamily {
   optional string divorce_date_conv = 13;
   optional string divorce_date_conv_long = 22;
   optional Calendar divorce_date_cal = 14;
-  repeated Person witnesses = 15;
+  repeated WitnessFicheEvent witnesses = 15;
   optional string notes = 16;
   optional string fsources = 17;
   repeated Person children = 18;

@@ -103,6 +103,7 @@ message SimplePerson {
 message WitnessEvent {
   required WitnessType witness_type = 1;
   required SimplePerson witness = 2;
+  optional string witness_note = 3;
 }
 
 message Event {
@@ -188,6 +189,7 @@ message PersonLink {
 message Witness {
   required WitnessType witness_type = 1;
   optional PersonLink person = 2;
+  optional string witness_note = 3;
 }
 
 enum FeventName {

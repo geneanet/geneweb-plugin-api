@@ -6,6 +6,7 @@ module Mext_write = Api_saisie_write_piqi_ext
 
 open Geneweb
 open Def
+open Date
 open Gwdb
 open Util
 open Api_util
@@ -166,7 +167,7 @@ let check_person_conflict base original_pevents sp =
   ignore @@
   List.fold_left begin fun created evt ->
     let _, created =
-      Array.fold_left begin fun (j, created) ((f, s, o, create, var, force_create), _) ->
+      Array.fold_left begin fun (j, created) ((f, s, o, create, var, force_create), _, _) ->
         match error_conflict_person_link base created (f, s, o, create, var, force_create) with
         | true, _ ->
           let pos = Mutil.list_index evt original_pevents in
@@ -213,7 +214,7 @@ let check_family_conflict base sfam scpl sdes =
     (* Vérification des fevents. *)
     List.fold_left begin fun (i, created) evt ->
       let _, created =
-        Array.fold_left begin fun (j, created) ((f, s, o, create, var, force_create), _) ->
+        Array.fold_left begin fun (j, created) ((f, s, o, create, var, force_create), _wkind, _wnote) ->
           match error_conflict_person_link base created (f, s, o, create, var, force_create) with
           | true, _ ->
             let conflict =
@@ -270,11 +271,12 @@ let piqi_date_of_date date =
   match date with
   | Dgreg (dmy, cal) ->
       let (cal, dmy) =
+        let d = Date.convert ~from:Dgregorian ~to_:cal dmy in
         match cal with
         | Dgregorian -> (None, dmy)
-        | Djulian -> (Some `julian, Calendar.julian_of_gregorian dmy)
-        | Dfrench -> (Some `french, Calendar.french_of_gregorian dmy)
-        | Dhebrew -> (Some `hebrew, Calendar.hebrew_of_gregorian dmy)
+        | Djulian -> (Some `julian, d)
+        | Dfrench -> (Some `french, d)
+        | Dhebrew -> (Some `hebrew, d)
       in
       let (prec, dmy, dmy2) =
         let d = Some (Int32.of_int dmy.day) in
@@ -460,13 +462,12 @@ let date_of_piqi_date conf date =
                       {day = 0; month = 0; year = 0; prec = Sure; delta = 0}
                 in
                 let dmy =
-                  match cal with
+                  begin match cal with
                   | Dgregorian ->
-                      let _check_date = Update.check_greg_day conf dmy in
-                      dmy
-                  | Djulian -> Calendar.gregorian_of_julian dmy
-                  | Dfrench -> Calendar.gregorian_of_french dmy
-                  | Dhebrew -> Calendar.gregorian_of_hebrew dmy
+                      Update.check_greg_day conf dmy
+                  | Djulian | Dfrench | Dhebrew -> ()
+                  end;
+                  Date.convert ~from:cal ~to_:Dgregorian dmy
                 in
                 Some (Dgreg (dmy, cal))
           | None -> None
@@ -705,22 +706,22 @@ let pers_to_piqi_person_search_info conf base p =
   let image = get_portrait conf base p in
   let events =
     List.map
-      (fun (name, date, place, note, src, w, isp) ->
+      (fun evt ->
         let name =
-          match name with
+          match Event.get_name evt with
           | Event.Pevent name -> !!(Util.string_of_pevent_name conf base name)
           | Event.Fevent name -> !!(Util.string_of_fevent_name conf base name)
         in
         let (date, _, date_conv, _, date_cal) =
-          match Date.od_of_cdate date with
+          match Date.od_of_cdate (Event.get_date evt) with
           | Some d -> Api_saisie_read.string_of_date_and_conv conf d
           | _ -> ("", "", "", "", None)
         in
-        let place = !!(Util.raw_string_of_place conf (sou base place) |> Adef.safe) in
-        let note = !!(Notes.person_note conf base p (sou base note)) in
-        let src = !!(Notes.source conf base (sou base src)) in
+        let place = !!(Util.raw_string_of_place conf (sou base (Event.get_place evt)) |> Adef.safe) in
+        let note = !!(Notes.person_note conf base p (sou base (Event.get_note evt))) in
+        let src = !!(Notes.source conf base (sou base (Event.get_src evt))) in
         let spouse =
-          match isp with
+          match Event.get_spouse_iper evt with
           | Some ip ->
               let sp = poi base ip in
               Some (pers_to_piqi_simple_person conf base sp)
@@ -728,11 +729,13 @@ let pers_to_piqi_person_search_info conf base p =
         in
         let witnesses =
           Mutil.array_to_list_map
-            (fun (ip, wk) ->
+            (fun (ip, wk, wnote) ->
               let witness_type = Api_util.piqi_of_witness_kind wk in
                let witness = pers_to_piqi_simple_person conf base @@ poi base ip in
-               Mwrite.Witness_event.{ witness_type ; witness })
-            w
+              let witness_note = sou base wnote in
+              let witness_note = if witness_note = "" then None else Some witness_note in
+              Mwrite.Witness_event.{ witness_type ; witness ; witness_note})
+            (Event.get_witnesses_and_notes evt)
         in
         {
           Mwrite.Event.name = name;
@@ -1061,7 +1064,7 @@ let pers_to_piqi_mod_person conf base p =
     List.map
       (fun evt ->
          let (pevent_type, event_perso) =
-           match evt.epers_name with
+           match get_pevent_name evt with
            | Epers_Birth -> (Some `epers_birth, None)
            | Epers_Baptism -> (Some `epers_baptism, None)
            | Epers_Death -> (Some `epers_death, None)
@@ -1115,22 +1118,24 @@ let pers_to_piqi_mod_person conf base p =
            | Epers_Name n -> (None, Some (sou base n))
          in
          let date =
-           match Date.od_of_cdate evt.epers_date with
+           match Date.od_of_cdate (get_pevent_date evt) with
            | Some d -> Some (piqi_date_of_date d)
            | _ -> None
          in
-         let place = sou base evt.epers_place in
+         let place = sou base (get_pevent_place evt) in
          let reason = None in
-         let note = sou base evt.epers_note in
-         let src = sou base evt.epers_src in
+         let note = sou base (get_pevent_note evt) in
+         let src = sou base (get_pevent_src evt) in
          let witnesses =
            Mutil.array_to_list_map
-             (fun (ip, wk) ->
+             (fun (ip, wk, wnote) ->
                 let witness_type = Api_util.piqi_of_witness_kind wk in
                 let p = poi base ip in
                 let person_link = pers_to_piqi_person_link conf base p in
-                Mwrite.Witness.{ witness_type ; person = Some person_link })
-             evt.epers_witnesses
+                let witness_note = sou base wnote in
+                let witness_note = if witness_note = "" then None else Some witness_note in
+                Mwrite.Witness.{ witness_type ; person = Some person_link; witness_note })
+             (get_pevent_witnesses_and_notes evt)
          in
          {
            Mwrite.Pevent.pevent_type = pevent_type;
@@ -1182,8 +1187,8 @@ let pers_to_piqi_mod_person conf base p =
       let (has_birth, has_death) =
         List.fold_left
           (fun (has_birth, has_death) evt ->
-            (has_birth || evt.epers_name = Epers_Birth,
-             has_death || evt.epers_name = Epers_Death))
+            (has_birth || get_pevent_name evt = Epers_Birth,
+             has_death || get_pevent_name evt = Epers_Death))
           (false, false) (get_pevents p)
       in
       let pevents =
@@ -1334,7 +1339,7 @@ let fam_to_piqi_mod_family conf base ifam fam =
     List.map
       (fun evt ->
          let (fevent_type, event_perso) =
-           match evt.efam_name with
+           match get_fevent_name evt with
            | Efam_Marriage -> (Some `efam_marriage, None)
            | Efam_NoMarriage -> (Some `efam_no_marriage, None)
            | Efam_NoMention -> (Some `efam_no_mention, None)
@@ -1350,22 +1355,24 @@ let fam_to_piqi_mod_family conf base ifam fam =
            | Efam_Name n -> (None, Some (sou base n))
          in
          let date =
-           match Date.od_of_cdate evt.efam_date with
+           match Date.od_of_cdate (get_fevent_date evt) with
            | Some d -> Some (piqi_date_of_date d)
            | _ -> None
          in
-         let place = sou base evt.efam_place in
+         let place = sou base (get_fevent_place evt) in
          let reason = None in
-         let note = sou base evt.efam_note in
-         let src = sou base evt.efam_src in
+         let note = sou base (get_fevent_note evt) in
+         let src = sou base (get_fevent_src evt) in
          let witnesses =
            Mutil.array_to_list_map
-             (fun (ip, wk) ->
+             (fun (ip, wk, wnote) ->
                 let witness_type = Api_util.piqi_of_witness_kind wk in
                 let p = poi base ip in
                 let person_link = pers_to_piqi_person_link conf base p in
-                Mwrite.Witness.{ witness_type; person = Some person_link })
-             evt.efam_witnesses
+                let witness_note = sou base wnote in
+                let witness_note = if witness_note = "" then None else Some witness_note in
+                Mwrite.Witness.{ witness_type; person = Some person_link ; witness_note})
+             (get_fevent_witnesses_and_notes evt)
          in
          {
            Mwrite.Fevent.fevent_type = fevent_type;

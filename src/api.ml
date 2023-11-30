@@ -283,14 +283,14 @@ let print_last_modified_persons conf base =
     | Some range ->
         let date_begin = range.M.Filter_date_range.date_begin in
         let dmy1 =
-          { day = Int32.to_int date_begin.M.Filter_date.day;
+          Date.{ day = Int32.to_int date_begin.M.Filter_date.day;
             month = Int32.to_int date_begin.M.Filter_date.month;
             year = Int32.to_int date_begin.M.Filter_date.year;
             prec = Sure; delta = 0 }
         in
         let date_end = range.M.Filter_date_range.date_end in
         let dmy2 =
-          { day = Int32.to_int date_end.M.Filter_date.day;
+          Date.{ day = Int32.to_int date_end.M.Filter_date.day;
             month = Int32.to_int date_end.M.Filter_date.month;
             year = Int32.to_int date_end.M.Filter_date.year;
             prec = Sure; delta = 0 }
@@ -308,9 +308,9 @@ let print_last_modified_persons conf base =
           let m = int_of_string (String.sub time 5 2) in
           let d = int_of_string (String.sub time 8 2) in
           let dmy =
-            { day = d; month = m; year = y; prec = Sure; delta = 0; }
+            Date.{ day = d; month = m; year = y; prec = Sure; delta = 0; }
           in
-          Some (Dgreg (dmy, Dgregorian))
+          Some (Date.Dgreg (dmy, Dgregorian))
         in
         is_date_included prec date date_begin date_end
     | None -> true
@@ -324,11 +324,11 @@ let print_last_modified_persons conf base =
         let m = int_of_string (String.sub time 5 2) in
         let d = int_of_string (String.sub time 8 2) in
         let dmy =
-          { day = d; month = m; year = y; prec = Sure; delta = 0; }
+          Date.{ day = d; month = m; year = y; prec = Sure; delta = 0; }
         in
-        Some (Dgreg (dmy, Dgregorian))
+        Some (Date.Dgreg (dmy, Dgregorian))
       in
-      let dmy_zero = { day = 1; month = 1; year = 1970; prec = Sure; delta = 0; } in
+      let dmy_zero = Date.{ day = 1; month = 1; year = 1970; prec = Sure; delta = 0; } in
       is_date_included prec date dmy_zero date_begin
     | None -> true
   in
@@ -649,7 +649,7 @@ let print_base_warnings conf base =
       in
       let result =
         (* Make the warning list uniq *)
-        Hashtbl.fold begin fun x _ acc ->
+        Hashtbl.fold begin fun (x : CheckItem.base_warning) _ acc ->
           Api_warnings.add_warning_to_piqi_warning_list conf base acc x
         end warnings result
       in

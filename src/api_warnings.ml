@@ -55,23 +55,27 @@ let add_error_to_piqi_warning_list base (w : M.Base_warnings.t) = function
                :: w.warning_bad_sex_of_married_person }
 
 let fevent_to_warning_event e =
+  let get_fevent_name e = e.efam_name in
   { M.Warning_event.pevent = None
   ; fevent =
-      try Some (Api_piqi_util.piqi_fevent_name_of_fevent_name e.efam_name)
+      try Some (Api_piqi_util.piqi_fevent_name_of_fevent_name (get_fevent_name e))
       with _ -> None
   }
 
 let pevent_to_warning_event e =
+  let get_pevent_name e = e.epers_name in
   { M.Warning_event.fevent = None
   ; pevent =
-      try Some (Api_piqi_util.piqi_pevent_name_of_pevent_name e.epers_name)
+      try Some (Api_piqi_util.piqi_pevent_name_of_pevent_name (get_pevent_name e))
       with _ -> None
   }
 
 let add_warning_to_piqi_warning_list conf base =
   let _ = conf in
+  let get_pevent_name e = e.epers_name in
+  let get_fevent_name e = e.efam_name in
   let p2wp = person_to_warning_person in
-  fun (w : M.Base_warnings.t) -> function
+  fun (w : M.Base_warnings.t) (warn : Geneweb.CheckItem.base_warning) -> match warn with
     | BigAgeBetweenSpouses (fath, moth, dmy) ->
       { w with warning_big_age_between_spouses =
                  M.Warning_big_age_between_spouses.{
@@ -263,16 +267,16 @@ let add_warning_to_piqi_warning_list conf base =
                  M.Warning_event_order.{
                    person = p2wp base p
                  ; pevents = []
-                 ; fevents = [ Api_piqi_util.piqi_fevent_name_of_fevent_name e1.efam_name
-                             ; Api_piqi_util.piqi_fevent_name_of_fevent_name e2.efam_name ]
+                 ; fevents = [ Api_piqi_util.piqi_fevent_name_of_fevent_name (get_fevent_name e1)
+                             ; Api_piqi_util.piqi_fevent_name_of_fevent_name (get_fevent_name e2) ]
                  } :: w.warning_event_order }
       [@warning "-45"]
     | PEventOrder (p, e1, e2) ->
       { w with warning_event_order =
                  M.Warning_event_order.{
                    person = p2wp base p
-                 ; pevents = [ Api_piqi_util.piqi_pevent_name_of_pevent_name e1.epers_name
-                             ; Api_piqi_util.piqi_pevent_name_of_pevent_name e2.epers_name ]
+                 ; pevents = [ Api_piqi_util.piqi_pevent_name_of_pevent_name (get_pevent_name e1)
+                             ; Api_piqi_util.piqi_pevent_name_of_pevent_name (get_pevent_name e2) ]
                  ; fevents = []
                  } :: w.warning_event_order }
       [@warning "-45"]
