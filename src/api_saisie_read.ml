@@ -2187,7 +2187,7 @@ let print_result_graph_tree conf base ip =
   in
   *)
   let max_children = 100 in
-  let limit_children arr = if Array.length arr > 100 then [||] else arr in
+  let limit_children arr = if Array.length arr > max_children then [||] else arr in
   let max_desc = 12 in
   let nb_desc =
     match params.Mread.Graph_tree_params.nb_desc with
