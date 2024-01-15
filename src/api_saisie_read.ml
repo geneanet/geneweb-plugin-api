@@ -9,6 +9,14 @@ open Gwdb
 open Util
 open Api_util
 
+
+let max_children = 100
+let limit_array arr =
+  if Array.length arr > max_children then [||] else arr
+
+let limit_list l =
+  if List.length l > max_children then [] else l
+
 (**/**) (* Conversion de dates *)
 
 (* Copie de date.ml sans les balises HTML => on devrait créer *)
@@ -359,7 +367,7 @@ let pers_to_piqi_person_tree conf base p more_info gen max_gen base_prefix =
                    (fun (children_or_spouses, nb_fam) ifam ->
                      let nb_fam = succ nb_fam in
                      let fam = foi base ifam in
-                     let children = get_children fam in
+                     let children = limit_array @@ get_children fam in
                      (children_or_spouses || (gen > 1 && Array.length children > 1) || nb_fam > 1,
                       nb_fam))
                    (false, 0) (get_family p)))
@@ -533,7 +541,7 @@ let pers_to_piqi_simple_person conf base p base_prefix =
     (Array.fold_left
         (fun has_children ifam ->
           let fam = foi base ifam in
-          let children = get_children fam in
+          let children = limit_array @@ get_children fam in
           (has_children || Array.length children >= 1))
         false (get_family p))
     in
@@ -644,7 +652,7 @@ let fam_to_piqi_family_link conf base (ifath : Gwdb.iper) imoth sp ifam fam base
   let children =
     List.map
       (fun (p, base_prefix) -> child_to_piqi conf base p base_prefix)
-      (!GWPARAM_ITL.get_children_of_parents base base_prefix ifam ifath imoth)
+      (!GWPARAM_ITL.get_children_of_parents base base_prefix ifam ifath imoth |> limit_list)
   in
   family_link_constructor index spouse marriage_date marriage_date_long marriage_date_raw marriage_date_conv marriage_date_conv_long
     marriage_cal marriage_date_text marriage_place marriage_src marriage_type divorce_type divorce_date divorce_date_long divorce_date_raw divorce_date_conv
@@ -849,12 +857,10 @@ let get_family_piqi base conf ifam p base_prefix spouse_to_piqi witnesses_to_piq
     else ""
   in
   let children =
-    let children_array = Gwdb.get_children fam in
-    if Array.length children_array < 100 then
-      Mutil.array_to_list_map
-        (fun ip -> child_to_piqi conf base (poi base ip) base_prefix)
-        children_array
-    else []
+    let children_array = limit_array @@ Gwdb.get_children fam in
+    Mutil.array_to_list_map
+      (fun ip -> child_to_piqi conf base (poi base ip) base_prefix)
+      children_array
   in
   (* lien inter arbre *)
   let children_link =
@@ -2054,7 +2060,7 @@ let build_graph_desc conf base p max_gen =
               let fam = foi base ifam in
               let sp = poi base (Gutil.spouse (get_iper p) fam) in
               let sp_factor = factor ht (get_iper sp) in
-              let children = Mutil.array_to_list_map (poi base) (get_children fam) in
+              let children = Mutil.array_to_list_map (poi base) (limit_array @@ get_children fam) in
               nodes := create_node ifam sp gen Spouse conf.command sp_factor :: !nodes;
               edges := create_edge p_factor conf.command p sp_factor conf.command sp :: !edges;
               if gen <> max_gen then begin
@@ -2090,7 +2096,7 @@ let build_graph_desc conf base p max_gen =
                                 edges := create_edge sp_factor baseprefix sp c_factor baseprefix c :: !edges;
                                 (baseprefix, c, gen + 1) :: acc
                             end acc children
-                          end l (!GWPARAM_ITL.get_children' conf base (get_iper p) fam (get_iper sp))
+                          end l (limit_list @@ !GWPARAM_ITL.get_children' conf base (get_iper p) fam (get_iper sp))
                         in
                         loop_child l
                   in
@@ -2126,7 +2132,7 @@ let build_graph_desc conf base p max_gen =
                           edges := create_edge sp_factor baseprefix sp c_factor baseprefix c :: !edges;
                           (baseprefix, c, gen + 1) :: acc
                         end acc children
-                      end acc (!GWPARAM_ITL.get_children' conf base (get_iper p) fam (get_iper sp))
+                      end acc (limit_list @@ !GWPARAM_ITL.get_children' conf base (get_iper p) fam (get_iper sp))
                   end l (!GWPARAM_ITL.get_families conf base p)
                 in loop_desc l
           in
@@ -2186,8 +2192,6 @@ let print_result_graph_tree conf base ip =
       nodes_asc
   in
   *)
-  let max_children = 100 in
-  let limit_children arr = if Array.length arr > max_children then [||] else arr in
   let max_desc = 12 in
   let nb_desc =
     match params.Mread.Graph_tree_params.nb_desc with
@@ -2216,14 +2220,14 @@ let print_result_graph_tree conf base ip =
                 }
               in
               node :: acc)
-          (limit_children @@ get_children fam) []
+          (limit_array @@ get_children fam) []
     | None -> []
   in
   let (nodes_siblings_before, nodes_siblings_after) =
     match get_parents p with
     | Some ifam ->
         let fam = foi base ifam in
-        let children = Array.to_list (limit_children @@ get_children fam) in
+        let children = Array.to_list (limit_array @@ get_children fam) in
         let rec split_at_person before after l =
           match l with
           | [] -> (List.rev before, after)
