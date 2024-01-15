@@ -849,9 +849,12 @@ let get_family_piqi base conf ifam p base_prefix spouse_to_piqi witnesses_to_piq
     else ""
   in
   let children =
-    Mutil.array_to_list_map
-      (fun ip -> child_to_piqi conf base (poi base ip) base_prefix)
-      (get_children fam)
+    let children_array = Gwdb.get_children fam in
+    if Array.length children_array < 100 then
+      Mutil.array_to_list_map
+        (fun ip -> child_to_piqi conf base (poi base ip) base_prefix)
+        children_array
+    else []
   in
   (* lien inter arbre *)
   let children_link =
