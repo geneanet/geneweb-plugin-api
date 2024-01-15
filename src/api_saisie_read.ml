@@ -2186,6 +2186,8 @@ let print_result_graph_tree conf base ip =
       nodes_asc
   in
   *)
+  let max_children = 100 in
+  let limit_children arr = if Array.length arr > 100 then [||] else arr in
   let max_desc = 12 in
   let nb_desc =
     match params.Mread.Graph_tree_params.nb_desc with
@@ -2214,14 +2216,14 @@ let print_result_graph_tree conf base ip =
                 }
               in
               node :: acc)
-          (get_children fam) []
+          (limit_children @@ get_children fam) []
     | None -> []
   in
   let (nodes_siblings_before, nodes_siblings_after) =
     match get_parents p with
     | Some ifam ->
         let fam = foi base ifam in
-        let children = Array.to_list (get_children fam) in
+        let children = Array.to_list (limit_children @@ get_children fam) in
         let rec split_at_person before after l =
           match l with
           | [] -> (List.rev before, after)
