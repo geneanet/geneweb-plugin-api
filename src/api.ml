@@ -658,9 +658,12 @@ let print_base_warnings conf base =
   print_result conf data
 
 let person_warnings conf base p =
-  List.fold_left begin fun acc x ->
-    Api_warnings.add_warning_to_piqi_warning_list conf base acc x
-  end Api_warnings.empty (CheckItem.person_warnings conf base p)
+  let ws = CheckItem.person_warnings conf base p in
+  if List.length ws < 100 then
+    List.fold_left begin fun acc x ->
+      Api_warnings.add_warning_to_piqi_warning_list conf base acc x
+    end Api_warnings.empty ws
+  else Api_warnings.empty
 
 let print_person_warnings conf base =
   let ref_person = Api_piqi_util.get_params conf Api_piqi_ext.parse_reference_person_i in
