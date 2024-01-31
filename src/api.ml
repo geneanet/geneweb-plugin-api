@@ -634,6 +634,7 @@ let print_base_warnings conf base =
     (fun w ->
        if not @@ table_contains_warning base warnings w
        then Hashtbl.add warnings w true)
+    ignore
     ignore ;
   let data =
     if filters.Api_def.nb_results then
