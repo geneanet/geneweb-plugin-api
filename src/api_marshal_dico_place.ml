@@ -1,7 +1,11 @@
 
 module StrSet = Set.Make (String)
 
-let quote s =  "\"" ^ s ^ "\""
+let escape_dquote s =
+  String.split_on_char '"' s
+  |> String.concat "\\\""
+
+let quote s =  "\"" ^ escape_dquote s ^ "\""
               
 let build_line =
   let rec aux s l = match l with
