@@ -4,7 +4,7 @@ type t = Csv.t
 
 let load_from_file ~file =
   try
-    Csv.load file
+    Csv.load ~backslash_escape:true file
   with Csv.Failure (nrecord, nfield, msg) ->
     !Geneweb.GWPARAM.syslog
       `LOG_ERR
@@ -16,7 +16,7 @@ let load_from_file ~file =
     
 (* TODO catch exceptions *)
 let of_string s =
-  let in_chan = Csv.of_string s in
+  let in_chan = Csv.of_string ~backslash_escape:true s in
   let csv = Csv.input_all in_chan in
   csv
 
