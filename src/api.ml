@@ -54,6 +54,7 @@ let print_info_base conf base =
       last_modified_person
     with Sys_error _ | _ -> default ()
   in
+  let has_ignored_duplicates = Some false in
   let info_base =
     M.Infos_base.({
       nb_persons = Int64.of_int (Gwdb.nb_of_persons base);
@@ -61,6 +62,7 @@ let print_info_base conf base =
       sosa = sosa;
       last_modified_person = Option.map Int64.of_string last_modified_person;
       real_nb_persons = Some (Int64.of_int (Gwdb.nb_of_real_persons base));
+      has_ignored_duplicates;
     })
   in
   let data = Mext.gen_infos_base info_base in
