@@ -453,21 +453,15 @@ let reduce_to_recent conf l =
   in loop l []
 
 
-(* *********************************************************************** *)
-(*  [Fonc] is_visible : config -> base -> person -> bool                   *)
-(** [Description] : Renvoie vrai si l'on peut afficher les informations
-                    d'une personne. Une personne est visible si elle n'est
-                    pas privée OU si elle n'est plus contemporaine.
-    [Args] :
-      - conf : configuration de la base
-      - base : base de donnée
-      - p    : person
-    [Retour] : string
-    [Rem] : Exporté en clair hors de ce module.                            *)
-(* *********************************************************************** *)
-let is_visible conf base p =
-  let tmp_conf = {(conf) with wizard = false; friend = false} in
-  Util.authorized_age tmp_conf base p
+(** [get_visibility conf base p] is the visibility of [p] as defined by geneanet's rules.
+    - [`public] if [p] is fully visible for a visitor
+    - [`half_private] if [p] is hidden but with some information such as names still visible
+    - [`private_] if [p] is fully hidden to a visitor
+*)
+let get_visibility conf base p =
+  if Util.is_fully_visible_to_visitors conf base p then `public
+  else if conf.hide_private_names || get_access p = Private then `private_
+  else `half_private
 
 
 (* ********************************************************************* *)
@@ -671,8 +665,9 @@ let empty_piqi_person_light conf ref_person =
     spouses = [];
     ascend = false;
     descend = false;
-    visible_for_visitors = false;
+    visible_for_visitors = `private_;
     baseprefix = conf.command;
+    is_contemporary = true;
   }
 
 
@@ -723,10 +718,11 @@ let empty_piqi_person_full conf ref_person =
     titles = [];
     related = [];
     rparents = [];
-    visible_for_visitors = false;
+    visible_for_visitors = `private_;
     parents = None;
     families = [];
     baseprefix = conf.command;
+    is_contemporary = true;
   }
 
 
@@ -854,7 +850,6 @@ let spouse_to_piqi_spouse conf base p fam compute_sosa =
       | Separated -> `separated
     else `not_divorced
   in
-  let visible = is_visible conf base p in
   {
     M.Spouse.sosa = sosa_p;
     n = sn;
@@ -877,7 +872,7 @@ let spouse_to_piqi_spouse conf base p fam compute_sosa =
     marriage_date = marriage_date;
     marriage_place = marriage_place;
     divorce_type = divorce_type;
-    visible_for_visitors = visible;
+    visible_for_visitors = get_visibility conf base p;
   }
 
 
@@ -996,7 +991,6 @@ let pers_to_piqi_person_light conf base p compute_sosa =
       (List.map (foi base) faml)
   in
   let baseprefix = conf.command in
-  let visible = is_visible conf base p in
   let index = Int32.of_string @@ Gwdb.string_of_iper gen_p.key_index in
   {
     M.Person.sosa = sosa_p;
@@ -1021,8 +1015,9 @@ let pers_to_piqi_person_light conf base p compute_sosa =
     spouses = sl;
     ascend = ascend;
     descend = descend;
-    visible_for_visitors = visible;
+    visible_for_visitors = get_visibility conf base p;
     baseprefix = baseprefix;
+    is_contemporary = !GWPARAM.is_contemporary conf base p;
   }
 
 
@@ -1194,7 +1189,6 @@ let pers_to_piqi_person_full conf base p compute_sosa =
   in
   let baseprefix = conf.command
   in
-  let visible = is_visible conf base p in
   {
     M.Full_person.sosa = sosa_p;
     n = sn;
@@ -1228,10 +1222,11 @@ let pers_to_piqi_person_full conf base p compute_sosa =
     titles = titles;
     related = related;
     rparents = rparents;
-    visible_for_visitors = visible;
+    visible_for_visitors = get_visibility conf base p;
     parents = parents;
     families = families;
     baseprefix = baseprefix;
+    is_contemporary = !GWPARAM.is_contemporary conf base p;
   }
 
 

@@ -462,12 +462,11 @@ let pers_to_piqi_simple_person conf base p base_prefix =
     restricted_person.Mread.Simple_person.index <- Int32.of_string @@ Gwdb.string_of_iper Gwdb.dummy_iper;
     restricted_person.Mread.Simple_person.lastname <- "x";
     restricted_person.Mread.Simple_person.firstname <- "x";
-    restricted_person.Mread.Simple_person.visible_for_visitors <- false;
+    restricted_person.Mread.Simple_person.visible_for_visitors <- `private_;
     restricted_person
   else
     let p_auth = authorized_age conf base p in
     let index = Int32.of_string @@ Gwdb.string_of_iper (get_iper p) in
-    let visible_for_visitors = is_visible conf base p in
     let sex =
       match get_sex p with
       | Male -> `male
@@ -564,11 +563,12 @@ let pers_to_piqi_simple_person conf base p base_prefix =
       image;
       sosa = sosa;
       sosa_nb = sosa_nb;
-      visible_for_visitors = visible_for_visitors;
+      visible_for_visitors = get_visibility conf base p;
       baseprefix = base_prefix;
       has_parent = has_parent;
       has_spouse = has_spouse;
-      has_child = has_child
+      has_child = has_child;
+      is_contemporary = !GWPARAM.is_contemporary conf base p;
     }
 
 
@@ -1661,13 +1661,14 @@ let rec pers_to_piqi_fiche_person conf base p base_prefix is_main_person nb_asc 
         piqi_fiche_person.Mread.Fiche_person.linked_page_death <- linked_page_death;
         piqi_fiche_person.Mread.Fiche_person.linked_page_head <- linked_page_head;
         piqi_fiche_person.Mread.Fiche_person.linked_page_occu <- linked_page_occu;
-        piqi_fiche_person.Mread.Fiche_person.visible_for_visitors <- is_visible conf base p;
+        piqi_fiche_person.Mread.Fiche_person.visible_for_visitors <- get_visibility conf base p;
         piqi_fiche_person.Mread.Fiche_person.related <- if is_main_person && not simple_graph_info then get_related_piqi conf base p base_prefix gen_p pers_to_piqi_fiche_person_only fiche_relation_person_constructor else [];
         piqi_fiche_person.Mread.Fiche_person.rparents <- if is_main_person && not simple_graph_info then get_rparents_piqi base conf base_prefix gen_p pers_to_piqi_fiche_person_only fiche_relation_person_constructor else [];
         if not no_event then
           piqi_fiche_person.Mread.Fiche_person.events_witnesses <- if is_main_person then get_events_witnesses conf base p base_prefix gen_p p_auth pers_to_piqi_fiche_person_only fiche_event_witness_constructor else [];
         if not no_event then
           piqi_fiche_person.Mread.Fiche_person.events <- fill_events_if_is_main_person conf base p base_prefix p_auth is_main_person pers_to_piqi_fiche_person_only fiche_witness_constructor fiche_event_constructor;
+        piqi_fiche_person.Mread.Fiche_person.is_contemporary <- !GWPARAM.is_contemporary conf base p;
         piqi_fiche_person
       in
       {
@@ -1830,20 +1831,6 @@ let print_result_fiche_person conf base ip nb_asc_max nb_desc_max simple_graph_i
   end
 
 (* ********************************************************************* *)
-(*  [Fonc] is_private_person : conf -> base -> ip -> bool                 *)
-(** [Description] : Indique si une personne est privée ou non.
-    [Args] :
-      - conf  : configuration de la base
-      - base  : base de donnée
-      - ip    : index de la personne
-    [Retour] : Bool
-    [Rem] : Non exporté en clair hors de ce module.                      *)
-(* ********************************************************************* *)
-let is_private_person conf base ip =
-    let p = pget conf base ip in
-    is_hidden p || ((is_hide_names conf p) && not(authorized_age conf base p))
-
-(* ********************************************************************* *)
 (*  [Fonc] print_from_identifier_person : conf -> base ->                *)
 (*   print_result_from_ip -> Identifier_person -> unit                   *)
 (** [Description] : Utilise un identifiant de personne pour appeler une
@@ -1877,8 +1864,8 @@ let print_from_identifier_person conf base print_result_from_ip identifier_perso
           begin
             match Gwdb.person_of_key base fn sn (Int32.to_int oc) with
             | Some ip ->
-              if is_private_person conf base ip
-              then
+              let p = Gwdb.poi base ip in
+              if is_empty_person p || ((is_hide_names conf p) && not(authorized_age conf base p)) then
                 print_error conf `not_found ""
               else
                 (if identifier_person.Mread.Identifier_person.track_visit

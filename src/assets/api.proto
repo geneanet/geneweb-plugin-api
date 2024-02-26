@@ -83,6 +83,12 @@ enum TitleType {
   TITLE_NONE = 2;
 }
 
+enum Visibility {
+  PUBLIC = 0;
+  HALF_PRIVATE = 1;
+  PRIVATE_ = 2;
+}
+
 message Title {
   required TitleType title_type = 1;
   optional string name = 2;
@@ -115,7 +121,7 @@ message Spouse {
   required string marriage_date = 19;
   required string marriage_place = 20;
   required DivorceType divorce_type = 21;
-  required bool visible_for_visitors = 22;
+  required Visibility visible_for_visitors = 22;
 }
 
 message Person {
@@ -140,9 +146,10 @@ message Person {
   repeated Spouse spouses = 19;
   required bool ascend = 20;
   required bool descend = 21;
-  required bool visible_for_visitors = 22;
+  required Visibility visible_for_visitors = 22;
   required string baseprefix = 23;
   required int32 index = 24;
+  required bool is_contemporary = 25;
 }
 
 message FullPerson {
@@ -178,10 +185,11 @@ message FullPerson {
   repeated Title titles = 32;
   repeated int32 related = 33;
   repeated RelationParent rparents = 34;
-  required bool visible_for_visitors = 35;
+  required Visibility visible_for_visitors = 35;
   optional int32 parents = 36;
   repeated int32 families = 37;
   required string baseprefix = 38;
+  required bool is_contemporary = 39;
 }
 
 message FullFamily {
