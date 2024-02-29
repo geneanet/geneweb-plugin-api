@@ -54,7 +54,7 @@ let print_info_base conf base =
       last_modified_person
     with Sys_error _ | _ -> default ()
   in
-  let has_ignored_duplicates = Some false in
+  let has_ignored_duplicates = Some (!GWPARAM.has_ignored_duplicates conf base) in
   let info_base =
     M.Infos_base.({
       nb_persons = Int64.of_int (Gwdb.nb_of_persons base);
