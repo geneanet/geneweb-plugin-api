@@ -610,7 +610,8 @@ let print_updt_image conf base =
           patch_person base p.key_index p
       | None -> () )
     pers_img_l;
-  Gwdb.commit_patches base
+  Gwdb.commit_patches base;
+  print_result conf (fun _ -> "")
 
 exception WarningFound
 let table_contains_warning base tbl w =
