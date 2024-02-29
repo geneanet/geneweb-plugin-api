@@ -397,6 +397,14 @@ let get_restricted_person () =
   restricted_person.Mread.Person.firstname <- "x";
   restricted_person
 
+let get_restricted_fiche_person () =
+  let person = get_restricted_person () in
+  let fiche = Mread.default_fiche_person () in
+  fiche.Mread.Fiche_person.visible_for_visitors <- `private_;
+  fiche.Mread.Fiche_person.is_contemporary <- false;
+  person.Mread.Person.fiche_person_person <- Some fiche;
+  person
+
 let fill_sex p =
       match get_sex p with
       | Male -> `male
@@ -1607,7 +1615,7 @@ let rec pers_to_piqi_fiche_person conf base p base_prefix is_main_person nb_asc 
   let piqi_fiche_person = Mread.default_fiche_person() in
   (* If the access is restricted, returns the person with default fields. *)
   if is_restricted conf base (get_iper p) then
-    get_restricted_person ()
+    get_restricted_fiche_person ()
   else
     begin
       let p_auth = authorized_age conf base p in
