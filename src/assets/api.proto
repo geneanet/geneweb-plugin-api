@@ -8,6 +8,7 @@ message InfosBase {
   optional ReferencePerson sosa = 3;
   optional int64 last_modified_person = 4;
   optional int64 real_nb_persons = 5;
+  optional bool has_ignored_duplicates = 6;
 }
 
 message ReferencePerson {
