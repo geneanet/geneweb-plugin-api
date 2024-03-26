@@ -341,6 +341,7 @@ message Person {
   optional Access access = 22 [default = ACCESS_IFTITLES];
   optional int32 parents = 23;
   repeated int32 families = 24;
+  required bool is_contemporary = 25;
 }
 
 message Family {
