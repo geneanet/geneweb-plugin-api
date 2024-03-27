@@ -283,7 +283,13 @@ let print_mod_aux conf base ncn mod_p callback =
     if digest = mod_p.Mwrite.Person.digest then
       match match if ncn then None else Update.check_missing_name base p with
         | Some _ as err -> err
-        | None -> Update.check_missing_witnesses_names conf (fun e -> e.epers_witnesses) p.pevents
+        | None ->
+          let missing_wit_names_o =
+            Update.check_missing_witnesses_names conf (fun e -> e.epers_witnesses) p.pevents
+          in
+          if Option.is_none missing_wit_names_o then
+            Update.check_illegal_access_update base p
+          else missing_wit_names_o
       with
       | Some err -> Api_update_util.UpdateError err
       | None -> callback p
