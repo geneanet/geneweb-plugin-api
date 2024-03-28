@@ -85,9 +85,9 @@ enum TitleType {
 }
 
 enum Visibility {
-  PUBLIC = 0;
-  HALF_PRIVATE = 1;
-  PRIVATE_ = 2;
+  VISIBILITY_PUBLIC = 0;
+  VISIBILITY_SEMI_PUBLIC = 1;
+  VISIBILITY_PRIVATE = 2;
 }
 
 message Title {

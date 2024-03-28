@@ -454,14 +454,14 @@ let reduce_to_recent conf l =
 
 
 (** [get_visibility conf base p] is the visibility of [p] as defined by geneanet's rules.
-    - [`public] if [p] is fully visible for a visitor
-    - [`half_private] if [p] is hidden but with some information such as names still visible
-    - [`private_] if [p] is fully hidden to a visitor
+    - [`visibility_public] if [p] is fully visible for a visitor
+    - [`visibility_semi_public] if [p] is hidden but with some information such as names still visible
+    - [`visibility_private] if [p] is fully hidden to a visitor
 *)
 let get_visibility conf base p =
-  if Util.is_fully_visible_to_visitors conf base p then `public
-  else if conf.hide_private_names || get_access p = Private then `private_
-  else `half_private
+  if Util.is_fully_visible_to_visitors conf base p then `visibility_public
+  else if conf.hide_private_names || get_access p = Private then `visibility_private
+  else `visibility_semi_public
 
 
 (* ********************************************************************* *)
@@ -665,7 +665,7 @@ let empty_piqi_person_light conf ref_person =
     spouses = [];
     ascend = false;
     descend = false;
-    visible_for_visitors = `private_;
+    visible_for_visitors = `visibility_private;
     baseprefix = conf.command;
     is_contemporary = true;
   }
@@ -718,7 +718,7 @@ let empty_piqi_person_full conf ref_person =
     titles = [];
     related = [];
     rparents = [];
-    visible_for_visitors = `private_;
+    visible_for_visitors = `visibility_private;
     parents = None;
     families = [];
     baseprefix = conf.command;
