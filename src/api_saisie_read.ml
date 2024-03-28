@@ -400,7 +400,7 @@ let get_restricted_person () =
 let get_restricted_fiche_person () =
   let person = get_restricted_person () in
   let fiche = Mread.default_fiche_person () in
-  fiche.Mread.Fiche_person.visible_for_visitors <- `private_;
+  fiche.Mread.Fiche_person.visible_for_visitors <- `visibility_private;
   fiche.Mread.Fiche_person.is_contemporary <- false;
   person.Mread.Person.fiche_person_person <- Some fiche;
   person
@@ -470,7 +470,7 @@ let pers_to_piqi_simple_person conf base p base_prefix =
     restricted_person.Mread.Simple_person.index <- Int32.of_string @@ Gwdb.string_of_iper Gwdb.dummy_iper;
     restricted_person.Mread.Simple_person.lastname <- "x";
     restricted_person.Mread.Simple_person.firstname <- "x";
-    restricted_person.Mread.Simple_person.visible_for_visitors <- `private_;
+    restricted_person.Mread.Simple_person.visible_for_visitors <- `visibility_private;
     restricted_person
   else
     let p_auth = authorized_age conf base p in
