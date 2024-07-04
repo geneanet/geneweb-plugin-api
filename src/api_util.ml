@@ -335,16 +335,10 @@ let date_included d d1 d2 =
 
 (**/**) (* Divers filtres possibles. *)
 
-(** [get_visibility conf base p] is the visibility of [p] as defined by geneanet's rules.
-    - [`visibility_public] if [p] is fully visible for a visitor
-    - [`visibility_semi_public] if [p] is hidden but with some information such as names still visible
-    - [`visibility_private] if [p] is fully hidden to a visitor
-*)
-let get_visibility conf base p =
-  if Util.is_fully_visible_to_visitors conf base p then `visibility_public
-  else if conf.hide_private_names || get_access p = Private then `visibility_private
-  else `visibility_semi_public
-
+let get_visibility conf base p = match Util.get_visibility conf base p with
+  | Util.Visibility_public -> `visibility_public
+  | Visibility_semi_public -> `visibility_semi_public
+  | Visibility_private -> `visibility_private
 
 (* ********************************************************************* *)
 (*  [Fonc] is_sosa : (person -> Sosa.t) -> person -> bool            *)
