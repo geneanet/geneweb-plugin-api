@@ -550,6 +550,8 @@ let empty_piqi_person_light conf ref_person =
     visible_for_visitors = `visibility_private;
     baseprefix = conf.command;
     is_contemporary = true;
+    name_is_hidden = false;
+    name_is_restricted = false;
   }
 
 
@@ -605,6 +607,8 @@ let empty_piqi_person_full conf ref_person =
     families = [];
     baseprefix = conf.command;
     is_contemporary = true;
+    name_is_hidden = false;
+    name_is_restricted = false;
   }
 
 
@@ -901,6 +905,8 @@ let pers_to_piqi_person_light conf base p compute_sosa =
     visible_for_visitors = get_visibility conf base p;
     baseprefix = baseprefix;
     is_contemporary = GWPARAM.is_contemporary conf base p;
+    name_is_hidden = Geneweb.NameDisplay.is_hidden conf base p;
+    name_is_restricted = Geneweb.NameDisplay.is_restricted conf base p;
   }
 
 
@@ -1110,6 +1116,8 @@ let pers_to_piqi_person_full conf base p compute_sosa =
     families = families;
     baseprefix = baseprefix;
     is_contemporary = GWPARAM.is_contemporary conf base p;
+    name_is_hidden = Geneweb.NameDisplay.is_hidden conf base p;
+    name_is_restricted = Geneweb.NameDisplay.is_restricted conf base p;
   }
 
 
