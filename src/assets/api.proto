@@ -804,7 +804,7 @@ message HistoryPerson {
     optional int32 year1 = 6;
     optional int32 year2 = 7;
     required bool exists_in_base = 8;
-    required bool has_history = 9;    
+    required bool has_history = 9;
 }
 
 message HistoryNote {
