@@ -77,7 +77,7 @@ let print_person_search_list with_cut_at_max conf base first_name surname max_re
 let print_person_search_list' conf base first_name surname limit =
   let first_name_prefix = Option.value first_name ~default:"" in
   let surname_prefix = Option.value surname ~default:"" in
-  let persons = Geneweb.SearchName.persons_starting_with ~conf ~base ~first_name_prefix ~surname_prefix ~limit in
+  let persons = Geneweb.SearchName.persons_starting_with ~conf ~base ~filter:(fun _ -> true) ~first_name_prefix ~surname_prefix ~limit in
   let list = List.map (fun p ->
       Api_update_util.pers_to_piqi_person_search conf base p
     ) persons in
