@@ -32,64 +32,20 @@ let print_auto_complete assets conf base =
   let data = Api_saisie_write_piqi_ext.gen_auto_complete_result result in
   Api_util.print_result conf data
 
-let print_person_search_list with_cut_at_max conf base first_name surname max_res =
-  let list =
-    Api_search.search_person_list conf base surname first_name (if with_cut_at_max then Some max_res else None)
-  in
-  let list =
-    List.sort
-      (fun ip1 ip2 ->
-        let p1 = Gwdb.poi base ip1 in
-        let p2 = Gwdb.poi base ip2 in
-        let fn1 = Gwdb.sou base (Gwdb.get_first_name p1) in
-        let sn1 = Gwdb.sou base (Gwdb.get_surname p1) in
-        let fn2 = Gwdb.sou base (Gwdb.get_first_name p2) in
-        let sn2 = Gwdb.sou base (Gwdb.get_surname p2) in
-        let cmp_sn = Utf8.alphabetic_order sn1 sn2 in
-        if cmp_sn = 0 then
-          let cmp_fn = Utf8.alphabetic_order fn1 fn2 in
-          if cmp_fn = 0 then
-            (match
-              (Date.od_of_cdate (Gwdb.get_birth p1),
-               Date.od_of_cdate (Gwdb.get_birth p2))
-             with
-             | (Some d1, Some d2) -> Date.compare_date d1 d2
-             | (Some _, _) -> -1
-             | (_, Some _) -> 1
-             | (_, _) -> 0)
-          else cmp_fn
-        else cmp_sn)
-      list
-  in
-  (* On préfère limiter la liste ici, même si on perd un peu en performance. *)
-  let list = Ext_list.take list max_res in
-  let () = Geneweb.SosaCache.build_sosa_ht conf base in
-  let list =
-    List.map
-      (fun ip ->
-        let p = Gwdb.poi base ip in
-        Api_update_util.pers_to_piqi_person_search conf base p)
-      list
-  in
-  let result = Api_saisie_write_piqi.Person_search_list.({ persons = list; }) in
-  let data = Api_saisie_write_piqi_ext.gen_person_search_list result in
-  Api_util.print_result conf data
-
-let print_person_search_list' conf base first_name surname limit =
-  let first_name_prefix = Option.value first_name ~default:"" in
-  let surname_prefix = Option.value surname ~default:"" in
-  let persons = Geneweb.SearchName.persons_starting_with ~conf ~base ~filter:(fun _ -> true) ~first_name_prefix ~surname_prefix ~limit in
-  let list = List.map (fun p ->
-      Api_update_util.pers_to_piqi_person_search conf base p
-    ) persons in
-  let result = Api_saisie_write_piqi.Person_search_list.({ persons = list; }) in
-  let data = Api_saisie_write_piqi_ext.gen_person_search_list result in
-  Api_util.print_result conf data
-
-let print_person_search_list_hom conf base first_name surname limit =
-  let first_name = Option.value first_name ~default:"" in
+let print_person_search_list conf base =
+  let params = Api_util.get_params conf Api_saisie_write_piqi_ext.parse_person_search_list_params in
+  let surname = params.Api_saisie_write_piqi.Person_search_list_params.lastname in
   let surname = Option.value surname ~default:"" in
-  let conf = {conf with Geneweb.Config.env = ("first_name", Adef.encoded first_name) :: ("surname", Adef.encoded surname) :: conf.Geneweb.Config.env} in
+  let first_name = params.Api_saisie_write_piqi.Person_search_list_params.firstname in
+  let first_name = Option.value first_name ~default:"" in
+
+  let limit = Int32.to_int params.Api_saisie_write_piqi.Person_search_list_params.limit in
+  let conf = {conf with Geneweb.Config.env =
+                          ("first_name", Adef.encoded first_name)
+                          :: ("surname", Adef.encoded surname)
+                          :: ("exact_first_name", Adef.encoded "pfx")
+                          :: ("exact_surname", Adef.encoded "pfx")
+                          :: conf.env} in
   let persons = fst @@ Geneweb.AdvSearchOk.advanced_search conf base limit in
   let list = List.map (fun p ->
       Api_update_util.pers_to_piqi_person_search conf base p
@@ -97,28 +53,6 @@ let print_person_search_list_hom conf base first_name surname limit =
   let result = Api_saisie_write_piqi.Person_search_list.({ persons = list; }) in
   let data = Api_saisie_write_piqi_ext.gen_person_search_list result in
   Api_util.print_result conf data
-
-let get_person_search_list_parameters params =
-  let surname = params.Api_saisie_write_piqi.Person_search_list_params.lastname in
-  let first_name = params.Api_saisie_write_piqi.Person_search_list_params.firstname in
-  let limit = Int32.to_int params.Api_saisie_write_piqi.Person_search_list_params.limit in
-  let search_type = params.Api_saisie_write_piqi.Person_search_list_params.search_type in
-  first_name, surname, limit, search_type
-
-let print_person_search_list_switch conf base =
-  let params = Api_util.get_params conf Api_saisie_write_piqi_ext.parse_person_search_list_params in
-  let first_name, surname, limit, search_type = get_person_search_list_parameters params in
-  let f = match search_type with
-    | Some "searchtree" | None -> print_person_search_list false conf
-    | Some "searchtree-limited" -> print_person_search_list true conf
-    | Some "searchhom" -> print_person_search_list_hom conf
-    | Some "searchhom-pfx" ->
-      let conf = {conf with env = ("exact_first_name", Adef.encoded "pfx") :: ("exact_surname", Adef.encoded "pfx") :: conf.env} in
-      print_person_search_list_hom conf
-    | Some "searchtree-index" -> print_person_search_list' conf
-    | Some _s -> assert false
-  in
-  f base first_name surname limit
 
 let print_person_search_info conf base =
   let params = Api_util.get_params conf Api_saisie_write_piqi_ext.parse_index_person in
