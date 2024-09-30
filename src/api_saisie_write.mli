@@ -8,7 +8,7 @@ val print_auto_complete : string -> Geneweb.Config.config -> Gwdb.base -> unit
       - result : la liste de la recherche.
                                                                            *)
 
-val print_person_search_list_switch : Geneweb.Config.config -> Gwdb.base -> unit
+val print_person_search_list : Geneweb.Config.config -> Gwdb.base -> unit
 (** [Description] : Renvoie la liste des personnes qui ont ce nom ou prénom.
     [Args] :
       - conf : configuration de la base

@@ -160,7 +160,7 @@ let () =
     ; ( "API_GET_CONFIG"
       , aux @@ fun conf _ -> wiz' Plugin_api_lib.Api_saisie_write.print_config conf)
     ; ( "API_PERSON_SEARCH_LIST"
-      , aux @@ w_base @@ Plugin_api_lib.Api_saisie_write.print_person_search_list_switch)
+      , aux @@ w_base @@ Plugin_api_lib.Api_saisie_write.print_person_search_list)
     ; ( "API_GET_PERSON_SEARCH_INFO"
       , aux @@ wiz @@ w_base @@ Plugin_api_lib.Api_saisie_write.print_person_search_info)
     ; ( "API_ADD_CHILD"
