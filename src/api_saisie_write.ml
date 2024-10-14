@@ -47,6 +47,18 @@ let print_person_search_list conf base =
                           :: ("exact_surname", Adef.encoded "pfx")
                           :: conf.env} in
   let persons = fst @@ Geneweb.AdvSearchOk.advanced_search conf base limit in
+  let cmp_per p1 p2 =
+    let c1 = String.compare
+        (Gwdb.sou base (Gwdb.get_surname p1))
+        (Gwdb.sou base (Gwdb.get_surname p2))
+    in
+    if c1 = 0 then
+      String.compare
+        (Gwdb.sou base (Gwdb.get_first_name p1))
+        (Gwdb.sou base (Gwdb.get_first_name p2))
+    else c1
+  in
+  let persons = List.sort cmp_per persons in
   let list = List.map (fun p ->
       Api_update_util.pers_to_piqi_person_search conf base p
     ) persons in
