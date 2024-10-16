@@ -74,8 +74,10 @@ let () =
     try Scanf.sscanf s "dico_profession_%[a-z].csv" (aux `profession s)
     with _ -> ()
   end (Sys.readdir assets) ;
-  let aux ?(timeout_mode = `TIMEOUT_504) fn _assets conf base =
+  let aux
+        ?timeout_duration ?(timeout_mode = `TIMEOUT_504) fn _assets conf base =
     let conf = { conf with Geneweb.Config.api_mode = true } in
+    Option.iter Wserver.set_timeout timeout_duration;
     choose_timeout_behaviour conf timeout_mode;
     fn conf base ; true
   in
