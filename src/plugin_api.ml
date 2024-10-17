@@ -109,7 +109,7 @@ let () =
     ; ( "API_INFO_IND"
       , aux @@ w_base @@ Plugin_api_lib.Api.print_info_ind)
     ; ( "API_IMAGE_ALL"
-      , aux @@ w_base @@ Plugin_api_lib.Api.print_img_all)
+      , aux ~timeout_duration:0 @@ w_base @@ Plugin_api_lib.Api.print_img_all)
     ; ( "API_IMAGE_PERSON"
       , aux @@ w_base @@ Plugin_api_lib.Api.print_img_person)
     ; ( "API_IMAGE_UPDATE"
