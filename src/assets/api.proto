@@ -245,21 +245,12 @@ message SearchParams {
 }
 
 message Image {
-  required Person person = 1;
-  required string img = 2;
-}
-
-message FullImage {
-  required FullPerson person = 1;
+  required ReferencePerson person = 1;
   required string img = 2;
 }
 
 message ListImages {
   repeated Image list_images = 1;
-}
-
-message ListFullImages {
-  repeated FullImage images = 1;
 }
 
 message PersImg {
