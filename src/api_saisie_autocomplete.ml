@@ -76,10 +76,11 @@ let rec get_list_from_cache ?(retry = true) conf base mode max_res s =
     let last_mod = conf.Geneweb.Config.ctime -. stats.Unix.st_mtime in
     let cache =
       if stats.Unix.st_size = 0 || last_mod > 3600.
-      then
+      then (
+        Wserver.set_timeout 300;
         let cache = create_cache base mode in
         write_cache cache_file cache;
-        cache
+        cache)
       else
         let ic = Secure.open_in_bin cache_file in
         try (Marshal.from_channel ic : string list)
