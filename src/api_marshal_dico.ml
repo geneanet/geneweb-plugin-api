@@ -29,7 +29,7 @@ let generate assets lang data_type data =
      output_value oc (data : Api_search.dico) ;
      close_out oc
 
-let sorted_array_of_set ?(compare = Ext_string.alphabetic) s =
+let sorted_array_of_set ?(compare = Utf8.alphabetic_order) s =
   let a = StrSet.elements s |> Array.of_list in
   Array.sort compare a ;
   a
