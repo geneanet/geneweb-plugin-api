@@ -1277,6 +1277,8 @@ let pers_to_piqi_mod_person conf base p =
     families = families;
     create_link = create_link;
     is_contemporary;
+    name_is_hidden = Geneweb.NameDisplay.is_hidden conf base p;
+    name_is_restricted = Geneweb.NameDisplay.is_restricted conf base p;
   }
 
 let fam_to_piqi_mod_family conf base ifam fam =

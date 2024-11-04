@@ -342,6 +342,8 @@ message Person {
   optional int32 parents = 23;
   repeated int32 families = 24;
   required bool is_contemporary = 25;
+  required bool name_is_hidden = 26;
+  required bool name_is_restricted = 27;
 }
 
 message Family {

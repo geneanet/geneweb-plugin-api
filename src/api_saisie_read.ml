@@ -321,6 +321,8 @@ let pers_to_piqi_person_tree conf base p more_info gen max_gen base_prefix =
       sosa = `no_sosa;
       has_more_infos = false;
       baseprefix = "";
+      name_is_hidden = Geneweb.NameDisplay.is_hidden conf base p;
+      name_is_restricted = Geneweb.NameDisplay.is_restricted conf base p;
     }
   else
     let p_auth = authorized_age conf base p in
@@ -386,7 +388,9 @@ let pers_to_piqi_person_tree conf base p more_info gen max_gen base_prefix =
       image;
       sosa = sosa;
       has_more_infos = has_more_infos;
-      baseprefix = base_prefix
+      baseprefix = base_prefix;
+      name_is_hidden = Geneweb.NameDisplay.is_hidden conf base p;
+      name_is_restricted = Geneweb.NameDisplay.is_restricted conf base p;
     }
 
 (* Common functions to build a SimplePerson or a FichePerson. *)
@@ -577,6 +581,8 @@ let pers_to_piqi_simple_person conf base p base_prefix =
       has_spouse = has_spouse;
       has_child = has_child;
       is_contemporary = GWPARAM.is_contemporary conf base p;
+      name_is_hidden = Geneweb.NameDisplay.is_hidden conf base p;
+      name_is_restricted = Geneweb.NameDisplay.is_restricted conf base p;
     }
 
 
@@ -1519,6 +1525,8 @@ let pers_to_piqi_person conf base p base_prefix is_main_person =
       baseprefix = base_prefix;
       fiche_person_person = None;
       is_contemporary = GWPARAM.is_contemporary conf base p;
+      name_is_hidden = Geneweb.NameDisplay.is_hidden conf base p;
+      name_is_restricted = Geneweb.NameDisplay.is_restricted conf base p;
     }
 
 let fill_ref_if_is_main_person conf base is_main_person =
@@ -1672,6 +1680,8 @@ let rec pers_to_piqi_fiche_person conf base p base_prefix is_main_person nb_asc 
         rparents = if return_simple_attributes then get_rparents_piqi base conf base_prefix gen_p pers_to_piqi_simple_person simple_relation_person_constructor else [];
         baseprefix = base_prefix;
         is_contemporary = GWPARAM.is_contemporary conf base p;
+        name_is_hidden = Geneweb.NameDisplay.is_hidden conf base p;
+        name_is_restricted = Geneweb.NameDisplay.is_restricted conf base p;
       }
     end
 

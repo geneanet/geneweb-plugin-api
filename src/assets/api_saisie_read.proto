@@ -247,6 +247,8 @@ message PersonTree {
   required Sosa sosa = 10;
   required bool has_more_infos = 11;
   required string baseprefix = 12;
+  required bool name_is_hidden = 13;
+  required bool name_is_restricted = 14;
 }
 
 message SimplePerson {
@@ -272,6 +274,8 @@ message SimplePerson {
   required bool has_spouse = 20;
   required bool has_child = 21;
   required bool is_contemporary = 22;
+  required bool name_is_hidden = 23;
+  required bool name_is_restricted = 24;
 }
 
 message RelationPerson {
@@ -357,6 +361,8 @@ message Person {
   repeated EventWitness events_witnesses = 48;
   required string baseprefix = 49;
   required bool is_contemporary = 50;
+  required bool name_is_hidden = 51;
+  required bool name_is_restricted = 52;
 }
 
 message FichePerson {
