@@ -471,9 +471,9 @@ let child_of_parent conf base p =
   (* alors on l'affiche, sinon on n'affiche que le prénom.   *)
   let print_father fath =
     if not (Gwdb.eq_istr (Gwdb.get_surname p) (Gwdb.get_surname fath)) then
-      Geneweb.Util.gen_person_text ~escape:false ~html:false conf base fath
+      Geneweb.NameDisplay.fullname_str_of_person conf base fath
     else
-      Geneweb.Util.gen_person_text ~escape:false ~html:false ~sn:false conf base fath
+      Geneweb.NameDisplay.first_name_str_of_person conf base fath
   in
   let a = Geneweb.Util.pget conf base (Gwdb.get_iper p) in
   let ifam =
@@ -497,13 +497,12 @@ let child_of_parent conf base p =
       let s =
         match (fath, moth) with
         | (Some fath, None) -> print_father fath
-        | (None, Some moth) -> Geneweb.Util.gen_person_text ~escape:false ~html:false conf base moth
+        | (None, Some moth) -> Geneweb.NameDisplay.fullname_str_of_person conf base moth
         | (Some fath, Some moth) ->
-            let open Def in
-            print_father fath
-            ^^^ " " ^<^ Geneweb.Util.transl_nth conf "and" 0 ^<^ " "
-            ^<^ Geneweb.Util.gen_person_text ~escape:false ~html:false conf base moth
-        | None, None -> Adef.safe ""
+          print_father fath
+          ^ " " ^ Geneweb.Util.transl_nth conf "and" 0 ^ " "
+          ^ Geneweb.NameDisplay.fullname_str_of_person conf base moth
+        | _ -> ""
       in
       let is = Geneweb.Util.index_of_sex (Gwdb.get_sex p) in
       Geneweb.Util.translate_eval
@@ -523,10 +522,8 @@ let husband_wife conf base p =
         let relation =
           Printf.sprintf (Geneweb.Util.relation_txt conf (Gwdb.get_sex p) fam) (fun () -> "")
         in
-        let open Def in
         Geneweb.Util.translate_eval
-          (relation ^<^ " " ^<^ (Geneweb.Util.gen_person_text ~escape:false ~html:false conf base conjoint)
-           :> string)
+          (relation ^ " " ^ (Geneweb.NameDisplay.fullname_str_of_person conf base conjoint))
       else loop (i + 1)
     else ""
   in
