@@ -29,9 +29,9 @@ let generate assets lang data_type data =
      output_value oc (data : Api_search.dico) ;
      close_out oc
 
-let sorted_array_of_set ?(compare = Ext_string.alphabetic) s =
+let sorted_array_of_set s =
   let a = StrSet.elements s |> Array.of_list in
-  Array.sort compare a ;
+  Array.sort Utf8.alphabetic_order a ;
   a
 
 module PlacesData : sig
@@ -136,4 +136,4 @@ let write_dico_profession_set ~assets ~fname_csv ~lang =
     ) StrSet.empty csv
   in
   generate assets lang `profession
-    (sorted_array_of_set ~compare:Utf8.alphabetic_order professions_set)
+    (sorted_array_of_set professions_set)
