@@ -1,11 +1,11 @@
 (**/**)
 
 let cache_file_of_cache_data base_file = function
-  | `lastname -> Filename.concat base_file "cache_surname"
-  | `firstname -> Filename.concat base_file "cache_first_name"
-  | `place -> Filename.concat base_file "cache_place"
-  | `source -> Filename.concat base_file "cache_src"
-  | `occupation -> Filename.concat base_file "cache_occupation"
+  | `lastname -> Caches.lastname_cache_fname base_file
+  | `firstname -> Caches.first_name_cache_fname base_file
+  | `place -> Caches.place_cache_fname base_file
+  | `source -> Caches.source_cache_fname base_file
+  | `occupation -> Caches.occupation_cache_fname base_file
 
 let has_cache conf mode =
   let base_file = Geneweb.Util.bpath (conf.Geneweb.Config.bname ^ ".gwb") in
