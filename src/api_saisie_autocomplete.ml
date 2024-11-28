@@ -12,6 +12,17 @@ let has_cache conf mode =
   let file = cache_file_of_cache_data base_file mode in
   Sys.file_exists file
 
+let cache_lock_file conf =
+  let base_file = Geneweb.Util.bpath (conf.Geneweb.Config.bname ^ ".gwb") in
+  Filename.concat base_file "cache_generation.lck"
+
+let write_caches conf base =
+  Lock.control (cache_lock_file conf) false
+    ~onerror:(fun () -> ()) begin fun () ->
+    Wserver.set_timeout 300;
+    Caches.write_caches base
+  end
+
 let get_list_from_cache conf mode max_res s =
   let bfile = Geneweb.Util.bpath (conf.Geneweb.Config.bname ^ ".gwb") in
   let cache_file = cache_file_of_cache_data bfile mode in

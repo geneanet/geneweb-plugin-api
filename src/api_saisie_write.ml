@@ -9,10 +9,8 @@ let print_auto_complete assets conf base =
   let place_mode = params.Api_saisie_write_piqi.Auto_complete.place_field in
   let list =
     if Gwdb.nb_of_persons base > Caches.node_threshold then begin
-      if not (Api_saisie_autocomplete.has_cache conf mode) then begin
-        Wserver.set_timeout 300;
-        Caches.write_caches base
-      end;
+      if not (Api_saisie_autocomplete.has_cache conf mode) then
+        Api_saisie_autocomplete.write_caches conf base;
       let cache = Api_saisie_autocomplete.get_list_from_cache conf mode max_res s in
       let ini = Name.lower @@ Ext_string.tr '_' ' ' s in
       match mode with
