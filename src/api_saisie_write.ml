@@ -8,16 +8,19 @@ let print_auto_complete assets conf base =
   let mode = params.Api_saisie_write_piqi.Auto_complete.field in
   let place_mode = params.Api_saisie_write_piqi.Auto_complete.place_field in
   let list =
-    if Gwdb.nb_of_persons base > 20_000 then
-      if Api_saisie_autocomplete.has_cache conf mode then
-        let cache = Api_saisie_autocomplete.get_list_from_cache conf mode max_res s in
-        let ini = Name.lower @@ Ext_string.tr '_' ' ' s in
-        match mode with
-        | `place | `source | `lastname | `firstname ->
-          Api_search.complete_with_dico assets conf (ref @@ List.length cache) max_res place_mode ini cache
-        | `occupation ->
-          Api_search.complete_with_dico assets conf (ref @@ List.length cache) max_res (Some `profession) ini cache
-      else []
+    if Gwdb.nb_of_persons base > Caches.node_threshold then begin
+      if not (Api_saisie_autocomplete.has_cache conf mode) then begin
+        Wserver.set_timeout 300;
+        Caches.write_caches base
+      end;
+      let cache = Api_saisie_autocomplete.get_list_from_cache conf mode max_res s in
+      let ini = Name.lower @@ Ext_string.tr '_' ' ' s in
+      match mode with
+      | `place | `source | `lastname | `firstname ->
+        Api_search.complete_with_dico assets conf (ref @@ List.length cache) max_res place_mode ini cache
+      | `occupation ->
+        Api_search.complete_with_dico assets conf (ref @@ List.length cache) max_res (Some `profession) ini cache
+    end
     else
       Api_search.search_auto_complete assets conf base mode place_mode max_res s
   in
