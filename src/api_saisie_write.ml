@@ -1594,6 +1594,7 @@ let do_mod_fam_add_child_aux conf base name ip mod_c mod_f fn =
           | Some ip_child ->
             mod_c.Api_saisie_write_piqi.Person.index <- Int32.of_string @@ Gwdb.string_of_iper ip_child;
             mod_c.Api_saisie_write_piqi.Person.occ <- child.Api_saisie_write_piqi.Person_link.occ;
+            let original_create_link = mod_c.create_link in
             mod_c.Api_saisie_write_piqi.Person.create_link <- `link ; (* child has been created already *)
             let digest = Geneweb.Update.digest_person (Geneweb.UpdateInd.string_person_of base @@ Gwdb.poi base ip_child) in
             mod_c.Api_saisie_write_piqi.Person.digest <- digest;
@@ -1603,8 +1604,19 @@ let do_mod_fam_add_child_aux conf base name ip mod_c mod_f fn =
               mod_c.Api_saisie_write_piqi.Person.death_type <-
                 Api_util.piqi_death_type_of_death (Geneweb.Update.infer_death_from_parents conf base @@ Gwdb.foi base ifam)
             end ;
-            begin match Api_update_person.print_mod conf base mod_c with
-              | Api_update_util.UpdateSuccess (wl, ml, hr, cp) -> (all_wl @ wl, all_ml @ ml, all_hr @ hr, cp)
+            let child_is_created = original_create_link <> `link in
+            begin match Api_update_person.print_mod ~with_history:(not child_is_created) conf base mod_c with
+              | Api_update_util.UpdateSuccess (wl, ml, hr, cp) ->
+                if child_is_created then
+                  let child_p = Gwdb.gen_person_of_person (Gwdb.poi base ip_child) in
+                  let changed = Def.U_Add_person (Geneweb.Util.string_gen_person base child_p) in
+                  let action = "ap" in
+                  let child_hr = fun () ->
+                    Geneweb.History.record conf base changed action
+                  in
+                  (all_wl @ wl, all_ml @ ml, child_hr :: all_hr @  hr, cp)
+                else
+                  (all_wl @ wl, all_ml @ ml, all_hr @  hr, cp)
               | Api_update_util.UpdateError s -> raise (Geneweb.Update.ModErr s)
               | Api_update_util.UpdateErrorConflict c -> raise (Api_update_util.ModErrApiConflict c)
             end

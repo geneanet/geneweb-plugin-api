@@ -7,6 +7,7 @@ val print_add :
 val print_mod :
   ?no_check_name:bool ->
   ?fexclude:Gwdb.ifam list ->
+  ?with_history:bool ->
   Geneweb.Config.config ->
   Gwdb.base ->
   Api_saisie_write_piqi.person ->
