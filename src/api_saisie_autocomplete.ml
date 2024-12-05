@@ -30,7 +30,10 @@ let get_list_from_cache conf mode max_res s =
     let ic = Secure.open_in_bin cache_file in
     try (Marshal.from_channel ic : string list)
     with
-    | _ ->
+    | e ->
+      Geneweb.GWPARAM.syslog `LOG_ERR
+        (Printf.sprintf "Error while reading api autocomplete cache %s %s"
+           cache_file (Printexc.to_string e));
       close_in ic;
       []
   in
