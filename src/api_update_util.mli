@@ -14,8 +14,8 @@ type created_person = {
 
 type update_base_status =
   | UpdateSuccess of
-      Geneweb.CheckItem.base_warning list
-      * Geneweb.CheckItem.base_misc list
+      Geneweb.Warning.base_warning list
+      * Geneweb.Warning.base_misc list
       * (unit -> unit) list
       * created_person option
   | UpdateError of Geneweb.Update.update_error

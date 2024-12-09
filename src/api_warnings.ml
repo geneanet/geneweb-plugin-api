@@ -74,7 +74,7 @@ let add_warning_to_piqi_warning_list conf base =
   let get_pevent_name e = e.epers_name in
   let get_fevent_name e = e.efam_name in
   let p2wp = person_to_warning_person in
-  fun (w : M.Base_warnings.t) (warn : Geneweb.CheckItem.base_warning) -> match warn with
+  fun (w : M.Base_warnings.t) (warn : Geneweb.Warning.base_warning) -> match warn with
     | BigAgeBetweenSpouses (fath, moth, dmy) ->
       { w with warning_big_age_between_spouses =
                  M.Warning_big_age_between_spouses.{

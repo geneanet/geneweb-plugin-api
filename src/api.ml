@@ -472,7 +472,7 @@ let print_updt_image conf base =
 exception WarningFound
 let table_contains_warning base tbl w =
   try Hashtbl.iter (fun w' _ ->
-          if Geneweb.CheckItem.eq_warning base w w'
+          if Geneweb.Warning.compare_base_warning base w w' = 0
           then raise WarningFound) tbl;
       false
   with WarningFound -> true
@@ -506,7 +506,7 @@ let print_base_warnings conf base =
       in
       let result =
         (* Make the warning list uniq *)
-        Hashtbl.fold begin fun (x : Geneweb.CheckItem.base_warning) _ acc ->
+        Hashtbl.fold begin fun (x : Geneweb.Warning.base_warning) _ acc ->
           Api_warnings.add_warning_to_piqi_warning_list conf base acc x
         end warnings result
       in
