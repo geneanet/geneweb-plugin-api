@@ -310,7 +310,7 @@ let print_mod_aux conf base no_check_name mod_p callback =
   | Geneweb.Update.ModErr s -> Api_update_util.UpdateError s
   | Api_update_util.ModErrApiConflict c -> Api_update_util.UpdateErrorConflict c
 
-let print_mod ?(no_check_name = false) ?(fexclude = []) conf base mod_p =
+let print_mod ?(no_check_name = false) ?(fexclude = []) ?(with_history = true) conf base mod_p =
   let ip = Gwdb.iper_of_string @@ Int32.to_string mod_p.Api_saisie_write_piqi.Person.index in
   let o_p =
     Geneweb.Util.string_gen_person base (Gwdb.gen_person_of_person (Gwdb.poi base ip))
@@ -354,9 +354,17 @@ let print_mod ?(no_check_name = false) ?(fexclude = []) conf base mod_p =
         let u = { Def.family } in
         Geneweb.UpdateIndOk.all_checks_person base p a u
       in
-      let changed = Def.U_Modify_person (o_p, (Geneweb.Util.string_gen_person base p)) in
+      let changed, action = match mod_p.Api_saisie_write_piqi.Person.create_link with
+        | `link ->
+          Def.U_Modify_person (o_p, (Geneweb.Util.string_gen_person base p)), "mp"
+        | `create
+        | `create_default_occ ->
+          Def.U_Add_person (Geneweb.Util.string_gen_person base p), "ap"
+      in
       let hr =
-        [(fun () -> Geneweb.History.record conf base changed "mp");
+        [(fun () ->
+            if with_history then
+              Geneweb.History.record conf base changed action);
          (fun () ->
            if not (Gwdb.is_quest_string p.surname) &&
               not (Gwdb.is_quest_string p.first_name) &&
