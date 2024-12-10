@@ -470,11 +470,6 @@ let print_updt_image conf base =
   Api_util.print_result conf (fun _ -> "")
 
 let print_base_warnings conf base =
-  Wserver.set_on_timeout (fun _ ->
-      let empty = Api_warnings.empty in
-      let data = Api_piqi_ext.gen_base_warnings empty in
-      Api_util.print_result conf data
-  );
   let filters = Api_util.get_filters conf in
   let errors = ref [] in
   let module BaseWarningSet = Geneweb.Warning.Gen_BaseWarningSet (struct let base = base end) in
