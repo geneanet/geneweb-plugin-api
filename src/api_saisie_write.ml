@@ -1,5 +1,13 @@
 (**/**) (* Fonctions pour l'auto-completion. *)
 
+let complete_with_cache conf assets mode place_mode max_res s =
+  let cache = Api_saisie_autocomplete.get_list_from_cache conf mode max_res s in
+  let ini = Name.lower @@ Ext_string.tr '_' ' ' s in
+  match mode with
+  | `place | `source | `lastname | `firstname ->
+    Api_search.complete_with_dico assets conf (ref @@ List.length cache) max_res place_mode ini cache
+  | `occupation ->
+    Api_search.complete_with_dico assets conf (ref @@ List.length cache) max_res (Some `profession) ini cache
 
 let print_auto_complete assets conf base =
   let params = Api_util.get_params conf Api_saisie_write_piqi_ext.parse_auto_complete in
@@ -8,14 +16,15 @@ let print_auto_complete assets conf base =
   let mode = params.Api_saisie_write_piqi.Auto_complete.field in
   let place_mode = params.Api_saisie_write_piqi.Auto_complete.place_field in
   let list =
-    if Gwdb.nb_of_persons base > 100000 then
-      let cache = Api_saisie_autocomplete.get_list_from_cache conf base mode max_res s in
-      let ini = Name.lower @@ Ext_string.tr '_' ' ' s in
-      match mode with
-      | `place | `source | `lastname | `firstname ->
-         Api_search.complete_with_dico assets conf (ref @@ List.length cache) max_res place_mode ini cache
-      | `occupation ->
-         Api_search.complete_with_dico assets conf (ref @@ List.length cache) max_res (Some `profession) ini cache
+    let nb_of_persons = Gwdb.nb_of_persons base in
+    if nb_of_persons > 100_000 then
+      if Api_saisie_autocomplete.has_cache conf mode then
+        complete_with_cache conf assets mode place_mode max_res s
+      else []
+    else if nb_of_persons > Caches.node_threshold &&
+            Api_saisie_autocomplete.has_cache conf mode
+    then
+      complete_with_cache conf assets mode place_mode max_res s
     else
       Api_search.search_auto_complete assets conf base mode place_mode max_res s
   in
