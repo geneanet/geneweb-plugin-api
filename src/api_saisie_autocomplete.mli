@@ -5,15 +5,15 @@ val has_cache :
 
 val get_list_from_cache :
   Geneweb.Config.config ->
-  [< `firstname | `lastname | `place | `source | `occupation ] ->
-  [> `area_code | `country | `county | `region | `town ] option ->
+  Api_saisie_write_piqi.auto_complete_field ->
+  Api_saisie_write_piqi.auto_complete_place_field option ->
   int ->
   string ->
   string list
 
 val is_valid_suggestion :
-    [< `firstname | `lastname | `place | `source | `occupation ] ->
-    [> `area_code | `country | `county | `region | `town | `subdivision] option ->
-    string ->
-    string ->
-    bool
+  Api_saisie_write_piqi.auto_complete_field ->
+  Api_saisie_write_piqi.auto_complete_place_field option ->
+  string ->
+  string ->
+  bool
