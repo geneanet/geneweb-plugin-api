@@ -571,8 +571,8 @@ let complete_with_dico assets conf nb max mode ini list =
      |> List.sort Utf8.alphabetic_order
      |> append list
   | None
-    | Some (#Api_saisie_write_piqi.auto_complete_place_field | `profession) ->
-     list
+  | Some (#Api_saisie_write_piqi.auto_complete_place_field | `profession) ->
+    list
 
 let get_all_data_from_db conf base data compare =
   let conf = { conf with Geneweb.Config.env = ("data", Mutil.encode data) :: conf.Geneweb.Config.env } in
