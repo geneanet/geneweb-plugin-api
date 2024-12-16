@@ -595,7 +595,7 @@ let is_completion_suggestion ~query:{kind; term} mode place_mode candidate =
   | Source | Occupation ->
      string_start_with term (Name.lower @@ Ext_string.tr '_' ' ' candidate)
   | Place _ ->
-    Api_saisie_autocomplete.is_valid_suggestion mode place_mode term candidate
+    Api_saisie_autocomplete.is_valid_suggestion ~mode ~place_mode ~ini:term ~candidate
 
 let complete_with_db ~conf ~base ~nb mode place_mode query =
   let list =

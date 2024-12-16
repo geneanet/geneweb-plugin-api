@@ -1,7 +1,7 @@
 (**/**) (* Fonctions pour l'auto-completion. *)
 
 let complete_with_cache conf assets mode place_mode max_res s =
-  let cache = Api_saisie_autocomplete.get_list_from_cache conf mode place_mode max_res s in
+  let cache = Api_saisie_autocomplete.get_list_from_cache ~conf ~mode ~place_mode ~n:max_res ~ini:s in
   let ini = Name.lower @@ Ext_string.tr '_' ' ' s in
   match mode with
   | `place | `source | `lastname | `firstname ->
@@ -18,11 +18,11 @@ let print_auto_complete assets conf base =
   let list =
     let nb_of_persons = Gwdb.nb_of_persons base in
     if nb_of_persons > 100_000 then
-      if Api_saisie_autocomplete.has_cache conf mode then
+      if Api_saisie_autocomplete.has_cache ~conf ~mode then
         complete_with_cache conf assets mode place_mode max_res s
       else []
     else if nb_of_persons > Caches.node_threshold &&
-            Api_saisie_autocomplete.has_cache conf mode
+            Api_saisie_autocomplete.has_cache ~conf ~mode
     then
       complete_with_cache conf assets mode place_mode max_res s
     else
