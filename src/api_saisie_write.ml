@@ -1,7 +1,7 @@
 (**/**) (* Fonctions pour l'auto-completion. *)
 
 let complete_with_cache conf assets mode place_mode max_res s =
-  let cache = Api_saisie_autocomplete.get_list_from_cache conf mode max_res s in
+  let cache = Api_saisie_autocomplete.get_list_from_cache conf mode place_mode max_res s in
   let ini = Name.lower @@ Ext_string.tr '_' ' ' s in
   match mode with
   | `place | `source | `lastname | `firstname ->
