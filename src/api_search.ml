@@ -582,78 +582,65 @@ let get_all_data_from_db conf base data compare =
   |> List.map (Gwdb.sou base)
   |> List.sort compare
 
-type kind =
-  | Source
-  | Occupation
-  | Place of
-      {field : Api_saisie_write_piqi.auto_complete_place_field option}
+let is_completion_suggestion ~mode ~place_mode ~ini ~candidate =
+  match mode with
+  | `source | `occupation ->
+     string_start_with ini (Name.lower @@ Ext_string.tr '_' ' ' candidate)
+  | `place as mode ->
+    Api_saisie_autocomplete.is_valid_suggestion ~mode ~place_mode ~ini ~candidate
 
-type query = {kind : kind; limit : int; term : string}
-
-let is_completion_suggestion ~query:{kind; term} mode place_mode candidate =
-  match kind with
-  | Source | Occupation ->
-     string_start_with term (Name.lower @@ Ext_string.tr '_' ' ' candidate)
-  | Place _ ->
-    Api_saisie_autocomplete.is_valid_suggestion ~mode ~place_mode ~ini:term ~candidate
-
-let complete_with_db ~conf ~base ~nb mode place_mode query =
+let complete_with_db ~conf ~base ~nb ~max ~(mode : [`source | `occupation | `place]) ~place_mode ~ini =
   let list =
     let data, compare =
-      match query.kind with
-      | Source -> "src", Utf8.alphabetic_order
-      | Occupation -> "occu", Utf8.alphabetic_order
-      | Place _ -> "place", Geneweb.Place.compare_places
+      match mode with
+      | `source -> "src", Utf8.alphabetic_order
+      | `occupation -> "occu", Utf8.alphabetic_order
+      | `place -> "place", Geneweb.Place.compare_places
     in
     get_all_data_from_db conf base data compare
   in
   let rec reduce acc = function
     | [] -> acc
-    | hd :: tl ->
+    | candidate :: tl ->
        let acc =
-         if is_completion_suggestion ~query mode place_mode hd
-         then (incr nb ; hd :: acc)
+         if is_completion_suggestion ~mode ~place_mode ~ini ~candidate
+         then (incr nb ; candidate :: acc)
          else acc
        in
-       if !nb < query.limit then reduce acc tl
+       if !nb < max then reduce acc tl
        else acc
   in
   List.rev @@ reduce [] list
 
 let search_auto_complete assets conf base mode place_mode max term =
-  match (mode :> Api_saisie_write_piqi.auto_complete_field) with
+  match (mode : Api_saisie_write_piqi.auto_complete_field) with
 
-  | `place ->
+  | `place as mode ->
     let nb = ref 0 in
     let ini = Name.lower @@ Ext_string.tr '_' ' ' term in
     let reduced_list =
-(*      let field =
-        (place_mode :> Api_saisie_write_piqi.auto_complete_place_field option)
-        in*)
-      complete_with_db
-        ~conf ~base ~nb mode place_mode {kind = Place {field = place_mode}; limit = max; term = ini}
+      complete_with_db ~conf ~base ~nb ~max ~mode ~place_mode ~ini
     in
     complete_with_dico assets conf nb max place_mode ini reduced_list
 
-  | `source ->
+  | `source as mode ->
     let nb = ref 0 in
     let ini = Name.lower @@ Ext_string.tr '_' ' ' term in
-    let query = {kind = Source; limit = max; term = ini} in
-    complete_with_db ~conf ~base ~nb mode place_mode query
+    complete_with_db ~conf ~base ~nb ~max ~mode ~place_mode ~ini
 
   | `firstname | `lastname as mode ->
     if Name.lower term = "" then []
     else ( Gwdb.load_strings_array base
          ; select_start_with_auto_complete base mode max term )
 
-  | `occupation ->
+  | `occupation as mode ->
     let nb = ref 0 in
-    let term = Name.lower @@ Ext_string.tr '_' ' ' term in
+    let ini = Name.lower @@ Ext_string.tr '_' ' ' term in
     let suggestions_from_db =
-      complete_with_db ~conf ~base ~nb mode place_mode {kind = Occupation; limit = max; term}
+      complete_with_db ~conf ~base ~nb ~max ~mode ~place_mode ~ini
     in
     complete_with_dico
-      assets conf nb max (Some `profession) term suggestions_from_db
+      assets conf nb max (Some `profession) ini suggestions_from_db
 
 let search_person_list base surname first_name =
   let _ = Gwdb.load_strings_array base in
