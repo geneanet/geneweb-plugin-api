@@ -5,9 +5,9 @@ let complete_with_cache conf assets mode place_mode max_res s =
   let ini = Name.lower @@ Ext_string.tr '_' ' ' s in
   match mode with
   | `place | `source | `lastname | `firstname ->
-    Api_search.complete_with_dico assets conf (ref @@ List.length cache) max_res place_mode ini cache
+    Api_search.complete_with_dico assets conf (List.length cache) max_res place_mode ini cache
   | `occupation ->
-    Api_search.complete_with_dico assets conf (ref @@ List.length cache) max_res (Some `profession) ini cache
+    Api_search.complete_with_dico assets conf (List.length cache) max_res (Some `profession) ini cache
 
 let print_auto_complete assets conf base =
   let params = Api_util.get_params conf Api_saisie_write_piqi_ext.parse_auto_complete in

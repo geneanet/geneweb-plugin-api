@@ -488,52 +488,49 @@ let complete_with_dico assets conf nb max mode ini list =
       None -> true
     | Some codes -> List.mem country_code codes
   in
-  let reduce_dico mode ignored format list =
+  let reduce_dico n mode ignored format list =
     let len = Array.length list in
-    let rec loop acc i =
-      if i = len
-      then acc
+    let rec loop n acc i =
+      if i = len || n >= max
+      then n, acc
       else
         let hd = Array.unsafe_get list i in
-        let acc =
-          let k =  Ext_string.tr '_' ' ' hd in
-          let k =
-            match mode with
-            | `area_code | `country | `county | `region | `town ->
-               Geneweb.Place.without_suburb k
-            | `subdivision | `profession -> k
-          in
-          if string_start_with ini (Name.lower k) then begin
-            let row = Api_csv.row_of_string hd in
-            let hd_opt =
-              match mode with
-              | `profession -> Some (String.concat ", " row)
-              | #Api_saisie_write_piqi.auto_complete_place_field ->
-                 let country_code, expl_hd = split_country_code row in
-                 if belongs_to_preferred_countries country_code then
-                   if format <> [] then
-                     Some (String.concat ", " @@
-                           List.filter_map begin function
-                             | `town -> List.nth_opt expl_hd 0
-                             | `area_code -> List.nth_opt expl_hd 1
-                             | `county -> List.nth_opt expl_hd 2
-                             | `region -> List.nth_opt expl_hd 3
-                             | `country -> List.nth_opt expl_hd 4
-                             | _ -> None
-                           end
-                             format)
-                   else Some (String.concat ", " expl_hd)
-                 else None
-            in
-            if Option.is_none hd_opt
-            || List.mem (Option.get hd_opt) ignored
-            then acc
-            else begin incr nb ; Option.get hd_opt :: acc end
-          end
-          else acc
+        let k =  Ext_string.tr '_' ' ' hd in
+        let k =
+          match mode with
+          | `area_code | `country | `county | `region | `town ->
+            Geneweb.Place.without_suburb k
+          | `subdivision | `profession -> k
         in
-        if !nb < max then loop acc (i + 1) else acc
-    in loop [] 0
+        if string_start_with ini (Name.lower k) then begin
+          let row = Api_csv.row_of_string hd in
+          let hd_opt =
+            match mode with
+            | `profession -> Some (String.concat ", " row)
+            | #Api_saisie_write_piqi.auto_complete_place_field ->
+              let country_code, expl_hd = split_country_code row in
+              if belongs_to_preferred_countries country_code then
+                if format <> [] then
+                  Some (String.concat ", " @@
+                        List.filter_map begin function
+                          | `town -> List.nth_opt expl_hd 0
+                          | `area_code -> List.nth_opt expl_hd 1
+                          | `county -> List.nth_opt expl_hd 2
+                          | `region -> List.nth_opt expl_hd 3
+                          | `country -> List.nth_opt expl_hd 4
+                          | _ -> None
+                        end
+                          format)
+                else Some (String.concat ", " expl_hd)
+              else None
+          in
+          if Option.is_none hd_opt
+          || List.mem (Option.get hd_opt) ignored
+          then loop n acc (i + 1)
+          else loop (n + 1) (Option.get hd_opt :: acc) (i + 1)
+        end
+        else loop n acc (i + 1)
+    in loop n [] 0
   in
   let unmarshal_dico ~assets ~lang ~data_type =
     match dico_fname ~assets ~lang ~data_type with
@@ -542,7 +539,7 @@ let complete_with_dico assets conf nb max mode ini list =
   in
   match mode with
   | Some (#Api_saisie_write_piqi.auto_complete_place_field as mode)
-       when !nb < max ->
+       when nb < max ->
     let format =
       match List.assoc_opt "places_format" conf.Geneweb.Config.base_env with
       | None -> []
@@ -558,18 +555,19 @@ let complete_with_dico assets conf nb max mode ini list =
           end
           (Api_csv.row_of_string s)
     in
-    let dico =
+    let _nb, dico =
       unmarshal_dico ~assets ~lang:conf.Geneweb.Config.lang ~data_type:mode
-      |> reduce_dico mode list format
+      |> reduce_dico nb mode list format
     in
     append list (List.sort Geneweb.Place.compare_places dico)
-  | Some `profession when !nb < max ->
+  | Some `profession when nb < max ->
      let dictionary =
        unmarshal_dico
          ~assets ~lang:conf.Geneweb.Config.lang ~data_type:`profession
      in
      dictionary
-     |> reduce_dico `profession list []
+     |> reduce_dico nb `profession list []
+     |> snd
      |> List.sort Utf8.alphabetic_order
      |> append list
   | None
@@ -589,7 +587,7 @@ let is_completion_suggestion ~mode ~place_mode ~ini ~candidate =
   | `place as mode ->
     Api_saisie_autocomplete.is_valid_suggestion ~mode ~place_mode ~ini ~candidate
 
-let complete_with_db ~conf ~base ~nb ~max ~(mode : [`source | `occupation | `place]) ~place_mode ~ini =
+let complete_with_db ~conf ~base ~max ~(mode : [`source | `occupation | `place]) ~place_mode ~ini =
   let list =
     let data, compare =
       match mode with
@@ -599,34 +597,30 @@ let complete_with_db ~conf ~base ~nb ~max ~(mode : [`source | `occupation | `pla
     in
     get_all_data_from_db conf base data compare
   in
-  let rec reduce acc = function
-    | [] -> acc
-    | candidate :: tl ->
-       let acc =
-         if is_completion_suggestion ~mode ~place_mode ~ini ~candidate
-         then (incr nb ; candidate :: acc)
-         else acc
-       in
-       if !nb < max then reduce acc tl
-       else acc
+  let rec reduce n acc = function
+    | [] -> n, acc
+    | candidate :: tl when n < max ->
+      if is_completion_suggestion ~mode ~place_mode ~ini ~candidate
+      then reduce (n + 1) (candidate :: acc) tl
+      else reduce n acc tl
+    | _candidate :: _tl -> n, acc
   in
-  List.rev @@ reduce [] list
+  let n, res = reduce 0 [] list in
+  n, List.rev res
 
 let search_auto_complete assets conf base mode place_mode max term =
   match (mode : Api_saisie_write_piqi.auto_complete_field) with
 
   | `place as mode ->
-    let nb = ref 0 in
     let ini = Name.lower @@ Ext_string.tr '_' ' ' term in
-    let reduced_list =
-      complete_with_db ~conf ~base ~nb ~max ~mode ~place_mode ~ini
+    let n, reduced_list =
+      complete_with_db ~conf ~base ~max ~mode ~place_mode ~ini
     in
-    complete_with_dico assets conf nb max place_mode ini reduced_list
+    complete_with_dico assets conf n max place_mode ini reduced_list
 
   | `source as mode ->
-    let nb = ref 0 in
     let ini = Name.lower @@ Ext_string.tr '_' ' ' term in
-    complete_with_db ~conf ~base ~nb ~max ~mode ~place_mode ~ini
+    snd (complete_with_db ~conf ~base ~max ~mode ~place_mode ~ini)
 
   | `firstname | `lastname as mode ->
     if Name.lower term = "" then []
@@ -634,13 +628,12 @@ let search_auto_complete assets conf base mode place_mode max term =
          ; select_start_with_auto_complete base mode max term )
 
   | `occupation as mode ->
-    let nb = ref 0 in
     let ini = Name.lower @@ Ext_string.tr '_' ' ' term in
-    let suggestions_from_db =
-      complete_with_db ~conf ~base ~nb ~max ~mode ~place_mode ~ini
+    let n, suggestions_from_db =
+      complete_with_db ~conf ~base ~max ~mode ~place_mode ~ini
     in
     complete_with_dico
-      assets conf nb max (Some `profession) ini suggestions_from_db
+      assets conf n max (Some `profession) ini suggestions_from_db
 
 let search_person_list base surname first_name =
   let _ = Gwdb.load_strings_array base in
