@@ -10,3 +10,10 @@ val get_list_from_cache :
   int ->
   string ->
   string list
+
+val is_valid_suggestion :
+    [< `firstname | `lastname | `place | `source | `occupation ] ->
+    [> `area_code | `country | `county | `region | `town | `subdivision] option ->
+    string ->
+    string ->
+    bool

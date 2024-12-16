@@ -28,8 +28,7 @@ val search_auto_complete :
   Geneweb.Config.config ->
   Gwdb.base ->
   [< Api_saisie_write_piqi.auto_complete_field ] ->
-  [< Api_saisie_write_piqi.auto_complete_place_field ]
-  option ->
+  Api_saisie_write_piqi.auto_complete_place_field option ->
   int ->
   string ->
   string list
