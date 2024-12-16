@@ -608,27 +608,27 @@ let complete_with_db ~conf ~base ~max ~(mode : [`source | `occupation | `place])
   let n, res = reduce 0 [] list in
   n, List.rev res
 
-let search_auto_complete assets conf base mode place_mode max term =
+let search_auto_complete ~assets ~conf ~base ~mode ~place_mode ~max ~ini =
   match (mode : Api_saisie_write_piqi.auto_complete_field) with
 
   | `place as mode ->
-    let ini = Name.lower @@ Ext_string.tr '_' ' ' term in
+    let ini = Name.lower @@ Ext_string.tr '_' ' ' ini in
     let n, reduced_list =
       complete_with_db ~conf ~base ~max ~mode ~place_mode ~ini
     in
     complete_with_dico assets conf n max place_mode ini reduced_list
 
   | `source as mode ->
-    let ini = Name.lower @@ Ext_string.tr '_' ' ' term in
+    let ini = Name.lower @@ Ext_string.tr '_' ' ' ini in
     snd (complete_with_db ~conf ~base ~max ~mode ~place_mode ~ini)
 
   | `firstname | `lastname as mode ->
-    if Name.lower term = "" then []
+    if Name.lower ini = "" then []
     else ( Gwdb.load_strings_array base
-         ; select_start_with_auto_complete base mode max term )
+         ; select_start_with_auto_complete base mode max ini )
 
   | `occupation as mode ->
-    let ini = Name.lower @@ Ext_string.tr '_' ' ' term in
+    let ini = Name.lower @@ Ext_string.tr '_' ' ' ini in
     let n, suggestions_from_db =
       complete_with_db ~conf ~base ~max ~mode ~place_mode ~ini
     in

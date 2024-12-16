@@ -26,7 +26,7 @@ let print_auto_complete assets conf base =
     then
       complete_with_cache conf assets mode place_mode max_res s
     else
-      Api_search.search_auto_complete assets conf base mode place_mode max_res s
+      Api_search.search_auto_complete ~assets ~conf ~base ~mode ~place_mode ~max:max_res ~ini:s
   in
   let result = { Api_saisie_write_piqi.Auto_complete_result. result = list } in
   let data = Api_saisie_write_piqi_ext.gen_auto_complete_result result in
