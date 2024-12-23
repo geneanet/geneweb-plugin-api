@@ -1,9 +1,9 @@
 let opt_only_printable = function
-  | Some s -> Ext_string.only_printable s
+  | Some s -> Geneweb_util.Ext_string.only_printable s
   | None -> ""
 
 let opt_only_printable_or_nl_stripped = function
-  | Some x -> Ext_string.only_printable_or_nl (Ext_string.strip_all_trailing_spaces x)
+  | Some x -> Geneweb_util.Ext_string.only_printable_or_nl (Geneweb_util.Ext_string.strip_all_trailing_spaces x)
   | None -> ""
 
 let to_event_with_update_key (event : _ Def.gen_fam_event) =
@@ -91,7 +91,7 @@ let reconstitute_family conf base mod_f =
       (fun evt ->
         let name =
           match evt.Api_saisie_write_piqi.Fevent.event_perso with
-          | Some n -> Def.Efam_Name (Ext_string.only_printable n)
+          | Some n -> Def.Efam_Name (Geneweb_util.Ext_string.only_printable n)
           | _ ->
               match evt.Api_saisie_write_piqi.Fevent.fevent_type with
               | Some `efam_marriage -> Def.Efam_Marriage
@@ -130,7 +130,7 @@ let reconstitute_family conf base mod_f =
               | None -> accu)
             evt.Api_saisie_write_piqi.Fevent.witnesses []
         in
-        { Def.efam_name = name; efam_date = Date.cdate_of_od date;
+        { Def.efam_name = name; efam_date = Geneweb_util.Date.cdate_of_od date;
           efam_place = place; efam_reason = reason; efam_note = note;
           efam_src = src; efam_witnesses = Array.of_list witnesses })
       mod_f.Api_saisie_write_piqi.Family.fevents
@@ -293,7 +293,7 @@ let reconstitute_family conf base mod_f =
      fevents; witnesses = Array.of_list witnesses;
      relation; divorce; comment;
      origin_file; fsources; fam_index}
-  and cpl = Futil.parent conf.multi_parents (Array.of_list parents)
+  and cpl = Geneweb_util.Futil.parent conf.multi_parents (Array.of_list parents)
   and des = {Def.children = Array.of_list children} in
   (* On vérifie s'il y a des conflits de personne. *)
   (* Normalement, il ne doit plus y avoir de lever *)

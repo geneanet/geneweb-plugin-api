@@ -67,7 +67,7 @@ val check_family_conflict :
   unit
 
 val date_of_piqi_date :
-  Geneweb.Config.config -> Api_saisie_write_piqi.date -> Date.date option
+  Geneweb.Config.config -> Api_saisie_write_piqi.date -> Geneweb_util.Date.date option
 
 val pers_to_piqi_person_search :
   Geneweb.Config.config ->

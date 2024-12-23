@@ -8,7 +8,6 @@ module Mext = Api_piqi_ext
 open Geneweb
 open Config
 open Def
-open Date
 open Gwdb
 open Util
 open Api_def
@@ -102,12 +101,12 @@ let load_image_ht conf =
 (* BIENTOT DEPRECATED *)
 let string_of_prec_dmy d =
   let s =
-    if d.month = 0 then string_of_int d.year
+    if d.Geneweb_util.Date.month = 0 then string_of_int d.year
     else if d.day = 0 then string_of_int d.month ^ "/" ^ string_of_int d.year
     else string_of_int d.day ^ "/" ^ string_of_int d.month ^ "/" ^ string_of_int d.year
   in
   match d.prec with
-   | Sure -> Mutil.nominative s
+   | Sure -> Geneweb_util.Mutil.nominative s
    | About -> "~" ^ s
    | Before -> "<" ^ s
    | After -> ">" ^ s
@@ -116,7 +115,7 @@ let string_of_prec_dmy d =
    | YearInt d2 -> s ^ ".." ^ string_of_int d2.year2
 
 let string_of_date = function
-    Dgreg (d, _) -> string_of_prec_dmy d
+    Geneweb_util.Date.Dgreg (d, _) -> string_of_prec_dmy d
   | Dtext t -> "(" ^ t ^ ")"
 
 let title_to_piqi_title t =
@@ -129,12 +128,12 @@ let title_to_piqi_title t =
   let title = t.t_ident in
   let fief = t.t_place in
   let date_begin =
-    match Date.od_of_cdate t.t_date_start with
+    match Geneweb_util.Date.od_of_cdate t.t_date_start with
     | Some d -> Some (string_of_date d)
     | None -> None
   in
   let date_end =
-    match Date.od_of_cdate t.t_date_end with
+    match Geneweb_util.Date.od_of_cdate t.t_date_end with
     | Some d -> Some (string_of_date d)
     | None -> None
   in
@@ -171,7 +170,7 @@ module Date_converter
      end) =
 struct
   let piqi_date_of_date = function
-    | Dgreg (dmy, cal) ->
+    | Geneweb_util.Date.Dgreg (dmy, cal) ->
       let cal =
         match cal with
         | Dgregorian -> `gregorian
@@ -233,18 +232,18 @@ struct
 
   let date_of_piqi_date date =
     match date.M.Date.text with
-    | Some txt -> Dtext txt
+    | Some txt -> Geneweb_util.Date.Dtext txt
     | _ ->
       let cal =
         match date.M.Date.cal with
-        | Some `julian -> Djulian
+        | Some `julian -> Geneweb_util.Date.Djulian
         | Some `french -> Dfrench
         | Some `hebrew -> Dhebrew
         | _ -> Dgregorian
       in
       let prec =
         match date.M.Date.prec with
-        | Some `about -> About
+        | Some `about -> Geneweb_util.Date.About
         | Some `maybe -> Maybe
         | Some `before -> Before
         | Some `after -> After
@@ -252,14 +251,14 @@ struct
           (match date.M.Date.dmy2 with
            | Some dmy ->
              let y = Int32.to_int dmy.M.Dmy.year in
-             let dmy2 = {day2 = 0; month2 = 0; year2 = y; delta2 = 0} in
+             let dmy2 = {Geneweb_util.Date.day2 = 0; month2 = 0; year2 = y; delta2 = 0} in
              OrYear dmy2
            | None -> OrYear {day2 = 0; month2 = 0; year2 = 0; delta2 = 0} (* erreur*))
         | Some `yearint ->
           (match date.M.Date.dmy2 with
            | Some dmy ->
              let y = Int32.to_int dmy.M.Dmy.year in
-             let dmy2 = {day2 = 0; month2 = 0; year2 = y; delta2 = 0} in
+             let dmy2 = {Geneweb_util.Date.day2 = 0; month2 = 0; year2 = y; delta2 = 0} in
              YearInt dmy2
            | None -> YearInt {day2 = 0; month2 = 0; year2 = 0; delta2 = 0} (* erreur*))
         | _ -> Sure
@@ -271,9 +270,9 @@ struct
           let month = Int32.to_int dmy.M.Dmy.month in
           let year = Int32.to_int dmy.M.Dmy.year in
           let delta = Int32.to_int dmy.M.Dmy.delta in
-          {day = day; month = month; year = year; prec = prec; delta = delta}
+          {Geneweb_util.Date.day = day; month = month; year = year; prec = prec; delta = delta}
         | None -> (* erreur*)
-          {day = 0; month = 0; year = 0; prec = Sure; delta = 0}
+          {Geneweb_util.Date.day = 0; month = 0; year = 0; prec = Sure; delta = 0}
       in
       Dgreg (dmy, cal)
 
@@ -302,10 +301,10 @@ let date_included d d1 d2 =
     else if max > 0 then ((y <= x) && (x <= max)) || ((1 <= x) && (x <= z))
     else false
   in
-  let (d, m, y) = (d.day, d.month, d.year) in
-  let { day = d2 ; month = m2 ; year = y2 } = d2 in
+  let (d, m, y) = (d.Geneweb_util.Date.day, d.month, d.year) in
+  let { Geneweb_util.Date.day = d2 ; month = m2 ; year = y2 } = d2 in
   match d1 with
-  | {day = 0; month = 0; year = 0} -> false
+  | {Geneweb_util.Date.day = 0; month = 0; year = 0} -> false
   | {day = d1; month = 0; year = 0} ->
     d2 <> 0 && m2 = 0 && y2 = 0 && d > 0 && comp d d1 d2 31
   | {day = 0; month = m1; year = 0} ->
@@ -401,7 +400,7 @@ let check_sex p sex = get_sex p = sex
 (* ********************************************************************* *)
 let is_date_included prec d d1 d2 =
   match d with
-  | Some (Dgreg (d, _)) ->
+  | Some (Geneweb_util.Date.Dgreg (d, _)) ->
       ((prec && d.prec = Sure) || not prec) && date_included d d1 d2
   | _ -> false
 
@@ -439,7 +438,7 @@ let apply_filters_p conf filters compute_sosa p =
       match filters.date_birth with
       | Some (date_begin, date_end, prec) ->
           is_date_included
-            prec (Date.od_of_cdate (get_birth p)) date_begin date_end
+            prec (Geneweb_util.Date.od_of_cdate (get_birth p)) date_begin date_end
       | None -> filter
     else filter
   in
@@ -448,7 +447,7 @@ let apply_filters_p conf filters compute_sosa p =
     | Some (date_begin, date_end, prec) ->
       let death =
         match get_death p with
-        | Death (_, cd) -> Some (Date.date_of_cdate cd)
+        | Death (_, cd) -> Some (Geneweb_util.Date.date_of_cdate cd)
         | _ -> None
       in
       is_date_included prec death date_begin date_end
@@ -471,7 +470,7 @@ let get_filters = Filter.get_filters
 let print_result = Api_piqi_util.print_result
 
 let date_to_opt_string d =
-  match Date.od_of_cdate d with
+  match Geneweb_util.Date.od_of_cdate d with
   | Some d -> Some (string_of_date d)
   | _ -> None
 
@@ -487,8 +486,8 @@ let person_to_warning_person base p =
     | _ -> None
   in
   let oc = Int32.of_int (get_occ p) in
-  let n = Name.lower lastname in
-  let p = Name.lower firstname in
+  let n = Geneweb_util.Name.lower lastname in
+  let p = Geneweb_util.Name.lower firstname in
   { M.Warning_person.n
   ; p
   ; oc
@@ -661,8 +660,8 @@ let spouse_to_piqi_spouse conf base p fam compute_sosa =
     if not p_auth && (is_hide_names conf p) then ""
     else gen_p.first_name
   in
-  let sn = Name.lower surname in
-  let fn = Name.lower first_name in
+  let sn = Geneweb_util.Name.lower surname in
+  let fn = Geneweb_util.Name.lower first_name in
   let occ = Int32.of_int (get_occ p) in
   let publicname = if gen_p.public_name = "" then None else Some gen_p.public_name in
   let image =
@@ -672,7 +671,7 @@ let spouse_to_piqi_spouse conf base p fam compute_sosa =
     | None -> ""
   in
   let birth =
-    match Date.od_of_cdate gen_p.birth with
+    match Geneweb_util.Date.od_of_cdate gen_p.birth with
     | Some d when p_auth -> string_of_date d
     | _ -> ""
   in
@@ -681,7 +680,7 @@ let spouse_to_piqi_spouse conf base p fam compute_sosa =
     else ""
   in
   let baptism =
-    match Date.od_of_cdate gen_p.baptism with
+    match Geneweb_util.Date.od_of_cdate gen_p.baptism with
     | Some d when p_auth -> string_of_date d
     | _ -> ""
   in
@@ -694,7 +693,7 @@ let spouse_to_piqi_spouse conf base p fam compute_sosa =
       match gen_p.death with
       | NotDead -> (`not_dead, "")
       | Death (_, cd) ->
-          let d = Date.date_of_cdate cd in
+          let d = Geneweb_util.Date.date_of_cdate cd in
           (`dead, string_of_date d)
       | DeadYoung -> (`dead_young, "")
       | DeadDontKnowWhen -> (`dead_dont_know_when, "")
@@ -710,7 +709,7 @@ let spouse_to_piqi_spouse conf base p fam compute_sosa =
   let burial =
     match gen_p.burial with
     | Buried cod | Cremated cod ->
-        (match Date.od_of_cdate cod with
+        (match Geneweb_util.Date.od_of_cdate cod with
         | Some d when p_auth -> string_of_date d
         | _ -> "")
     | _ -> ""
@@ -720,7 +719,7 @@ let spouse_to_piqi_spouse conf base p fam compute_sosa =
     else ""
   in
   let marriage_date =
-    match Date.od_of_cdate (get_marriage fam) with
+    match Geneweb_util.Date.od_of_cdate (get_marriage fam) with
     | Some d when m_auth -> string_of_date d
     | _ -> ""
   in
@@ -798,8 +797,8 @@ let pers_to_piqi_person_light conf base p compute_sosa =
     if not p_auth && (is_hide_names conf p) then ""
     else gen_p.first_name
   in
-  let sn = Name.lower surname in
-  let fn = Name.lower first_name in
+  let sn = Geneweb_util.Name.lower surname in
+  let fn = Geneweb_util.Name.lower first_name in
   let occ = Int32.of_int (get_occ p) in
   let publicname = if gen_p.public_name = "" then None else Some gen_p.public_name in
   let image =
@@ -809,7 +808,7 @@ let pers_to_piqi_person_light conf base p compute_sosa =
     | None -> ""
   in
   let birth =
-    match Date.od_of_cdate gen_p.birth with
+    match Geneweb_util.Date.od_of_cdate gen_p.birth with
     | Some d when p_auth -> string_of_date d
     | _ -> ""
   in
@@ -818,7 +817,7 @@ let pers_to_piqi_person_light conf base p compute_sosa =
     else ""
   in
   let baptism =
-    match Date.od_of_cdate gen_p.baptism with
+    match Geneweb_util.Date.od_of_cdate gen_p.baptism with
     | Some d when p_auth -> string_of_date d
     | _ -> ""
   in
@@ -831,7 +830,7 @@ let pers_to_piqi_person_light conf base p compute_sosa =
       match gen_p.death with
       | NotDead -> (`not_dead, "")
       | Death (_, cd) ->
-          let d = Date.date_of_cdate cd in
+          let d = Geneweb_util.Date.date_of_cdate cd in
           (`dead, string_of_date d)
       | DeadYoung -> (`dead_young, "")
       | DeadDontKnowWhen -> (`dead_dont_know_when, "")
@@ -847,7 +846,7 @@ let pers_to_piqi_person_light conf base p compute_sosa =
   let burial =
     match gen_p.burial with
     | Buried cod | Cremated cod ->
-        (match Date.od_of_cdate cod with
+        (match Geneweb_util.Date.od_of_cdate cod with
         | Some d when p_auth -> string_of_date d
         | _ -> "")
     | _ -> ""
@@ -905,8 +904,8 @@ let pers_to_piqi_person_light conf base p compute_sosa =
     visible_for_visitors = get_visibility conf base p;
     baseprefix = baseprefix;
     is_contemporary = GWPARAM.is_contemporary conf base p;
-    name_is_hidden = Geneweb.NameDisplay.is_hidden conf base p;
-    name_is_restricted = Geneweb.NameDisplay.is_restricted conf base p;
+    name_is_hidden = NameDisplay.is_hidden conf base p;
+    name_is_restricted = NameDisplay.is_restricted conf base p;
   }
 
 
@@ -946,8 +945,8 @@ let pers_to_piqi_person_full conf base p compute_sosa =
     if not p_auth && (is_hide_names conf p) then ""
     else gen_p.first_name
   in
-  let sn = Name.lower surname in
-  let fn = Name.lower first_name in
+  let sn = Geneweb_util.Name.lower surname in
+  let fn = Geneweb_util.Name.lower first_name in
   let occ = Int32.of_int (get_occ p) in
   let index = Int32.of_string @@ Gwdb.string_of_iper gen_p.key_index in
   let publicname = if gen_p.public_name = "" then None else Some gen_p.public_name in
@@ -965,7 +964,7 @@ let pers_to_piqi_person_full conf base p compute_sosa =
     | None -> ""
   in
   let birth =
-    match Date.od_of_cdate gen_p.birth with
+    match Geneweb_util.Date.od_of_cdate gen_p.birth with
     | Some d when p_auth -> Some (string_of_date d)
     | _ -> None
   in
@@ -978,7 +977,7 @@ let pers_to_piqi_person_full conf base p compute_sosa =
     else None
   in
   let baptism =
-    match Date.od_of_cdate gen_p.baptism with
+    match Geneweb_util.Date.od_of_cdate gen_p.baptism with
     | Some d when p_auth -> Some (string_of_date d)
     | _ -> None
   in
@@ -995,7 +994,7 @@ let pers_to_piqi_person_full conf base p compute_sosa =
       match gen_p.death with
       | NotDead -> (`not_dead, None)
       | Death (_, cd) ->
-          let d = Date.date_of_cdate cd in
+          let d = Geneweb_util.Date.date_of_cdate cd in
           (`dead, Some (string_of_date d))
       | DeadYoung -> (`dead_young, None)
       | DeadDontKnowWhen -> (`dead_dont_know_when, None)
@@ -1015,7 +1014,7 @@ let pers_to_piqi_person_full conf base p compute_sosa =
   let burial =
     match get_burial p with
     | Buried cod | Cremated cod ->
-        (match Date.od_of_cdate cod with
+        (match Geneweb_util.Date.od_of_cdate cod with
         | Some d when p_auth -> Some (string_of_date d)
         | _ -> None)
     | _ -> None
@@ -1069,7 +1068,7 @@ let pers_to_piqi_person_full conf base p compute_sosa =
       gen_p.rparents
   in
   let families =
-    Mutil.array_to_list_map (fun x -> Int32.of_string @@ Gwdb.string_of_ifam x) (get_family p)
+    Geneweb_util.Mutil.array_to_list_map (fun x -> Int32.of_string @@ Gwdb.string_of_ifam x) (get_family p)
   in
   let parents =
     match get_parents p with
@@ -1116,8 +1115,8 @@ let pers_to_piqi_person_full conf base p compute_sosa =
     families = families;
     baseprefix = baseprefix;
     is_contemporary = GWPARAM.is_contemporary conf base p;
-    name_is_hidden = Geneweb.NameDisplay.is_hidden conf base p;
-    name_is_restricted = Geneweb.NameDisplay.is_restricted conf base p;
+    name_is_hidden = NameDisplay.is_hidden conf base p;
+    name_is_restricted = NameDisplay.is_restricted conf base p;
   }
 
 
@@ -1153,7 +1152,7 @@ let fam_to_piqi_family conf base ifam =
     else None
   in
   let marriage =
-    match Date.od_of_cdate gen_f.marriage with
+    match Geneweb_util.Date.od_of_cdate gen_f.marriage with
     | Some d when m_auth -> Some (string_of_date d)
     | _ -> None
   in
@@ -1183,7 +1182,7 @@ let fam_to_piqi_family conf base ifam =
     match gen_f.divorce with
     | NotDivorced -> (`not_divorced, None)
     | Divorced cod ->
-        (match Date.od_of_cdate cod with
+        (match Geneweb_util.Date.od_of_cdate cod with
          | Some d when m_auth -> (`divorced, Some (string_of_date d))
          | _ -> (`divorced, None))
     | Separated -> (`separated, None)

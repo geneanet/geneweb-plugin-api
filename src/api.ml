@@ -13,7 +13,7 @@ let print_info_base conf base =
       let (_, pos, wiz) = (1, in_channel_length ic, "") in
       let vv = (ref (Bytes.create 0), ref 0) in
       let last_modified_person =
-        let (line, _) = Mutil.rev_input_line ic pos vv in
+        let (line, _) = Geneweb_util.Mutil.rev_input_line ic pos vv in
         match Geneweb.History.line_fields line with
         | Some (_, user, action, keyo) ->
           if wiz = "" || user = wiz then
@@ -196,14 +196,14 @@ let print_last_modified_persons conf base =
     | Some range ->
         let date_begin = range.Api_piqi.Filter_date_range.date_begin in
         let dmy1 =
-          Date.{ day = Int32.to_int date_begin.Api_piqi.Filter_date.day;
+          Geneweb_util.Date.{ day = Int32.to_int date_begin.Api_piqi.Filter_date.day;
             month = Int32.to_int date_begin.Api_piqi.Filter_date.month;
             year = Int32.to_int date_begin.Api_piqi.Filter_date.year;
             prec = Sure; delta = 0 }
         in
         let date_end = range.Api_piqi.Filter_date_range.date_end in
         let dmy2 =
-          Date.{ day = Int32.to_int date_end.Api_piqi.Filter_date.day;
+          Geneweb_util.Date.{ day = Int32.to_int date_end.Api_piqi.Filter_date.day;
             month = Int32.to_int date_end.Api_piqi.Filter_date.month;
             year = Int32.to_int date_end.Api_piqi.Filter_date.year;
             prec = Sure; delta = 0 }
@@ -221,9 +221,9 @@ let print_last_modified_persons conf base =
           let m = int_of_string (String.sub time 5 2) in
           let d = int_of_string (String.sub time 8 2) in
           let dmy =
-            Date.{ day = d; month = m; year = y; prec = Sure; delta = 0; }
+            Geneweb_util.Date.{ day = d; month = m; year = y; prec = Sure; delta = 0; }
           in
-          Some (Date.Dgreg (dmy, Dgregorian))
+          Some (Geneweb_util.Date.Dgreg (dmy, Dgregorian))
         in
         Api_util.is_date_included prec date date_begin date_end
     | None -> true
@@ -237,11 +237,11 @@ let print_last_modified_persons conf base =
         let m = int_of_string (String.sub time 5 2) in
         let d = int_of_string (String.sub time 8 2) in
         let dmy =
-          Date.{ day = d; month = m; year = y; prec = Sure; delta = 0; }
+          Geneweb_util.Date.{ day = d; month = m; year = y; prec = Sure; delta = 0; }
         in
-        Some (Date.Dgreg (dmy, Dgregorian))
+        Some (Geneweb_util.Date.Dgreg (dmy, Dgregorian))
       in
-      let dmy_zero = Date.{ day = 1; month = 1; year = 1970; prec = Sure; delta = 0; } in
+      let dmy_zero = Geneweb_util.Date.{ day = 1; month = 1; year = 1970; prec = Sure; delta = 0; } in
       Api_util.is_date_included prec date dmy_zero date_begin
     | None -> true
   in
@@ -268,7 +268,7 @@ let print_last_modified_persons conf base =
           if res = 0 then list
           else
             match
-              try Some (Mutil.rev_input_line ic pos vv)
+              try Some (Geneweb_util.Mutil.rev_input_line ic pos vv)
               with End_of_file -> None
             with
             | Some (line, pos) ->
@@ -640,7 +640,7 @@ module HistoryApi = struct
     | s -> raise (Invalid_argument s)
 
   let person_of_key conf base s =
-    let year_of_cdate d = Option.bind (Date.od_of_cdate d) Date.year_of_date in
+    let year_of_cdate d = Option.bind (Geneweb_util.Date.od_of_cdate d) Geneweb_util.Date.year_of_date in
     let has_history fn sn occ =
       let person_file = Geneweb.HistoryDiff.history_file fn sn occ in
       Sys.file_exists (Geneweb.HistoryDiff.history_path conf person_file)
@@ -652,8 +652,8 @@ module HistoryApi = struct
       let oc = Gwdb.get_occ pers in
       let has_history = has_history firstname lastname oc in
       let oc = Int32.of_int oc in
-      let n = Name.lower lastname in
-      let p = Name.lower firstname in
+      let n = Geneweb_util.Name.lower lastname in
+      let p = Geneweb_util.Name.lower firstname in
       let year1 =
         let birth_year = year_of_cdate (Gwdb.get_birth pers) in
         if Option.is_some birth_year then birth_year
@@ -661,10 +661,10 @@ module HistoryApi = struct
       in
       let year2 =
         let death_year =
-          Option.bind (Date.date_of_death (Gwdb.get_death pers)) Date.year_of_date
+          Option.bind (Geneweb_util.Date.date_of_death (Gwdb.get_death pers)) Geneweb_util.Date.year_of_date
         in
         if Option.is_some death_year then death_year
-        else Option.bind (Date.date_of_burial (Gwdb.get_burial pers)) Date.year_of_date
+        else Option.bind (Geneweb_util.Date.date_of_burial (Gwdb.get_burial pers)) Geneweb_util.Date.year_of_date
       in
       {
         Api_piqi.History_person.n;

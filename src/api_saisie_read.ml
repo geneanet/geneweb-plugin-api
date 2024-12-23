@@ -4,7 +4,6 @@ module Mext_read = Api_saisie_read_piqi_ext
 open Geneweb
 open Config
 open Def
-open Date
 open Gwdb
 open Util
 open Api_util
@@ -24,7 +23,7 @@ let limit_list l =
 
 let short_prec_year_text conf d =
   let prec =
-    match d.prec with
+    match d.Geneweb_util.Date.prec with
     | About | OrYear _ | YearInt _ ->
         (* On utilise le dictionnaire pour être sur *)
         (* que ce soit compréhensible de tous.      *)
@@ -40,7 +39,7 @@ let short_prec_year_text conf d =
 
 let partial_short_dates_text conf birth_date death_date p =
   match (birth_date, death_date) with
-  | (Some (Dgreg (b, _)), Some (Dtext _)) -> short_prec_year_text conf b ^ "-"
+  | (Some (Geneweb_util.Date.Dgreg (b, _)), Some (Geneweb_util.Date.Dtext _)) -> short_prec_year_text conf b ^ "-"
   | (Some (Dgreg (b, _)), None) ->
       (* La personne peut être décédée mais ne pas avoir de date. *)
       (match get_death p with
@@ -109,11 +108,11 @@ let encode_dmy conf d m y is_long =
   else date ^ " " ^ string_of_int y
 
 let string_of_dmy conf d is_long =
-  let sy = encode_dmy conf d.day d.month d.year is_long in
+  let sy = encode_dmy conf d.Geneweb_util.Date.day d.month d.year is_long in
   let sy2 =
     match d.prec with
     | OrYear d2 | YearInt d2 ->
-        let d2 = Date.dmy_of_dmy2 d2 in
+        let d2 = Geneweb_util.Date.dmy_of_dmy2 d2 in
         encode_dmy conf d2.day d2.month d2.year is_long
     | _ -> Adef.safe ""
   in
@@ -130,7 +129,7 @@ let string_of_dmy conf d is_long =
 (* ************************************************************************** *)
 let string_of_dmy_raw d =
   let prec =
-    match d.prec with
+    match d.Geneweb_util.Date.prec with
     | About -> "~"
     | Maybe -> "?"
     | Before -> "<"
@@ -160,14 +159,14 @@ let string_of_dmy_raw d =
 (* ************************************************************************** *)
 let string_of_date_raw conf d =
   match d with
-  | Dgreg (d, _) -> string_of_dmy_raw d
+  | Geneweb_util.Date.Dgreg (d, _) -> string_of_dmy_raw d
   | Dtext t -> string_with_macros conf [] t
 
 let gregorian_precision conf d is_long =
-  if d.delta = 0 then string_of_dmy conf d is_long
+  if d.Geneweb_util.Date.delta = 0 then string_of_dmy conf d is_long
   else
     let d2 =
-      Date.gregorian_of_sdn ~prec:d.prec (Date.to_sdn ~from:Dgregorian d + d.delta)
+      Geneweb_util.Date.gregorian_of_sdn ~prec:d.prec (Geneweb_util.Date.to_sdn ~from:Dgregorian d + d.delta)
     in
     transl conf "between (date)"
     ^ " " ^ string_of_dmy conf d is_long
@@ -175,10 +174,10 @@ let gregorian_precision conf d is_long =
     ^ " " ^ string_of_dmy conf d2 is_long
 
 let string_of_french_dmy conf d =
-  code_french_date conf d.day d.month d.year
+  code_french_date conf d.Geneweb_util.Date.day d.month d.year
 
 let string_of_hebrew_dmy conf d =
-  DateDisplay.code_hebrew_date conf d.day d.month d.year
+  DateDisplay.code_hebrew_date conf d.Geneweb_util.Date.day d.month d.year
 
 (* ************************************************************************** *)
 (*  [Fonc] string_of_date_and_conv :
@@ -195,7 +194,7 @@ let string_of_hebrew_dmy conf d =
 (* ************************************************************************** *)
 let string_of_date_and_conv conf d =
   match d with
-  | Dgreg (d, Dgregorian) ->
+  | Geneweb_util.Date.Dgreg (d, Dgregorian) ->
       let date = string_of_dmy conf d false in
       let date_long = string_of_dmy conf d true in
       let date_conv = date in
@@ -208,7 +207,7 @@ let string_of_date_and_conv conf d =
       let date_conv_long =
         if d.year < 1582 then "" else gregorian_precision conf d true
       in
-      let d1 = Date.convert ~from:Dgregorian ~to_:Djulian d in
+      let d1 = Geneweb_util.Date.convert ~from:Dgregorian ~to_:Djulian d in
       let year_prec =
         if d1.month > 0 && d1.month < 3 ||
            d1.month = 3 && d1.day > 0 && d1.day < 25 then
@@ -222,14 +221,14 @@ let string_of_date_and_conv conf d =
       in
       (date, date, date_conv, date_conv_long, Some `julian)
   | Dgreg (d, Dfrench) ->
-      let d1 = Date.convert ~from:Dgregorian ~to_:Dfrench d in
+      let d1 = Geneweb_util.Date.convert ~from:Dgregorian ~to_:Dfrench d in
       let date = string_of_french_dmy conf d1 in
       let date_long = !!(DateDisplay.string_of_on_french_dmy conf d1) in
       let date_conv = gregorian_precision conf d false in
       let date_conv_long = !!(DateDisplay.string_of_dmy conf d) in
       (date, date_long, date_conv, date_conv_long, Some `french)
   | Dgreg (d, Dhebrew) ->
-      let d1 = Date.convert ~from:Dgregorian ~to_:Dhebrew d in
+      let d1 = Geneweb_util.Date.convert ~from:Dgregorian ~to_:Dhebrew d in
       let date = string_of_hebrew_dmy conf d1 in
       let date_long = !!(DateDisplay.string_of_on_hebrew_dmy conf d1) in
       let date_conv = gregorian_precision conf d false in
@@ -321,8 +320,8 @@ let pers_to_piqi_person_tree conf base p more_info gen max_gen base_prefix =
       sosa = `no_sosa;
       has_more_infos = false;
       baseprefix = "";
-      name_is_hidden = Geneweb.NameDisplay.is_hidden conf base p;
-      name_is_restricted = Geneweb.NameDisplay.is_restricted conf base p;
+      name_is_hidden = NameDisplay.is_hidden conf base p;
+      name_is_restricted = NameDisplay.is_restricted conf base p;
     }
   else
     let p_auth = authorized_age conf base p in
@@ -343,11 +342,11 @@ let pers_to_piqi_person_tree conf base p more_info gen max_gen base_prefix =
     in
     let sn =
       if (is_hide_names conf p) && not p_auth then ""
-      else Name.lower (sou base (get_surname p))
+      else Geneweb_util.Name.lower (sou base (get_surname p))
     in
     let fn =
       if (is_hide_names conf p) && not p_auth then ""
-      else Name.lower (sou base (get_first_name p))
+      else Geneweb_util.Name.lower (sou base (get_first_name p))
     in
     let occ = Int32.of_int (get_occ p) in
     let (first_name, surname) =
@@ -389,8 +388,8 @@ let pers_to_piqi_person_tree conf base p more_info gen max_gen base_prefix =
       sosa = sosa;
       has_more_infos = has_more_infos;
       baseprefix = base_prefix;
-      name_is_hidden = Geneweb.NameDisplay.is_hidden conf base p;
-      name_is_restricted = Geneweb.NameDisplay.is_restricted conf base p;
+      name_is_hidden = NameDisplay.is_hidden conf base p;
+      name_is_restricted = NameDisplay.is_restricted conf base p;
     }
 
 (* Common functions to build a SimplePerson or a FichePerson. *)
@@ -423,11 +422,11 @@ let fill_sosa p =
 
 let fill_sn conf base p p_auth =
   if (is_hide_names conf p) && not p_auth then ""
-  else Name.lower (sou base (get_surname p))
+  else Geneweb_util.Name.lower (sou base (get_surname p))
 
 let fill_fn conf base p p_auth =
   if (is_hide_names conf p) && not p_auth then ""
-  else Name.lower (sou base (get_first_name p))
+  else Geneweb_util.Name.lower (sou base (get_first_name p))
 
 let fill_occ p =
   Int32.of_int (get_occ p)
@@ -498,11 +497,11 @@ let pers_to_piqi_simple_person conf base p base_prefix =
     in
     let sn =
       if (is_hide_names conf p) && not p_auth then ""
-      else Name.lower (sou base (get_surname p))
+      else Geneweb_util.Name.lower (sou base (get_surname p))
     in
     let fn =
       if (is_hide_names conf p) && not p_auth then ""
-      else Name.lower (sou base (get_first_name p))
+      else Geneweb_util.Name.lower (sou base (get_first_name p))
     in
     let occ = Int32.of_int (get_occ p) in
     let (birth_short, birth_raw, birth_place, death_short, death_raw, death_place) =
@@ -581,8 +580,8 @@ let pers_to_piqi_simple_person conf base p base_prefix =
       has_spouse = has_spouse;
       has_child = has_child;
       is_contemporary = GWPARAM.is_contemporary conf base p;
-      name_is_hidden = Geneweb.NameDisplay.is_hidden conf base p;
-      name_is_restricted = Geneweb.NameDisplay.is_restricted conf base p;
+      name_is_hidden = NameDisplay.is_hidden conf base p;
+      name_is_restricted = NameDisplay.is_restricted conf base p;
     }
 
 
@@ -605,7 +604,7 @@ let fam_to_piqi_family_link conf base (ifath : Gwdb.iper) imoth sp ifam fam base
   let gen_f = Util.string_gen_family base (gen_family_of_family fam) in
   let index = Int32.of_string @@ Gwdb.string_of_ifam gen_f.fam_index in
   let (marriage_date, marriage_date_long, marriage_date_conv, marriage_date_conv_long, marriage_cal, marriage_date_raw) =
-    match (m_auth, Date.od_of_cdate gen_f.marriage) with
+    match (m_auth, Geneweb_util.Date.od_of_cdate gen_f.marriage) with
     | (true, Some d) ->
       let (marriage_date, marriage_date_long, marriage_date_conv, marriage_date_conv_long, marriage_cal) = string_of_date_and_conv conf d in
       (marriage_date, marriage_date_long, marriage_date_conv, marriage_date_conv_long, marriage_cal, string_of_date_raw conf d)
@@ -636,7 +635,7 @@ let fam_to_piqi_family_link conf base (ifath : Gwdb.iper) imoth sp ifam fam base
     match gen_f.divorce with
     | NotDivorced -> (`not_divorced, "", "", "", "", None, "")
     | Divorced cod ->
-        (match Date.od_of_cdate cod with
+        (match Geneweb_util.Date.od_of_cdate cod with
          | Some d when m_auth ->
              let (divorce_date, divorce_date_long, divorce_date_conv, divorce_date_conv_long, divorce_cal) =
                string_of_date_and_conv conf d
@@ -646,7 +645,7 @@ let fam_to_piqi_family_link conf base (ifath : Gwdb.iper) imoth sp ifam fam base
     | Separated -> (`separated, "", "", "", "", None, "")
   in
   let witnesses =
-    Mutil.array_to_list_map
+    Geneweb_util.Mutil.array_to_list_map
       (fun (ip, wkind, wnote) ->
          let p = poi base ip in
          let wnote = sou base wnote in
@@ -710,7 +709,7 @@ let fill_events conf base p base_prefix p_auth pers_to_piqi witness_constructor 
                                  , event_to_piqi_event None (Some name) )
         in
         let (date, date_long, date_conv, date_conv_long, date_cal, date_raw) =
-          match Date.od_of_cdate date with
+          match Geneweb_util.Date.od_of_cdate date with
           | Some d ->
             let (date, date_long, date_conv, date_conv_long, date_cal) = string_of_date_and_conv conf d in
             (date, date_long, date_conv, date_conv_long, date_cal, string_of_date_raw conf d)
@@ -727,7 +726,7 @@ let fill_events conf base p base_prefix p_auth pers_to_piqi witness_constructor 
           Option.map (fun ip -> pers_to_piqi conf base (poi base ip) base_prefix) isp
         in
         let witnesses =
-          Mutil.array_to_list_map
+          Geneweb_util.Mutil.array_to_list_map
             (fun (ip, wk, wnote) ->
                let witness_type = Api_util.piqi_of_witness_kind wk in
                let witness = poi base ip in
@@ -811,7 +810,7 @@ let get_family_piqi base conf ifam p base_prefix spouse_to_piqi witnesses_to_piq
   let gen_f = Util.string_gen_family base (gen_family_of_family fam) in
   let index = Int32.of_string @@ Gwdb.string_of_ifam gen_f.fam_index in
   let (marriage_date, marriage_date_long, marriage_date_conv, marriage_date_conv_long, marriage_cal, marriage_date_raw) =
-    match (m_auth, Date.od_of_cdate gen_f.marriage) with
+    match (m_auth, Geneweb_util.Date.od_of_cdate gen_f.marriage) with
     | (true, Some d) ->
       let (marriage_date, marriage_date_long, marriage_date_conv, marriage_date_conv_long, marriage_cal) = string_of_date_and_conv conf d in
       (marriage_date, marriage_date_long, marriage_date_conv, marriage_date_conv_long, marriage_cal, string_of_date_raw conf d)
@@ -842,7 +841,7 @@ let get_family_piqi base conf ifam p base_prefix spouse_to_piqi witnesses_to_piq
     match gen_f.divorce with
     | NotDivorced -> (`not_divorced, "", "", "", "", None, "")
     | Divorced cod ->
-        (match Date.od_of_cdate cod with
+        (match Geneweb_util.Date.od_of_cdate cod with
          | Some d when m_auth ->
              let (divorce_date, divorce_date_long, divorce_date_conv, divorce_date_conv_long, divorce_cal) =
                string_of_date_and_conv conf d
@@ -852,7 +851,7 @@ let get_family_piqi base conf ifam p base_prefix spouse_to_piqi witnesses_to_piq
     | Separated -> (`separated, "", "", "", "", None, "")
   in
   let witnesses =
-    Mutil.array_to_list_map
+    Geneweb_util.Mutil.array_to_list_map
       (fun (ip, wkind, wnote) ->
          let p = poi base ip in
          let wnote = sou base wnote in
@@ -872,7 +871,7 @@ let get_family_piqi base conf ifam p base_prefix spouse_to_piqi witnesses_to_piq
   in
   let children =
     let children_array = limit_array @@ Gwdb.get_children fam in
-    Mutil.array_to_list_map
+    Geneweb_util.Mutil.array_to_list_map
       (fun ip -> child_to_piqi conf base (poi base ip) base_prefix)
       children_array
   in
@@ -907,7 +906,7 @@ let get_family_piqi base conf ifam p base_prefix spouse_to_piqi witnesses_to_piq
 (* ********************************************************************* *)
 let get_families_piqi base conf p base_prefix spouse_to_piqi witnesses_to_piqi child_to_piqi family_constructor =
   let families =
-    Mutil.array_to_list_map
+    Geneweb_util.Mutil.array_to_list_map
       (fun ifam ->
          get_family_piqi base conf ifam p base_prefix spouse_to_piqi witnesses_to_piqi child_to_piqi family_constructor
       )
@@ -997,7 +996,7 @@ let get_events_witnesses conf base p base_prefix _gen_p p_auth pers_to_piqi even
               else  ""
         in
         let s =
-          match Date.cdate_to_dmy_opt (Event.get_date evt) with
+          match Geneweb_util.Date.cdate_to_dmy_opt (Event.get_date evt) with
           | None ->
               Printf.sprintf "(%s) : %s"
               !!(wk) event_name
@@ -1046,7 +1045,7 @@ let fill_death conf p_auth gen_p =
   match (p_auth, gen_p.death) with
       | (true, NotDead) -> (`not_dead, "", "", None)
       | (true, Death (_, cd)) ->
-          let d = Date.date_of_cdate cd in
+          let d = Geneweb_util.Date.date_of_cdate cd in
           let (death, _, death_conv, _, death_cal) = string_of_date_and_conv conf d in
           (`dead, death, death_conv, death_cal)
       | (true, DeadYoung) -> (`dead_young, "", "", None)
@@ -1056,19 +1055,19 @@ let fill_death conf p_auth gen_p =
       | _ -> (`dont_know_if_dead, "", "", None)
 
 let fill_birth conf p_auth gen_p =
-  match (p_auth, Date.od_of_cdate gen_p.birth) with
+  match (p_auth, Geneweb_util.Date.od_of_cdate gen_p.birth) with
       | (true, Some d) -> string_of_date_and_conv conf d
       | _ -> ("", "", "", "", None)
 
 let fill_baptism conf p_auth gen_p =
-  match (p_auth, Date.od_of_cdate gen_p.baptism) with
+  match (p_auth, Geneweb_util.Date.od_of_cdate gen_p.baptism) with
       | (true, Some d) -> string_of_date_and_conv conf d
       | _ -> ("", "", "", "", None)
 
 let fill_burial conf p_auth gen_p =
   match (p_auth, gen_p.burial) with
       | (true, Buried cod) | (true, Cremated cod) ->
-          (match Date.od_of_cdate cod with
+          (match Geneweb_util.Date.od_of_cdate cod with
           | Some d -> string_of_date_and_conv conf d
           | _ -> ("", "", "", "", None))
       | _ -> ("", "", "", "", None)
@@ -1359,19 +1358,19 @@ let transform_empty_string_to_None string =
   if string = "" then None else Some string
 
 let fill_birth_date_raw conf p_auth gen_p =
-  match (p_auth, Date.od_of_cdate gen_p.birth) with
+  match (p_auth, Geneweb_util.Date.od_of_cdate gen_p.birth) with
     | (true, Some d) -> string_of_date_raw conf d
     | _ -> ""
 
 let fill_baptism_date_raw conf p_auth gen_p =
-  match (p_auth, Date.od_of_cdate gen_p.baptism) with
+  match (p_auth, Geneweb_util.Date.od_of_cdate gen_p.baptism) with
     | (true, Some d) -> string_of_date_raw conf d
     | _ -> ""
 
 let fill_death_date_raw conf p_auth gen_p =
   match (p_auth, gen_p.death) with
       | (true, Death (_, cd)) ->
-          let d = Date.date_of_cdate cd in
+          let d = Geneweb_util.Date.date_of_cdate cd in
           string_of_date_raw conf d
       | _ -> ""
 
@@ -1379,7 +1378,7 @@ let fill_burial_date_raw_if_is_main_person conf p_auth gen_p is_main_person =
   if is_main_person then
     match (p_auth, gen_p.burial) with
     | (true, Buried cod) | (true, Cremated cod) ->
-        (match Date.od_of_cdate cod with
+        (match Geneweb_util.Date.od_of_cdate cod with
         | Some d -> string_of_date_raw conf d
         | _ -> "")
     | _ -> ""
@@ -1525,8 +1524,8 @@ let pers_to_piqi_person conf base p base_prefix is_main_person =
       baseprefix = base_prefix;
       fiche_person_person = None;
       is_contemporary = GWPARAM.is_contemporary conf base p;
-      name_is_hidden = Geneweb.NameDisplay.is_hidden conf base p;
-      name_is_restricted = Geneweb.NameDisplay.is_restricted conf base p;
+      name_is_hidden = NameDisplay.is_hidden conf base p;
+      name_is_restricted = NameDisplay.is_restricted conf base p;
     }
 
 let fill_ref_if_is_main_person conf base is_main_person =
@@ -1680,8 +1679,8 @@ let rec pers_to_piqi_fiche_person conf base p base_prefix is_main_person nb_asc 
         rparents = if return_simple_attributes then get_rparents_piqi base conf base_prefix gen_p pers_to_piqi_simple_person simple_relation_person_constructor else [];
         baseprefix = base_prefix;
         is_contemporary = GWPARAM.is_contemporary conf base p;
-        name_is_hidden = Geneweb.NameDisplay.is_hidden conf base p;
-        name_is_restricted = Geneweb.NameDisplay.is_restricted conf base p;
+        name_is_hidden = NameDisplay.is_hidden conf base p;
+        name_is_restricted = NameDisplay.is_restricted conf base p;
       }
     end
 
@@ -2002,7 +2001,7 @@ let build_graph_desc conf base p max_gen =
               let fam = foi base ifam in
               let sp = poi base (Gutil.spouse (get_iper p) fam) in
               let sp_factor = factor ht (get_iper sp) in
-              let children = Mutil.array_to_list_map (poi base) (limit_array @@ get_children fam) in
+              let children = Geneweb_util.Mutil.array_to_list_map (poi base) (limit_array @@ get_children fam) in
               nodes := create_node ifam sp gen Spouse conf.command sp_factor :: !nodes;
               edges := create_edge p_factor conf.command p sp_factor conf.command sp :: !edges;
               if gen <> max_gen then begin

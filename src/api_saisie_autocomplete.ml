@@ -26,15 +26,15 @@ let get_list_from_cache conf mode max_res s =
       close_in ic;
       []
   in
-  let ini = Name.lower @@ Ext_string.tr '_' ' ' s in
+  let ini = Geneweb_util.Name.lower @@ Geneweb_util.Ext_string.tr '_' ' ' s in
   (* optim : on sait que la liste est triée. *)
   let rec loop list accu nb_res =
     match list with
     | [] -> List.rev accu
     | name :: l ->
-      let k = Ext_string.tr '_' ' ' name in
+      let k = Geneweb_util.Ext_string.tr '_' ' ' name in
       let (accu, nb_res) =
-        if Utf8.start_with_wildcard ini 0 (Name.lower k)
+        if Geneweb_util.Utf8.start_with_wildcard ini 0 (Geneweb_util.Name.lower k)
         then name :: accu, nb_res + 1
         else accu, nb_res
       in

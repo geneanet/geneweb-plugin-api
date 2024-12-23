@@ -71,7 +71,7 @@ let pevents_aux conf base filter acc p =
             ; sp = None
             ; pevent_name = Some (Api_piqi_util.piqi_pevent_name_of_pevent_name (get_pevent_name e))
             ; fevent_name = None
-            ; date = piqi_date_of_date @@ Date.date_of_cdate (get_pevent_date e)
+            ; date = piqi_date_of_date @@ Geneweb_util.Date.date_of_cdate (get_pevent_date e)
             ; place = sou base (get_pevent_place e)
             ; note = sou base (get_pevent_note e)
             ; src = sou base (get_pevent_src e)
@@ -93,7 +93,7 @@ let fevents_aux conf base filter acc f =
           ; sp = Some (pers_to_piqi_person @@ poi base @@ Gwdb.get_mother f)
           ; pevent_name = None
           ; fevent_name = Some (Api_piqi_util.piqi_fevent_name_of_fevent_name (get_fevent_name e))
-          ; date = piqi_date_of_date @@ Date.date_of_cdate (get_fevent_date e)
+          ; date = piqi_date_of_date @@ Geneweb_util.Date.date_of_cdate (get_fevent_date e)
           ; place = sou base (get_fevent_place e)
           ; note = sou base (get_fevent_note e)
           ; src = sou base (get_fevent_src e)
@@ -110,7 +110,7 @@ let events_filters_aux params =
       let b = date_of_piqi_date b in
       fun d ->
         begin
-          match Date.compare_date_strict d b with
+          match Geneweb_util.Date.compare_date_strict d b with
           | None -> false
           | Some v -> v >= 0
         end
@@ -122,7 +122,7 @@ let events_filters_aux params =
       let b = date_of_piqi_date b in
       fun d ->
         begin
-          match Date.compare_date_strict d b with
+          match Geneweb_util.Date.compare_date_strict d b with
           | None -> false
           | Some v -> v <= 0
         end
@@ -130,12 +130,12 @@ let events_filters_aux params =
   in
   ( (fun e ->
         List.mem (get_pevent_name e) filter_pevents
-        && match Date.od_of_cdate (get_pevent_date e) with
+        && match Geneweb_util.Date.od_of_cdate (get_pevent_date e) with
         | Some d -> filter_start_date d && filter_stop_date d
         | None -> false)
   , (fun e ->
        List.mem (get_fevent_name e) filter_fevents
-       && match Date.od_of_cdate (get_fevent_date e) with
+       && match Geneweb_util.Date.od_of_cdate (get_fevent_date e) with
         | Some d -> filter_start_date d && filter_stop_date d
         | None -> false)
   )

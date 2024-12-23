@@ -10,17 +10,17 @@ type person_update = {
 
 let get_local_occurrence_numbers, reserve_occurrence_number =
   let ht_free_occ = Hashtbl.create 33 in
-  let key ~first_name ~surname = Name.lower (first_name ^ " " ^ surname) in
+  let key ~first_name ~surname = Geneweb_util.Name.lower (first_name ^ " " ^ surname) in
   let get_occurrence_numbers ~first_name ~surname =
     Option.value
-      ~default:Ext_int.Set.empty
+      ~default:Geneweb_util.Ext_int.Set.empty
       (Hashtbl.find_opt ht_free_occ (key ~first_name ~surname))
   in
   let reserve_occurrence_number ~first_name ~surname occurrence_number =
     Hashtbl.replace
       ht_free_occ
       (key ~first_name ~surname)
-      (Ext_int.Set.add
+      (Geneweb_util.Ext_int.Set.add
          occurrence_number
          (get_occurrence_numbers ~first_name ~surname))
   in
@@ -34,8 +34,8 @@ let find_free_occ ~base ~first_name ~surname =
     let base_occurrence_numbers =
       Gutil.get_all_occurrence_numbers ~base ~first_name ~surname
     in
-    Occurrence_number.smallest_free
-      (Ext_int.Set.union local_occurrence_numbers base_occurrence_numbers)
+    Geneweb_util.Occurrence_number.smallest_free
+      (Geneweb_util.Ext_int.Set.union local_occurrence_numbers base_occurrence_numbers)
   in
   reserve_occurrence_number ~first_name ~surname occ;
   occ
@@ -99,7 +99,7 @@ let error_conflict_person_link
        force = force_create} =
   let k = (f, s, o) in
   let exists () =
-    Gwdb.person_of_key base f s o <> None || List.exists (Mutil.eq_key k) created
+    Gwdb.person_of_key base f s o <> None || List.exists (Geneweb_util.Mutil.eq_key k) created
   in
   let f = if f = "" then "?" else f in
   let s = if s = "" then "?" else s in
@@ -174,7 +174,7 @@ let check_person_conflict base original_pevents sp =
       Array.fold_left begin fun (j, created) (person_update, _, _) ->
         match error_conflict_person_link base created person_update with
         | true, _ ->
-          let pos = Ext_list.index evt original_pevents in
+          let pos = Geneweb_util.Ext_list.index evt original_pevents in
           let conflict =
             { Api_saisie_write_piqi.Create_conflict.form = Some `person_form1
             ; witness = true
@@ -262,16 +262,16 @@ let check_family_conflict base sfam scpl sdes =
 (**/**) (* Convertion d'une date. *)
 
 
-let piqi_date_of_date (date : Date.date) : Api_saisie_write_piqi.date =
+let piqi_date_of_date (date : Geneweb_util.Date.date) : Api_saisie_write_piqi.date =
   match date with
-  | Date.Dgreg (dmy, cal) ->
+  | Geneweb_util.Date.Dgreg (dmy, cal) ->
       let (cal, dmy) =
-        let d = Date.convert ~from:Date.Dgregorian ~to_:cal dmy in
+        let d = Geneweb_util.Date.convert ~from:Geneweb_util.Date.Dgregorian ~to_:cal dmy in
         match cal with
-        | Date.Dgregorian -> (None, dmy)
-        | Date.Djulian -> (Some `julian, d)
-        | Date.Dfrench -> (Some `french, d)
-        | Date.Dhebrew -> (Some `hebrew, d)
+        | Geneweb_util.Date.Dgregorian -> (None, dmy)
+        | Geneweb_util.Date.Djulian -> (Some `julian, d)
+        | Geneweb_util.Date.Dfrench -> (Some `french, d)
+        | Geneweb_util.Date.Dhebrew -> (Some `hebrew, d)
       in
       let (prec, dmy, dmy2) =
         let d = Some (Int32.of_int dmy.day) in
@@ -281,12 +281,12 @@ let piqi_date_of_date (date : Date.date) : Api_saisie_write_piqi.date =
         let dmy1 = {Api_saisie_write_piqi.Dmy.day = d; month = m; year = y; delta = delta;} in
         let (prec, dmy2) =
           match dmy.prec with
-          | Date.Sure -> (`sure, None)
-          | Date.About -> (`about, None)
-          | Date.Maybe -> (`maybe, None)
-          | Date.Before -> (`before, None)
-          | Date.After -> (`after, None)
-          | Date.OrYear dmy2 ->
+          | Geneweb_util.Date.Sure -> (`sure, None)
+          | Geneweb_util.Date.About -> (`about, None)
+          | Geneweb_util.Date.Maybe -> (`maybe, None)
+          | Geneweb_util.Date.Before -> (`before, None)
+          | Geneweb_util.Date.After -> (`after, None)
+          | Geneweb_util.Date.OrYear dmy2 ->
               let d = Some (Int32.of_int dmy2.day2) in
               let m = Some (Int32.of_int dmy2.month2) in
               let y = Some (Int32.of_int dmy2.year2) in
@@ -295,7 +295,7 @@ let piqi_date_of_date (date : Date.date) : Api_saisie_write_piqi.date =
                 {Api_saisie_write_piqi.Dmy.day = d; month = m; year = y; delta = delta;}
               in
               (`oryear, Some dmy2)
-          | Date.YearInt dmy2 ->
+          | Geneweb_util.Date.YearInt dmy2 ->
               let d = Some (Int32.of_int dmy2.day2) in
               let m = Some (Int32.of_int dmy2.month2) in
               let y = Some (Int32.of_int dmy2.year2) in
@@ -314,7 +314,7 @@ let piqi_date_of_date (date : Date.date) : Api_saisie_write_piqi.date =
         dmy2 = dmy2;
         text = None;
       }
-  | Date.Dtext txt ->
+  | Geneweb_util.Date.Dtext txt ->
       {
         Api_saisie_write_piqi.Date.cal = None;
         prec = None;
@@ -326,7 +326,7 @@ let piqi_date_of_date (date : Date.date) : Api_saisie_write_piqi.date =
 
 let date_of_piqi_date conf date =
   match date.Api_saisie_write_piqi.Date.text with
-  | Some txt -> Some (Date.Dtext txt)
+  | Some txt -> Some (Geneweb_util.Date.Dtext txt)
   | None ->
       (* Si on a une année, on a une date. *)
       match date.Api_saisie_write_piqi.Date.dmy with
@@ -336,10 +336,10 @@ let date_of_piqi_date conf date =
             | Some _ ->
                 let cal =
                   match date.Api_saisie_write_piqi.Date.cal with
-                  | Some `julian -> Date.Djulian
-                  | Some `french -> Date.Dfrench
-                  | Some `hebrew -> Date.Dhebrew
-                  | Some `gregorian | None -> Date.Dgregorian
+                  | Some `julian -> Geneweb_util.Date.Djulian
+                  | Some `french -> Geneweb_util.Date.Dfrench
+                  | Some `hebrew -> Geneweb_util.Date.Dhebrew
+                  | Some `gregorian | None -> Geneweb_util.Date.Dgregorian
                 in
                 let get_adef_dmy_from_saisie_write_dmy_if_valid conf dmy cal prec =
                   let day =
@@ -371,7 +371,7 @@ let date_of_piqi_date conf date =
                         (day, month, year)
                   in
                   let adef_dmy =
-                    {Date.day = day; month = month; year = year; delta = delta; prec = prec}
+                    {Geneweb_util.Date.day = day; month = month; year = year; delta = delta; prec = prec}
                   in
                   let day_to_check =
                     adef_dmy.day >= 1 && adef_dmy.day <= 31
@@ -385,11 +385,11 @@ let date_of_piqi_date conf date =
                   else if adef_dmy.day = 0 && month_to_check
                   then
                     (* Check the month in the gregorian calendar. *)
-                    if cal = Date.Dgregorian
+                    if cal = Geneweb_util.Date.Dgregorian
                     then
                       begin
                         (* The day is set to 1 for checking. *)
-                        Geneweb.Update.check_greg_day conf {Date.day = 1; month = adef_dmy.month; year = adef_dmy.year; delta = delta; prec = prec};
+                        Geneweb.Update.check_greg_day conf {Geneweb_util.Date.day = 1; month = adef_dmy.month; year = adef_dmy.year; delta = delta; prec = prec};
                         adef_dmy
                       end
                     else
@@ -398,10 +398,10 @@ let date_of_piqi_date conf date =
                   else if day_to_check && month_to_check
                   then
                     (* Check the date in the gregorian calendar. *)
-                    if cal = Date.Dgregorian
+                    if cal = Geneweb_util.Date.Dgregorian
                     then
                       begin
-                        Geneweb.Update.check_greg_day conf {Date.day = adef_dmy.day; month = adef_dmy.month; year = adef_dmy.year; delta = delta; prec = prec};
+                        Geneweb.Update.check_greg_day conf {Geneweb_util.Date.day = adef_dmy.Geneweb_util.Date.day; month = adef_dmy.month; year = adef_dmy.year; delta = delta; prec = prec};
                         adef_dmy
                       end
                     else
@@ -412,50 +412,50 @@ let date_of_piqi_date conf date =
                 let delta2 = 0 in
                 let prec =
                   match date.Api_saisie_write_piqi.Date.prec with
-                  | Some `about -> Date.About
-                  | Some `maybe -> Date.Maybe
-                  | Some `before -> Date.Before
-                  | Some `after -> Date.After
+                  | Some `about -> Geneweb_util.Date.About
+                  | Some `maybe -> Geneweb_util.Date.Maybe
+                  | Some `before -> Geneweb_util.Date.Before
+                  | Some `after -> Geneweb_util.Date.After
                   | Some `oryear ->
                       (match date.Api_saisie_write_piqi.Date.dmy2 with
                       | Some dmy ->
                           begin
                             match dmy.Api_saisie_write_piqi.Dmy.year with
                             | Some _ ->
-                              let adef_dmy = get_adef_dmy_from_saisie_write_dmy_if_valid conf dmy cal Date.Sure in
-                              Date.OrYear {day2 = adef_dmy.day; month2 = adef_dmy.month; year2 = adef_dmy.year; delta2 = delta2}
-                            | None -> Date.Sure
+                              let adef_dmy = get_adef_dmy_from_saisie_write_dmy_if_valid conf dmy cal Geneweb_util.Date.Sure in
+                              Geneweb_util.Date.OrYear {day2 = adef_dmy.day; month2 = adef_dmy.month; year2 = adef_dmy.year; delta2 = delta2}
+                            | None -> Geneweb_util.Date.Sure
                           end
-                      | None -> Date.Sure (* erreur*))
+                      | None -> Geneweb_util.Date.Sure (* erreur*))
                   | Some `yearint ->
                       (match date.Api_saisie_write_piqi.Date.dmy2 with
                       | Some dmy ->
                           begin
                             match dmy.Api_saisie_write_piqi.Dmy.year with
                             | Some _ ->
-                              let adef_dmy = get_adef_dmy_from_saisie_write_dmy_if_valid conf dmy cal Date.Sure in
-                              Date.YearInt {day2 = adef_dmy.day; month2 = adef_dmy.month; year2 = adef_dmy.year; delta2 = delta2}
-                            | None -> Date.Sure
+                              let adef_dmy = get_adef_dmy_from_saisie_write_dmy_if_valid conf dmy cal Geneweb_util.Date.Sure in
+                              Geneweb_util.Date.YearInt {day2 = adef_dmy.day; month2 = adef_dmy.month; year2 = adef_dmy.year; delta2 = delta2}
+                            | None -> Geneweb_util.Date.Sure
                           end
-                      | None -> Date.Sure (* erreur*))
-                  | Some `sure | None -> Date.Sure
+                      | None -> Geneweb_util.Date.Sure (* erreur*))
+                  | Some `sure | None -> Geneweb_util.Date.Sure
                 in
                 let dmy =
                   match date.Api_saisie_write_piqi.Date.dmy with
                   | Some dmy ->
                       get_adef_dmy_from_saisie_write_dmy_if_valid conf dmy cal prec
                   | None -> (* erreur*)
-                      {Date.day = 0; month = 0; year = 0; prec = Sure; delta = 0}
+                      {Geneweb_util.Date.day = 0; month = 0; year = 0; prec = Sure; delta = 0}
                 in
                 let dmy =
                   begin match cal with
-                  | Date.Dgregorian ->
+                  | Geneweb_util.Date.Dgregorian ->
                       Geneweb.Update.check_greg_day conf dmy
-                  | Date.Djulian | Date.Dfrench | Date.Dhebrew -> ()
+                  | Geneweb_util.Date.Djulian | Geneweb_util.Date.Dfrench | Geneweb_util.Date.Dhebrew -> ()
                   end;
-                  Date.convert ~from:cal ~to_:Date.Dgregorian dmy
+                  Geneweb_util.Date.convert ~from:cal ~to_:Geneweb_util.Date.Dgregorian dmy
                 in
-                Some (Date.Dgreg (dmy, cal))
+                Some (Geneweb_util.Date.Dgreg (dmy, cal))
           | None -> None
           end
       | None -> None
@@ -677,7 +677,7 @@ let pers_to_piqi_person_search_info conf base p =
              !!(Geneweb.Util.string_of_fevent_name conf base name)
         in
         let (date, _, date_conv, _, date_cal) =
-          match Date.od_of_cdate (Geneweb.Event.get_date evt) with
+          match Geneweb_util.Date.od_of_cdate (Geneweb.Event.get_date evt) with
           | Some d -> Api_saisie_read.string_of_date_and_conv conf d
           | None -> ("", "", "", "", None)
         in
@@ -701,7 +701,7 @@ let pers_to_piqi_person_search_info conf base p =
           | None -> None
         in
         let witnesses =
-          Mutil.array_to_list_map
+          Geneweb_util.Mutil.array_to_list_map
             (fun (ip, wk, wnote) ->
               let witness_type = Api_util.piqi_of_witness_kind wk in
                let witness = pers_to_piqi_simple_person conf base @@ Gwdb.poi base ip in
@@ -765,17 +765,17 @@ let pers_to_piqi_person_search_info conf base p =
       List.sort
         (fun (c1, _) (c2, _) ->
            let d1 =
-             match Date.od_of_cdate (Gwdb.get_baptism c1) with
-             | None -> Date.od_of_cdate (Gwdb.get_birth c1)
+             match Geneweb_util.Date.od_of_cdate (Gwdb.get_baptism c1) with
+             | None -> Geneweb_util.Date.od_of_cdate (Gwdb.get_birth c1)
              | x -> x
            in
            let d2 =
-             match Date.od_of_cdate (Gwdb.get_baptism c2) with
-             | None -> Date.od_of_cdate (Gwdb.get_birth c2)
+             match Geneweb_util.Date.od_of_cdate (Gwdb.get_baptism c2) with
+             | None -> Geneweb_util.Date.od_of_cdate (Gwdb.get_birth c2)
              | x -> x
            in
            match (d1, d2) with
-           |(Some d1, Some d2) -> Date.compare_date d1 d2
+           |(Some d1, Some d2) -> Geneweb_util.Date.compare_date d1 d2
            | Some _, None | None, (None | Some _) -> -1 )
       (List.rev list)
     in
@@ -863,10 +863,10 @@ let pers_to_piqi_person_search_info conf base p =
       List.sort
         (fun (_, fam1) (_, fam2) ->
            match
-             (Date.od_of_cdate (Gwdb.get_marriage fam1),
-              Date.od_of_cdate (Gwdb.get_marriage fam2))
+             (Geneweb_util.Date.od_of_cdate (Gwdb.get_marriage fam1),
+              Geneweb_util.Date.od_of_cdate (Gwdb.get_marriage fam2))
            with
-           | (Some d1, Some d2) -> Date.compare_date d1 d2
+           | (Some d1, Some d2) -> Geneweb_util.Date.compare_date d1 d2
            | Some _, None | None, (None | Some _) -> 0 )
         list
     in
@@ -965,7 +965,7 @@ let pers_to_piqi_mod_person conf base p =
     (* Cas particulier pour les personnes sans clé, et principalement *)
     (* ? ?. On ne renvoie pas le occ, comme ça si la personne existe  *)
     (* dans la base, on aura le droit à un conflit de nom.            *)
-    if Name.lower surname = "" || Name.lower first_name = "" then None
+    if Geneweb_util.Name.lower surname = "" || Geneweb_util.Name.lower first_name = "" then None
     else
       if occ = 0 then None
       else Some (Int32.of_int occ)
@@ -993,12 +993,12 @@ let pers_to_piqi_mod_person conf base p =
         let title = Gwdb.sou base t.t_ident in
         let fief = Gwdb.sou base t.t_place in
         let date_begin =
-          match Date.od_of_cdate t.t_date_start with
+          match Geneweb_util.Date.od_of_cdate t.t_date_start with
           | Some d -> Some (piqi_date_of_date d)
           | None -> None
         in
         let date_end =
-          match Date.od_of_cdate t.t_date_end with
+          match Geneweb_util.Date.od_of_cdate t.t_date_end with
           | Some d -> Some (piqi_date_of_date d)
           | None -> None
         in
@@ -1071,7 +1071,7 @@ let pers_to_piqi_mod_person conf base p =
            | Epers_Name n -> (None, Some (Gwdb.sou base n))
          in
          let date =
-           match Date.od_of_cdate (Gwdb.get_pevent_date evt) with
+           match Geneweb_util.Date.od_of_cdate (Gwdb.get_pevent_date evt) with
            | Some d -> Some (piqi_date_of_date d)
            | None -> None
          in
@@ -1080,7 +1080,7 @@ let pers_to_piqi_mod_person conf base p =
          let note = Gwdb.sou base (Gwdb.get_pevent_note evt) in
          let src = Gwdb.sou base (Gwdb.get_pevent_src evt) in
          let witnesses =
-           Mutil.array_to_list_map
+           Geneweb_util.Mutil.array_to_list_map
              (fun (ip, wk, wnote) ->
                 let witness_type = Api_util.piqi_of_witness_kind wk in
                 let p = Gwdb.poi base ip in
@@ -1248,7 +1248,7 @@ let pers_to_piqi_mod_person conf base p =
     | None -> None
   in
   let families =
-    Mutil.array_to_list_map (fun x -> Int32.of_string @@ Gwdb.string_of_ifam x) (Gwdb.get_family p)
+    Geneweb_util.Mutil.array_to_list_map (fun x -> Int32.of_string @@ Gwdb.string_of_ifam x) (Gwdb.get_family p)
   in
   let is_contemporary = Geneweb.GWPARAM.is_contemporary conf base p in
   {
@@ -1304,7 +1304,7 @@ let fam_to_piqi_mod_family conf base ifam fam =
            | Efam_Name n -> (None, Some (Gwdb.sou base n))
          in
          let date =
-           match Date.od_of_cdate (Gwdb.get_fevent_date evt) with
+           match Geneweb_util.Date.od_of_cdate (Gwdb.get_fevent_date evt) with
            | Some d -> Some (piqi_date_of_date d)
            | None -> None
          in
@@ -1313,7 +1313,7 @@ let fam_to_piqi_mod_family conf base ifam fam =
          let note = Gwdb.sou base (Gwdb.get_fevent_note evt) in
          let src = Gwdb.sou base (Gwdb.get_fevent_src evt) in
          let witnesses =
-           Mutil.array_to_list_map
+           Geneweb_util.Mutil.array_to_list_map
              (fun (ip, wk, wnote) ->
                 let witness_type = Api_util.piqi_of_witness_kind wk in
                 let p = Gwdb.poi base ip in
@@ -1347,13 +1347,13 @@ let fam_to_piqi_mod_family conf base ifam fam =
   let mother = Gwdb.poi base (Gwdb.get_mother fam) in
   let mother = pers_to_piqi_mod_person conf base mother in
   let children =
-    Mutil.array_to_list_map
+    Geneweb_util.Mutil.array_to_list_map
       (fun ip -> pers_to_piqi_person_link conf base @@ Gwdb.poi base ip)
       (Gwdb.get_children fam)
   in
   (* Compatibilité avec GeneWeb. *)
   let old_witnesses =
-    Mutil.array_to_list_map (fun x -> Int32.of_string @@ Gwdb.string_of_iper x) (Gwdb.get_witnesses fam)
+    Geneweb_util.Mutil.array_to_list_map (fun x -> Int32.of_string @@ Gwdb.string_of_iper x) (Gwdb.get_witnesses fam)
   in
   {
     Api_saisie_write_piqi.Family.digest = digest;
@@ -1391,19 +1391,19 @@ let piqi_mod_person_of_person_start conf base start_p =
                | Some d ->
                    let d = Int32.to_int d in
                    let dmy =
-                     {Date.day = d; month = m; year = y; prec = Sure; delta = 0}
+                     {Geneweb_util.Date.day = d; month = m; year = y; prec = Sure; delta = 0}
                    in
-                   Some (Date.Dgreg (dmy, Date.Dgregorian))
+                   Some (Geneweb_util.Date.Dgreg (dmy, Geneweb_util.Date.Dgregorian))
                | None ->
                    let dmy =
-                     {Date.day = 0; month = m; year = y; prec = Sure; delta = 0}
+                     {Geneweb_util.Date.day = 0; month = m; year = y; prec = Sure; delta = 0}
                    in
-                   Some (Date.Dgreg (dmy, Date.Dgregorian)))
+                   Some (Geneweb_util.Date.Dgreg (dmy, Geneweb_util.Date.Dgregorian)))
            | None ->
                let dmy =
-                 {Date.day = 0; month = 0; year = y; prec = Sure; delta = 0}
+                 {Geneweb_util.Date.day = 0; month = 0; year = y; prec = Sure; delta = 0}
                in
-               Some (Date.Dgreg (dmy, Date.Dgregorian)))
+               Some (Geneweb_util.Date.Dgreg (dmy, Geneweb_util.Date.Dgregorian)))
         else
           None
     | None -> None
@@ -1518,9 +1518,9 @@ let reconstitute_somebody base person =
     (* If there are forbidden characters, delete them. *)
     let contain_fn = String.contains fn in
     let contain_sn = String.contains sn in
-    if (List.exists contain_fn Name.forbidden_char)
-    || (List.exists contain_sn Name.forbidden_char)
-    then (Name.purge fn, Name.purge sn)
+    if (List.exists contain_fn Geneweb_util.Name.forbidden_char)
+    || (List.exists contain_sn Geneweb_util.Name.forbidden_char)
+    then (Geneweb_util.Name.purge fn, Geneweb_util.Name.purge sn)
     else (fn, sn)
   in
   {first_name = fn;

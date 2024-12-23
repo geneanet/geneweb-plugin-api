@@ -4,7 +4,6 @@ module Mext_stats = Api_stats_piqi_ext
 open Geneweb
 open Config
 open Def
-open Date
 open Gwdb
 open Api_util
 
@@ -23,15 +22,15 @@ let list_uniq l =
   List.rev l
 
 let wday conf = function
-  | Dgreg ({ prec = Sure ; delta = 0 } as d, _) when d.day <> 0 && d.month <> 0 ->
-    let jd = Date.to_sdn ~from:Dgregorian d in
-    let jd_today = Date.to_sdn ~from:Dgregorian conf.today in
+  | Geneweb_util.Date.Dgreg ({ prec = Sure ; delta = 0 } as d, _) when d.day <> 0 && d.month <> 0 ->
+    let jd = Geneweb_util.Date.to_sdn ~from:Dgregorian d in
+    let jd_today = Geneweb_util.Date.to_sdn ~from:Dgregorian conf.today in
     let x = conf.today_wd - jd_today + jd in
     ((if x < 0 then 6 + (x + 1) mod 7 else x mod 7) + 6) mod 7
   | _ -> -1
 
 let md = function
-  | Dgreg ({ prec = Sure ; month }, _) when month <> 0 -> month - 1
+  | Geneweb_util.Date.Dgreg ({ prec = Sure ; month }, _) when month <> 0 -> month - 1
   | _ -> -1
 
 type record_stats =
@@ -208,7 +207,7 @@ let format_stats_m_f2 l1 l2 title series1 series2 =
       l2
   in
   let datas =
-    Mutil.array_to_list_map
+    Geneweb_util.Mutil.array_to_list_map
       (fun s -> Mstats.Data_l.({data = Array.to_list s;}))
       data
   in
@@ -259,7 +258,7 @@ let format_stats_dmy l title series =
   in
   let () = loop 0 labels in
   let datas =
-    Mutil.array_to_list_map
+    Geneweb_util.Mutil.array_to_list_map
       (fun s -> Mstats.Data_l.({data = Array.to_list s;}))
       data
   in
@@ -284,7 +283,7 @@ let format_top_stats ht title =
   let l =
     List.sort (fun (_, n1) (_, n2) -> if n1 > n2 then -1 else 1) !res
   in
-  let l = Ext_list.take l 10 in
+  let l = Geneweb_util.Ext_list.take l 10 in
   let (series_string, datas) =
     List.fold_right
       (fun (s, n) (series, datas) ->
@@ -831,8 +830,8 @@ let print_ind_stats conf base =
               in
               List.iter
                 (fun s ->
-                  let s = if split then Name.strip_c s '"' else s in
-                  let k = Name.lower s in
+                  let s = if split then Geneweb_util.Name.strip_c s '"' else s in
+                  let k = Geneweb_util.Name.lower s in
                   if k = "?" || k = "" then ()
                   else
                     try
@@ -850,7 +849,7 @@ let print_ind_stats conf base =
         (fun (_, n1) (_, n2) -> if n1 > n2 then -1 else 1)
         !res
     in
-    let l = Ext_list.take l 10 in
+    let l = Geneweb_util.Ext_list.take l 10 in
     let (series_string, datas) =
       List.fold_right
         (fun (s, n) (series, datas) ->
@@ -899,7 +898,7 @@ let print_ind_stats conf base =
                 in
                 List.iter
                   (fun s ->
-                    let k = Name.lower s in
+                    let k = Geneweb_util.Name.lower s in
                     if k = "?" || k = "" then ()
                     else
                       try
@@ -910,7 +909,7 @@ let print_ind_stats conf base =
                   List.iter
                     (fun e ->
                       let s = sou base (get_pevent_note e) in
-                      let k = Name.lower s in
+                      let k = Geneweb_util.Name.lower s in
                       if k = "" then ()
                       else
                         try
@@ -929,7 +928,7 @@ let print_ind_stats conf base =
         (fun (_, n1) (_, n2) -> if n1 > n2 then -1 else 1)
         !res
     in
-    let l = Ext_list.take l 10 in
+    let l = Geneweb_util.Ext_list.take l 10 in
     let (series_string, datas) =
       List.fold_right
         (fun (s, n) (series, datas) ->
@@ -1038,7 +1037,7 @@ let print_all_stats conf base =
 
   let aux1 ht dmy s_sex s_value =
     let r =
-      { s_year = dmy.year - (dmy.year mod periode) ; s_sex ; s_value; }
+      { s_year = dmy.Geneweb_util.Date.year - (dmy.year mod periode) ; s_sex ; s_value; }
     in
     match Hashtbl.find_opt ht r.s_year with
     | Some l -> Hashtbl.replace ht r.s_year (r :: l)
@@ -1048,7 +1047,7 @@ let print_all_stats conf base =
   let aux2 ht dmy s_sex s_value =
     if s_value <> -1 then
       let r =
-        { s_year = dmy.year - (dmy.year mod periode) ; s_sex ; s_value }
+        { s_year = dmy.Geneweb_util.Date.year - (dmy.year mod periode) ; s_sex ; s_value }
       in
       match Hashtbl.find_opt ht (r.s_year, r.s_value) with
       | Some l -> Hashtbl.replace ht (r.s_year, r.s_value) (r :: l)
@@ -1064,7 +1063,7 @@ let print_all_stats conf base =
 
       begin (* Count surnames *)
         let s = sou base @@ get_surname p in
-        let k = Name.lower s in
+        let k = Geneweb_util.Name.lower s in
         if k <> "?" && k <> "" then match Hashtbl.find_opt ht_surname k with
           | Some (s, n) -> Hashtbl.replace ht_surname k (s, succ n)
           | None -> Hashtbl.add ht_surname k (s, 1)
@@ -1073,11 +1072,11 @@ let print_all_stats conf base =
       begin (* Count first names *)
         let s = sou base @@ get_first_name p in
         List.iter begin fun s ->
-          let k = Name.lower s in
+          let k = Geneweb_util.Name.lower s in
           if k <> "?" && k <> "" then match Hashtbl.find_opt ht_first_name k with
             | Some (s, n) -> Hashtbl.replace ht_first_name k (s, (succ n))
             | None -> Hashtbl.add ht_first_name k (s, 1)
-        end (String.split_on_char ' ' @@ Name.strip_c s '"')
+        end (String.split_on_char ' ' @@ Geneweb_util.Name.strip_c s '"')
       end ;
 
       if get_sex p = Neuter then ()
@@ -1090,7 +1089,7 @@ let print_all_stats conf base =
             let s_sex = get_sex p in
 
             (* Oldest person *)
-            if d1 <> d2 then aux1 ht_longuest dmy2 s_sex (Date.time_elapsed dmy1 dmy2).year ;
+            if d1 <> d2 then aux1 ht_longuest dmy2 s_sex (Geneweb_util.Date.time_elapsed dmy1 dmy2).year ;
 
             (* Sex repartition *)
             aux1 ht_male_female dmy1 s_sex 1 ;
@@ -1128,7 +1127,7 @@ let print_all_stats conf base =
             (* Moon phase *)
             if dmy1.delta = 0 && dmy1.day > 0 then
               aux2 ht_moon dmy1 s_sex begin
-                let jd = Date.to_sdn ~from:Dgregorian dmy1 in
+                let jd = Geneweb_util.Date.to_sdn ~from:Dgregorian dmy1 in
                 let (mp, md) = Calendars.moon_phase_of_sdn jd in
                 match mp with
                 | None ->
@@ -1155,14 +1154,14 @@ let print_all_stats conf base =
                   let fam = foi base ifam in
                   if not @@ Util.authorized_age conf base (poi base (Gutil.spouse (get_iper p) fam))
                   then loop (i + 1)
-                  else begin match Date.od_of_cdate (get_marriage fam) with
+                  else begin match Geneweb_util.Date.od_of_cdate (get_marriage fam) with
                     | Some (Dgreg ({ prec = Sure } as dmy, _)) ->
                       begin match get_divorce fam with
                         | Divorced co ->
-                          begin match Date.od_of_cdate co with
+                          begin match Geneweb_util.Date.od_of_cdate co with
                             | Some (Dgreg ({ prec = Sure } as dmy2, _)) ->
                               if dmy2.year >= dmy.year
-                              then aux1 ht_marr_time dmy Neuter (Date.time_elapsed dmy dmy2).year ;
+                              then aux1 ht_marr_time dmy Neuter (Geneweb_util.Date.time_elapsed dmy dmy2).year ;
                               loop (i + 1)
                             | _ -> loop (i + 1)
                           end
@@ -1178,22 +1177,22 @@ let print_all_stats conf base =
                               , (_, Some (Dgreg (dmym, _)), _)) ->
                               if dmyf.year < dmy.year || dmym.year < dmy.year then ()
                               else if dmyf.year < dmym.year
-                              then aux1 ht_marr_time dmy Neuter (Date.time_elapsed dmy dmyf).year
-                              else aux1 ht_marr_time dmy Neuter (Date.time_elapsed dmy dmym).year
+                              then aux1 ht_marr_time dmy Neuter (Geneweb_util.Date.time_elapsed dmy dmyf).year
+                              else aux1 ht_marr_time dmy Neuter (Geneweb_util.Date.time_elapsed dmy dmym).year
                             | ((_, Some (Dgreg (dmyf, _)), _) , _) ->
                               if dmyf.year >= dmy.year
-                              then aux1 ht_marr_time dmy Neuter (Date.time_elapsed dmy dmyf).year
+                              then aux1 ht_marr_time dmy Neuter (Geneweb_util.Date.time_elapsed dmy dmyf).year
                             | (_, (_, Some (Dgreg (dmym, _)), _)) ->
                               if dmym.year <= dmy.year
-                              then aux1 ht_marr_time dmy Neuter (Date.time_elapsed dmy dmym).year
+                              then aux1 ht_marr_time dmy Neuter (Geneweb_util.Date.time_elapsed dmy dmym).year
                             | _ -> ()
                           end else begin
                             let ifam2 = Array.unsafe_get fams (i + 1) in
                             let fam2 = foi base ifam2 in
-                            match Date.od_of_cdate (get_marriage fam2) with
+                            match Geneweb_util.Date.od_of_cdate (get_marriage fam2) with
                             | Some (Dgreg ({ prec = Sure } as dmy2, _)) ->
                               if dmy.year <= dmy2.year
-                              then aux1 ht_marr_time dmy Neuter (Date.time_elapsed dmy dmy2).year ;
+                              then aux1 ht_marr_time dmy Neuter (Geneweb_util.Date.time_elapsed dmy dmy2).year ;
                               loop (i + 1)
                             | _ -> loop (i + 2)
                           end
@@ -1208,7 +1207,7 @@ let print_all_stats conf base =
             (* Most common occupations *)
             begin
               List.iter begin fun s ->
-                let k = Name.lower s in
+                let k = Geneweb_util.Name.lower s in
                 if k <> "" then match Hashtbl.find_opt ht_occupation k with
                   | Some (s, n) -> Hashtbl.replace ht_occupation k (s, (n + 1))
                   | None -> Hashtbl.add ht_occupation k (s, 1)
@@ -1216,7 +1215,7 @@ let print_all_stats conf base =
               List.iter begin fun e ->
                 if get_pevent_name e = Epers_Occupation then
                   let s = sou base (get_pevent_note e) in
-                  let k = Name.lower s in
+                  let k = Geneweb_util.Name.lower s in
                   if k <> "" then match Hashtbl.find_opt ht_occupation k with
                     | Some (s, n) -> Hashtbl.replace ht_occupation k (s, (n + 1))
                     | None -> Hashtbl.add ht_occupation k (s, 1)
@@ -1238,7 +1237,7 @@ let print_all_stats conf base =
     let m = poi base (get_mother fam) in
     if Util.authorized_age conf base f
     && Util.authorized_age conf base m
-    then begin match Date.od_of_cdate (get_marriage fam) with
+    then begin match Geneweb_util.Date.od_of_cdate (get_marriage fam) with
       | Some (Dgreg ({ prec = Sure } as dmy, _) as d) -> begin
 
           (* Age at wedding *)
@@ -1249,9 +1248,9 @@ let print_all_stats conf base =
             | ( (Some (Dgreg (({prec = Sure} as dmy1), _)), _, _)
               , (Some (Dgreg (({prec = Sure} as dmy2), _)), _, _) ) ->
               if dmy1.day > 0
-              then aux1 ht_marr_age dmy1 (get_sex f) (Date.time_elapsed dmy1 dmy).year ;
+              then aux1 ht_marr_age dmy1 (get_sex f) (Geneweb_util.Date.time_elapsed dmy1 dmy).year ;
               if dmy2.day > 0
-              then aux1 ht_marr_age dmy2 (get_sex m) (Date.time_elapsed dmy2 dmy).year ;
+              then aux1 ht_marr_age dmy2 (get_sex m) (Geneweb_util.Date.time_elapsed dmy2 dmy).year ;
             | _ -> ()
           end;
 
@@ -1282,8 +1281,8 @@ let print_all_stats conf base =
               , (Some (Dgreg (({prec = Sure} as dmy2), _)), _, _) )
               when dmy1.day > 0 && dmy2.day > 0 ->
               let a =
-                if dmy1.year < dmy2.year then Date.time_elapsed dmy1 dmy2
-                else Date.time_elapsed dmy2 dmy2
+                if dmy1.year < dmy2.year then Geneweb_util.Date.time_elapsed dmy1 dmy2
+                else Geneweb_util.Date.time_elapsed dmy2 dmy2
               in
               let v = a.month + 12 * a.year in
               aux1 ht_marr_diff_age_cpl dmy (get_sex f) v ;
@@ -1315,7 +1314,7 @@ let print_all_stats conf base =
                   with
                   | ( (Some (Dgreg (({prec = Sure} as dmy_c1), _)), _, _)
                     , (Some (Dgreg (({prec = Sure} as dmy_c2), _)), _, _) ) ->
-                    let a = Date.time_elapsed dmy_c1 dmy_c2 in
+                    let a = Geneweb_util.Date.time_elapsed dmy_c1 dmy_c2 in
                     let v = a.month + 12 * a.year in
                     aux1 ht_diff_age_child dmy_c1 Neuter v
                   | _ -> ()
@@ -1333,7 +1332,7 @@ let print_all_stats conf base =
                 | (Some (Dgreg (({ prec = Sure } as dmy_c), _)), _, _) ->
                   let aux p = match Gutil.get_birth_death_date p with
                     | (Some (Dgreg (({ prec = Sure } as dmy_p), _)), _, _) ->
-                      aux1 ht dmy_c (get_sex p) (Date.time_elapsed dmy_p dmy_c).year
+                      aux1 ht dmy_c (get_sex p) (Geneweb_util.Date.time_elapsed dmy_p dmy_c).year
                     | _ -> ()
                   in
                   aux f ;
@@ -1361,7 +1360,7 @@ let print_all_stats conf base =
             then match (Gutil.get_birth_death_date c1, Gutil.get_birth_death_date c2) with
               | ( (Some (Dgreg (({prec = Sure} as dmy1), _)), _, _)
                 , (Some (Dgreg (({prec = Sure} as dmy2), _)), _, _) ) ->
-                let a = Date.time_elapsed dmy1 dmy2 in
+                let a = Geneweb_util.Date.time_elapsed dmy1 dmy2 in
                 let v = a.month + 12 * a.year in
                 aux1 ht_diff_age_extr_child dmy2 Neuter v
               | _ -> ()

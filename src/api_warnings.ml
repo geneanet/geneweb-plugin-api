@@ -240,7 +240,7 @@ let add_warning_to_piqi_warning_list conf base =
                  ; origin = [ p2wp base origin ]
                  } :: w.warning_witness_date_before_birth }
     | TitleDatesError (p, t) ->
-      let t = Futil.map_title_strings (sou base) t in
+      let t = Geneweb_util.Futil.map_title_strings (sou base) t in
       { w with warning_title_dates_error =
                  M.Warning_title_dates_error.{ person = p2wp base p
                                              ; title = Api_util.title_to_piqi_title t }

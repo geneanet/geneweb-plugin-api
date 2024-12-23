@@ -1,7 +1,7 @@
 let append l1 l2 =
   List.fold_left (fun l hd -> hd :: l) l2 (List.rev l1)
 
-let string_start_with ini s = Utf8.start_with_wildcard ini 0 s
+let string_start_with ini s = Geneweb_util.Utf8.start_with_wildcard ini 0 s
 
 (* Algo de Knuth-Morris-Pratt *)
 let init_next p =
@@ -17,8 +17,8 @@ let init_next p =
 
 (* Algo de Knuth-Morris-Pratt *)
 let kmp p s =
-  let p = (Name.lower p) in
-  let s = (Name.lower s) in
+  let p = (Geneweb_util.Name.lower p) in
+  let s = (Geneweb_util.Name.lower s) in
   (* Optimisation pour GeneWeb *)
   if s = "" || s = "?" then false
   else
@@ -60,10 +60,10 @@ let get_list_of_select_start_with (conf : Geneweb.Config.config) (base : Gwdb.ba
       (* Itère sur chaque entrée du tableau qui commence par la lettre letter *)
       let istr = Gwdb.spi_first name letter in
         let rec loop istr list =
-          let s = Mutil.nominative (Gwdb.sou base istr) in
+          let s = Geneweb_util.Mutil.nominative (Gwdb.sou base istr) in
           let k = Geneweb.Util.name_key base s in
             (* Vérifie que le début du nom de famille de la personne correspond à celui demandé *)
-            if "" = ini_n || string_start_with (Name.lower ini_n) (Name.lower k) then
+            if "" = ini_n || string_start_with (Geneweb_util.Name.lower ini_n) (Geneweb_util.Name.lower k) then
               let list =
                 if s <> "?" then
                   let my_list = Gwdb.spi_find name istr in
@@ -78,7 +78,7 @@ let get_list_of_select_start_with (conf : Geneweb.Config.config) (base : Gwdb.ba
                                 if "" <> ini_p
                                 then
                                     let isp = Gwdb.sou base (Gwdb.get_first_name p) in
-                                    if Gwdb.eq_istr isn istr && string_start_with (Name.lower ini_p) (Name.lower isp)
+                                    if Gwdb.eq_istr isn istr && string_start_with (Geneweb_util.Name.lower ini_p) (Geneweb_util.Name.lower isp)
                                     then
                                         (* Prénom===Prénom && Nom===Nom *)
                                         (ip :: l)
@@ -91,7 +91,7 @@ let get_list_of_select_start_with (conf : Geneweb.Config.config) (base : Gwdb.ba
                             if "" <> ini_p
                             then
                                 let isp = Gwdb.sou base (Gwdb.get_first_name p) in
-                                if string_start_with (Name.lower ini_p) (Name.lower isp)
+                                if string_start_with (Geneweb_util.Name.lower ini_p) (Geneweb_util.Name.lower isp)
                                 then
                                     (* Prénom===Prénom && Nom===* *)
                                     (ip :: l)
@@ -143,9 +143,9 @@ let select_start_with (conf : Geneweb.Config.config) (base : Gwdb.base) (ini_n :
   let start =
     if ini_n <> ""
     then
-      Ext_string.tr '_' ' ' ini_n
+      Geneweb_util.Ext_string.tr '_' ' ' ini_n
     else
-      Ext_string.tr '_' ' ' ini_p
+      Geneweb_util.Ext_string.tr '_' ' ' ini_p
   in
   let list_min =
     let letter = String.lowercase_ascii (String.sub start 0 1) in
@@ -164,10 +164,10 @@ let aux_ini (s : string) : string list =
       let start = index + 1 in
       let len = String.length (s :> string) - start in
       let ns = Adef.encoded @@ String.sub (s :> string) start len in
-      loop ns (Mutil.decode (Adef.encoded @@ String.sub (s :> string) 0 index) :: acc)
-    else (Mutil.decode s :: acc)
+      loop ns (Geneweb_util.Mutil.decode (Adef.encoded @@ String.sub (s :> string) 0 index) :: acc)
+    else (Geneweb_util.Mutil.decode s :: acc)
   in
-  loop (Mutil.encode s) []
+  loop (Geneweb_util.Mutil.encode s) []
 
 let select_both_all base ini_n ini_p maiden_name =
   let find_sn p x = kmp x (Gwdb.sou base (Gwdb.get_surname p)) in
@@ -264,13 +264,13 @@ let print_list conf base filters list =
     else
       List.sort
         (fun p1 p2 ->
-          let sn1 = Name.lower (Gwdb.p_surname base p1) in
-          let sn2 = Name.lower (Gwdb.p_surname base p2) in
-          let comp = Utf8.alphabetic_order sn1 sn2 in
+          let sn1 = Geneweb_util.Name.lower (Gwdb.p_surname base p1) in
+          let sn2 = Geneweb_util.Name.lower (Gwdb.p_surname base p2) in
+          let comp = Geneweb_util.Utf8.alphabetic_order sn1 sn2 in
           if comp = 0 then
-            let fn1 = Name.lower (Gwdb.p_first_name base p1) in
-            let fn2 = Name.lower (Gwdb.p_first_name base p2) in
-            Utf8.alphabetic_order fn1 fn2
+            let fn1 = Geneweb_util.Name.lower (Gwdb.p_first_name base p1) in
+            let fn2 = Geneweb_util.Name.lower (Gwdb.p_first_name base p2) in
+            Geneweb_util.Utf8.alphabetic_order fn1 fn2
           else comp)
         person_l
   in
@@ -294,7 +294,7 @@ let print_search conf base =
    | (Some n, Some fs) ->
       let _ = Gwdb.load_strings_array base in
       let list =
-        if Name.lower n = "" && Name.lower fs = "" then
+        if Geneweb_util.Name.lower n = "" && Geneweb_util.Name.lower fs = "" then
           []
         else
           let maiden_name = search_params.Api_piqi.Search_params.maiden_name in
@@ -310,7 +310,7 @@ let print_search conf base =
   | (Some n, None) ->
       let _ = Gwdb.load_strings_array base in
       let list =
-        if Name.lower n = "" then
+        if Geneweb_util.Name.lower n = "" then
           []
         else
           match search_params.Api_piqi.Search_params.search_type with
@@ -322,7 +322,7 @@ let print_search conf base =
   | (None, Some fs) ->
       let _ = Gwdb.load_strings_array base in
       let list =
-        if Name.lower fs = "" then
+        if Geneweb_util.Name.lower fs = "" then
           []
         else
           match search_params.Api_piqi.Search_params.search_type with
@@ -366,11 +366,11 @@ let string_incl_start_with x y =
 
 let select_both_start_with_person base ini_n ini_p =
   let find n x = string_start_with x n in
-  let ini_n = aux_ini (Name.lower ini_n) in
-  let ini_p = aux_ini (Name.lower ini_p) in
+  let ini_n = aux_ini (Geneweb_util.Name.lower ini_n) in
+  let ini_p = aux_ini (Geneweb_util.Name.lower ini_p) in
   Gwdb.Collection.fold begin fun list p ->
-      let surnames = aux_ini (Name.lower (Gwdb.sou base (Gwdb.get_surname p))) in
-      let first_names = aux_ini (Name.lower (Gwdb.sou base (Gwdb.get_first_name p))) in
+      let surnames = aux_ini (Geneweb_util.Name.lower (Gwdb.sou base (Gwdb.get_surname p))) in
+      let first_names = aux_ini (Geneweb_util.Name.lower (Gwdb.sou base (Gwdb.get_first_name p))) in
       let start_surname =
         List.for_all
           (fun ini -> List.exists (fun name -> find name ini) surnames)
@@ -387,9 +387,9 @@ let select_both_start_with_person base ini_n ini_p =
 
 let select_start_with_person base get_field ini =
   let find n x = string_start_with x n in
-  let ini = aux_ini (Name.lower ini) in
+  let ini = aux_ini (Geneweb_util.Name.lower ini) in
   Gwdb.Collection.fold begin fun list p ->
-      let names = aux_ini (Name.lower (Gwdb.sou base (get_field p))) in
+      let names = aux_ini (Geneweb_util.Name.lower (Gwdb.sou base (get_field p))) in
       let start_name =
         List.for_all
           (fun ini -> List.exists (fun name -> find name ini) names)
@@ -405,8 +405,8 @@ let matching_nameset base stop max_res istr name_f name first_letter =
     let k = Geneweb.Util.name_key base s in
     if n < max_res && (stop && String.sub k 0 1 = first_letter || not stop) then
       let n, set =
-        if string_incl_start_with (Name.lower name) (Name.lower k) then
-          n + 1, Ext_string.Set.add s set
+        if string_incl_start_with (Geneweb_util.Name.lower name) (Geneweb_util.Name.lower k) then
+          n + 1, Geneweb_util.Ext_string.Set.add s set
         else n, set
       in
       match Gwdb.spi_next name_f istr with
@@ -414,15 +414,15 @@ let matching_nameset base stop max_res istr name_f name first_letter =
       | istr -> aux n istr set
     else n, set
   in
-  aux 0 istr Ext_string.Set.empty
+  aux 0 istr Geneweb_util.Ext_string.Set.empty
 
 let matching_nameset' base stop max_res name_f name first_letter =
   match Gwdb.spi_first name_f first_letter with
-  | exception Not_found -> 0, Ext_string.Set.empty
+  | exception Not_found -> 0, Geneweb_util.Ext_string.Set.empty
   | istr -> matching_nameset base stop max_res istr name_f name first_letter
 
 let matching_nameset_of_input base stop uppercase name_f max_res name =
-  let name' = Ext_string.tr '_' ' ' name in
+  let name' = Geneweb_util.Ext_string.tr '_' ' ' name in
   let first_letter = String.sub name' 0 1 in
   let first_letter =
     if uppercase then String.uppercase_ascii first_letter
@@ -448,7 +448,7 @@ let select_start_with_auto_complete base mode max_res input =
       let nb_res, maj_set = matching_nameset_of_input base true true name_f max_res name in
       (* lowercase *)
       let _, min_set = matching_nameset_of_input base true false name_f (max_res - nb_res) name in
-      Ext_string.Set.union maj_set min_set
+      Geneweb_util.Ext_string.Set.union maj_set min_set
     end
   else
     begin
@@ -459,8 +459,8 @@ let select_start_with_auto_complete base mode max_res input =
 
 let select_start_with_auto_complete base mode max_res ini =
   let s = select_start_with_auto_complete base mode max_res ini in
-  let l = Ext_string.Set.elements s in
-  List.sort Utf8.alphabetic_order l
+  let l = Geneweb_util.Ext_string.Set.elements s in
+  List.sort Geneweb_util.Utf8.alphabetic_order l
 
 type dico = string array
 
@@ -496,14 +496,14 @@ let complete_with_dico assets conf nb max mode ini list =
       else
         let hd = Array.unsafe_get list i in
         let acc =
-          let k =  Ext_string.tr '_' ' ' hd in
+          let k =  Geneweb_util.Ext_string.tr '_' ' ' hd in
           let k =
             match mode with
             | `area_code | `country | `county | `region | `town ->
                Geneweb.Place.without_suburb k
             | `subdivision | `profession -> k
           in
-          if string_start_with ini (Name.lower k) then begin
+          if string_start_with ini (Geneweb_util.Name.lower k) then begin
             let row = Api_csv.row_of_string hd in
             let hd_opt =
               match mode with
@@ -570,14 +570,14 @@ let complete_with_dico assets conf nb max mode ini list =
      in
      dictionary
      |> reduce_dico `profession list []
-     |> List.sort Utf8.alphabetic_order
+     |> List.sort Geneweb_util.Utf8.alphabetic_order
      |> append list
   | None
     | Some (#Api_saisie_write_piqi.auto_complete_place_field | `profession) ->
      list
 
 let get_all_data_from_db conf base data compare =
-  let conf = { conf with Geneweb.Config.env = ("data", Mutil.encode data) :: conf.Geneweb.Config.env } in
+  let conf = { conf with Geneweb.Config.env = ("data", Geneweb_util.Mutil.encode data) :: conf.Geneweb.Config.env } in
   Geneweb.UpdateData.get_all_data conf base
   |> List.map (Gwdb.sou base)
   |> List.sort compare
@@ -593,7 +593,7 @@ type query = {kind : kind; limit : int; term : string}
 let is_completion_suggestion ~query:{kind; term} candidate =
   match kind with
   | Source | Occupation ->
-     string_start_with term (Name.lower @@ Ext_string.tr '_' ' ' candidate)
+     string_start_with term (Geneweb_util.Name.lower @@ Geneweb_util.Ext_string.tr '_' ' ' candidate)
   | Place {field} ->
      let hd' =
        match field with
@@ -601,14 +601,14 @@ let is_completion_suggestion ~query:{kind; term} candidate =
           Geneweb.Place.without_suburb candidate
        | Some `subdivision -> candidate
      in
-     Utf8.start_with_wildcard term 0 @@ Name.lower @@ Ext_string.tr '_' ' ' hd'
+     Geneweb_util.Utf8.start_with_wildcard term 0 @@ Geneweb_util.Name.lower @@ Geneweb_util.Ext_string.tr '_' ' ' hd'
 
 let complete_with_db ~conf ~base ~nb query =
   let list =
     let data, compare =
       match query.kind with
-      | Source -> "src", Utf8.alphabetic_order
-      | Occupation -> "occu", Utf8.alphabetic_order
+      | Source -> "src", Geneweb_util.Utf8.alphabetic_order
+      | Occupation -> "occu", Geneweb_util.Utf8.alphabetic_order
       | Place _ -> "place", Geneweb.Place.compare_places
     in
     get_all_data_from_db conf base data compare
@@ -631,7 +631,7 @@ let search_auto_complete assets conf base mode place_mode max term =
 
   | `place ->
     let nb = ref 0 in
-    let ini = Name.lower @@ Ext_string.tr '_' ' ' term in
+    let ini = Geneweb_util.Name.lower @@ Geneweb_util.Ext_string.tr '_' ' ' term in
     let reduced_list =
       let field =
         (place_mode :> Api_saisie_write_piqi.auto_complete_place_field option)
@@ -643,18 +643,18 @@ let search_auto_complete assets conf base mode place_mode max term =
 
   | `source ->
     let nb = ref 0 in
-    let ini = Name.lower @@ Ext_string.tr '_' ' ' term in
+    let ini = Geneweb_util.Name.lower @@ Geneweb_util.Ext_string.tr '_' ' ' term in
     let query = {kind = Source; limit = max; term = ini} in
     complete_with_db ~conf ~base ~nb query
 
   | `firstname | `lastname as mode ->
-    if Name.lower term = "" then []
+    if Geneweb_util.Name.lower term = "" then []
     else ( Gwdb.load_strings_array base
          ; select_start_with_auto_complete base mode max term )
 
   | `occupation ->
     let nb = ref 0 in
-    let term = Name.lower @@ Ext_string.tr '_' ' ' term in
+    let term = Geneweb_util.Name.lower @@ Geneweb_util.Ext_string.tr '_' ' ' term in
     let suggestions_from_db =
       complete_with_db ~conf ~base ~nb {kind = Occupation; limit = max; term}
     in
@@ -666,8 +666,8 @@ let search_person_list base surname first_name =
   let (surname, first_name) =
     match (surname, first_name) with
     | (Some n, Some fn) ->
-        ((if Name.lower n = "" then None else Some n),
-         (if Name.lower fn = "" then None else Some fn))
+        ((if Geneweb_util.Name.lower n = "" then None else Some n),
+         (if Geneweb_util.Name.lower fn = "" then None else Some fn))
     | (Some n, None) -> ((if n = "" then None else Some n), None)
     | (None, Some fn) -> (None, (if fn = "" then None else Some fn))
     | (None, None) -> (None, None)

@@ -2,7 +2,7 @@
 
 let complete_with_cache conf assets mode place_mode max_res s =
   let cache = Api_saisie_autocomplete.get_list_from_cache conf mode max_res s in
-  let ini = Name.lower @@ Ext_string.tr '_' ' ' s in
+  let ini = Geneweb_util.Name.lower @@ Geneweb_util.Ext_string.tr '_' ' ' s in
   match mode with
   | `place | `source | `lastname | `firstname ->
     Api_search.complete_with_dico assets conf (ref @@ List.length cache) max_res place_mode ini cache
@@ -50,15 +50,15 @@ let print_person_search_list conf base =
         let sn1 = Gwdb.sou base (Gwdb.get_surname p1) in
         let fn2 = Gwdb.sou base (Gwdb.get_first_name p2) in
         let sn2 = Gwdb.sou base (Gwdb.get_surname p2) in
-        let cmp_sn = Utf8.alphabetic_order sn1 sn2 in
+        let cmp_sn = Geneweb_util.Utf8.alphabetic_order sn1 sn2 in
         if cmp_sn = 0 then
-          let cmp_fn = Utf8.alphabetic_order fn1 fn2 in
+          let cmp_fn = Geneweb_util.Utf8.alphabetic_order fn1 fn2 in
           if cmp_fn = 0 then
             (match
-              (Date.od_of_cdate (Gwdb.get_birth p1),
-               Date.od_of_cdate (Gwdb.get_birth p2))
+              (Geneweb_util.Date.od_of_cdate (Gwdb.get_birth p1),
+               Geneweb_util.Date.od_of_cdate (Gwdb.get_birth p2))
              with
-             | (Some d1, Some d2) -> Date.compare_date d1 d2
+             | (Some d1, Some d2) -> Geneweb_util.Date.compare_date d1 d2
              | (Some _, _) -> -1
              | (_, Some _) -> 1
              | (_, _) -> 0)
@@ -67,7 +67,7 @@ let print_person_search_list conf base =
       list
   in
   (* On préfère limiter la liste ici, même si on perd un peu en performance. *)
-  let list = Ext_list.take list max_res in
+  let list = Geneweb_util.Ext_list.take list max_res in
   let () = Geneweb.SosaCache.build_sosa_ht conf base in
   let list =
     List.map
@@ -255,7 +255,7 @@ let print_config conf =
   let transl_pevent_sec =
     List.sort
       (fun msg1 msg2 ->
-        Utf8.alphabetic_order
+        Geneweb_util.Utf8.alphabetic_order
           msg1.Api_saisie_write_piqi.Transl_pevent_name.sval
           msg2.Api_saisie_write_piqi.Transl_pevent_name.sval)
       transl_pevent_sec
@@ -279,7 +279,7 @@ let print_config conf =
   let transl_pevent_LDS =
     List.sort
       (fun msg1 msg2 ->
-        Utf8.alphabetic_order
+        Geneweb_util.Utf8.alphabetic_order
           msg1.Api_saisie_write_piqi.Transl_pevent_name.sval
           msg2.Api_saisie_write_piqi.Transl_pevent_name.sval)
       transl_pevent_LDS
@@ -485,8 +485,8 @@ let children_surname base fam =
   | [||] -> NoChild
   | [|x|] -> Surname x
   | a ->
-    let x_crush = Name.crush_lower a.(0) in
-    if Array.for_all (fun n -> Name.crush_lower n = x_crush) a
+    let x_crush = Geneweb_util.Name.crush_lower a.(0) in
+    if Array.for_all (fun n -> Geneweb_util.Name.crush_lower n = x_crush) a
     then Surname a.(0)
     else NoSurname
 
@@ -495,8 +495,8 @@ let infer_surname_from_parents base surname p =
   | Some ifam -> begin
       let g_fam = Gwdb.foi base ifam in
       let g_father = Gwdb.poi base (Gwdb.get_father g_fam) in
-      if Name.crush_lower surname
-         = Name.crush_lower (Gwdb.sou base (Gwdb.get_surname g_father))
+      if Geneweb_util.Name.crush_lower surname
+         = Geneweb_util.Name.crush_lower (Gwdb.sou base (Gwdb.get_surname g_father))
       then surname
       else ""
     end
@@ -566,7 +566,7 @@ let possible_family_dup conf base f1 =
       (print_someone base @@ Gwdb.poi base @@ Gwdb.get_mother f)
   in
   let link = merge_dup_link conf (Gwdb.get_father f)
-               (Geneweb.Util.transl conf "click here to merge these unions" |> Utf8.capitalize_fst)
+               (Geneweb.Util.transl conf "click here to merge these unions" |> Geneweb_util.Utf8.capitalize_fst)
   in
   w ^ ". " ^ link
 
@@ -585,7 +585,7 @@ let possible_family_dup_homonmous conf base fam p =
       (print_someone base @@ Gwdb.poi base @@ hom)
   in
   let txt = Geneweb.Util.transl conf "click here to merge these persons and their unions"
-            |> Utf8.capitalize_fst
+            |> Geneweb_util.Utf8.capitalize_fst
   in
   let link = merge_dup_link conf curr txt in
   w ^ ". " ^ link
@@ -810,12 +810,12 @@ let compute_warnings conf base resp =
                   (fun _ ->
                      Printf.sprintf "%s %s %s-%s"
                        (Gwdb.sou base t.Def.t_ident) (Gwdb.sou base t.t_place)
-                       (match Date.od_of_cdate t.t_date_start with
+                       (match Geneweb_util.Date.od_of_cdate t.t_date_start with
                         | Some d ->
                            let open Api_util in
                            !!(Geneweb.DateDisplay.string_of_date conf d)
                         | _ -> "" )
-                       (match Date.od_of_cdate t.t_date_end with
+                       (match Geneweb_util.Date.od_of_cdate t.t_date_end with
                         | Some d ->
                            let open Api_util in
                            !!(Geneweb.DateDisplay.string_of_date conf d)
@@ -846,7 +846,7 @@ let compute_warnings conf base resp =
           (fun m ml ->
             match m with
             | Geneweb.Warning.MissingSources ->
-                let m = Utf8.capitalize_fst (Geneweb.Util.transl conf "missing sources") in
+                let m = Geneweb_util.Utf8.capitalize_fst (Geneweb.Util.transl conf "missing sources") in
                 m :: ml)
           ml []
       in
@@ -871,8 +871,8 @@ let compute_modification_status' conf base ip ifam resp =
       else
         (surname, first_name, occ, index_person, surname_str, first_name_str)
   in
-  let sn = if surname = "" then None else Some (Name.lower surname) in
-  let fn = if first_name = "" then None else Some (Name.lower first_name) in
+  let sn = if surname = "" then None else Some (Geneweb_util.Name.lower surname) in
+  let fn = if first_name = "" then None else Some (Geneweb_util.Name.lower first_name) in
   let index_family = if ifam = Gwdb.dummy_ifam then None else Some (Int32.of_string @@ Gwdb.string_of_ifam ifam) in
   let (is_base_updated, warnings, miscs, conflict, history_records, created_person) =
     compute_warnings conf base resp
@@ -2284,8 +2284,8 @@ let print_add_first_fam conf =
   let occ = mod_p.Api_saisie_write_piqi.Person.occ in
   let lastname_str = Some mod_p.Api_saisie_write_piqi.Person.lastname in
   let firstname_str = Some mod_p.Api_saisie_write_piqi.Person.firstname in
-  let n = if lastname = "" then None else Some (Name.lower lastname) in
-  let p = if firstname = "" then None else Some (Name.lower firstname) in
+  let n = if lastname = "" then None else Some (Geneweb_util.Name.lower lastname) in
+  let p = if firstname = "" then None else Some (Geneweb_util.Name.lower firstname) in
   let index_family = None in
   let (is_base_updated, warnings, miscs, conflict, _) =
     match resp with

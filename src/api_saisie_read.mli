@@ -3,7 +3,7 @@ val short_dates_text :
 
 val string_of_date_and_conv :
   Geneweb.Config.config ->
-  Date.date ->
+  Geneweb_util.Date.date ->
   string
   * string
   * string

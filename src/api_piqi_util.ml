@@ -1,10 +1,10 @@
 open Geneweb
 open Def
-open Date
+open Geneweb_util.Date
 open Config
 
 let p_getenvbin env label =
-  let decode_varenv = Mutil.gen_decode false in
+  let decode_varenv = Geneweb_util.Mutil.gen_decode false in
   try Some (decode_varenv (List.assoc label env))
   with Not_found -> None
 
@@ -181,8 +181,8 @@ module ReferencePerson
  = struct
 
   let person_to_reference_person base p =
-    { M.Reference_person.n = Name.lower @@ Gwdb.sou base @@ Gwdb.get_surname p
-    ; p = Name.lower @@ Gwdb.sou base @@ Gwdb.get_first_name p
+    { M.Reference_person.n = Geneweb_util.Name.lower @@ Gwdb.sou base @@ Gwdb.get_surname p
+    ; p = Geneweb_util.Name.lower @@ Gwdb.sou base @@ Gwdb.get_first_name p
     ; oc = Int32.of_int (Gwdb.get_occ p)
     }
 

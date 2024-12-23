@@ -30,7 +30,7 @@ val print_result :
 val get_portrait :
   Geneweb.Config.config -> Gwdb.base -> Gwdb.person -> string option
 
-val string_of_prec_dmy : Date.dmy -> string
+val string_of_prec_dmy : Geneweb_util.Date.dmy -> string
 val has_base_loop : Geneweb.Config.config -> Gwdb.base -> bool
 
 val piqi_of_witness_kind :
@@ -59,7 +59,7 @@ val pers_to_piqi_person_light :
   (Gwdb.person -> Sosa.t) ->
   Api_piqi.person
 
-val piqi_date_of_date : Date.date -> Api_piqi.date
+val piqi_date_of_date : Geneweb_util.Date.date -> Api_piqi.date
 
 val piqi_death_type_of_death :
   Def.death ->
@@ -71,7 +71,7 @@ val person_to_reference_person :
 val print_error :
   Geneweb.Config.config -> Api_piqi.Api_piqi.error_code -> string -> _
 
-val date_of_piqi_date : Api_piqi.date -> Date.date
+val date_of_piqi_date : Api_piqi.date -> Geneweb_util.Date.date
 
 val pers_to_piqi_person :
   Geneweb.Config.config ->
@@ -135,7 +135,7 @@ val data_list_person_option :
   string
 
 val is_empty_or_quest_name : Gwdb.person -> bool
-val is_date_included : bool -> Date.date option -> Date.dmy -> Date.dmy -> bool
+val is_date_included : bool -> Geneweb_util.Date.date option -> Geneweb_util.Date.dmy -> Geneweb_util.Date.dmy -> bool
 val p_getenvbin : ('a * Adef.encoded_string) list -> 'a -> string option
 
 val pers_to_piqi_person_full :

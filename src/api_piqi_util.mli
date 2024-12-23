@@ -24,7 +24,7 @@ module Date : functor
      end
    end)
   -> sig
-  val piqi_date_of_date : Date.date -> M.Date.t
+  val piqi_date_of_date : Geneweb_util.Date.date -> M.Date.t
 end
 
 module Filter : functor

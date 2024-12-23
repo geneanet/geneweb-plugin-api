@@ -31,7 +31,7 @@ let generate assets lang data_type data =
 
 let sorted_array_of_set s =
   let a = StrSet.elements s |> Array.of_list in
-  Array.sort Utf8.alphabetic_order a ;
+  Array.sort Geneweb_util.Utf8.alphabetic_order a ;
   a
 
 module PlacesData : sig
@@ -129,7 +129,7 @@ let write_dico_profession_set ~assets ~fname_csv ~lang =
   let professions_set = Api_csv.fold_left (fun set ->
       function
       | [profession] ->
-        StrSet.add (Utf8.capitalize_fst profession) set
+        StrSet.add (Geneweb_util.Utf8.capitalize_fst profession) set
       | l ->
         malformed_line fname_csv l;
         set
