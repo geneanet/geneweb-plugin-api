@@ -585,7 +585,7 @@ let is_completion_suggestion ~mode ~place_mode ~ini ~candidate =
   | `source | `occupation ->
      string_start_with ini (Name.lower @@ Ext_string.tr '_' ' ' candidate)
   | `place as mode ->
-    Api_saisie_autocomplete.is_valid_suggestion ~mode ~place_mode ~ini ~candidate
+    Api_saisie_autocomplete.is_valid_suggestion ~mode ~place_mode ~ini ~candidate:(Ext_string.tr '_' ' ' candidate)
 
 let complete_with_db ~conf ~base ~max ~(mode : [`source | `occupation | `place]) ~place_mode ~ini =
   let list =
