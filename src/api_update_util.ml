@@ -81,7 +81,7 @@ let created_person_is_unnamed cp =
   cp.n = "?" && cp.p = "?"
 
 type update_base_status =
-  | UpdateSuccess of Geneweb.CheckItem.base_warning list * Geneweb.CheckItem.base_misc list * (unit -> unit) list * created_person option
+  | UpdateSuccess of Geneweb.Warning.base_warning list * Geneweb.Warning.base_misc list * (unit -> unit) list * created_person option
   | UpdateError of Geneweb.Update.update_error
   | UpdateErrorConflict of Api_saisie_write_piqi.Create_conflict.t
 

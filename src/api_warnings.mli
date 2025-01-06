@@ -4,7 +4,7 @@ val add_warning_to_piqi_warning_list :
   _ ->
   Gwdb.base ->
   Api_piqi.base_warnings ->
-  Geneweb.CheckItem.base_warning ->
+  Geneweb.Warning.base_warning ->
   Api_piqi.base_warnings
 
 val add_error_to_piqi_warning_list :

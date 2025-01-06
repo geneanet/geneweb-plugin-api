@@ -35,9 +35,20 @@ let w_base =
   in
   Gwd_lib.Request.w_base ~none
 
-let set_request_timeout () =
+let set_warning_timeout conf : unit =
+  Wserver.set_on_timeout (fun _ ->
+      let empty = Plugin_api_lib.Api_warnings.empty in
+      let data = Plugin_api_lib.Api_piqi_ext.gen_base_warnings empty in
+      Plugin_api_lib.Api_util.print_result conf data
+    )
+
+let set_request_timeout () : unit =
   Wserver.set_on_timeout
     (fun _ -> Wserver.request_timeout ())
+
+let choose_timeout_behaviour conf timeout_mode : unit = match timeout_mode with
+  | `TIMEOUT_504 -> set_request_timeout ()
+  | `TIMEOUT_EMPTY_WARNINGS -> set_warning_timeout conf
 
 let () =
   let assets = !Gwd_lib.GwdPlugin.assets in
@@ -63,9 +74,10 @@ let () =
     try Scanf.sscanf s "dico_profession_%[a-z].csv" (aux `profession s)
     with _ -> ()
   end (Sys.readdir assets) ;
-  let aux fn _assets conf base =
-    set_request_timeout ();
-    fn { conf with Geneweb.Config.api_mode = true } base ; true
+  let aux ?(timeout_mode = `TIMEOUT_504) fn _assets conf base =
+    let conf = { conf with Geneweb.Config.api_mode = true } in
+    choose_timeout_behaviour conf timeout_mode;
+    fn conf base ; true
   in
   Gwd_lib.GwdPlugin.register ~ns:"api"
     [ ( "API_ADD_FIRST_FAM"
@@ -75,7 +87,7 @@ let () =
     ; ( "API_ALL_FAMILIES"
       , aux @@ w_base @@ Plugin_api_lib.Api.print_all_families)
     ; ( "API_BASE_WARNINGS"
-      , aux @@ friend @@ w_lock @@ w_base @@ Plugin_api_lib.Api.print_base_warnings)
+      , aux ~timeout_mode:`TIMEOUT_EMPTY_WARNINGS @@ friend @@ w_base @@ Plugin_api_lib.Api.print_base_warnings)
     ; ( "API_CLOSE_PERSONS"
       , aux @@ w_base @@ Plugin_api_lib.Api_graph.print_close_person_relations)
     ; ( "API_CPL_REL"

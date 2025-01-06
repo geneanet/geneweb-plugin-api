@@ -469,32 +469,19 @@ let print_updt_image conf base =
   Gwdb.commit_patches base;
   Api_util.print_result conf (fun _ -> "")
 
-exception WarningFound
-let table_contains_warning base tbl w =
-  try Hashtbl.iter (fun w' _ ->
-          if Geneweb.CheckItem.eq_warning base w w'
-          then raise WarningFound) tbl;
-      false
-  with WarningFound -> true
-
 let print_base_warnings conf base =
-  Wserver.set_on_timeout (fun _ ->
-      let empty = Api_warnings.empty in
-      let data = Api_piqi_ext.gen_base_warnings empty in
-      Api_util.print_result conf data
-  );
   let filters = Api_util.get_filters conf in
   let errors = ref [] in
-  let warnings = Hashtbl.create 0 in
+  let module BaseWarningSet = Geneweb.Warning.Gen_BaseWarningSet (struct let base = base end) in
+  let warnings = ref BaseWarningSet.empty in
   Geneweb.Check.check_base base
     (fun e -> errors := e :: !errors)
-    (fun w ->
-       if not @@ table_contains_warning base warnings w
-       then Hashtbl.add warnings w true)
+    (fun w -> warnings := BaseWarningSet.add w !warnings)
     ignore ;
+  let warnings = Geneweb.Warning.handle_homonymous base (BaseWarningSet.elements !warnings) in
   let data =
     if filters.Api_def.nb_results then
-      let len = List.length !errors + Hashtbl.length warnings in
+      let len = List.length !errors + List.length warnings in
       let len = Api_piqi.Internal_int32.({value = Int32.of_int len}) in
       Api_piqi_ext.gen_internal_int32 len
     else
@@ -506,9 +493,9 @@ let print_base_warnings conf base =
       in
       let result =
         (* Make the warning list uniq *)
-        Hashtbl.fold begin fun (x : Geneweb.CheckItem.base_warning) _ acc ->
+        List.fold_left begin fun acc (x : Geneweb.Warning.base_warning) ->
           Api_warnings.add_warning_to_piqi_warning_list conf base acc x
-        end warnings result
+        end result warnings
       in
       Api_piqi_ext.gen_base_warnings result
   in
