@@ -11,7 +11,7 @@ val dico_fname :
 val complete_with_dico :
   string ->
   Geneweb.Config.config ->
-  int ref ->
+  int ->
   int ->
   [< Api_saisie_write_piqi.auto_complete_place_field | `profession]
   option ->
@@ -24,14 +24,13 @@ val complete_with_dico :
 *)
 
 val search_auto_complete :
-  string ->
-  Geneweb.Config.config ->
-  Gwdb.base ->
-  [< Api_saisie_write_piqi.auto_complete_field ] ->
-  [< Api_saisie_write_piqi.auto_complete_place_field ]
-  option ->
-  int ->
-  string ->
+  assets:string ->
+  conf:Geneweb.Config.config ->
+  base:Gwdb.base ->
+  mode:Api_saisie_write_piqi.auto_complete_field ->
+  place_mode:Api_saisie_write_piqi.auto_complete_place_field option ->
+  max:int ->
+  ini:string ->
   string list
 
 val search_person_list :
