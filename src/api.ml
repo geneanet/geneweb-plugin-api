@@ -472,7 +472,7 @@ let print_updt_image conf base =
 let print_base_warnings conf base =
   let filters = Api_util.get_filters conf in
   let errors = ref [] in
-  let module BaseWarningSet = Geneweb.Warning.Gen_BaseWarningSet (struct let base = base end) in
+  let module BaseWarningSet = Geneweb.Warning.BaseWarningSet in
   let warnings = ref BaseWarningSet.empty in
   Geneweb.Check.check_base base
     (fun e -> errors := e :: !errors)
