@@ -893,18 +893,18 @@ let compute_modification_status' conf base ip ifam resp =
       base_warnings = warnings;
       base_miscs = miscs;
       index_person = index_person;
-      lastname = surname;
-      firstname = first_name;
+      lastname = Utf8.normalize surname;
+      firstname = Utf8.normalize first_name;
       occ = occ;
       index_family = index_family;
       conflict = conflict;
-      lastname_str = surname_str;
-      firstname_str = first_name_str;
-      n = sn;
-      p = fn;
+      lastname_str = Option.map Utf8.normalize surname_str;
+      firstname_str = Option.map Utf8.normalize first_name_str;
+      n = Option.map Utf8.normalize sn;
+      p = Option.map Utf8.normalize fn;
       created_person = Option.map (fun cp -> Api_saisie_write_piqi.Created_person.{
-        n = cp.Api_update_util.n;
-        p = cp.p;
+        n = Utf8.normalize cp.Api_update_util.n;
+        p = Utf8.normalize cp.p;
         oc = cp.oc;
       }) created_person;
     }
@@ -1326,12 +1326,12 @@ let print_add_family_ok conf base =
   let firstname =
     if Gwdb.is_empty_string fn then
       response.Api_saisie_write_piqi.Modification_status.firstname
-    else Gwdb.sou base fn
+    else Utf8.normalize (Gwdb.sou base fn)
   in
   let lastname =
     if Gwdb.is_empty_string sn then
       response.Api_saisie_write_piqi.Modification_status.lastname
-    else Gwdb.sou base sn
+    else Utf8.normalize (Gwdb.sou base sn)
   in
   let firstname_str =
     if Gwdb.is_empty_string fn then
