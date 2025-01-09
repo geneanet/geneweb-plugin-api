@@ -1085,8 +1085,8 @@ let print_add_family conf base =
   let family = compute_add_family conf base p in
   let add_family =
     {
-      Api_saisie_write_piqi.Add_family.person_lastname = surname;
-      person_firstname = first_name;
+      Api_saisie_write_piqi.Add_family.person_lastname = Utf8.normalize surname;
+      person_firstname = Utf8.normalize first_name;
       family = family;
     }
   in
@@ -1561,11 +1561,11 @@ let print_add_parents conf base =
       mother.Api_saisie_write_piqi.Person.pevents <- mother.Api_saisie_write_piqi.Person.pevents @ [ empty_death_pevent () ]
     end
   in
-  father.Api_saisie_write_piqi.Person.lastname <- surname ;
+  father.Api_saisie_write_piqi.Person.lastname <- Utf8.normalize surname ;
   let add_parents =
     {
-      Api_saisie_write_piqi.Add_parents.person_lastname = surname;
-      person_firstname = first_name;
+      Api_saisie_write_piqi.Add_parents.person_lastname = Utf8.normalize surname;
+      person_firstname = Utf8.normalize first_name;
       family = family;
     }
   in
@@ -1827,10 +1827,10 @@ let print_add_child conf base =
              Api_saisie_write_piqi.Family_spouse.index_family = index_family;
              index_person = index_person;
              sex = sex;
-             lastname = surname;
-             firstname = first_name;
-             dates = if dates = "" then None else Some dates;
-             image;
+             lastname = Utf8.normalize surname;
+             firstname = Utf8.normalize first_name;
+             dates = if dates = "" then None else Some (Utf8.normalize dates);
+             image = Option.map Utf8.normalize image;
              sosa = sosa;
            }
          in
@@ -1875,11 +1875,11 @@ let print_add_child conf base =
   in
   (* On prend le nom du père *)
   let child_surname = infer_surname conf base p @@ Option.map Int32.to_string ifam_i32_opt in
-  child.Api_saisie_write_piqi.Person.lastname <- child_surname;
+  child.Api_saisie_write_piqi.Person.lastname <- Utf8.normalize child_surname;
   let add_child =
     Api_saisie_write_piqi.Add_child.({
-      person_lastname = surname;
-      person_firstname = first_name;
+      person_lastname = Utf8.normalize surname;
+      person_firstname = Utf8.normalize first_name;
       family_spouse = family_spouse;
       child = child;
     })
@@ -1924,11 +1924,11 @@ let print_add_sibling conf base =
     | Some father -> infer_surname conf base father None
     | None -> surname
   in
-  sibling.Api_saisie_write_piqi.Person.lastname <- sibling_surname;
+  sibling.Api_saisie_write_piqi.Person.lastname <- Utf8.normalize sibling_surname;
   let add_sibling =
     Api_saisie_write_piqi.Add_sibling.({
-      person_lastname = surname;
-      person_firstname = first_name;
+      person_lastname = Utf8.normalize surname;
+      person_firstname = Utf8.normalize first_name;
       sibling = sibling;
     })
   in

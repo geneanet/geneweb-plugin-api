@@ -320,7 +320,7 @@ let piqi_date_of_date (date : Date.date) : Api_saisie_write_piqi.date =
         prec = None;
         dmy = None;
         dmy2 = None;
-        text = Some txt;
+        text = Some (Utf8.normalize txt);
       }
 
 
@@ -941,10 +941,10 @@ let pers_to_piqi_person_link conf base p =
     Api_saisie_write_piqi.Person_link.create_link = create_link;
     index = index;
     sex = sex;
-    lastname = surname;
-    firstname = first_name;
+    lastname = Utf8.normalize surname;
+    firstname = Utf8.normalize first_name;
     occ = occ;
-    dates = dates;
+    dates = Option.map Utf8.normalize dates;
   }
 
 
@@ -987,11 +987,11 @@ let pers_to_piqi_mod_person conf base p =
         let name =
           match t.Def.t_name with
           | Tmain -> ""
-          | Tname name -> Gwdb.sou base name
+          | Tname name -> Utf8.normalize (Gwdb.sou base name)
           | Tnone -> ""
         in
-        let title = Gwdb.sou base t.t_ident in
-        let fief = Gwdb.sou base t.t_place in
+        let title = Utf8.normalize (Gwdb.sou base t.t_ident) in
+        let fief = Utf8.normalize (Gwdb.sou base t.t_place) in
         let date_begin =
           match Date.od_of_cdate t.t_date_start with
           | Some d -> Some (piqi_date_of_date d)
@@ -1068,7 +1068,7 @@ let pers_to_piqi_mod_person conf base p =
            | Epers_ScellentSpouseLDS -> (Some `epers_scellentspouselds, None)
            | Epers_VenteBien -> (Some `epers_ventebien, None)
            | Epers_Will -> (Some `epers_will, None)
-           | Epers_Name n -> (None, Some (Gwdb.sou base n))
+           | Epers_Name n -> (None, Some (Utf8.normalize (Gwdb.sou base n)))
          in
          let date =
            match Date.od_of_cdate (Gwdb.get_pevent_date evt) with
@@ -1085,7 +1085,7 @@ let pers_to_piqi_mod_person conf base p =
                 let witness_type = Api_util.piqi_of_witness_kind wk in
                 let p = Gwdb.poi base ip in
                 let person_link = pers_to_piqi_person_link conf base p in
-                let witness_note = Gwdb.sou base wnote in
+                let witness_note = Utf8.normalize (Gwdb.sou base wnote) in
                 let witness_note = if witness_note = "" then None else Some witness_note in
                 Api_saisie_write_piqi.Witness.{ witness_type ; person = Some person_link; witness_note })
              (Gwdb.get_pevent_witnesses_and_notes evt)
@@ -1093,10 +1093,10 @@ let pers_to_piqi_mod_person conf base p =
          {
            Api_saisie_write_piqi.Pevent.pevent_type = pevent_type;
            date = date;
-           place = if place = "" then None else Some place;
+           place = if place = "" then None else Some (Utf8.normalize place);
            reason = reason;
-           note = if note = "" then None else Some note;
-           src = if src = "" then None else Some src;
+           note = if note = "" then None else Some (Utf8.normalize note);
+           src = if src = "" then None else Some (Utf8.normalize src);
            witnesses = witnesses;
            event_perso = event_perso;
          })
@@ -1207,7 +1207,7 @@ let pers_to_piqi_mod_person conf base p =
                 Api_saisie_write_piqi.Relation_parent.({
                   rpt_type = rpt_type;
                   person = Some father;
-                  source = if source = "" then None else Some source;
+                  source = if source = "" then None else Some (Utf8.normalize source);
                 })
               in
               r :: accu
@@ -1229,7 +1229,7 @@ let pers_to_piqi_mod_person conf base p =
             Api_saisie_write_piqi.Relation_parent.({
                 rpt_type = rpt_type;
                 person = Some mother;
-                source = if source = "" then None else Some source;
+                source = if source = "" then None else Some (Utf8.normalize source);
               })
           in
           r :: accu
@@ -1255,19 +1255,19 @@ let pers_to_piqi_mod_person conf base p =
     Api_saisie_write_piqi.Person.digest = digest;
     index = index;
     sex = sex;
-    lastname = surname;
-    firstname = first_name;
+    lastname = Utf8.normalize surname;
+    firstname = Utf8.normalize first_name;
     occ = occ;
-    public_name = if publicname = "" then None else Some publicname;
-    aliases = aliases;
-    qualifiers = qualifiers;
-    firstname_aliases = firstname_aliases;
-    surname_aliases = surname_aliases;
-    image;
+    public_name = if publicname = "" then None else Some (Utf8.normalize publicname);
+    aliases = List.map Utf8.normalize aliases;
+    qualifiers = List.map Utf8.normalize qualifiers;
+    firstname_aliases = List.map Utf8.normalize firstname_aliases;
+    surname_aliases = List.map Utf8.normalize surname_aliases;
+    image = Option.map Utf8.normalize image;
     death_type = death_type;
-    occupation = if occupation = "" then None else Some occupation;
-    psources = if psources = "" then None else Some psources;
-    notes = if notes = "" then None else Some notes;
+    occupation = if occupation = "" then None else Some (Utf8.normalize occupation);
+    psources = if psources = "" then None else Some (Utf8.normalize psources);
+    notes = if notes = "" then None else Some (Utf8.normalize notes);
     titles = titles;
     pevents = pevents;
     related = related;
@@ -1301,7 +1301,7 @@ let fam_to_piqi_mod_family conf base ifam fam =
            | Efam_MarriageLicense -> (Some `efam_marriage_license, None)
            | Efam_PACS -> (Some `efam_pacs, None)
            | Efam_Residence -> (Some `efam_residence, None)
-           | Efam_Name n -> (None, Some (Gwdb.sou base n))
+           | Efam_Name n -> (None, Some (Utf8.normalize @@ Gwdb.sou base n))
          in
          let date =
            match Date.od_of_cdate (Gwdb.get_fevent_date evt) with
@@ -1318,7 +1318,7 @@ let fam_to_piqi_mod_family conf base ifam fam =
                 let witness_type = Api_util.piqi_of_witness_kind wk in
                 let p = Gwdb.poi base ip in
                 let person_link = pers_to_piqi_person_link conf base p in
-                let witness_note = Gwdb.sou base wnote in
+                let witness_note = Utf8.normalize @@ Gwdb.sou base wnote in
                 let witness_note = if witness_note = "" then None else Some witness_note in
                 Api_saisie_write_piqi.Witness.{ witness_type; person = Some person_link ; witness_note})
              (Gwdb.get_fevent_witnesses_and_notes evt)
@@ -1326,10 +1326,10 @@ let fam_to_piqi_mod_family conf base ifam fam =
          {
            Api_saisie_write_piqi.Fevent.fevent_type = fevent_type;
            date = date;
-           place = if place = "" then None else Some place;
+           place = if place = "" then None else Some (Utf8.normalize place);
            reason = reason;
-           note = if note = "" then None else Some note;
-           src = if src = "" then None else Some src;
+           note = if note = "" then None else Some (Utf8.normalize note);
+           src = if src = "" then None else Some (Utf8.normalize src);
            witnesses = witnesses;
            event_perso = event_perso;
          })
@@ -1359,9 +1359,9 @@ let fam_to_piqi_mod_family conf base ifam fam =
     Api_saisie_write_piqi.Family.digest = digest;
     index = index;
     fevents = fevents;
-    fsources = if fsources = "" then None else Some fsources;
-    comment = if comment = "" then None else Some comment;
-    origin_file = if origin_file = "" then None else Some origin_file;
+    fsources = if fsources = "" then None else Some (Utf8.normalize fsources);
+    comment = if comment = "" then None else Some (Utf8.normalize comment);
+    origin_file = if origin_file = "" then None else Some (Utf8.normalize origin_file);
     father = father;
     mother = mother;
     children = children;

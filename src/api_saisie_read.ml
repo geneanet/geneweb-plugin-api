@@ -241,19 +241,19 @@ let string_of_date_and_conv conf d =
 
 let person_firstname_surname_txt base p =
   if not (is_empty_string (get_public_name p)) then
-    let fn = sou base (get_public_name p) in
+    let fn = Utf8.normalize @@ sou base (get_public_name p) in
     let sn =
       match get_qualifiers p with
-      | s :: _ -> " " ^ sou base s
-      | _ -> sou base (get_surname p)
+      | s :: _ -> " " ^ Utf8.normalize @@ sou base s
+      | _ -> Utf8.normalize @@ sou base (get_surname p)
     in
     (fn, sn)
   else
-    let fn = sou base (get_first_name p) in
-    let sn = sou base (get_surname p) in
+    let fn = Utf8.normalize @@ sou base (get_first_name p) in
+    let sn = Utf8.normalize @@ sou base (get_surname p) in
     let sn =
       match get_qualifiers p with
-      | s :: _ -> sn ^ " " ^ sou base s
+      | s :: _ -> sn ^ " " ^ Utf8.normalize @@ sou base s
       | _ -> sn
     in
     (fn, sn)
@@ -271,7 +271,7 @@ let simple_witness_constructor witness_type witness witness_note =
   Mread.Witness_event.({
     witness_type;
     witness;
-    witness_note
+    witness_note = Utf8.normalize witness_note
   })
 
 
@@ -379,13 +379,13 @@ let pers_to_piqi_person_tree conf base p more_info gen max_gen base_prefix =
     {
       Mread.Person_tree.index = index;
       sex = sex;
-      lastname = surname;
-      firstname = first_name;
-      n = sn;
-      p = fn;
+      lastname = Utf8.normalize surname;
+      firstname = Utf8.normalize first_name;
+      n = Utf8.normalize sn;
+      p = Utf8.normalize fn;
       occ = occ;
-      dates = if dates = "" then None else Some dates;
-      image;
+      dates = if dates = "" then None else Some (Utf8.normalize dates);
+      image = Option.map Utf8.normalize image;
       sosa = sosa;
       has_more_infos = has_more_infos;
       baseprefix = base_prefix;
@@ -558,21 +558,22 @@ let pers_to_piqi_simple_person conf base p base_prefix =
     in
     let gen_p = Util.string_gen_person base (gen_person_of_person p)
     in
+    let gen_p = Futil.map_person_ps Fun.id Utf8.normalize gen_p in
     {
       Mread.Simple_person.index = index;
       sex = sex;
       lastname = fill_surname conf p p_auth gen_p;
       firstname = fill_firstname conf p p_auth gen_p;
-      n = sn;
-      p = fn;
+      n = Utf8.normalize sn;
+      p = Utf8.normalize fn;
       occ = occ;
-      birth_short_date = if birth_short = "" then None else Some birth_short;
-      birth_date_raw = if birth_raw = "" then None else Some birth_raw;
-      birth_place = if birth_place = "" then None else Some birth_place;
-      death_short_date = if death_short = "" then None else Some death_short;
-      death_date_raw = if death_raw = "" then None else Some death_raw;
-      death_place = if death_place = "" then None else Some death_place;
-      image;
+      birth_short_date = if birth_short = "" then None else Some (Utf8.normalize birth_short);
+      birth_date_raw = if birth_raw = "" then None else Some (Utf8.normalize birth_raw);
+      birth_place = if birth_place = "" then None else Some (Utf8.normalize birth_place);
+      death_short_date = if death_short = "" then None else Some (Utf8.normalize death_short);
+      death_date_raw = if death_raw = "" then None else Some (Utf8.normalize death_raw);
+      death_place = if death_place = "" then None else Some (Utf8.normalize death_place);
+      image = Option.map Utf8.normalize image;
       sosa = sosa;
       sosa_nb = sosa_nb;
       visible_for_visitors = get_visibility conf base p;
@@ -603,6 +604,7 @@ let fam_to_piqi_family_link conf base (ifath : Gwdb.iper) imoth sp ifam fam base
   let p_auth = true in
   let m_auth = true in
   let gen_f = Util.string_gen_family base (gen_family_of_family fam) in
+  let gen_f = Futil.map_family_ps Fun.id Fun.id Utf8.normalize gen_f in
   let index = Int32.of_string @@ Gwdb.string_of_ifam gen_f.fam_index in
   let (marriage_date, marriage_date_long, marriage_date_conv, marriage_date_conv_long, marriage_cal, marriage_date_raw) =
     match (m_auth, Date.od_of_cdate gen_f.marriage) with
@@ -649,7 +651,7 @@ let fam_to_piqi_family_link conf base (ifath : Gwdb.iper) imoth sp ifam fam base
     Mutil.array_to_list_map
       (fun (ip, wkind, wnote) ->
          let p = poi base ip in
-         let wnote = sou base wnote in
+         let wnote = Utf8.normalize @@ sou base wnote in
          witness_to_piqi conf base p wkind wnote base_prefix
       ) (Perso.get_marriage_witnesses_and_notes fam)
   in
@@ -732,7 +734,7 @@ let fill_events conf base p base_prefix p_auth pers_to_piqi witness_constructor 
                let witness_type = Api_util.piqi_of_witness_kind wk in
                let witness = poi base ip in
                let witness = pers_to_piqi conf base witness base_prefix in
-               let wnote = sou base wnote in
+               let wnote = Utf8.normalize @@ sou base wnote in
                witness_constructor witness_type witness wnote
                )
             w
@@ -809,6 +811,7 @@ let get_family_piqi base conf ifam p base_prefix spouse_to_piqi witnesses_to_piq
     authorized_age conf base (pget conf base imoth)
   in
   let gen_f = Util.string_gen_family base (gen_family_of_family fam) in
+  let gen_f = Futil.map_family_ps Fun.id Fun.id Utf8.normalize gen_f in
   let index = Int32.of_string @@ Gwdb.string_of_ifam gen_f.fam_index in
   let (marriage_date, marriage_date_long, marriage_date_conv, marriage_date_conv_long, marriage_cal, marriage_date_raw) =
     match (m_auth, Date.od_of_cdate gen_f.marriage) with
@@ -855,7 +858,7 @@ let get_family_piqi base conf ifam p base_prefix spouse_to_piqi witnesses_to_piq
     Mutil.array_to_list_map
       (fun (ip, wkind, wnote) ->
          let p = poi base ip in
-         let wnote = sou base wnote in
+         let wnote = Utf8.normalize @@ sou base wnote in
          witnesses_to_piqi conf base p wkind wnote base_prefix
       )
       (Perso.get_marriage_witnesses_and_notes fam)
@@ -1163,36 +1166,36 @@ let fill_fiche_parents conf base p base_prefix nb_asc nb_asc_max with_parent_fam
 
 let get_event_constructor name type_ date date_long date_raw date_conv date_conv_long date_cal place note src spouse witnesses =
       {
-        Mread.Event.name = name;
+        Mread.Event.name = Utf8.normalize name;
         type_ = type_;
-        date = if date = "" then None else Some date;
-        date_long = if date_long = "" then None else Some date_long;
-        date_raw = if date_raw = "" then None else Some date_raw;
-        date_conv = if date_conv = "" then None else Some date_conv;
-        date_conv_long = if date_conv_long = "" then None else Some date_conv_long;
+        date = if date = "" then None else Some (Utf8.normalize date);
+        date_long = if date_long = "" then None else Some (Utf8.normalize date_long);
+        date_raw = if date_raw = "" then None else Some (Utf8.normalize date_raw);
+        date_conv = if date_conv = "" then None else Some (Utf8.normalize date_conv);
+        date_conv_long = if date_conv_long = "" then None else Some (Utf8.normalize date_conv_long);
         date_cal = date_cal;
-        place = if place = "" then None else Some place;
+        place = if place = "" then None else Some (Utf8.normalize place);
         reason = None;
-        note = if note = "" then None else Some note;
-        src = if src= "" then None else Some src;
+        note = if note = "" then None else Some (Utf8.normalize note);
+        src = if src= "" then None else Some (Utf8.normalize src);
         spouse = spouse;
         witnesses = witnesses;
       }
 
 let fiche_event_constructor name type_ date date_long date_raw date_conv date_conv_long date_cal place note src spouse witnesses =
   {
-      Mread.Fiche_event.name = name;
+      Mread.Fiche_event.name = Utf8.normalize name;
       type_ = type_;
-      date = if date = "" then None else Some date;
-      date_long = if date_long = "" then None else Some date_long;
-      date_raw = if date_raw = "" then None else Some date_raw;
-      date_conv = if date_conv = "" then None else Some date_conv;
-      date_conv_long = if date_conv_long = "" then None else Some date_conv_long;
+      date = if date = "" then None else Some (Utf8.normalize date);
+      date_long = if date_long = "" then None else Some (Utf8.normalize date_long);
+      date_raw = if date_raw = "" then None else Some (Utf8.normalize date_raw);
+      date_conv = if date_conv = "" then None else Some (Utf8.normalize date_conv);
+      date_conv_long = if date_conv_long = "" then None else Some (Utf8.normalize date_conv_long);
       date_cal = date_cal;
-      place = if place = "" then None else Some place;
+      place = if place = "" then None else Some (Utf8.normalize place);
       reason = None;
-      note = if note = "" then None else Some note;
-      src = if src= "" then None else Some src;
+      note = if note = "" then None else Some (Utf8.normalize note);
+      src = if src= "" then None else Some (Utf8.normalize src);
       spouse = spouse;
       witnesses = witnesses;
   }
@@ -1201,7 +1204,7 @@ let fiche_witness_constructor witness_type witness witness_note =
   Mread.Witness_fiche_event.({
     witness_type;
     witness;
-    witness_note
+    witness_note = Utf8.normalize witness_note
   })
 
 let simple_event_witness_constructor event_witness_type husband wife witness_note =
@@ -1209,7 +1212,7 @@ let simple_event_witness_constructor event_witness_type husband wife witness_not
         event_witness_type = event_witness_type;
         husband = husband;
         wife = wife;
-        witness_note
+        witness_note = Utf8.normalize witness_note
       })
 
 let fiche_event_witness_constructor event_witness_type husband wife witness_note =
@@ -1217,7 +1220,7 @@ let fiche_event_witness_constructor event_witness_type husband wife witness_note
     event_witness_type = event_witness_type;
     husband = husband;
     wife = wife;
-    witness_note
+    witness_note = Utf8.normalize witness_note
   })
 
 let fill_notes conf base p p_auth is_main_person gen_p =
@@ -1256,30 +1259,30 @@ let fill_families conf base p =
     {
       Mread.Family.index = index;
       spouse = spouse;
-      marriage_date = if marriage_date = "" then None else Some marriage_date;
-      marriage_date_long = if marriage_date_long = "" then None else Some marriage_date_long;
-      marriage_date_raw = if marriage_date_raw = "" then None else Some marriage_date_raw;
+      marriage_date = if marriage_date = "" then None else Some (Utf8.normalize marriage_date);
+      marriage_date_long = if marriage_date_long = "" then None else Some (Utf8.normalize marriage_date_long);
+      marriage_date_raw = if marriage_date_raw = "" then None else Some (Utf8.normalize marriage_date_raw);
       marriage_date_conv =
-        if marriage_date_conv = "" then None else Some marriage_date_conv;
+        if marriage_date_conv = "" then None else Some (Utf8.normalize marriage_date_conv);
       marriage_date_conv_long =
-        if marriage_date_conv_long = "" then None else Some marriage_date_conv_long;
+        if marriage_date_conv_long = "" then None else Some (Utf8.normalize marriage_date_conv_long);
       marriage_date_cal = marriage_cal;
-      marriage_date_text = if marriage_date_text = "" then None else Some marriage_date_text;
-      marriage_place = if marriage_place = "" then None else Some marriage_place;
-      marriage_src = if marriage_src = "" then None else Some marriage_src;
+      marriage_date_text = if marriage_date_text = "" then None else Some (Utf8.normalize marriage_date_text);
+      marriage_place = if marriage_place = "" then None else Some (Utf8.normalize marriage_place);
+      marriage_src = if marriage_src = "" then None else Some (Utf8.normalize marriage_src);
       marriage_type = marriage_type;
       divorce_type = divorce_type;
-      divorce_date = if divorce_date = "" then None else Some divorce_date;
-      divorce_date_long = if divorce_date_long = "" then None else Some divorce_date_long;
-      divorce_date_raw = if divorce_date_raw = "" then None else Some divorce_date_raw;
+      divorce_date = if divorce_date = "" then None else Some (Utf8.normalize divorce_date);
+      divorce_date_long = if divorce_date_long = "" then None else Some (Utf8.normalize divorce_date_long);
+      divorce_date_raw = if divorce_date_raw = "" then None else Some (Utf8.normalize divorce_date_raw);
       divorce_date_conv =
-        if divorce_date_conv = "" then None else Some divorce_date_conv;
+        if divorce_date_conv = "" then None else Some (Utf8.normalize divorce_date_conv);
       divorce_date_conv_long =
-        if divorce_date_conv_long = "" then None else Some divorce_date_conv_long;
+        if divorce_date_conv_long = "" then None else Some (Utf8.normalize divorce_date_conv_long);
       divorce_date_cal = divorce_cal;
       witnesses = witnesses;
-      notes = if notes = "" then None else Some notes;
-      fsources = if fsources = "" then None else Some fsources;
+      notes = if notes = "" then None else Some (Utf8.normalize notes);
+      fsources = if fsources = "" then None else Some (Utf8.normalize fsources);
       children = children;
     }
   in
@@ -1310,30 +1313,30 @@ let fill_fiche_families conf base p base_prefix nb_asc nb_desc nb_desc_max pers_
       {
         Mread.Fiche_family.index = index;
         spouse = spouse;
-        marriage_date = if marriage_date = "" then None else Some marriage_date;
-        marriage_date_long = if marriage_date_long = "" then None else Some marriage_date_long;
-        marriage_date_raw = if marriage_date_raw = "" then None else Some marriage_date_raw;
+        marriage_date = if marriage_date = "" then None else Some (Utf8.normalize marriage_date);
+        marriage_date_long = if marriage_date_long = "" then None else Some (Utf8.normalize marriage_date_long);
+        marriage_date_raw = if marriage_date_raw = "" then None else Some (Utf8.normalize marriage_date_raw);
         marriage_date_conv =
-          if marriage_date_conv = "" then None else Some marriage_date_conv;
+          if marriage_date_conv = "" then None else Some (Utf8.normalize marriage_date_conv);
         marriage_date_conv_long =
-          if marriage_date_conv_long = "" then None else Some marriage_date_conv_long;
+          if marriage_date_conv_long = "" then None else Some (Utf8.normalize marriage_date_conv_long);
         marriage_date_cal = marriage_cal;
-        marriage_date_text = if marriage_date_text = "" then None else Some marriage_date_text;
-        marriage_place = if marriage_place = "" then None else Some marriage_place;
-        marriage_src = if marriage_src = "" then None else Some marriage_src;
+        marriage_date_text = if marriage_date_text = "" then None else Some (Utf8.normalize marriage_date_text);
+        marriage_place = if marriage_place = "" then None else Some (Utf8.normalize marriage_place);
+        marriage_src = if marriage_src = "" then None else Some (Utf8.normalize marriage_src);
         marriage_type = marriage_type;
         divorce_type = divorce_type;
-        divorce_date = if divorce_date = "" then None else Some divorce_date;
-        divorce_date_long = if divorce_date_long = "" then None else Some divorce_date_long;
-        divorce_date_raw = if divorce_date_raw = "" then None else Some divorce_date_raw;
+        divorce_date = if divorce_date = "" then None else Some (Utf8.normalize divorce_date);
+        divorce_date_long = if divorce_date_long = "" then None else Some (Utf8.normalize divorce_date_long);
+        divorce_date_raw = if divorce_date_raw = "" then None else Some (Utf8.normalize divorce_date_raw);
         divorce_date_conv =
-          if divorce_date_conv = "" then None else Some divorce_date_conv;
+          if divorce_date_conv = "" then None else Some (Utf8.normalize divorce_date_conv);
         divorce_date_conv_long =
-          if divorce_date_conv_long = "" then None else Some divorce_date_conv_long;
+          if divorce_date_conv_long = "" then None else Some (Utf8.normalize divorce_date_conv_long);
         divorce_date_cal = divorce_cal;
         witnesses = if not simple_graph_info then witnesses else [];
-        notes = if notes = "" || simple_graph_info then None else Some notes;
-        fsources = if fsources = "" || simple_graph_info then None else Some fsources;
+        notes = if notes = "" || simple_graph_info then None else Some (Utf8.normalize notes);
+        fsources = if fsources = "" || simple_graph_info then None else Some (Utf8.normalize fsources);
         children = children;
       }
     in
@@ -1458,7 +1461,7 @@ let pers_to_piqi_person conf base p base_prefix is_main_person =
   else
     let p_auth = authorized_age conf base p in
     let gen_p = Util.string_gen_person base (gen_person_of_person p) in
-
+    let gen_p = Futil.map_person_ps Fun.id Utf8.normalize gen_p in
     let (baptism_date, _, baptism_date_conv, _, baptism_cal) = fill_baptism conf p_auth gen_p in
     let (birth_date, _, birth_date_conv, _, birth_cal) = fill_birth conf p_auth gen_p in
     let (burial_date, _, burial_date_conv, _,burial_cal) = fill_burial conf p_auth gen_p in
@@ -1564,7 +1567,7 @@ let rec pers_to_piqi_fiche_person conf base p base_prefix is_main_person nb_asc 
     begin
       let p_auth = authorized_age conf base p in
       let gen_p = Util.string_gen_person base (gen_person_of_person p) in
-
+      let gen_p = Futil.map_person_ps Fun.id Utf8.normalize gen_p in
       (* Sources only returned for the main person. *)
       let psources = if is_main_person then fill_sources conf base p_auth gen_p is_main_person else "" in
       let birth_src = if is_main_person then fill_birth_src conf base p_auth gen_p else "" in
