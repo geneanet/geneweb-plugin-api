@@ -74,8 +74,10 @@ let () =
     try Scanf.sscanf s "dico_profession_%[a-z].csv" (aux `profession s)
     with _ -> ()
   end (Sys.readdir assets) ;
-  let aux ?(timeout_mode = `TIMEOUT_504) fn _assets conf base =
+  let aux
+        ?timeout_duration ?(timeout_mode = `TIMEOUT_504) fn _assets conf base =
     let conf = { conf with Geneweb.Config.api_mode = true } in
+    Option.iter Wserver.set_timeout timeout_duration;
     choose_timeout_behaviour conf timeout_mode;
     fn conf base ; true
   in
@@ -107,7 +109,7 @@ let () =
     ; ( "API_INFO_IND"
       , aux @@ w_base @@ Plugin_api_lib.Api.print_info_ind)
     ; ( "API_IMAGE_ALL"
-      , aux @@ w_base @@ Plugin_api_lib.Api.print_img_all)
+      , aux ~timeout_duration:0 @@ w_base @@ Plugin_api_lib.Api.print_img_all)
     ; ( "API_IMAGE_PERSON"
       , aux @@ w_base @@ Plugin_api_lib.Api.print_img_person)
     ; ( "API_IMAGE_UPDATE"

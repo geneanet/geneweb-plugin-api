@@ -417,20 +417,12 @@ let print_img_all conf base =
     else
       Api_util.print_result conf (fl list)
   in
-  let compute_sosa = Api_util.compute_sosa conf base false in
-  if Api_util.p_getenvbin conf.env "full_infos" = Some "1" then
-    aux
-      (fun p img ->
-         let p = Api_util.pers_to_piqi_person_full conf base p compute_sosa in
-         Api_piqi.Full_image.({person = p; img = img;}))
-      (fun list -> Api_piqi_ext.gen_list_full_images @@ Api_piqi.List_full_images.({images = list}) )
-  else
-    aux
-      (fun p img ->
-         let p = Api_util.pers_to_piqi_person_light conf base p compute_sosa in
-         Api_piqi.Image.({person = p; img}))
-      (fun list ->
-         Api_piqi_ext.gen_list_images @@ Api_piqi.List_images.({list_images = list}))
+  aux
+    (fun p img ->
+       let p = Api_util.person_to_reference_person base p in
+       Api_piqi.Image.({person = p; img}))
+    (fun list ->
+       Api_piqi_ext.gen_list_images @@ Api_piqi.List_images.({list_images = list}))
 
 (**/**) (* API_IMAGE_APP *)
 
