@@ -5,6 +5,7 @@ val has_cache :
 
 val get_list_from_cache :
   conf:Geneweb.Config.config ->
+  base:Gwdb.base ->
   mode:Api_saisie_write_piqi.auto_complete_field ->
   place_mode:Api_saisie_write_piqi.auto_complete_place_field option ->
   n:int ->
