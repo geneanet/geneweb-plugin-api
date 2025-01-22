@@ -893,18 +893,18 @@ let compute_modification_status' conf base ip ifam resp =
       base_warnings = warnings;
       base_miscs = miscs;
       index_person = index_person;
-      lastname = surname;
-      firstname = first_name;
+      lastname = Utf8.normalize surname;
+      firstname = Utf8.normalize first_name;
       occ = occ;
       index_family = index_family;
       conflict = conflict;
-      lastname_str = surname_str;
-      firstname_str = first_name_str;
-      n = sn;
-      p = fn;
+      lastname_str = Option.map Utf8.normalize surname_str;
+      firstname_str = Option.map Utf8.normalize first_name_str;
+      n = Option.map Utf8.normalize sn;
+      p = Option.map Utf8.normalize fn;
       created_person = Option.map (fun cp -> Api_saisie_write_piqi.Created_person.{
-        n = cp.Api_update_util.n;
-        p = cp.p;
+        n = Utf8.normalize cp.Api_update_util.n;
+        p = Utf8.normalize cp.p;
         oc = cp.oc;
       }) created_person;
     }
@@ -1085,8 +1085,8 @@ let print_add_family conf base =
   let family = compute_add_family conf base p in
   let add_family =
     {
-      Api_saisie_write_piqi.Add_family.person_lastname = surname;
-      person_firstname = first_name;
+      Api_saisie_write_piqi.Add_family.person_lastname = Utf8.normalize surname;
+      person_firstname = Utf8.normalize first_name;
       family = family;
     }
   in
@@ -1326,12 +1326,12 @@ let print_add_family_ok conf base =
   let firstname =
     if Gwdb.is_empty_string fn then
       response.Api_saisie_write_piqi.Modification_status.firstname
-    else Gwdb.sou base fn
+    else Utf8.normalize (Gwdb.sou base fn)
   in
   let lastname =
     if Gwdb.is_empty_string sn then
       response.Api_saisie_write_piqi.Modification_status.lastname
-    else Gwdb.sou base sn
+    else Utf8.normalize (Gwdb.sou base sn)
   in
   let firstname_str =
     if Gwdb.is_empty_string fn then
@@ -1561,11 +1561,11 @@ let print_add_parents conf base =
       mother.Api_saisie_write_piqi.Person.pevents <- mother.Api_saisie_write_piqi.Person.pevents @ [ empty_death_pevent () ]
     end
   in
-  father.Api_saisie_write_piqi.Person.lastname <- surname ;
+  father.Api_saisie_write_piqi.Person.lastname <- Utf8.normalize surname ;
   let add_parents =
     {
-      Api_saisie_write_piqi.Add_parents.person_lastname = surname;
-      person_firstname = first_name;
+      Api_saisie_write_piqi.Add_parents.person_lastname = Utf8.normalize surname;
+      person_firstname = Utf8.normalize first_name;
       family = family;
     }
   in
@@ -1827,10 +1827,10 @@ let print_add_child conf base =
              Api_saisie_write_piqi.Family_spouse.index_family = index_family;
              index_person = index_person;
              sex = sex;
-             lastname = surname;
-             firstname = first_name;
-             dates = if dates = "" then None else Some dates;
-             image;
+             lastname = Utf8.normalize surname;
+             firstname = Utf8.normalize first_name;
+             dates = if dates = "" then None else Some (Utf8.normalize dates);
+             image = Option.map Utf8.normalize image;
              sosa = sosa;
            }
          in
@@ -1875,11 +1875,11 @@ let print_add_child conf base =
   in
   (* On prend le nom du père *)
   let child_surname = infer_surname conf base p @@ Option.map Int32.to_string ifam_i32_opt in
-  child.Api_saisie_write_piqi.Person.lastname <- child_surname;
+  child.Api_saisie_write_piqi.Person.lastname <- Utf8.normalize child_surname;
   let add_child =
     Api_saisie_write_piqi.Add_child.({
-      person_lastname = surname;
-      person_firstname = first_name;
+      person_lastname = Utf8.normalize surname;
+      person_firstname = Utf8.normalize first_name;
       family_spouse = family_spouse;
       child = child;
     })
@@ -1924,11 +1924,11 @@ let print_add_sibling conf base =
     | Some father -> infer_surname conf base father None
     | None -> surname
   in
-  sibling.Api_saisie_write_piqi.Person.lastname <- sibling_surname;
+  sibling.Api_saisie_write_piqi.Person.lastname <- Utf8.normalize sibling_surname;
   let add_sibling =
     Api_saisie_write_piqi.Add_sibling.({
-      person_lastname = surname;
-      person_firstname = first_name;
+      person_lastname = Utf8.normalize surname;
+      person_firstname = Utf8.normalize first_name;
       sibling = sibling;
     })
   in

@@ -117,9 +117,10 @@ let string_of_prec_dmy d =
 
 let string_of_date = function
     Dgreg (d, _) -> string_of_prec_dmy d
-  | Dtext t -> "(" ^ t ^ ")"
+  | Dtext t -> "(" ^ Utf8.normalize t ^ ")"
 
 let title_to_piqi_title t =
+  let t = Futil.map_title_strings Utf8.normalize t in
   let (title_type, name) =
     match t.t_name with
     | Tmain -> (`title_main, "")
@@ -478,8 +479,8 @@ let date_to_opt_string d =
 
 let person_to_warning_person base p =
   let iper = Gwdb.string_of_iper (get_iper p) in
-  let lastname = sou base (get_surname p) in
-  let firstname = sou base (get_first_name p) in
+  let lastname = Utf8.normalize (sou base (get_surname p)) in
+  let firstname = Utf8.normalize (sou base (get_first_name p)) in
   let birth_date = date_to_opt_string @@ get_birth p in
   let death_date =
     match get_death p with
@@ -639,6 +640,7 @@ let empty_piqi_person conf ref_person =
 (* ************************************************************************** *)
 let spouse_to_piqi_spouse conf base p fam compute_sosa =
   let gen_p = Util.string_gen_person base (gen_person_of_person p) in
+  let gen_p = Futil.map_person_ps Fun.id Utf8.normalize gen_p in
   let p_auth = authorized_age conf base p in
   let ifath = get_father fam in
   let imoth = get_mother fam in
@@ -725,7 +727,7 @@ let spouse_to_piqi_spouse conf base p fam compute_sosa =
     | _ -> ""
   in
   let marriage_place =
-    if m_auth then sou base (get_marriage_place fam)
+    if m_auth then Utf8.normalize (sou base (get_marriage_place fam))
     else ""
   in
   let divorce_type =
@@ -782,6 +784,7 @@ let spouse_to_piqi_spouse conf base p fam compute_sosa =
 (* ************************************************************************** *)
 let pers_to_piqi_person_light conf base p compute_sosa =
   let gen_p = Util.string_gen_person base (gen_person_of_person p) in
+  let gen_p = Futil.map_person_ps Fun.id Utf8.normalize gen_p in
   let p_auth = authorized_age conf base p in
   let sosa_p = Sosa.to_string (compute_sosa p) in
   let sex =
@@ -841,7 +844,7 @@ let pers_to_piqi_person_light conf base p compute_sosa =
       (`not_dead, "")
   in
   let death_place =
-    if p_auth then sou base (get_death_place p)
+    if p_auth then Utf8.normalize (sou base (get_death_place p))
     else ""
   in
   let burial =
@@ -930,6 +933,7 @@ let pers_to_piqi_person_light conf base p compute_sosa =
 (* ************************************************************************** *)
 let pers_to_piqi_person_full conf base p compute_sosa =
   let gen_p = Util.string_gen_person base (gen_person_of_person p) in
+  let gen_p = Futil.map_person_ps Fun.id Utf8.normalize gen_p in
   let p_auth = authorized_age conf base p in
   let sosa_p = Sosa.to_string (compute_sosa p) in
   let sex =
@@ -1141,6 +1145,7 @@ let pers_to_piqi_person conf base p compute_sosa =
 let fam_to_piqi_family conf base ifam =
   let fam = foi base ifam in
   let gen_f = Util.string_gen_family base (gen_family_of_family fam) in
+  let gen_f = Futil.map_family_ps Fun.id Fun.id Utf8.normalize gen_f in
   let ifath = get_father fam in
   let imoth = get_mother fam in
   let m_auth =
