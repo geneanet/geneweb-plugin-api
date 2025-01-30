@@ -1,6 +1,3 @@
-module Mread = Api_saisie_read_piqi
-module Mext_read = Api_saisie_read_piqi_ext
-
 let max_children = 100
 let limit_array arr =
   if Array.length arr > max_children then [||] else arr
@@ -273,7 +270,7 @@ type graph_more_info =
   | Spouse
 
 let simple_witness_constructor witness_type witness witness_note =
-  Mread.Witness_event.({
+  Api_saisie_read_piqi.Witness_event.({
     witness_type;
     witness;
     witness_note = Utf8.normalize witness_note
@@ -314,7 +311,7 @@ let event_to_piqi_event pevt_name fevt_name =
 let pers_to_piqi_person_tree conf base p more_info gen max_gen base_prefix =
   if Geneweb.Util.is_restricted conf base (Gwdb.get_iper p) then
     {
-      Mread.Person_tree.index = Int32.of_string @@ Gwdb.string_of_iper Gwdb.dummy_iper;
+      Api_saisie_read_piqi.Person_tree.index = Int32.of_string @@ Gwdb.string_of_iper Gwdb.dummy_iper;
       sex = `unknown;
       lastname = "x";
       firstname = "x";
@@ -382,7 +379,7 @@ let pers_to_piqi_person_tree conf base p more_info gen max_gen base_prefix =
           (Gwdb.get_parents p <> None) || Array.length (Gwdb.get_family p) > 1
     in
     {
-      Mread.Person_tree.index = index;
+      Api_saisie_read_piqi.Person_tree.index = index;
       sex = sex;
       lastname = Utf8.normalize surname;
       firstname = Utf8.normalize first_name;
@@ -400,18 +397,18 @@ let pers_to_piqi_person_tree conf base p more_info gen max_gen base_prefix =
 
 (* Common functions to build a SimplePerson or a FichePerson. *)
 let get_restricted_person () =
-  let restricted_person = Mread.default_person () in
-  restricted_person.Mread.Person.index <- Int32.of_string @@ Gwdb.string_of_iper Gwdb.dummy_iper;
-  restricted_person.Mread.Person.lastname <- "x";
-  restricted_person.Mread.Person.firstname <- "x";
+  let restricted_person = Api_saisie_read_piqi.default_person () in
+  restricted_person.Api_saisie_read_piqi.Person.index <- Int32.of_string @@ Gwdb.string_of_iper Gwdb.dummy_iper;
+  restricted_person.Api_saisie_read_piqi.Person.lastname <- "x";
+  restricted_person.Api_saisie_read_piqi.Person.firstname <- "x";
   restricted_person
 
 let get_restricted_fiche_person () =
   let person = get_restricted_person () in
-  let fiche = Mread.default_fiche_person () in
-  fiche.Mread.Fiche_person.visible_for_visitors <- `visibility_private;
-  fiche.Mread.Fiche_person.is_contemporary <- false;
-  person.Mread.Person.fiche_person_person <- Some fiche;
+  let fiche = Api_saisie_read_piqi.default_fiche_person () in
+  fiche.Api_saisie_read_piqi.Fiche_person.visible_for_visitors <- `visibility_private;
+  fiche.Api_saisie_read_piqi.Fiche_person.is_contemporary <- false;
+  person.Api_saisie_read_piqi.Person.fiche_person_person <- Some fiche;
   person
 
 let fill_sex p =
@@ -475,11 +472,11 @@ let fill_surname_aliases p_auth gen_p =
 (* ************************************************************************** *)
 let pers_to_piqi_simple_person conf base p base_prefix =
   if Geneweb.Util.is_restricted conf base (Gwdb.get_iper p) then
-    let restricted_person = Mread.default_simple_person() in
-    restricted_person.Mread.Simple_person.index <- Int32.of_string @@ Gwdb.string_of_iper Gwdb.dummy_iper;
-    restricted_person.Mread.Simple_person.lastname <- "x";
-    restricted_person.Mread.Simple_person.firstname <- "x";
-    restricted_person.Mread.Simple_person.visible_for_visitors <- `visibility_private;
+    let restricted_person = Api_saisie_read_piqi.default_simple_person() in
+    restricted_person.Api_saisie_read_piqi.Simple_person.index <- Int32.of_string @@ Gwdb.string_of_iper Gwdb.dummy_iper;
+    restricted_person.Api_saisie_read_piqi.Simple_person.lastname <- "x";
+    restricted_person.Api_saisie_read_piqi.Simple_person.firstname <- "x";
+    restricted_person.Api_saisie_read_piqi.Simple_person.visible_for_visitors <- `visibility_private;
     restricted_person
   else
     let p_auth = Geneweb.Util.authorized_age conf base p in
@@ -570,7 +567,7 @@ let pers_to_piqi_simple_person conf base p base_prefix =
     in
     let gen_p = Futil.map_person_ps Fun.id Utf8.normalize gen_p in
     {
-      Mread.Simple_person.index = index;
+      Api_saisie_read_piqi.Simple_person.index = index;
       sex = sex;
       lastname = fill_surname conf p p_auth gen_p;
       firstname = fill_firstname conf p p_auth gen_p;
@@ -1248,7 +1245,7 @@ let fill_fiche_parents conf base p base_prefix nb_asc nb_asc_max with_parent_fam
 
 let get_event_constructor name type_ date date_long date_raw date_conv date_conv_long date_cal place note src spouse witnesses =
       {
-        Mread.Event.name = Utf8.normalize name;
+        Api_saisie_read_piqi.Event.name = Utf8.normalize name;
         type_ = type_;
         date = if date = "" then None else Some (Utf8.normalize date);
         date_long = if date_long = "" then None else Some (Utf8.normalize date_long);
@@ -1266,7 +1263,7 @@ let get_event_constructor name type_ date date_long date_raw date_conv date_conv
 
 let fiche_event_constructor name type_ date date_long date_raw date_conv date_conv_long date_cal place note src spouse witnesses =
   {
-      Mread.Fiche_event.name = Utf8.normalize name;
+      Api_saisie_read_piqi.Fiche_event.name = Utf8.normalize name;
       type_ = type_;
       date = if date = "" then None else Some (Utf8.normalize date);
       date_long = if date_long = "" then None else Some (Utf8.normalize date_long);
@@ -1283,14 +1280,14 @@ let fiche_event_constructor name type_ date date_long date_raw date_conv date_co
   }
 
 let fiche_witness_constructor witness_type witness witness_note =
-  Mread.Witness_fiche_event.({
+  Api_saisie_read_piqi.Witness_fiche_event.({
     witness_type;
     witness;
     witness_note = Utf8.normalize witness_note
   })
 
 let simple_event_witness_constructor event_witness_type husband wife witness_note =
-      Mread.Event_witness.({
+      Api_saisie_read_piqi.Event_witness.({
         event_witness_type = event_witness_type;
         husband = husband;
         wife = wife;
@@ -1298,7 +1295,7 @@ let simple_event_witness_constructor event_witness_type husband wife witness_not
       })
 
 let fiche_event_witness_constructor event_witness_type husband wife witness_note =
-  Mread.Event_fiche_witness.({
+  Api_saisie_read_piqi.Event_fiche_witness.({
     event_witness_type = event_witness_type;
     husband = husband;
     wife = wife;
@@ -1314,13 +1311,13 @@ let fill_notes conf base p p_auth is_main_person gen_p =
 
 let simple_relation_person_constructor r_type p =
   {
-    Mread.Relation_person.r_type = r_type;
+    Api_saisie_read_piqi.Relation_person.r_type = r_type;
     person = p;
   }
 
 let fiche_relation_person_constructor r_type p =
   {
-    Mread.Relation_fiche_person.r_type = r_type;
+    Api_saisie_read_piqi.Relation_fiche_person.r_type = r_type;
     person = p;
   }
 
@@ -1341,7 +1338,7 @@ let fill_families conf base p =
        marriage_date_text marriage_place marriage_src marriage_type divorce_type divorce_date divorce_date_long divorce_date_raw divorce_date_conv
        divorce_date_conv_long divorce_cal witnesses notes fsources children =
     {
-      Mread.Family.index = index;
+      Api_saisie_read_piqi.Family.index = index;
       spouse = spouse;
       marriage_date = if marriage_date = "" then None else Some (Utf8.normalize marriage_date);
       marriage_date_long = if marriage_date_long = "" then None else Some (Utf8.normalize marriage_date_long);
@@ -1382,7 +1379,7 @@ let fill_fiche_families conf base p base_prefix nb_asc nb_desc nb_desc_max pers_
     let witnesses_to_piqi conf base p wkind wnote base_prefix =
       let p = if not simple_graph_info then
           pers_to_piqi_person conf base p base_prefix false 0 1 0 0 false simple_graph_info no_event
-        else Mread.default_person ()
+        else Api_saisie_read_piqi.default_person ()
       in
       let wkind = Api_util.piqi_of_witness_kind wkind in
       fiche_witness_constructor wkind p wnote
@@ -1395,7 +1392,7 @@ let fill_fiche_families conf base p base_prefix nb_asc nb_desc nb_desc_max pers_
     divorce_date_conv_long divorce_cal witnesses notes fsources children
       =
       {
-        Mread.Fiche_family.index = index;
+        Api_saisie_read_piqi.Fiche_family.index = index;
         spouse = spouse;
         marriage_date = if marriage_date = "" then None else Some (Utf8.normalize marriage_date);
         marriage_date_long = if marriage_date_long = "" then None else Some (Utf8.normalize marriage_date_long);
@@ -1571,7 +1568,7 @@ let pers_to_piqi_person conf base p base_prefix is_main_person =
     let has_sources = has_sources p_auth psources birth_src baptism_src death_src burial_src in
 
     {
-      Mread.Person.type_ = `simple;
+      Api_saisie_read_piqi.Person.type_ = `simple;
       index = fill_index conf p p_auth;
       sex = fill_sex p;
       lastname = fill_surname conf p p_auth gen_p;
@@ -1653,7 +1650,7 @@ let fill_ref_if_is_main_person conf base is_main_person =
 (* ************************************************************************** *)
 let rec pers_to_piqi_fiche_person conf base p base_prefix is_main_person nb_asc nb_asc_max nb_desc nb_desc_max with_parent_families simple_graph_info no_event =
   (* Generates a fiche person by default. *)
-  let piqi_fiche_person = Mread.default_fiche_person() in
+  let piqi_fiche_person = Api_saisie_read_piqi.default_fiche_person() in
   (* If the access is restricted, returns the person with default fields. *)
   if Geneweb.Util.is_restricted conf base (Gwdb.get_iper p) then
     get_restricted_fiche_person ()
@@ -1683,45 +1680,45 @@ let rec pers_to_piqi_fiche_person conf base p base_prefix is_main_person nb_asc 
       let (ref_index, ref_person) = fill_ref_if_is_main_person conf base is_main_person in
       let piqi_fiche_person =
         (* Fields shared by all the members of the family. *)
-        piqi_fiche_person.Mread.Fiche_person.birth_date_raw <- transform_empty_string_to_None (fill_birth_date_raw conf p_auth gen_p);
-        piqi_fiche_person.Mread.Fiche_person.birth_text <- transform_empty_string_to_None (fill_birth_text conf p p_auth);
-        piqi_fiche_person.Mread.Fiche_person.burial_date_raw <- transform_empty_string_to_None (fill_burial_date_raw_if_is_main_person conf p_auth gen_p is_main_person);
-        piqi_fiche_person.Mread.Fiche_person.burial_text <- transform_empty_string_to_None (fill_burial_text conf p p_auth);
-        piqi_fiche_person.Mread.Fiche_person.burial_type <- fill_burial_type p_auth gen_p;
-        piqi_fiche_person.Mread.Fiche_person.cremation_text <- transform_empty_string_to_None (fill_cremation_text conf p p_auth);
-        piqi_fiche_person.Mread.Fiche_person.death_date_raw <- transform_empty_string_to_None (fill_death_date_raw conf p_auth gen_p);
-        piqi_fiche_person.Mread.Fiche_person.death_text <- transform_empty_string_to_None (fill_death_text conf p p_auth);
-        piqi_fiche_person.Mread.Fiche_person.titles_links <- if not simple_graph_info then fill_titles_with_links conf base p else [];
-        piqi_fiche_person.Mread.Fiche_person.sosa_nb <- if sosa_nb = Sosa.zero then None else Some (Sosa.to_string sosa_nb);
-        piqi_fiche_person.Mread.Fiche_person.father <- fiche_father;
-        piqi_fiche_person.Mread.Fiche_person.mother <- fiche_mother;
+        piqi_fiche_person.Api_saisie_read_piqi.Fiche_person.birth_date_raw <- transform_empty_string_to_None (fill_birth_date_raw conf p_auth gen_p);
+        piqi_fiche_person.Api_saisie_read_piqi.Fiche_person.birth_text <- transform_empty_string_to_None (fill_birth_text conf p p_auth);
+        piqi_fiche_person.Api_saisie_read_piqi.Fiche_person.burial_date_raw <- transform_empty_string_to_None (fill_burial_date_raw_if_is_main_person conf p_auth gen_p is_main_person);
+        piqi_fiche_person.Api_saisie_read_piqi.Fiche_person.burial_text <- transform_empty_string_to_None (fill_burial_text conf p p_auth);
+        piqi_fiche_person.Api_saisie_read_piqi.Fiche_person.burial_type <- fill_burial_type p_auth gen_p;
+        piqi_fiche_person.Api_saisie_read_piqi.Fiche_person.cremation_text <- transform_empty_string_to_None (fill_cremation_text conf p p_auth);
+        piqi_fiche_person.Api_saisie_read_piqi.Fiche_person.death_date_raw <- transform_empty_string_to_None (fill_death_date_raw conf p_auth gen_p);
+        piqi_fiche_person.Api_saisie_read_piqi.Fiche_person.death_text <- transform_empty_string_to_None (fill_death_text conf p p_auth);
+        piqi_fiche_person.Api_saisie_read_piqi.Fiche_person.titles_links <- if not simple_graph_info then fill_titles_with_links conf base p else [];
+        piqi_fiche_person.Api_saisie_read_piqi.Fiche_person.sosa_nb <- if sosa_nb = Sosa.zero then None else Some (Sosa.to_string sosa_nb);
+        piqi_fiche_person.Api_saisie_read_piqi.Fiche_person.father <- fiche_father;
+        piqi_fiche_person.Api_saisie_read_piqi.Fiche_person.mother <- fiche_mother;
         if is_main_person || not simple_graph_info then
-          piqi_fiche_person.Mread.Fiche_person.families <- fill_fiche_families conf base p base_prefix nb_asc nb_desc nb_desc_max pers_to_piqi_fiche_person simple_graph_info no_event;
+          piqi_fiche_person.Api_saisie_read_piqi.Fiche_person.families <- fill_fiche_families conf base p base_prefix nb_asc nb_desc nb_desc_max pers_to_piqi_fiche_person simple_graph_info no_event;
 
         (* Fields only filled for the main person. *)
-        piqi_fiche_person.Mread.Fiche_person.baptism_date_raw <- if is_main_person then transform_empty_string_to_None (fill_baptism_date_raw conf p_auth gen_p) else None;
-        piqi_fiche_person.Mread.Fiche_person.baptism_text <- if is_main_person then transform_empty_string_to_None (fill_baptism_text conf p p_auth) else None;
-        piqi_fiche_person.Mread.Fiche_person.has_possible_duplications <- has_duplication_if_is_main_person conf base p is_main_person;
-        piqi_fiche_person.Mread.Fiche_person.ref_index <- ref_index;
-        piqi_fiche_person.Mread.Fiche_person.ref_person <- ref_person;
-        piqi_fiche_person.Mread.Fiche_person.has_history <- has_history_if_is_main_person conf base p p_auth is_main_person;
-        piqi_fiche_person.Mread.Fiche_person.linked_page_biblio <- linked_page_biblio;
-        piqi_fiche_person.Mread.Fiche_person.linked_page_bnote <- linked_page_bnote;
-        piqi_fiche_person.Mread.Fiche_person.linked_page_death <- linked_page_death;
-        piqi_fiche_person.Mread.Fiche_person.linked_page_head <- linked_page_head;
-        piqi_fiche_person.Mread.Fiche_person.linked_page_occu <- linked_page_occu;
-        piqi_fiche_person.Mread.Fiche_person.visible_for_visitors <- Api_util.get_visibility conf base p;
-        piqi_fiche_person.Mread.Fiche_person.related <- if is_main_person && not simple_graph_info then get_related_piqi conf base p base_prefix gen_p pers_to_piqi_fiche_person_only fiche_relation_person_constructor else [];
-        piqi_fiche_person.Mread.Fiche_person.rparents <- if is_main_person && not simple_graph_info then get_rparents_piqi base conf base_prefix gen_p pers_to_piqi_fiche_person_only fiche_relation_person_constructor else [];
+        piqi_fiche_person.Api_saisie_read_piqi.Fiche_person.baptism_date_raw <- if is_main_person then transform_empty_string_to_None (fill_baptism_date_raw conf p_auth gen_p) else None;
+        piqi_fiche_person.Api_saisie_read_piqi.Fiche_person.baptism_text <- if is_main_person then transform_empty_string_to_None (fill_baptism_text conf p p_auth) else None;
+        piqi_fiche_person.Api_saisie_read_piqi.Fiche_person.has_possible_duplications <- has_duplication_if_is_main_person conf base p is_main_person;
+        piqi_fiche_person.Api_saisie_read_piqi.Fiche_person.ref_index <- ref_index;
+        piqi_fiche_person.Api_saisie_read_piqi.Fiche_person.ref_person <- ref_person;
+        piqi_fiche_person.Api_saisie_read_piqi.Fiche_person.has_history <- has_history_if_is_main_person conf base p p_auth is_main_person;
+        piqi_fiche_person.Api_saisie_read_piqi.Fiche_person.linked_page_biblio <- linked_page_biblio;
+        piqi_fiche_person.Api_saisie_read_piqi.Fiche_person.linked_page_bnote <- linked_page_bnote;
+        piqi_fiche_person.Api_saisie_read_piqi.Fiche_person.linked_page_death <- linked_page_death;
+        piqi_fiche_person.Api_saisie_read_piqi.Fiche_person.linked_page_head <- linked_page_head;
+        piqi_fiche_person.Api_saisie_read_piqi.Fiche_person.linked_page_occu <- linked_page_occu;
+        piqi_fiche_person.Api_saisie_read_piqi.Fiche_person.visible_for_visitors <- Api_util.get_visibility conf base p;
+        piqi_fiche_person.Api_saisie_read_piqi.Fiche_person.related <- if is_main_person && not simple_graph_info then get_related_piqi conf base p base_prefix gen_p pers_to_piqi_fiche_person_only fiche_relation_person_constructor else [];
+        piqi_fiche_person.Api_saisie_read_piqi.Fiche_person.rparents <- if is_main_person && not simple_graph_info then get_rparents_piqi base conf base_prefix gen_p pers_to_piqi_fiche_person_only fiche_relation_person_constructor else [];
         if not no_event then
-          piqi_fiche_person.Mread.Fiche_person.events_witnesses <- if is_main_person then get_events_witnesses conf base p base_prefix gen_p p_auth pers_to_piqi_fiche_person_only fiche_event_witness_constructor else [];
+          piqi_fiche_person.Api_saisie_read_piqi.Fiche_person.events_witnesses <- if is_main_person then get_events_witnesses conf base p base_prefix gen_p p_auth pers_to_piqi_fiche_person_only fiche_event_witness_constructor else [];
         if not no_event then
-          piqi_fiche_person.Mread.Fiche_person.events <- fill_events_if_is_main_person conf base p base_prefix p_auth is_main_person pers_to_piqi_fiche_person_only fiche_witness_constructor fiche_event_constructor;
-        piqi_fiche_person.Mread.Fiche_person.is_contemporary <- Geneweb.GWPARAM.is_contemporary conf base p;
+          piqi_fiche_person.Api_saisie_read_piqi.Fiche_person.events <- fill_events_if_is_main_person conf base p base_prefix p_auth is_main_person pers_to_piqi_fiche_person_only fiche_witness_constructor fiche_event_constructor;
+        piqi_fiche_person.Api_saisie_read_piqi.Fiche_person.is_contemporary <- Geneweb.GWPARAM.is_contemporary conf base p;
         piqi_fiche_person
       in
       {
-        Mread.Person.type_ = `fiche;
+        Api_saisie_read_piqi.Person.type_ = `fiche;
         fiche_person_person = Some piqi_fiche_person;
         n = fill_sn conf base p p_auth;
         p = fill_fn conf base p p_auth;
@@ -1794,14 +1791,14 @@ let rec pers_to_piqi_fiche_person conf base p base_prefix is_main_person nb_asc 
     [Rem] : Non exporté en clair hors de ce module.                      *)
 (* ********************************************************************* *)
 let print_person_tree conf base =
-  let params = Api_util.get_params conf Mext_read.parse_index_person in
-  let ip = Gwdb.iper_of_string @@ Int32.to_string params.Mread.Index_person.index in
+  let params = Api_util.get_params conf Api_saisie_read_piqi_ext.parse_index_person in
+  let ip = Gwdb.iper_of_string @@ Int32.to_string params.Api_saisie_read_piqi.Index_person.index in
   if Gwdb.iper_exists base ip then
   (* Construction de la base avec calcul des sosas           *)
   (* Si iz présent, on prend iz comme souche pour le calcul  *)
   (* Sinon on prend la souche de l'arbre                     *)
   let () =
-    match params.Mread.Index_person.indexz with
+    match params.Api_saisie_read_piqi.Index_person.indexz with
       | Some n -> Geneweb.SosaCache.build_sosa_tree_ht conf base (Gwdb.poi base (Gwdb.iper_of_string @@ Int32.to_string n))
       | None -> Geneweb.SosaCache.build_sosa_ht conf base
     in
@@ -1809,7 +1806,7 @@ let print_person_tree conf base =
   (* cache lien inter arbre *)
   let () = !Geneweb.GWPARAM_ITL.init_cache conf base ip 1 1 1 in
   let pers_piqi = pers_to_piqi_person conf base p conf.Geneweb.Config.command true in
-  let data = Mext_read.gen_person pers_piqi in
+  let data = Api_saisie_read_piqi_ext.gen_person pers_piqi in
   Api_util.print_result conf data
   else begin
     Geneweb.Output.status conf Def.Not_Found ;
@@ -1875,7 +1872,7 @@ let print_result_fiche_person conf base ip nb_asc_max nb_desc_max simple_graph_i
     (* cache lien inter arbre *)
     let () = !Geneweb.GWPARAM_ITL.init_cache conf base ip 1 1 1 in
     let pers_piqi = pers_to_piqi_fiche_person conf base p conf.Geneweb.Config.command true 0 nb_asc_max 0 nb_desc_max true simple_graph_info no_event in
-    let data = Mext_read.gen_person pers_piqi in
+    let data = Api_saisie_read_piqi_ext.gen_person pers_piqi in
     Api_util.print_result conf data
   end else begin
     Geneweb.Output.status conf Def.Not_Found ;
@@ -1898,19 +1895,19 @@ let print_result_fiche_person conf base ip nb_asc_max nb_desc_max simple_graph_i
     [Rem] : Non exporté en clair hors de ce module.                      *)
 (* ********************************************************************* *)
 let print_from_identifier_person conf base print_result_from_ip identifier_person =
-  match identifier_person.Mread.Identifier_person.index with
+  match identifier_person.Api_saisie_read_piqi.Identifier_person.index with
   | Some index ->
     (* Traite l'index *)
     let ip = Gwdb.iper_of_string @@ Int32.to_string index in
-    if identifier_person.Mread.Identifier_person.track_visit = Some true
+    if identifier_person.Api_saisie_read_piqi.Identifier_person.track_visit = Some true
     then Geneweb.Util.record_visited conf ip;
     print_result_from_ip conf base ip
   | None ->
-    match (identifier_person.Mread.Identifier_person.oc) with
+    match (identifier_person.Api_saisie_read_piqi.Identifier_person.oc) with
     | (Some oc) ->
       begin
-        match ( identifier_person.Mread.Identifier_person.p
-              , identifier_person.Mread.Identifier_person.n) with
+        match ( identifier_person.Api_saisie_read_piqi.Identifier_person.p
+              , identifier_person.Api_saisie_read_piqi.Identifier_person.n) with
         | (Some fn, Some sn) ->
           (* Retourne une personne en fonction de son npoc *)
           begin
@@ -1920,7 +1917,7 @@ let print_from_identifier_person conf base print_result_from_ip identifier_perso
               if Geneweb.Util.is_empty_person p || ((Geneweb.Util.is_hide_names conf p) && not(Geneweb.Util.authorized_age conf base p)) then
                 Api_util.print_error conf `not_found ""
               else
-                (if identifier_person.Mread.Identifier_person.track_visit
+                (if identifier_person.Api_saisie_read_piqi.Identifier_person.track_visit
                     = Some true
                  then Geneweb.Util.record_visited conf ip;
                  print_result_from_ip conf base ip)
@@ -1932,8 +1929,8 @@ let print_from_identifier_person conf base print_result_from_ip identifier_perso
     | None ->
       (* Fait une recherche par mots-clé *)
       let (fn, sn) =
-        match ( identifier_person.Mread.Identifier_person.p
-              , identifier_person.Mread.Identifier_person.n) with
+        match ( identifier_person.Api_saisie_read_piqi.Identifier_person.p
+              , identifier_person.Api_saisie_read_piqi.Identifier_person.n) with
         | (Some fn, Some sn) -> (fn, sn)
         | (None, Some sn) -> ("", sn)
         | (Some fn, None) -> (fn, "")
@@ -1948,7 +1945,7 @@ let print_from_identifier_person conf base print_result_from_ip identifier_perso
           (fn ^ " " ^ sn, [ Key; ApproxKey; PartialKey ])
       in match search_index conf base an order with
       | Some ip ->
-        if identifier_person.Mread.Identifier_person.track_visit = Some true
+        if identifier_person.Api_saisie_read_piqi.Identifier_person.track_visit = Some true
         then Geneweb.Util.record_visited conf ip;
         print_result_from_ip conf base ip
       | None -> Api_util.print_error conf `not_found ""
@@ -1964,26 +1961,26 @@ let print_from_identifier_person conf base print_result_from_ip identifier_perso
     [Rem] : Non exporté en clair hors de ce module.                      *)
 (* ********************************************************************* *)
 let print_fiche_person conf base =
-  let fiche_parameters = Api_util.get_params conf Mext_read.parse_fiche_parameters in
-  let identifier_person = fiche_parameters.Mread.Fiche_parameters.identifier_person in
+  let fiche_parameters = Api_util.get_params conf Api_saisie_read_piqi_ext.parse_fiche_parameters in
+  let identifier_person = fiche_parameters.Api_saisie_read_piqi.Fiche_parameters.identifier_person in
   let print_result_from_ip conf base ip =
       let nb_asc_max =
-        match fiche_parameters.Mread.Fiche_parameters.nb_asc_max with
+        match fiche_parameters.Api_saisie_read_piqi.Fiche_parameters.nb_asc_max with
         | Some n -> Int32.to_int n
         | None -> 1 (* Add grand-parents. *)
       in
       let nb_desc_max =
-        match fiche_parameters.Mread.Fiche_parameters.nb_desc_max with
+        match fiche_parameters.Api_saisie_read_piqi.Fiche_parameters.nb_desc_max with
         | Some n -> Int32.to_int n
         | None -> 0
       in
       let simple_graph_info =
-        match fiche_parameters.Mread.Fiche_parameters.simple_graph_info with
+        match fiche_parameters.Api_saisie_read_piqi.Fiche_parameters.simple_graph_info with
         | Some b -> b
         | None -> false
       in
       let no_event =
-        match fiche_parameters.Mread.Fiche_parameters.no_event with
+        match fiche_parameters.Api_saisie_read_piqi.Fiche_parameters.no_event with
         | Some b -> b
         | None -> false
       in
@@ -1999,12 +1996,12 @@ let hash_id x = Int64.of_int (Hashtbl.hash x)
 let create_edge factor_from baseprefix_from p_from factor_to baseprefix_to p_to =
   let from_node = hash_id (baseprefix_from, Gwdb.get_iper p_from, factor_from) in
   let to_node = hash_id (baseprefix_to, Gwdb.get_iper p_to, factor_to) in
-  Mread.Edge.{ from_node ; to_node }
+  Api_saisie_read_piqi.Edge.{ from_node ; to_node }
 
 let create_node conf base max_gen ifam p gen more_info base_prefix factor =
   let id = hash_id (base_prefix, Gwdb.get_iper p, factor) in
   let p = pers_to_piqi_person_tree conf base p more_info gen max_gen base_prefix in
-  { Mread.Node.id = id
+  { Api_saisie_read_piqi.Node.id = id
   ; person = p
   ; ifam
   }
@@ -2198,19 +2195,19 @@ let build_graph_desc conf base p max_gen =
 (* ********************************************************************* *)
 let print_result_graph_tree conf base ip =
   if Gwdb.iper_exists base ip then
-  let params = Api_util.get_params conf Mext_read.parse_graph_tree_params in
+  let params = Api_util.get_params conf Api_saisie_read_piqi_ext.parse_graph_tree_params in
   (* Construction de la base avec calcul des sosas           *)
   (* Si iz présent, on prend iz comme souche pour le calcul  *)
   (* Sinon on prend la souche de l'arbre                     *)
   let () =
-    match params.Mread.Graph_tree_params.indexz with
+    match params.Api_saisie_read_piqi.Graph_tree_params.indexz with
       | Some n -> Geneweb.SosaCache.build_sosa_tree_ht conf base (Gwdb.poi base (Gwdb.iper_of_string @@ Int32.to_string n))
       | None -> Geneweb.SosaCache.build_sosa_ht conf base
     in
   let p = Gwdb.poi base ip in
   let max_asc = 12 in
   let nb_asc =
-    match params.Mread.Graph_tree_params.nb_asc with
+    match params.Api_saisie_read_piqi.Graph_tree_params.nb_asc with
     | Some n -> min max_asc (max (Int32.to_int n) 1)
     | None -> max_asc
   in
@@ -2233,7 +2230,7 @@ let print_result_graph_tree conf base ip =
   *)
   let max_desc = 12 in
   let nb_desc =
-    match params.Mread.Graph_tree_params.nb_desc with
+    match params.Api_saisie_read_piqi.Graph_tree_params.nb_desc with
     | Some n -> min max_desc (max (Int32.to_int n) 1)
     | None -> max_desc
   in
@@ -2253,7 +2250,7 @@ let print_result_graph_tree conf base ip =
               let id = Int64.of_string @@ string_of_int uniq_id in
               let c = pers_to_piqi_person_tree conf base c Siblings 1 1 conf.Geneweb.Config.command in
               let node =
-                { Mread.Node.id = id
+                { Api_saisie_read_piqi.Node.id = id
                 ; person = c
                 ; ifam = None
                 }
@@ -2281,7 +2278,7 @@ let print_result_graph_tree conf base ip =
                       let uniq_id = Hashtbl.hash (conf.Geneweb.Config.command, ic) in
                       let id = Int64.of_string @@ string_of_int uniq_id in
                       let c = pers_to_piqi_person_tree conf base c Siblings 1 1 conf.Geneweb.Config.command in
-                      { Mread.Node.id = id
+                      { Api_saisie_read_piqi.Node.id = id
                       ; person = c
                       ; ifam = None
                       })
@@ -2296,7 +2293,7 @@ let print_result_graph_tree conf base ip =
                 let id = Int64.of_string @@ string_of_int uniq_id in
                 let c = pers_to_piqi_person_tree conf base c Siblings 1 1 conf.Geneweb.Config.command in
                 let node =
-                  { Mread.Node.id = id
+                  { Api_saisie_read_piqi.Node.id = id
                   ; person = c
                   ; ifam = None
                   }
@@ -2307,7 +2304,7 @@ let print_result_graph_tree conf base ip =
     | None -> ([], [])
   in
   let graph =
-    Mread.Graph_tree.({
+    Api_saisie_read_piqi.Graph_tree.({
       nodes_asc = nodes_asc;
       edges_asc = edges_asc;
       nodes_desc = nodes_desc;
@@ -2317,7 +2314,7 @@ let print_result_graph_tree conf base ip =
       nodes_siblings_after = nodes_siblings_after;
     })
   in
-  let data = Mext_read.gen_graph_tree graph in
+  let data = Api_saisie_read_piqi_ext.gen_graph_tree graph in
   Api_util.print_result conf data
   else begin
     Geneweb.Output.status conf Def.Not_Found ;
@@ -2376,9 +2373,9 @@ let get_nb_ancestors base ip =
     [Rem] : Non exporté en clair hors de ce module.                           *)
 (* ************************************************************************** *)
 let nb_to_piqi_nb_ancestors nb =
-    let piqi_nb_ancestors = Mread.default_nb_ancestors() in
-        piqi_nb_ancestors.Mread.Nb_ancestors.nb <- Int32.of_int nb;
-    Mext_read.gen_nb_ancestors piqi_nb_ancestors
+    let piqi_nb_ancestors = Api_saisie_read_piqi.default_nb_ancestors() in
+        piqi_nb_ancestors.Api_saisie_read_piqi.Nb_ancestors.nb <- Int32.of_int nb;
+    Api_saisie_read_piqi_ext.gen_nb_ancestors piqi_nb_ancestors
 
 (* ********************************************************************* *)
 (*  [Fonc] print_result_nb_ancestors : conf -> base -> ip -> unit        *)
@@ -2405,7 +2402,7 @@ let print_result_nb_ancestors conf base ip =
     [Rem] : Non exporté en clair hors de ce module.                      *)
 (* ********************************************************************* *)
 let print_nb_ancestors conf base =
-  print_from_identifier_person conf base print_result_nb_ancestors (Api_util.get_params conf Mext_read.parse_identifier_person)
+  print_from_identifier_person conf base print_result_nb_ancestors (Api_util.get_params conf Api_saisie_read_piqi_ext.parse_identifier_person)
 
 (* ********************************************************************* *)
 (*  [Fonc] print_graph_tree : conf -> base -> unit                    *)
@@ -2418,6 +2415,6 @@ let print_nb_ancestors conf base =
     [Rem] : Non exporté en clair hors de ce module.                      *)
 (* ********************************************************************* *)
 let print_graph_tree conf base =
-  let params = Api_util.get_params conf Mext_read.parse_graph_tree_params in
-  let identifier_person = params.Mread.Graph_tree_params.identifier_person in
+  let params = Api_util.get_params conf Api_saisie_read_piqi_ext.parse_graph_tree_params in
+  let identifier_person = params.Api_saisie_read_piqi.Graph_tree_params.identifier_person in
   print_from_identifier_person conf base print_result_graph_tree identifier_person
