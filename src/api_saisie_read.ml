@@ -715,7 +715,6 @@ let fam_to_piqi_family_link conf base (ifath : Gwdb.iper) imoth sp ifam fam base
 let fill_events conf base p base_prefix p_auth pers_to_piqi witness_constructor event_constructor =
   if p_auth then
     List.map
-      (*      (fun (name, date, place, note, src, w, isp) ->*)
       (fun evt ->
          let name = Geneweb.Event.get_name evt in
          let date = Geneweb.Event.get_date evt in
@@ -2037,7 +2036,6 @@ let build_graph_asc conf base p max_gen =
           nodes := create_node moth gen Ancestor conf.Geneweb.Config.command moth_factor :: !nodes;
           edges := create_edge p_factor conf.Geneweb.Config.command p fath_factor conf.Geneweb.Config.command fath :: !edges;
           edges := create_edge p_factor conf.Geneweb.Config.command p moth_factor conf.Geneweb.Config.command moth :: !edges;
-          (*create_family ifam families;*)
           loop ((fath, gen + 1) :: (moth, gen + 1) :: l)
         | None ->
           (* lien inter arbre *)
@@ -2106,7 +2104,6 @@ let build_graph_desc conf base p max_gen =
                   edges := create_edge p_factor conf.Geneweb.Config.command p c_factor conf.Geneweb.Config.command c :: !edges;
                   edges := create_edge sp_factor conf.Geneweb.Config.command sp c_factor conf.Geneweb.Config.command c :: !edges
                 end children;
-                (*create_family ifam families;*)
                 let child_local =
                   List.fold_left (fun acc c -> (c, gen + 1) :: acc) acc children
                 in
@@ -2214,20 +2211,6 @@ let print_result_graph_tree conf base ip =
   (* cache lien inter arbre *)
   let () = !Geneweb.GWPARAM_ITL.init_cache conf base ip 1 1 1 in
   let (nodes_asc, edges_asc) = build_graph_asc conf base p nb_asc in
-  (*
-  let nodes_asc =
-    List.rev_map
-      (fun p ->
-        let id = Int32.of_string @@ Gwdb.string_of_iper (get_iper p) in
-        let p = pers_to_piqi_person_tree conf base p in
-        Mread.Node.({
-          id = id;
-          person = p;
-          ifam = None;
-        }))
-      nodes_asc
-  in
-  *)
   let max_desc = 12 in
   let nb_desc =
     match params.Api_saisie_read_piqi.Graph_tree_params.nb_desc with
