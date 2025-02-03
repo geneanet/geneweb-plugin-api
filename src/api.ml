@@ -464,13 +464,12 @@ let print_updt_image conf base =
 let print_base_warnings conf base =
   let filters = Api_util.get_filters conf in
   let errors = ref [] in
-  let module BaseWarningSet = Geneweb.Warning.Gen_BaseWarningSet (struct let base = base end) in
-  let warnings = ref BaseWarningSet.empty in
+  let warnings = ref Geneweb.Warning.BaseWarningSet.empty in
   Geneweb.Check.check_base base
     (fun e -> errors := e :: !errors)
-    (fun w -> warnings := BaseWarningSet.add w !warnings)
+    (fun w -> warnings := Geneweb.Warning.BaseWarningSet.add w !warnings)
     ignore ;
-  let warnings = Geneweb.Warning.handle_homonymous base (BaseWarningSet.elements !warnings) in
+  let warnings = Geneweb.Warning.handle_homonymous base (Geneweb.Warning.BaseWarningSet.elements !warnings) in
   let data =
     if filters.Api_def.nb_results then
       let len = List.length !errors + List.length warnings in
