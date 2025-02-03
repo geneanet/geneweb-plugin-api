@@ -150,7 +150,7 @@ let string_of_dmy_raw d =
 let string_of_date_raw conf d =
   match d with
   | Date.Dgreg (d, _) -> string_of_dmy_raw d
-  | Date.Dtext t -> Geneweb.Util.string_with_macros conf [] t
+  | Date.Dtext t -> Geneweb.Util.string_with_macros ~conf ~env:[] t
 
 let gregorian_precision conf d is_long =
   if d.Date.delta = 0 then string_of_dmy conf d is_long
@@ -237,7 +237,7 @@ let string_of_date_and_conv conf d =
         !!(Geneweb.DateDisplay.string_of_dmy conf d)
       in
       (date, date_long, date_conv, date_conv_long, Some `hebrew)
-  | Date.Dtext t -> ("(" ^ Geneweb.Util.string_with_macros conf [] t ^ ")", "", "", "", None)
+  | Date.Dtext t -> ("(" ^ Geneweb.Util.string_with_macros ~conf ~env:[] t ^ ")", "", "", "", None)
 
 (**/**) (* Affichage nom/prénom *)
 
