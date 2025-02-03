@@ -1,15 +1,3 @@
-module Mread = Api_saisie_read_piqi
-module Mext_read = Api_saisie_read_piqi_ext
-
-open Geneweb
-open Config
-open Def
-open Date
-open Gwdb
-open Util
-open Api_util
-
-
 let max_children = 100
 let limit_array arr =
   if Array.length arr > max_children then [||] else arr
@@ -24,11 +12,11 @@ let limit_list l =
 
 let short_prec_year_text conf d =
   let prec =
-    match d.prec with
+    match d.Date.prec with
     | About | OrYear _ | YearInt _ ->
         (* On utilise le dictionnaire pour être sur *)
         (* que ce soit compréhensible de tous.      *)
-        (match transl conf "about (short date)" with
+        (match Geneweb.Util.transl conf "about (short date)" with
          | "ca" -> "ca "
          | s -> s ^ " ")
     | Maybe -> "? "
@@ -40,43 +28,43 @@ let short_prec_year_text conf d =
 
 let partial_short_dates_text conf birth_date death_date p =
   match (birth_date, death_date) with
-  | (Some (Dgreg (b, _)), Some (Dtext _)) -> short_prec_year_text conf b ^ "-"
-  | (Some (Dgreg (b, _)), None) ->
+  | (Some (Date.Dgreg (b, _)), Some (Date.Dtext _)) -> short_prec_year_text conf b ^ "-"
+  | (Some (Date.Dgreg (b, _)), None) ->
       (* La personne peut être décédée mais ne pas avoir de date. *)
-      (match get_death p with
+      (match Gwdb.get_death p with
       | Death (_, _) | DeadDontKnowWhen | DeadYoung ->
           short_prec_year_text conf b ^ "-"
       | _ -> short_prec_year_text conf b )
-  | (None, Some (Dtext _)) ->
-      (match get_death p with
-      | Death (_, _) | DeadDontKnowWhen | DeadYoung -> DateDisplay.death_symbol conf
+  | (None, Some (Date.Dtext _)) ->
+      (match Gwdb.get_death p with
+      | Death (_, _) | DeadDontKnowWhen | DeadYoung -> Geneweb.DateDisplay.death_symbol conf
       | _ -> "" )
   | (None, None) ->
       (* La personne peut être décédée mais ne pas avoir de date. *)
-      (match get_death p with
-      | Death (_, _) | DeadDontKnowWhen | DeadYoung -> DateDisplay.death_symbol conf
+      (match Gwdb.get_death p with
+      | Death (_, _) | DeadDontKnowWhen | DeadYoung -> Geneweb.DateDisplay.death_symbol conf
       | _ -> "" )
   | (_, _) -> ""
 
 let short_dates_text conf base p =
-  if authorized_age conf base p then
+  if Geneweb.Util.authorized_age conf base p then
     let (birth_date, death_date, _) = Gutil.get_birth_death_date p in
     match (birth_date, death_date) with
-    | (Some (Dgreg (b, _)), Some (Dgreg (d, _))) ->
+    | (Some (Date.Dgreg (b, _)), Some (Date.Dgreg (d, _))) ->
       short_prec_year_text conf b ^ "-" ^ short_prec_year_text conf d
-    | (Some (Dgreg (b, _)), None) ->
+    | (Some (Date.Dgreg (b, _)), None) ->
       (* La personne peut être décédée mais ne pas avoir de date. *)
-      (match get_death p with
+      (match Gwdb.get_death p with
        | Death (_, _) | DeadDontKnowWhen | DeadYoung ->
          short_prec_year_text conf b ^ "-"
        | _ -> short_prec_year_text conf b )
-    | (None, Some (Dgreg (d, _))) ->
-      DateDisplay.death_symbol conf ^ short_prec_year_text conf d
+    | (None, Some (Date.Dgreg (d, _))) ->
+      Geneweb.DateDisplay.death_symbol conf ^ short_prec_year_text conf d
     | (None, None) ->
       (* La personne peut être décédée mais ne pas avoir de date. *)
-      (match get_death p with
+      (match Gwdb.get_death p with
        | Death (_, _) | DeadDontKnowWhen | DeadYoung ->
-         DateDisplay.death_symbol conf
+         Geneweb.DateDisplay.death_symbol conf
        | _ -> "" )
     (* On ne peut pas traiter les dates au format texte, mais on *)
     (* affiche tout de même les dates au format Dgreg.           *)
@@ -90,9 +78,9 @@ let code_french_date conf d m y =
   in
   let s =
     if m = 0 then ""
-    else s ^ (if s = "" then "" else " ") ^ DateDisplay.french_month conf (m - 1)
+    else s ^ (if s = "" then "" else " ") ^ Geneweb.DateDisplay.french_month conf (m - 1)
   in
-  s ^ (if s = "" then "" else " ") ^ DateDisplay.code_french_year conf y
+  s ^ (if s = "" then "" else " ") ^ Geneweb.DateDisplay.code_french_year conf y
 
 
 let encode_dmy conf d m y is_long =
@@ -101,23 +89,24 @@ let encode_dmy conf d m y is_long =
   let date =
     if m != 0 then
       let date_keyword = if is_long then "(month)" else "(short month)" in
-      if date = "" then transl_nth conf date_keyword (m - 1)
-      else date ^ " " ^ transl_nth conf date_keyword (m - 1)
+      if date = "" then Geneweb.Util.transl_nth conf date_keyword (m - 1)
+      else date ^ " " ^ Geneweb.Util.transl_nth conf date_keyword (m - 1)
     else date
   in
   if date = "" then string_of_int y
   else date ^ " " ^ string_of_int y
 
 let string_of_dmy conf d is_long =
-  let sy = encode_dmy conf d.day d.month d.year is_long in
+  let sy = encode_dmy conf d.Date.day d.month d.year is_long in
   let sy2 =
-    match d.prec with
+    match d.Date.prec with
     | OrYear d2 | YearInt d2 ->
         let d2 = Date.dmy_of_dmy2 d2 in
-        encode_dmy conf d2.day d2.month d2.year is_long
+        encode_dmy conf d2.Date.day d2.month d2.year is_long
     | _ -> Adef.safe ""
   in
-  !!(DateDisplay.string_of_prec_dmy conf sy sy2 d)
+  let open Api_util in
+  !!(Geneweb.DateDisplay.string_of_prec_dmy conf sy sy2 d)
 
 (* ************************************************************************** *)
 (*  [Fonc] string_of_dmy_raw : Def.dmy -> string                              *)
@@ -130,7 +119,7 @@ let string_of_dmy conf d is_long =
 (* ************************************************************************** *)
 let string_of_dmy_raw d =
   let prec =
-    match d.prec with
+    match d.Date.prec with
     | About -> "~"
     | Maybe -> "?"
     | Before -> "<"
@@ -138,12 +127,12 @@ let string_of_dmy_raw d =
     | _ -> ""
   in
   let date =
-    Printf.sprintf "%d/%d/%d" d.year d.month d.day
+    Printf.sprintf "%d/%d/%d" d.year d.month d.Date.day
   in
   let delta =
-    match d.prec with
-    | OrYear d2 -> Printf.sprintf "|/%d/%d/%d" d2.year2 d2.month2 d2.day2
-    | YearInt d2 -> Printf.sprintf "../%d/%d/%d" d2.year2 d2.month2 d2.day2
+    match d.Date.prec with
+    | OrYear d2 -> Printf.sprintf "|/%d/%d/%d" d2.year2 d2.month2 d2.Date.day2
+    | YearInt d2 -> Printf.sprintf "../%d/%d/%d" d2.year2 d2.month2 d2.Date.day2
     | _ -> ""
   in
   prec ^ "/" ^ date ^ "#" ^ delta
@@ -160,25 +149,25 @@ let string_of_dmy_raw d =
 (* ************************************************************************** *)
 let string_of_date_raw conf d =
   match d with
-  | Dgreg (d, _) -> string_of_dmy_raw d
-  | Dtext t -> string_with_macros conf [] t
+  | Date.Dgreg (d, _) -> string_of_dmy_raw d
+  | Date.Dtext t -> Geneweb.Util.string_with_macros conf [] t
 
 let gregorian_precision conf d is_long =
-  if d.delta = 0 then string_of_dmy conf d is_long
+  if d.Date.delta = 0 then string_of_dmy conf d is_long
   else
     let d2 =
-      Date.gregorian_of_sdn ~prec:d.prec (Date.to_sdn ~from:Dgregorian d + d.delta)
+      Date.gregorian_of_sdn ~prec:d.Date.prec (Date.to_sdn ~from:Dgregorian d + d.Date.delta)
     in
-    transl conf "between (date)"
+    Geneweb.Util.transl conf "between (date)"
     ^ " " ^ string_of_dmy conf d is_long
-    ^ " " ^ transl_nth conf "and" 0
+    ^ " " ^ Geneweb.Util.transl_nth conf "and" 0
     ^ " " ^ string_of_dmy conf d2 is_long
 
 let string_of_french_dmy conf d =
-  code_french_date conf d.day d.month d.year
+  code_french_date conf d.Date.day d.month d.year
 
 let string_of_hebrew_dmy conf d =
-  DateDisplay.code_hebrew_date conf d.day d.month d.year
+  Geneweb.DateDisplay.code_hebrew_date conf d.Date.day d.month d.year
 
 (* ************************************************************************** *)
 (*  [Fonc] string_of_date_and_conv :
@@ -195,13 +184,13 @@ let string_of_hebrew_dmy conf d =
 (* ************************************************************************** *)
 let string_of_date_and_conv conf d =
   match d with
-  | Dgreg (d, Dgregorian) ->
+  | Date.Dgreg (d, Dgregorian) ->
       let date = string_of_dmy conf d false in
       let date_long = string_of_dmy conf d true in
       let date_conv = date in
       let date_conv_long = date_long in
       (date, date_long, date_conv, date_conv_long, Some `gregorian)
-  | Dgreg (d, Djulian) ->
+  | Date.Dgreg (d, Djulian) ->
       let date_conv =
         if d.year < 1582 then "" else gregorian_precision conf d false
       in
@@ -211,49 +200,62 @@ let string_of_date_and_conv conf d =
       let d1 = Date.convert ~from:Dgregorian ~to_:Djulian d in
       let year_prec =
         if d1.month > 0 && d1.month < 3 ||
-           d1.month = 3 && d1.day > 0 && d1.day < 25 then
+           d1.month = 3 && d1.Date.day > 0 && d1.Date.day < 25 then
           Printf.sprintf " (%d/%d)" (d1.year - 1) (d1.year mod 10)
         else ""
       in
       let date =
-        !!(DateDisplay.string_of_dmy conf d1)
+        let open Api_util in
+        !!(Geneweb.DateDisplay.string_of_dmy conf d1)
         ^ year_prec
-        ^ " " ^ transl_nth conf "gregorian/julian/french/hebrew" 1
+        ^ " " ^ Geneweb.Util.transl_nth conf "gregorian/julian/french/hebrew" 1
       in
       (date, date, date_conv, date_conv_long, Some `julian)
-  | Dgreg (d, Dfrench) ->
+  | Date.Dgreg (d, Dfrench) ->
       let d1 = Date.convert ~from:Dgregorian ~to_:Dfrench d in
       let date = string_of_french_dmy conf d1 in
-      let date_long = !!(DateDisplay.string_of_on_french_dmy conf d1) in
+      let date_long =
+        let open Api_util in
+        !!(Geneweb.DateDisplay.string_of_on_french_dmy conf d1)
+      in
       let date_conv = gregorian_precision conf d false in
-      let date_conv_long = !!(DateDisplay.string_of_dmy conf d) in
+      let date_conv_long =
+        let open Api_util in
+        !!(Geneweb.DateDisplay.string_of_dmy conf d)
+      in
       (date, date_long, date_conv, date_conv_long, Some `french)
-  | Dgreg (d, Dhebrew) ->
+  | Date.Dgreg (d, Dhebrew) ->
       let d1 = Date.convert ~from:Dgregorian ~to_:Dhebrew d in
       let date = string_of_hebrew_dmy conf d1 in
-      let date_long = !!(DateDisplay.string_of_on_hebrew_dmy conf d1) in
+      let date_long =
+        let open Api_util in
+        !!(Geneweb.DateDisplay.string_of_on_hebrew_dmy conf d1)
+      in
       let date_conv = gregorian_precision conf d false in
-      let date_conv_long = !!(DateDisplay.string_of_dmy conf d) in
+      let date_conv_long =
+        let open Api_util in
+        !!(Geneweb.DateDisplay.string_of_dmy conf d)
+      in
       (date, date_long, date_conv, date_conv_long, Some `hebrew)
-  | Dtext t -> ("(" ^ string_with_macros conf [] t ^ ")", "", "", "", None)
+  | Date.Dtext t -> ("(" ^ Geneweb.Util.string_with_macros conf [] t ^ ")", "", "", "", None)
 
 (**/**) (* Affichage nom/prénom *)
 
 let person_firstname_surname_txt base p =
-  if not (is_empty_string (get_public_name p)) then
-    let fn = Utf8.normalize @@ sou base (get_public_name p) in
+  if not (Gwdb.is_empty_string (Gwdb.get_public_name p)) then
+    let fn = Utf8.normalize @@ Gwdb.sou base (Gwdb.get_public_name p) in
     let sn =
-      match get_qualifiers p with
-      | s :: _ -> " " ^ Utf8.normalize @@ sou base s
-      | _ -> Utf8.normalize @@ sou base (get_surname p)
+      match Gwdb.get_qualifiers p with
+      | s :: _ -> " " ^ Utf8.normalize @@ Gwdb.sou base s
+      | _ -> Utf8.normalize @@ Gwdb.sou base (Gwdb.get_surname p)
     in
     (fn, sn)
   else
-    let fn = Utf8.normalize @@ sou base (get_first_name p) in
-    let sn = Utf8.normalize @@ sou base (get_surname p) in
+    let fn = Utf8.normalize @@ Gwdb.sou base (Gwdb.get_first_name p) in
+    let sn = Utf8.normalize @@ Gwdb.sou base (Gwdb.get_surname p) in
     let sn =
-      match get_qualifiers p with
-      | s :: _ -> sn ^ " " ^ Utf8.normalize @@ sou base s
+      match Gwdb.get_qualifiers p with
+      | s :: _ -> sn ^ " " ^ Utf8.normalize @@ Gwdb.sou base s
       | _ -> sn
     in
     (fn, sn)
@@ -268,7 +270,7 @@ type graph_more_info =
   | Spouse
 
 let simple_witness_constructor witness_type witness witness_note =
-  Mread.Witness_event.({
+  Api_saisie_read_piqi.Witness_event.({
     witness_type;
     witness;
     witness_note = Utf8.normalize witness_note
@@ -286,10 +288,10 @@ let simple_witness_constructor witness_type witness witness_note =
 (* ************************************************************************** *)
 let event_to_piqi_event pevt_name fevt_name =
   match pevt_name with
-  | Some (Epers_Name _) -> `epers_custom
+  | Some (Def.Epers_Name _) -> `epers_custom
   | Some pevt -> Api_piqi_util.piqi_pevent_name_of_pevent_name pevt
   | None -> match fevt_name with
-    | Some (Efam_Name _) -> `efam_custom
+    | Some (Def.Efam_Name _) -> `efam_custom
     | Some fevt -> Api_piqi_util.piqi_fevent_name_of_fevent_name fevt
     | None -> failwith "event_to_piqi_event"
 
@@ -307,9 +309,9 @@ let event_to_piqi_event pevt_name fevt_name =
     [Rem] : Non exporté en clair hors de ce module.                           *)
 (* ************************************************************************** *)
 let pers_to_piqi_person_tree conf base p more_info gen max_gen base_prefix =
-  if is_restricted conf base (get_iper p) then
+  if Geneweb.Util.is_restricted conf base (Gwdb.get_iper p) then
     {
-      Mread.Person_tree.index = Int32.of_string @@ Gwdb.string_of_iper Gwdb.dummy_iper;
+      Api_saisie_read_piqi.Person_tree.index = Int32.of_string @@ Gwdb.string_of_iper Gwdb.dummy_iper;
       sex = `unknown;
       lastname = "x";
       firstname = "x";
@@ -325,59 +327,59 @@ let pers_to_piqi_person_tree conf base p more_info gen max_gen base_prefix =
       name_is_restricted = Geneweb.NameDisplay.is_restricted conf base p;
     }
   else
-    let p_auth = authorized_age conf base p in
-    let index = Int32.of_string @@ Gwdb.string_of_iper (get_iper p) in
+    let p_auth = Geneweb.Util.authorized_age conf base p in
+    let index = Int32.of_string @@ Gwdb.string_of_iper (Gwdb.get_iper p) in
     let sex =
-      match get_sex p with
+      match Gwdb.get_sex p with
       | Male -> `male
       | Female -> `female
       | Neuter -> `unknown
     in
     let sosa =
-      if conf.bname <> chop_base_prefix base_prefix then `no_sosa
+      if conf.bname <> Api_util.chop_base_prefix base_prefix then `no_sosa
       else
-        let sosa_nb = SosaCache.get_sosa_person p in
+        let sosa_nb = Geneweb.SosaCache.get_sosa_person p in
         if Sosa.eq sosa_nb Sosa.zero then `no_sosa
         else if Sosa.eq sosa_nb Sosa.one then `sosa_ref
         else `sosa
     in
     let sn =
-      if (is_hide_names conf p) && not p_auth then ""
-      else Name.lower (sou base (get_surname p))
+      if (Geneweb.Util.is_hide_names conf p) && not p_auth then ""
+      else Name.lower (Gwdb.sou base (Gwdb.get_surname p))
     in
     let fn =
-      if (is_hide_names conf p) && not p_auth then ""
-      else Name.lower (sou base (get_first_name p))
+      if (Geneweb.Util.is_hide_names conf p) && not p_auth then ""
+      else Name.lower (Gwdb.sou base (Gwdb.get_first_name p))
     in
-    let occ = Int32.of_int (get_occ p) in
+    let occ = Int32.of_int (Gwdb.get_occ p) in
     let (first_name, surname) =
-      if not p_auth && (is_hide_names conf p) then ("x", "x")
+      if not p_auth && (Geneweb.Util.is_hide_names conf p) then ("x", "x")
       else person_firstname_surname_txt base p
     in
     let dates = short_dates_text conf base p in
-    let image = get_portrait conf base p in
+    let image = Api_util.get_portrait conf base p in
     let has_more_infos =
       match more_info with
       | Root -> false
-      | Siblings -> Array.length (get_family p) > 0
+      | Siblings -> Array.length (Gwdb.get_family p) > 0
       | Children ->
-           gen = max_gen - 1 && Array.length (get_family p) > 0
+           gen = max_gen - 1 && Array.length (Gwdb.get_family p) > 0
       | Ancestor ->
-          let has_parents = get_parents p <> None in
+          let has_parents = Gwdb.get_parents p <> None in
           (gen = max_gen - 1 && has_parents) ||
            (fst (Array.fold_left
                    (fun (children_or_spouses, nb_fam) ifam ->
                      let nb_fam = succ nb_fam in
-                     let fam = foi base ifam in
-                     let children = limit_array @@ get_children fam in
+                     let fam = Gwdb.foi base ifam in
+                     let children = limit_array @@ Gwdb.get_children fam in
                      (children_or_spouses || (gen > 1 && Array.length children > 1) || nb_fam > 1,
                       nb_fam))
-                   (false, 0) (get_family p)))
+                   (false, 0) (Gwdb.get_family p)))
       | Spouse ->
-          (get_parents p <> None) || Array.length (get_family p) > 1
+          (Gwdb.get_parents p <> None) || Array.length (Gwdb.get_family p) > 1
     in
     {
-      Mread.Person_tree.index = index;
+      Api_saisie_read_piqi.Person_tree.index = index;
       sex = sex;
       lastname = Utf8.normalize surname;
       firstname = Utf8.normalize first_name;
@@ -395,64 +397,64 @@ let pers_to_piqi_person_tree conf base p more_info gen max_gen base_prefix =
 
 (* Common functions to build a SimplePerson or a FichePerson. *)
 let get_restricted_person () =
-  let restricted_person = Mread.default_person () in
-  restricted_person.Mread.Person.index <- Int32.of_string @@ Gwdb.string_of_iper Gwdb.dummy_iper;
-  restricted_person.Mread.Person.lastname <- "x";
-  restricted_person.Mread.Person.firstname <- "x";
+  let restricted_person = Api_saisie_read_piqi.default_person () in
+  restricted_person.Api_saisie_read_piqi.Person.index <- Int32.of_string @@ Gwdb.string_of_iper Gwdb.dummy_iper;
+  restricted_person.Api_saisie_read_piqi.Person.lastname <- "x";
+  restricted_person.Api_saisie_read_piqi.Person.firstname <- "x";
   restricted_person
 
 let get_restricted_fiche_person () =
   let person = get_restricted_person () in
-  let fiche = Mread.default_fiche_person () in
-  fiche.Mread.Fiche_person.visible_for_visitors <- `visibility_private;
-  fiche.Mread.Fiche_person.is_contemporary <- false;
-  person.Mread.Person.fiche_person_person <- Some fiche;
+  let fiche = Api_saisie_read_piqi.default_fiche_person () in
+  fiche.Api_saisie_read_piqi.Fiche_person.visible_for_visitors <- `visibility_private;
+  fiche.Api_saisie_read_piqi.Fiche_person.is_contemporary <- false;
+  person.Api_saisie_read_piqi.Person.fiche_person_person <- Some fiche;
   person
 
 let fill_sex p =
-      match get_sex p with
+      match Gwdb.get_sex p with
       | Male -> `male
       | Female -> `female
       | Neuter -> `unknown
 
 let fill_sosa p =
-  let sosa_nb = SosaCache.get_sosa_person p in
+  let sosa_nb = Geneweb.SosaCache.get_sosa_person p in
   if Sosa.eq sosa_nb Sosa.zero then `no_sosa
   else if Sosa.eq sosa_nb Sosa.one then `sosa_ref
   else `sosa
 
 let fill_sn conf base p p_auth =
-  if (is_hide_names conf p) && not p_auth then ""
-  else Name.lower (sou base (get_surname p))
+  if (Geneweb.Util.is_hide_names conf p) && not p_auth then ""
+  else Name.lower (Gwdb.sou base (Gwdb.get_surname p))
 
 let fill_fn conf base p p_auth =
-  if (is_hide_names conf p) && not p_auth then ""
-  else Name.lower (sou base (get_first_name p))
+  if (Geneweb.Util.is_hide_names conf p) && not p_auth then ""
+  else Name.lower (Gwdb.sou base (Gwdb.get_first_name p))
 
 let fill_occ p =
-  Int32.of_int (get_occ p)
+  Int32.of_int (Gwdb.get_occ p)
 
 let fill_surname conf p p_auth gen_p =
-  if not p_auth && (is_hide_names conf p) then "x" else gen_p.surname
+  if not p_auth && (Geneweb.Util.is_hide_names conf p) then "x" else gen_p.Def.surname
 
 let fill_firstname conf p p_auth gen_p =
-  if not p_auth && (is_hide_names conf p) then "x" else gen_p.first_name
+  if not p_auth && (Geneweb.Util.is_hide_names conf p) then "x" else gen_p.Def.first_name
 
 let fill_publicname p_auth gen_p =
-  let publicname = if not p_auth then "" else gen_p.public_name in
+  let publicname = if not p_auth then "" else gen_p.Def.public_name in
   if publicname = "" then None else Some publicname
 
 let fill_aliases p_auth gen_p =
-  if not p_auth then [] else gen_p.aliases
+  if not p_auth then [] else gen_p.Def.aliases
 
 let fill_qualifiers p_auth gen_p =
-  if not p_auth then [] else gen_p.qualifiers
+  if not p_auth then [] else gen_p.Def.qualifiers
 
 let fill_firstname_aliases p_auth gen_p =
-  if not p_auth then [] else gen_p.first_names_aliases
+  if not p_auth then [] else gen_p.Def.first_names_aliases
 
 let fill_surname_aliases p_auth gen_p =
-  if not p_auth then [] else gen_p.surnames_aliases
+  if not p_auth then [] else gen_p.Def.surnames_aliases
 
 (* ************************************************************************** *)
 (*  [Fonc] pers_to_piqi_simple_person :
@@ -469,23 +471,23 @@ let fill_surname_aliases p_auth gen_p =
     [Rem] : Non exporté en clair hors de ce module.                           *)
 (* ************************************************************************** *)
 let pers_to_piqi_simple_person conf base p base_prefix =
-  if is_restricted conf base (get_iper p) then
-    let restricted_person = Mread.default_simple_person() in
-    restricted_person.Mread.Simple_person.index <- Int32.of_string @@ Gwdb.string_of_iper Gwdb.dummy_iper;
-    restricted_person.Mread.Simple_person.lastname <- "x";
-    restricted_person.Mread.Simple_person.firstname <- "x";
-    restricted_person.Mread.Simple_person.visible_for_visitors <- `visibility_private;
+  if Geneweb.Util.is_restricted conf base (Gwdb.get_iper p) then
+    let restricted_person = Api_saisie_read_piqi.default_simple_person() in
+    restricted_person.Api_saisie_read_piqi.Simple_person.index <- Int32.of_string @@ Gwdb.string_of_iper Gwdb.dummy_iper;
+    restricted_person.Api_saisie_read_piqi.Simple_person.lastname <- "x";
+    restricted_person.Api_saisie_read_piqi.Simple_person.firstname <- "x";
+    restricted_person.Api_saisie_read_piqi.Simple_person.visible_for_visitors <- `visibility_private;
     restricted_person
   else
-    let p_auth = authorized_age conf base p in
-    let index = Int32.of_string @@ Gwdb.string_of_iper (get_iper p) in
+    let p_auth = Geneweb.Util.authorized_age conf base p in
+    let index = Int32.of_string @@ Gwdb.string_of_iper (Gwdb.get_iper p) in
     let sex =
-      match get_sex p with
+      match Gwdb.get_sex p with
       | Male -> `male
       | Female -> `female
       | Neuter -> `unknown
     in
-    let sosa_nb_num = SosaCache.get_sosa_person p in
+    let sosa_nb_num = Geneweb.SosaCache.get_sosa_person p in
     let sosa =
       if Sosa.eq sosa_nb_num Sosa.zero then `no_sosa
       else if Sosa.eq sosa_nb_num Sosa.one then `sosa_ref
@@ -497,20 +499,22 @@ let pers_to_piqi_simple_person conf base p base_prefix =
         else Some (Sosa.to_string sosa_nb_num)
     in
     let sn =
-      if (is_hide_names conf p) && not p_auth then ""
-      else Name.lower (sou base (get_surname p))
+      if (Geneweb.Util.is_hide_names conf p) && not p_auth then ""
+      else Name.lower (Gwdb.sou base (Gwdb.get_surname p))
     in
     let fn =
-      if (is_hide_names conf p) && not p_auth then ""
-      else Name.lower (sou base (get_first_name p))
+      if (Geneweb.Util.is_hide_names conf p) && not p_auth then ""
+      else Name.lower (Gwdb.sou base (Gwdb.get_first_name p))
     in
-    let occ = Int32.of_int (get_occ p) in
+    let occ = Int32.of_int (Gwdb.get_occ p) in
     let (birth_short, birth_raw, birth_place, death_short, death_raw, death_place) =
       if p_auth then
         let (birth_date, death_date, _) = Gutil.get_birth_death_date p in
         let birth =
           match birth_date with
-          | Some d -> !!(DateDisplay.string_slash_of_date conf d)
+          | Some d ->
+             let open Api_util in
+             !!(Geneweb.DateDisplay.string_slash_of_date conf d)
           | None -> ""
         in
         let birth_raw =
@@ -519,15 +523,17 @@ let pers_to_piqi_simple_person conf base p base_prefix =
           | None -> ""
         in
         let birth_place =
-          let birth_place = sou base (get_birth_place p) in
-          if birth_place <> "" then Util.string_of_place birth_place
+          let birth_place = Gwdb.sou base (Gwdb.get_birth_place p) in
+          if birth_place <> "" then Geneweb.Util.string_of_place birth_place
           else
-            let baptism_place = sou base (get_baptism_place p) in
-            Util.string_of_place baptism_place
+            let baptism_place = Gwdb.sou base (Gwdb.get_baptism_place p) in
+            Geneweb.Util.string_of_place baptism_place
         in
         let death =
           match death_date with
-          | Some d -> !!(DateDisplay.string_slash_of_date conf d)
+          | Some d ->
+             let open Api_util in
+             !!(Geneweb.DateDisplay.string_slash_of_date conf d)
           | None -> ""
         in
         let death_raw =
@@ -536,31 +542,32 @@ let pers_to_piqi_simple_person conf base p base_prefix =
           | None -> ""
         in
         let death_place =
-          let death_place = sou base (get_death_place p) in
-          if death_place <> "" then Util.string_of_place death_place
+          let death_place = Gwdb.sou base (Gwdb.get_death_place p) in
+          if death_place <> "" then Geneweb.Util.string_of_place death_place
           else
-            let burial_place = sou base (get_burial_place p) in
-            Util.string_of_place burial_place
+            let burial_place = Gwdb.sou base (Gwdb.get_burial_place p) in
+            Geneweb.Util.string_of_place burial_place
         in
+        let open Api_util in
         (birth, birth_raw, !!birth_place, death, death_raw, !!death_place)
       else ("", "", "", "", "", "")
     in
-    let image = get_portrait conf base p in
-    let has_parent = get_parents p <> None in
-    let has_spouse = Array.length (get_family p) >= 1 in
+    let image = Api_util.get_portrait conf base p in
+    let has_parent = Gwdb.get_parents p <> None in
+    let has_spouse = Array.length (Gwdb.get_family p) >= 1 in
     let has_child =
     (Array.fold_left
         (fun has_children ifam ->
-          let fam = foi base ifam in
-          let children = limit_array @@ get_children fam in
+          let fam = Gwdb.foi base ifam in
+          let children = limit_array @@ Gwdb.get_children fam in
           (has_children || Array.length children >= 1))
-        false (get_family p))
+        false (Gwdb.get_family p))
     in
-    let gen_p = Util.string_gen_person base (gen_person_of_person p)
+    let gen_p = Geneweb.Util.string_gen_person base (Gwdb.gen_person_of_person p)
     in
     let gen_p = Futil.map_person_ps Fun.id Utf8.normalize gen_p in
     {
-      Mread.Simple_person.index = index;
+      Api_saisie_read_piqi.Simple_person.index = index;
       sex = sex;
       lastname = fill_surname conf p p_auth gen_p;
       firstname = fill_firstname conf p p_auth gen_p;
@@ -576,12 +583,12 @@ let pers_to_piqi_simple_person conf base p base_prefix =
       image = Option.map Utf8.normalize image;
       sosa = sosa;
       sosa_nb = sosa_nb;
-      visible_for_visitors = get_visibility conf base p;
+      visible_for_visitors = Api_util.get_visibility conf base p;
       baseprefix = base_prefix;
       has_parent = has_parent;
       has_spouse = has_spouse;
       has_child = has_child;
-      is_contemporary = GWPARAM.is_contemporary conf base p;
+      is_contemporary = Geneweb.GWPARAM.is_contemporary conf base p;
       name_is_hidden = Geneweb.NameDisplay.is_hidden conf base p;
       name_is_restricted = Geneweb.NameDisplay.is_restricted conf base p;
     }
@@ -603,7 +610,7 @@ let fam_to_piqi_family_link conf base (ifath : Gwdb.iper) imoth sp ifam fam base
   let spouse = spouse_to_piqi conf base sp base_prefix in
   let p_auth = true in
   let m_auth = true in
-  let gen_f = Util.string_gen_family base (gen_family_of_family fam) in
+  let gen_f = Geneweb.Util.string_gen_family base (Gwdb.gen_family_of_family fam) in
   let gen_f = Futil.map_family_ps Fun.id Fun.id Utf8.normalize gen_f in
   let index = Int32.of_string @@ Gwdb.string_of_ifam gen_f.fam_index in
   let (marriage_date, marriage_date_long, marriage_date_conv, marriage_date_conv_long, marriage_cal, marriage_date_raw) =
@@ -613,12 +620,21 @@ let fam_to_piqi_family_link conf base (ifath : Gwdb.iper) imoth sp ifam fam base
       (marriage_date, marriage_date_long, marriage_date_conv, marriage_date_conv_long, marriage_cal, string_of_date_raw conf d)
     | _ -> ("", "", "", "", None, "")
   in
-  let marriage_date_text = !!(Perso.get_marriage_date_text conf fam p_auth) in
+  let marriage_date_text =
+    let open Api_util in
+    !!(Geneweb.Perso.get_marriage_date_text conf fam p_auth)
+  in
   let marriage_place =
-    if m_auth then !!(Util.string_of_place gen_f.marriage_place) else ""
+    if m_auth then
+      let open Api_util in
+      !!(Geneweb.Util.string_of_place gen_f.marriage_place)
+    else ""
   in
   let marriage_src =
-    if m_auth then !!(Notes.source conf base gen_f.marriage_src) else ""
+    if m_auth then
+      let open Api_util in
+      !!(Geneweb.Notes.source conf base gen_f.marriage_src)
+    else ""
   in
   let marriage_type =
     match gen_f.relation with
@@ -650,25 +666,29 @@ let fam_to_piqi_family_link conf base (ifath : Gwdb.iper) imoth sp ifam fam base
   let witnesses =
     Mutil.array_to_list_map
       (fun (ip, wkind, wnote) ->
-         let p = poi base ip in
-         let wnote = Utf8.normalize @@ sou base wnote in
+         let p = Gwdb.poi base ip in
+         let wnote = Utf8.normalize @@ Gwdb.sou base wnote in
          witness_to_piqi conf base p wkind wnote base_prefix
-      ) (Perso.get_marriage_witnesses_and_notes fam)
+      ) (Geneweb.Perso.get_marriage_witnesses_and_notes fam)
   in
   let notes =
-    if m_auth && not conf.no_note
-    then !!(Notes.note conf base [] gen_f.comment)
+    if m_auth && not conf.Geneweb.Config.no_note
+    then
+      let open Api_util in
+      !!(Geneweb.Notes.note conf base [] gen_f.comment)
     else ""
   in
   let fsources =
     if m_auth
-    then !!(Notes.source conf base gen_f.fsources)
+    then
+      let open Api_util in
+      !!(Geneweb.Notes.source conf base gen_f.fsources)
     else ""
   in
   let children =
     List.map
       (fun (p, base_prefix) -> child_to_piqi conf base p base_prefix)
-      (!GWPARAM_ITL.get_children_of_parents base base_prefix ifam ifath imoth |> limit_list)
+      (!Geneweb.GWPARAM_ITL.get_children_of_parents base base_prefix ifam ifath imoth |> limit_list)
   in
   family_link_constructor index spouse marriage_date marriage_date_long marriage_date_raw marriage_date_conv marriage_date_conv_long
     marriage_cal marriage_date_text marriage_place marriage_src marriage_type divorce_type divorce_date divorce_date_long divorce_date_raw divorce_date_conv
@@ -695,20 +715,23 @@ let fam_to_piqi_family_link conf base (ifath : Gwdb.iper) imoth sp ifam fam base
 let fill_events conf base p base_prefix p_auth pers_to_piqi witness_constructor event_constructor =
   if p_auth then
     List.map
-      (*      (fun (name, date, place, note, src, w, isp) ->*)
       (fun evt ->
-         let name = Event.get_name evt in
-         let date = Event.get_date evt in
-         let place = Event.get_place evt in
-         let note = Event.get_note evt in
-         let src = Event.get_src evt in
-         let w = Event.get_witnesses_and_notes evt in
-         let isp = Event.get_spouse_iper evt in
+         let name = Geneweb.Event.get_name evt in
+         let date = Geneweb.Event.get_date evt in
+         let place = Geneweb.Event.get_place evt in
+         let note = Geneweb.Event.get_note evt in
+         let src = Geneweb.Event.get_src evt in
+         let w = Geneweb.Event.get_witnesses_and_notes evt in
+         let isp = Geneweb.Event.get_spouse_iper evt in
          let (name, type_) =
           match name with
-          | Event.Pevent name -> ( !!(Util.string_of_pevent_name conf base name)
+          | Geneweb.Event.Pevent name ->
+             let open Api_util in
+             ( !!(Geneweb.Util.string_of_pevent_name conf base name)
                                  , event_to_piqi_event (Some name) None)
-          | Event.Fevent name -> ( !!(Util.string_of_fevent_name conf base name)
+          | Geneweb.Event.Fevent name ->
+             let open Api_util in
+             ( !!(Geneweb.Util.string_of_fevent_name conf base name)
                                  , event_to_piqi_event None (Some name) )
         in
         let (date, date_long, date_conv, date_conv_long, date_cal, date_raw) =
@@ -718,30 +741,38 @@ let fill_events conf base p base_prefix p_auth pers_to_piqi witness_constructor 
             (date, date_long, date_conv, date_conv_long, date_cal, string_of_date_raw conf d)
           | _ -> ("", "", "", "", None, "")
         in
-        let place = !!(Util.string_of_place (sou base place)) in
+        let place =
+          let open Api_util in
+          !!(Geneweb.Util.string_of_place (Gwdb.sou base place))
+        in
         let note =
-          if not conf.no_note
-          then !!(Notes.person_note conf base p (sou base note))
+          if not conf.Geneweb.Config.no_note
+          then
+            let open Api_util in
+            !!(Geneweb.Notes.person_note conf base p (Gwdb.sou base note))
           else ""
         in
-        let src = !!(Notes.source conf base (sou base src)) in
+        let src =
+          let open Api_util in
+          !!(Geneweb.Notes.source conf base (Gwdb.sou base src))
+        in
         let spouse =
-          Option.map (fun ip -> pers_to_piqi conf base (poi base ip) base_prefix) isp
+          Option.map (fun ip -> pers_to_piqi conf base (Gwdb.poi base ip) base_prefix) isp
         in
         let witnesses =
           Mutil.array_to_list_map
             (fun (ip, wk, wnote) ->
                let witness_type = Api_util.piqi_of_witness_kind wk in
-               let witness = poi base ip in
+               let witness = Gwdb.poi base ip in
                let witness = pers_to_piqi conf base witness base_prefix in
-               let wnote = Utf8.normalize @@ sou base wnote in
+               let wnote = Utf8.normalize @@ Gwdb.sou base wnote in
                witness_constructor witness_type witness wnote
                )
             w
         in
           event_constructor name type_ date date_long date_raw date_conv date_conv_long date_cal place note src spouse witnesses
         )
-      (Event.sorted_events conf base p)
+      (Ext_list.take (Geneweb.Event.sorted_events conf base p) 25)
   else []
 
 
@@ -771,7 +802,7 @@ let get_related_piqi conf base p base_prefix _gen_p pers_to_piqi relation_person
       (fun (p, rp) ->
         let p = pers_to_piqi conf base p base_prefix in
         let r_type =
-          match rp.r_type with
+          match rp.Def.r_type with
           | Adoption -> `rchild_adoption
           | Recognition -> `rchild_recognition
           | CandidateParent -> `rchild_candidate_parent
@@ -780,7 +811,7 @@ let get_related_piqi conf base p base_prefix _gen_p pers_to_piqi relation_person
         in
         relation_person_constructor r_type p
         )
-      (Relation.get_others_related conf base p)
+      (Geneweb.Relation.get_others_related conf base p)
 
 (* ********************************************************************* *)
 (*  [Fonc] get_family_piqi                                               *)
@@ -800,17 +831,17 @@ let get_related_piqi conf base p base_prefix _gen_p pers_to_piqi relation_person
                                                                          *)
 (* ********************************************************************* *)
 let get_family_piqi base conf ifam p base_prefix spouse_to_piqi witnesses_to_piqi child_to_piqi family_constructor =
-  let fam = foi base ifam in
-  let sp = poi base (Gutil.spouse (get_iper p) fam) in
+  let fam = Gwdb.foi base ifam in
+  let sp = Gwdb.poi base (Gutil.spouse (Gwdb.get_iper p) fam) in
   let spouse = spouse_to_piqi conf base sp base_prefix in
-  let ifath = get_father fam in
-  let imoth = get_mother fam in
-  let p_auth = authorized_age conf base p in
+  let ifath = Gwdb.get_father fam in
+  let imoth = Gwdb.get_mother fam in
+  let p_auth = Geneweb.Util.authorized_age conf base p in
   let m_auth =
-    authorized_age conf base (pget conf base ifath) &&
-    authorized_age conf base (pget conf base imoth)
+    Geneweb.Util.authorized_age conf base (Geneweb.Util.pget conf base ifath) &&
+    Geneweb.Util.authorized_age conf base (Geneweb.Util.pget conf base imoth)
   in
-  let gen_f = Util.string_gen_family base (gen_family_of_family fam) in
+  let gen_f = Geneweb.Util.string_gen_family base (Gwdb.gen_family_of_family fam) in
   let gen_f = Futil.map_family_ps Fun.id Fun.id Utf8.normalize gen_f in
   let index = Int32.of_string @@ Gwdb.string_of_ifam gen_f.fam_index in
   let (marriage_date, marriage_date_long, marriage_date_conv, marriage_date_conv_long, marriage_cal, marriage_date_raw) =
@@ -820,12 +851,21 @@ let get_family_piqi base conf ifam p base_prefix spouse_to_piqi witnesses_to_piq
       (marriage_date, marriage_date_long, marriage_date_conv, marriage_date_conv_long, marriage_cal, string_of_date_raw conf d)
     | _ -> ("", "", "", "", None, "")
   in
-  let marriage_date_text = !!(Perso.get_marriage_date_text conf fam p_auth) in
+  let marriage_date_text =
+    let open Api_util in
+    !!(Geneweb.Perso.get_marriage_date_text conf fam p_auth)
+  in
   let marriage_place =
-    if m_auth then !!(Util.string_of_place gen_f.marriage_place) else ""
+    if m_auth then
+      let open Api_util in
+      !!(Geneweb.Util.string_of_place gen_f.marriage_place)
+    else ""
   in
   let marriage_src =
-    if m_auth then !!(Notes.source conf base gen_f.marriage_src) else ""
+    if m_auth then
+      let open Api_util in
+      !!(Geneweb.Notes.source conf base gen_f.marriage_src)
+    else ""
   in
   let marriage_type =
     match gen_f.relation with
@@ -857,26 +897,30 @@ let get_family_piqi base conf ifam p base_prefix spouse_to_piqi witnesses_to_piq
   let witnesses =
     Mutil.array_to_list_map
       (fun (ip, wkind, wnote) ->
-         let p = poi base ip in
-         let wnote = Utf8.normalize @@ sou base wnote in
+         let p = Gwdb.poi base ip in
+         let wnote = Utf8.normalize @@ Gwdb.sou base wnote in
          witnesses_to_piqi conf base p wkind wnote base_prefix
       )
-      (Perso.get_marriage_witnesses_and_notes fam)
+      (Geneweb.Perso.get_marriage_witnesses_and_notes fam)
   in
   let notes =
     if m_auth && not conf.no_note
-    then !!(Notes.note conf base [] gen_f.comment )
+    then
+      let open Api_util in
+      !!(Geneweb.Notes.note conf base [] gen_f.comment )
     else ""
   in
   let fsources =
     if m_auth
-    then !!(Notes.source conf base gen_f.fsources)
+    then
+      let open Api_util in
+      !!(Geneweb.Notes.source conf base gen_f.fsources)
     else ""
   in
   let children =
     let children_array = limit_array @@ Gwdb.get_children fam in
     Mutil.array_to_list_map
-      (fun ip -> child_to_piqi conf base (poi base ip) base_prefix)
+      (fun ip -> child_to_piqi conf base (Gwdb.poi base ip) base_prefix)
       children_array
   in
   (* lien inter arbre *)
@@ -886,7 +930,7 @@ let get_family_piqi base conf ifam p base_prefix spouse_to_piqi witnesses_to_piq
         if can_merge then acc
         else child_to_piqi conf base p baseprefix :: acc
       end children acc
-    end (!GWPARAM_ITL.get_children' conf base (get_iper p) fam (get_iper sp)) []
+    end (!Geneweb.GWPARAM_ITL.get_children' conf base (Gwdb.get_iper p) fam (Gwdb.get_iper sp)) []
   in
   let children = children @ children_link in
     family_constructor index spouse marriage_date marriage_date_long marriage_date_raw marriage_date_conv marriage_date_conv_long
@@ -914,7 +958,7 @@ let get_families_piqi base conf p base_prefix spouse_to_piqi witnesses_to_piqi c
       (fun ifam ->
          get_family_piqi base conf ifam p base_prefix spouse_to_piqi witnesses_to_piqi child_to_piqi family_constructor
       )
-      (get_family p)
+      (Gwdb.get_family p)
   in
   (* lien inter arbre *)
   let families_link =
@@ -922,7 +966,7 @@ let get_families_piqi base conf p base_prefix spouse_to_piqi witnesses_to_piqi c
       if can_merge then acc
       else
         fam_to_piqi_family_link conf base ifath imoth isp ifam fam baseprefix spouse_to_piqi witnesses_to_piqi child_to_piqi family_constructor :: acc
-    end (!GWPARAM_ITL.get_families conf base p) []
+    end (!Geneweb.GWPARAM_ITL.get_families conf base p) []
   in
     families @ families_link
 
@@ -945,7 +989,7 @@ let get_rparents_piqi base conf base_prefix gen_p pers_to_piqi relation_person_c
     List.fold_left
       (fun rl rp ->
         let r_type =
-          match rp.r_type with
+          match rp.Def.r_type with
           | Adoption -> `rparent_adoption
           | Recognition -> `rparent_recognition
           | CandidateParent -> `rparent_candidate_parent
@@ -953,7 +997,7 @@ let get_rparents_piqi base conf base_prefix gen_p pers_to_piqi relation_person_c
           | FosterParent -> `rparent_foster_parent
         in
         let to_relation_person conf base ip =
-          let p = poi base ip in
+          let p = Gwdb.poi base ip in
           let p = pers_to_piqi conf base p base_prefix in
           relation_person_constructor r_type p
         in
@@ -967,7 +1011,7 @@ let get_rparents_piqi base conf base_prefix gen_p pers_to_piqi relation_person_c
         match rp.r_moth with
         | Some ip -> to_relation_person conf base ip :: rl
         | None -> rl)
-      [] gen_p.rparents
+      [] gen_p.Def.rparents
 
 (* ********************************************************************* *)
 (*  [Fonc] get_events_witnesses                                          *)
@@ -986,34 +1030,42 @@ let get_rparents_piqi base conf base_prefix gen_p pers_to_piqi relation_person_c
                                                                          *)
 (* ********************************************************************* *)
 let get_events_witnesses conf base p base_prefix _gen_p p_auth pers_to_piqi event_witness_constructor =
-    let events_witnesses = Relation.get_event_witnessed conf base p in
+    let events_witnesses =
+      Ext_list.take (Geneweb.Relation.get_event_witnessed conf base p) 25
+    in
     List.map
       (fun (witness, wk, wnote, evt) ->
-        let wk = string_of_witness_kind conf (get_sex p) wk in
+        let wk = Geneweb.Util.string_of_witness_kind conf (Gwdb.get_sex p) wk in
         let event_name =
-          match Event.get_name evt with
-          | Event.Pevent name ->
-              if p_auth then !!(Util.string_of_pevent_name conf base name)
-              else  ""
-          | Event.Fevent name ->
-              if p_auth then !!(Util.string_of_fevent_name conf base name)
-              else  ""
+          match Geneweb.Event.get_name evt with
+          | Geneweb.Event.Pevent name ->
+             if p_auth then
+               let open Api_util in
+               !!(Geneweb.Util.string_of_pevent_name conf base name)
+             else  ""
+          | Geneweb.Event.Fevent name ->
+             if p_auth then
+               let open Api_util in
+               !!(Geneweb.Util.string_of_fevent_name conf base name)
+             else  ""
         in
         let s =
-          match Date.cdate_to_dmy_opt (Event.get_date evt) with
+          match Date.cdate_to_dmy_opt (Geneweb.Event.get_date evt) with
           | None ->
+              let open Api_util in
               Printf.sprintf "(%s) : %s"
               !!(wk) event_name
           | Some dmy ->
+              let open Api_util in
               Printf.sprintf "%s (%s) : %s"
-              (DateDisplay.year_text dmy) !!(wk) event_name
+              (Geneweb.DateDisplay.year_text dmy) !!(wk) event_name
         in
-        let event_witness_type = Util.translate_eval (transl_a_of_b conf s "" "") in
+        let event_witness_type = Geneweb.Util.translate_eval (Geneweb.Util.transl_a_of_b conf s "" "") in
         let husband = pers_to_piqi conf base witness base_prefix in
         let wife =
-          match Event.get_spouse_iper evt with
+          match Geneweb.Event.get_spouse_iper evt with
           | Some isp ->
-              let sp = poi base isp in
+              let sp = Gwdb.poi base isp in
               Some (pers_to_piqi conf base sp base_prefix )
           | None -> None
         in
@@ -1022,31 +1074,55 @@ let get_events_witnesses conf base p base_prefix _gen_p p_auth pers_to_piqi even
       events_witnesses
 
 let fill_birth_place p_auth gen_p =
-  if p_auth then !!(Util.string_of_place gen_p.birth_place) else ""
+  if p_auth then
+    let open Api_util in
+    !!(Geneweb.Util.string_of_place gen_p.Def.birth_place)
+  else ""
 
 let fill_baptism_place p_auth gen_p =
-  if p_auth then !!(Util.string_of_place gen_p.baptism_place) else ""
+  if p_auth then
+    let open Api_util in
+    !!(Geneweb.Util.string_of_place gen_p.Def.baptism_place)
+  else ""
 
 let fill_death_place p_auth gen_p =
-  if p_auth then !!(Util.string_of_place gen_p.death_place) else ""
+  if p_auth then
+    let open Api_util in
+    !!(Geneweb.Util.string_of_place gen_p.Def.death_place)
+  else ""
 
 let fill_birth_src conf base p_auth gen_p =
-  if p_auth then !!(Notes.source conf base gen_p.birth_src) else ""
+  if p_auth then
+    let open Api_util in
+    !!(Geneweb.Notes.source conf base gen_p.Def.birth_src)
+  else ""
 
 let fill_burial_src conf base p_auth gen_p =
-  if p_auth then !!(Notes.source conf base gen_p.burial_src) else ""
+  if p_auth then
+    let open Api_util in
+    !!(Geneweb.Notes.source conf base gen_p.Def.burial_src)
+  else ""
 
 let fill_death_src conf base p_auth gen_p =
-  if p_auth then !!(Notes.source conf base gen_p.death_src) else ""
+  if p_auth then
+    let open Api_util in
+    !!(Geneweb.Notes.source conf base gen_p.Def.death_src)
+  else ""
 
 let fill_baptism_src conf base p_auth gen_p =
-  if p_auth then !!(Notes.source conf base gen_p.baptism_src) else ""
+  if p_auth then
+    let open Api_util in
+    !!(Geneweb.Notes.source conf base gen_p.Def.baptism_src)
+  else ""
 
 let fill_burial_place p_auth gen_p =
-  if p_auth then !!(Util.string_of_place gen_p.burial_place) else ""
+  if p_auth then
+    let open Api_util in
+    !!(Geneweb.Util.string_of_place gen_p.Def.burial_place)
+  else ""
 
 let fill_death conf p_auth gen_p =
-  match (p_auth, gen_p.death) with
+  match (p_auth, gen_p.Def.death) with
       | (true, NotDead) -> (`not_dead, "", "", None)
       | (true, Death (_, cd)) ->
           let d = Date.date_of_cdate cd in
@@ -1059,17 +1135,17 @@ let fill_death conf p_auth gen_p =
       | _ -> (`dont_know_if_dead, "", "", None)
 
 let fill_birth conf p_auth gen_p =
-  match (p_auth, Date.od_of_cdate gen_p.birth) with
+  match (p_auth, Date.od_of_cdate gen_p.Def.birth) with
       | (true, Some d) -> string_of_date_and_conv conf d
       | _ -> ("", "", "", "", None)
 
 let fill_baptism conf p_auth gen_p =
-  match (p_auth, Date.od_of_cdate gen_p.baptism) with
+  match (p_auth, Date.od_of_cdate gen_p.Def.baptism) with
       | (true, Some d) -> string_of_date_and_conv conf d
       | _ -> ("", "", "", "", None)
 
 let fill_burial conf p_auth gen_p =
-  match (p_auth, gen_p.burial) with
+  match (p_auth, gen_p.Def.burial) with
       | (true, Buried cod) | (true, Cremated cod) ->
           (match Date.od_of_cdate cod with
           | Some d -> string_of_date_and_conv conf d
@@ -1078,62 +1154,66 @@ let fill_burial conf p_auth gen_p =
 
 let fill_occupation conf base p_auth gen_p =
   if p_auth
-  then !!(Notes.source conf base gen_p.occupation)
+  then
+    let open Api_util in
+    !!(Geneweb.Notes.source conf base gen_p.Def.occupation)
   else ""
 
 let fill_index conf p p_auth =
-  if not p_auth && (is_hide_names conf p)
+  if not p_auth && (Geneweb.Util.is_hide_names conf p)
   then
     Int32.of_string @@ Gwdb.string_of_iper Gwdb.dummy_iper
   else
-    Int32.of_string @@ Gwdb.string_of_iper (get_iper p)
+    Int32.of_string @@ Gwdb.string_of_iper (Gwdb.get_iper p)
 
 let fill_sources conf base p_auth gen_p is_main_person =
   if p_auth && is_main_person
-  then !!(Notes.source conf base gen_p.psources)
+  then
+    let open Api_util in
+    !!(Geneweb.Notes.source conf base gen_p.Def.psources)
   else ""
 
 let fill_parents conf base p base_prefix =
-  match get_parents p with
+  match Gwdb.get_parents p with
   | Some ifam ->
-    let cpl = foi base ifam in
-    let ifath = get_father cpl in
-    let imoth = get_mother cpl in
+    let cpl = Gwdb.foi base ifam in
+    let ifath = Gwdb.get_father cpl in
+    let imoth = Gwdb.get_mother cpl in
     let father =
       if ifath = Gwdb.dummy_iper then None
       else
-        let father = poi base ifath in
+        let father = Gwdb.poi base ifath in
         Some (pers_to_piqi_simple_person conf base father base_prefix)
     in
     let mother =
       if imoth = Gwdb.dummy_iper then None
       else
-        let mother = poi base imoth in
+        let mother = Gwdb.poi base imoth in
         Some (pers_to_piqi_simple_person conf base mother base_prefix)
     in
     (father, mother)
   | None ->
     (* lien inter arbre *)
-    let ip = get_iper p in
+    let ip = Gwdb.get_iper p in
     let aux fn =
       match fn conf base base_prefix ip with
       | Some ((p, _), base_prefix) -> Some (pers_to_piqi_simple_person conf base p base_prefix)
       | None -> None
     in
-    (aux !GWPARAM_ITL.get_father, aux !GWPARAM_ITL.get_mother)
+    (aux !Geneweb.GWPARAM_ITL.get_father, aux !Geneweb.GWPARAM_ITL.get_mother)
 
 let fill_fiche_parents conf base p base_prefix nb_asc nb_asc_max with_parent_families pers_to_piqi_person simple_graph_info no_event =
   if nb_asc_max > nb_asc
   then
-    match get_parents p with
+    match Gwdb.get_parents p with
     | Some ifam ->
-      let cpl = foi base ifam in
-      let ifath = get_father cpl in
-      let imoth = get_mother cpl in
+      let cpl = Gwdb.foi base ifam in
+      let ifath = Gwdb.get_father cpl in
+      let imoth = Gwdb.get_mother cpl in
       let father =
         if ifath = Gwdb.dummy_iper then None
         else
-          let father = poi base ifath in
+          let father = Gwdb.poi base ifath in
           if with_parent_families then
             Some (pers_to_piqi_person conf base father base_prefix false (nb_asc+1) nb_asc_max 0 2 true simple_graph_info no_event)
           else
@@ -1142,7 +1222,7 @@ let fill_fiche_parents conf base p base_prefix nb_asc nb_asc_max with_parent_fam
       let mother =
         if imoth = Gwdb.dummy_iper then None
         else
-          let mother = poi base imoth in
+          let mother = Gwdb.poi base imoth in
           if with_parent_families then
             Some (pers_to_piqi_person conf base mother base_prefix false (nb_asc+1) nb_asc_max 0 2 true simple_graph_info no_event)
           else
@@ -1151,7 +1231,7 @@ let fill_fiche_parents conf base p base_prefix nb_asc nb_asc_max with_parent_fam
       (father, mother)
     | None ->
       (* lien inter arbre *)
-      let ip = get_iper p in
+      let ip = Gwdb.get_iper p in
       let aux fn =
         match fn conf base base_prefix ip with
         | Some ((p, _), baseprefix) ->
@@ -1160,13 +1240,13 @@ let fill_fiche_parents conf base p base_prefix nb_asc nb_asc_max with_parent_fam
           else Some (pers_to_piqi_person conf base p baseprefix false (nb_asc + 1) nb_asc_max 0 0 false simple_graph_info no_event)
         | None -> None
       in
-      (aux !GWPARAM_ITL.get_father, aux !GWPARAM_ITL.get_mother)
+      (aux !Geneweb.GWPARAM_ITL.get_father, aux !Geneweb.GWPARAM_ITL.get_mother)
   else
     (None, None)
 
 let get_event_constructor name type_ date date_long date_raw date_conv date_conv_long date_cal place note src spouse witnesses =
       {
-        Mread.Event.name = Utf8.normalize name;
+        Api_saisie_read_piqi.Event.name = Utf8.normalize name;
         type_ = type_;
         date = if date = "" then None else Some (Utf8.normalize date);
         date_long = if date_long = "" then None else Some (Utf8.normalize date_long);
@@ -1184,7 +1264,7 @@ let get_event_constructor name type_ date date_long date_raw date_conv date_conv
 
 let fiche_event_constructor name type_ date date_long date_raw date_conv date_conv_long date_cal place note src spouse witnesses =
   {
-      Mread.Fiche_event.name = Utf8.normalize name;
+      Api_saisie_read_piqi.Fiche_event.name = Utf8.normalize name;
       type_ = type_;
       date = if date = "" then None else Some (Utf8.normalize date);
       date_long = if date_long = "" then None else Some (Utf8.normalize date_long);
@@ -1201,14 +1281,14 @@ let fiche_event_constructor name type_ date date_long date_raw date_conv date_co
   }
 
 let fiche_witness_constructor witness_type witness witness_note =
-  Mread.Witness_fiche_event.({
+  Api_saisie_read_piqi.Witness_fiche_event.({
     witness_type;
     witness;
     witness_note = Utf8.normalize witness_note
   })
 
 let simple_event_witness_constructor event_witness_type husband wife witness_note =
-      Mread.Event_witness.({
+      Api_saisie_read_piqi.Event_witness.({
         event_witness_type = event_witness_type;
         husband = husband;
         wife = wife;
@@ -1216,7 +1296,7 @@ let simple_event_witness_constructor event_witness_type husband wife witness_not
       })
 
 let fiche_event_witness_constructor event_witness_type husband wife witness_note =
-  Mread.Event_fiche_witness.({
+  Api_saisie_read_piqi.Event_fiche_witness.({
     event_witness_type = event_witness_type;
     husband = husband;
     wife = wife;
@@ -1224,24 +1304,26 @@ let fiche_event_witness_constructor event_witness_type husband wife witness_note
   })
 
 let fill_notes conf base p p_auth is_main_person gen_p =
-  if p_auth && not conf.no_note && is_main_person
-  then !!(Notes.person_note conf base p gen_p.notes)
+  if p_auth && not conf.Geneweb.Config.no_note && is_main_person
+  then
+    let open Api_util in
+    !!(Geneweb.Notes.person_note conf base p gen_p.Def.notes)
   else ""
 
 let simple_relation_person_constructor r_type p =
   {
-    Mread.Relation_person.r_type = r_type;
+    Api_saisie_read_piqi.Relation_person.r_type = r_type;
     person = p;
   }
 
 let fiche_relation_person_constructor r_type p =
   {
-    Mread.Relation_fiche_person.r_type = r_type;
+    Api_saisie_read_piqi.Relation_fiche_person.r_type = r_type;
     person = p;
   }
 
 let fill_families conf base p =
-  let base_prefix = conf.command in
+  let base_prefix = conf.Geneweb.Config.command in
   let spouse_to_piqi conf base p base_prefix =
       pers_to_piqi_simple_person conf base p base_prefix
   in
@@ -1257,7 +1339,7 @@ let fill_families conf base p =
        marriage_date_text marriage_place marriage_src marriage_type divorce_type divorce_date divorce_date_long divorce_date_raw divorce_date_conv
        divorce_date_conv_long divorce_cal witnesses notes fsources children =
     {
-      Mread.Family.index = index;
+      Api_saisie_read_piqi.Family.index = index;
       spouse = spouse;
       marriage_date = if marriage_date = "" then None else Some (Utf8.normalize marriage_date);
       marriage_date_long = if marriage_date_long = "" then None else Some (Utf8.normalize marriage_date_long);
@@ -1298,7 +1380,7 @@ let fill_fiche_families conf base p base_prefix nb_asc nb_desc nb_desc_max pers_
     let witnesses_to_piqi conf base p wkind wnote base_prefix =
       let p = if not simple_graph_info then
           pers_to_piqi_person conf base p base_prefix false 0 1 0 0 false simple_graph_info no_event
-        else Mread.default_person ()
+        else Api_saisie_read_piqi.default_person ()
       in
       let wkind = Api_util.piqi_of_witness_kind wkind in
       fiche_witness_constructor wkind p wnote
@@ -1311,7 +1393,7 @@ let fill_fiche_families conf base p base_prefix nb_asc nb_desc nb_desc_max pers_
     divorce_date_conv_long divorce_cal witnesses notes fsources children
       =
       {
-        Mread.Fiche_family.index = index;
+        Api_saisie_read_piqi.Fiche_family.index = index;
         spouse = spouse;
         marriage_date = if marriage_date = "" then None else Some (Utf8.normalize marriage_date);
         marriage_date_long = if marriage_date_long = "" then None else Some (Utf8.normalize marriage_date_long);
@@ -1355,24 +1437,26 @@ let has_sources p_auth psources birth_src baptism_src death_src burial_src =
 
 let fill_titles conf base p =
   List.map
-    (fun x -> !!(Perso.string_of_title ~safe:true ~link:false conf base (Adef.safe "") p x))
-    (Perso.nobility_titles_list conf base p)
+    (fun x ->
+      let open Api_util in
+      !!(Geneweb.Perso.string_of_title ~safe:true ~link:false conf base (Adef.safe "") p x))
+    (Geneweb.Perso.nobility_titles_list conf base p)
 
 let transform_empty_string_to_None string =
   if string = "" then None else Some string
 
 let fill_birth_date_raw conf p_auth gen_p =
-  match (p_auth, Date.od_of_cdate gen_p.birth) with
+  match (p_auth, Date.od_of_cdate gen_p.Def.birth) with
     | (true, Some d) -> string_of_date_raw conf d
     | _ -> ""
 
 let fill_baptism_date_raw conf p_auth gen_p =
-  match (p_auth, Date.od_of_cdate gen_p.baptism) with
+  match (p_auth, Date.od_of_cdate gen_p.Def.baptism) with
     | (true, Some d) -> string_of_date_raw conf d
     | _ -> ""
 
 let fill_death_date_raw conf p_auth gen_p =
-  match (p_auth, gen_p.death) with
+  match (p_auth, gen_p.Def.death) with
       | (true, Death (_, cd)) ->
           let d = Date.date_of_cdate cd in
           string_of_date_raw conf d
@@ -1380,7 +1464,7 @@ let fill_death_date_raw conf p_auth gen_p =
 
 let fill_burial_date_raw_if_is_main_person conf p_auth gen_p is_main_person =
   if is_main_person then
-    match (p_auth, gen_p.burial) with
+    match (p_auth, gen_p.Def.burial) with
     | (true, Buried cod) | (true, Cremated cod) ->
         (match Date.od_of_cdate cod with
         | Some d -> string_of_date_raw conf d
@@ -1390,23 +1474,28 @@ let fill_burial_date_raw_if_is_main_person conf p_auth gen_p is_main_person =
     ""
 
 let fill_birth_text conf p p_auth =
-  !!(Perso.get_birth_text conf p p_auth)
+  let open Api_util in
+  !!(Geneweb.Perso.get_birth_text conf p p_auth)
 
 let fill_baptism_text conf p p_auth =
-  !!(Perso.get_baptism_text conf p p_auth)
+  let open Api_util in
+  !!(Geneweb.Perso.get_baptism_text conf p p_auth)
 
 let fill_death_text conf p p_auth =
-  !!(Perso.get_death_text conf p p_auth)
+  let open Api_util in
+  !!(Geneweb.Perso.get_death_text conf p p_auth)
 
 let fill_burial_text conf p p_auth =
-  !!(Perso.get_burial_text conf p p_auth)
+  let open Api_util in
+  !!(Geneweb.Perso.get_burial_text conf p p_auth)
 
 let fill_cremation_text conf p p_auth =
-  !!(Perso.get_cremation_text conf p p_auth)
+  let open Api_util in
+  !!(Geneweb.Perso.get_cremation_text conf p p_auth)
 
 let fill_burial_type p_auth gen_p =
   if p_auth then
-  match (gen_p.burial) with
+  match (gen_p.Def.burial) with
     | Buried _ -> `buried
     | Cremated _ -> `cremated
     | _ -> `dont_know
@@ -1414,28 +1503,31 @@ let fill_burial_type p_auth gen_p =
 
 let fill_titles_with_links conf base p =
   List.map
-    (fun x -> !!(Perso.string_of_title ~link:true conf base (Adef.safe "") p x))
-    (Perso.nobility_titles_list conf base p)
+    (fun x ->
+      let open Api_util in
+      !!(Geneweb.Perso.string_of_title ~link:true conf base (Adef.safe "") p x))
+    (Geneweb.Perso.nobility_titles_list conf base p)
 
 let has_history_if_is_main_person conf base p p_auth is_main_person =
   if is_main_person then
-    Perso.has_history conf base p p_auth
+    Geneweb.Perso.has_history conf base p p_auth
   else false
 
 let has_duplication_if_is_main_person conf base p is_main_person =
   (* Les doublons ne sont pas testés pour les LIA. *)
   if is_main_person then
-      Perso.has_possible_duplications conf base p
+      Geneweb.Perso.has_possible_duplications conf base p
   else
       false
 
 let fill_linked_page_if_is_main_person conf base p is_main_person =
   if is_main_person then
-    ( !!(Perso.get_linked_page conf base p "BIBLIO")
-    , !!(Perso.get_linked_page conf base p "BNOTE")
-    , !!(Perso.get_linked_page conf base p "DEATH")
-    , !!(Perso.get_linked_page conf base p "HEAD")
-    , !!(Perso.get_linked_page conf base p "OCCU")
+    let open Api_util in
+    ( !!(Geneweb.Perso.get_linked_page conf base p "BIBLIO")
+    , !!(Geneweb.Perso.get_linked_page conf base p "BNOTE")
+    , !!(Geneweb.Perso.get_linked_page conf base p "DEATH")
+    , !!(Geneweb.Perso.get_linked_page conf base p "HEAD")
+    , !!(Geneweb.Perso.get_linked_page conf base p "OCCU")
     )
   else
     ("", "", "", "", "")
@@ -1456,11 +1548,11 @@ let fill_linked_page_if_is_main_person conf base p is_main_person =
     [Rem] : Non exporté en clair hors de ce module.                           *)
 (* ************************************************************************** *)
 let pers_to_piqi_person conf base p base_prefix is_main_person =
-  if is_restricted conf base (get_iper p) then
+  if Geneweb.Util.is_restricted conf base (Gwdb.get_iper p) then
     get_restricted_person ()
   else
-    let p_auth = authorized_age conf base p in
-    let gen_p = Util.string_gen_person base (gen_person_of_person p) in
+    let p_auth = Geneweb.Util.authorized_age conf base p in
+    let gen_p = Geneweb.Util.string_gen_person base (Gwdb.gen_person_of_person p) in
     let gen_p = Futil.map_person_ps Fun.id Utf8.normalize gen_p in
     let (baptism_date, _, baptism_date_conv, _, baptism_cal) = fill_baptism conf p_auth gen_p in
     let (birth_date, _, birth_date_conv, _, birth_cal) = fill_birth conf p_auth gen_p in
@@ -1477,7 +1569,7 @@ let pers_to_piqi_person conf base p base_prefix is_main_person =
     let has_sources = has_sources p_auth psources birth_src baptism_src death_src burial_src in
 
     {
-      Mread.Person.type_ = `simple;
+      Api_saisie_read_piqi.Person.type_ = `simple;
       index = fill_index conf p p_auth;
       sex = fill_sex p;
       lastname = fill_surname conf p p_auth gen_p;
@@ -1490,7 +1582,7 @@ let pers_to_piqi_person conf base p base_prefix is_main_person =
       qualifiers = fill_qualifiers p_auth gen_p;
       firstname_aliases = fill_firstname_aliases p_auth gen_p;
       surname_aliases = fill_surname_aliases p_auth gen_p;
-      image = get_portrait conf base p;
+      image = Api_util.get_portrait conf base p;
       birth_date = transform_empty_string_to_None birth_date;
       birth_date_conv = transform_empty_string_to_None birth_date_conv;
       birth_date_cal = birth_cal;
@@ -1527,16 +1619,16 @@ let pers_to_piqi_person conf base p base_prefix is_main_person =
       events_witnesses = get_events_witnesses conf base p base_prefix gen_p p_auth pers_to_piqi_simple_person simple_event_witness_constructor;
       baseprefix = base_prefix;
       fiche_person_person = None;
-      is_contemporary = GWPARAM.is_contemporary conf base p;
+      is_contemporary = Geneweb.GWPARAM.is_contemporary conf base p;
       name_is_hidden = Geneweb.NameDisplay.is_hidden conf base p;
       name_is_restricted = Geneweb.NameDisplay.is_restricted conf base p;
     }
 
 let fill_ref_if_is_main_person conf base is_main_person =
   if is_main_person then
-    match Util.find_sosa_ref conf base with
-      | Some ref -> ( Some (Int32.of_string @@ Gwdb.string_of_iper (get_iper ref))
-                    , Some (pers_to_piqi_person conf base ref conf.command false) )
+    match Geneweb.Util.find_sosa_ref conf base with
+      | Some ref -> ( Some (Int32.of_string @@ Gwdb.string_of_iper (Gwdb.get_iper ref))
+                    , Some (pers_to_piqi_person conf base ref conf.Geneweb.Config.command false) )
       | None -> (None, None)
   else
     (None, None)
@@ -1559,14 +1651,14 @@ let fill_ref_if_is_main_person conf base is_main_person =
 (* ************************************************************************** *)
 let rec pers_to_piqi_fiche_person conf base p base_prefix is_main_person nb_asc nb_asc_max nb_desc nb_desc_max with_parent_families simple_graph_info no_event =
   (* Generates a fiche person by default. *)
-  let piqi_fiche_person = Mread.default_fiche_person() in
+  let piqi_fiche_person = Api_saisie_read_piqi.default_fiche_person() in
   (* If the access is restricted, returns the person with default fields. *)
-  if is_restricted conf base (get_iper p) then
+  if Geneweb.Util.is_restricted conf base (Gwdb.get_iper p) then
     get_restricted_fiche_person ()
   else
     begin
-      let p_auth = authorized_age conf base p in
-      let gen_p = Util.string_gen_person base (gen_person_of_person p) in
+      let p_auth = Geneweb.Util.authorized_age conf base p in
+      let gen_p = Geneweb.Util.string_gen_person base (Gwdb.gen_person_of_person p) in
       let gen_p = Futil.map_person_ps Fun.id Utf8.normalize gen_p in
       (* Sources only returned for the main person. *)
       let psources = if is_main_person then fill_sources conf base p_auth gen_p is_main_person else "" in
@@ -1581,7 +1673,7 @@ let rec pers_to_piqi_fiche_person conf base p base_prefix is_main_person nb_asc 
       let pers_to_piqi_fiche_person_only conf base p base_prefix =
         pers_to_piqi_fiche_person conf base p base_prefix false 0 0 0 0 false simple_graph_info no_event
       in
-      let sosa_nb = SosaCache.get_sosa_person p in
+      let sosa_nb = Geneweb.SosaCache.get_sosa_person p in
       let (fiche_father, fiche_mother) = if is_main_person || not simple_graph_info then fill_fiche_parents conf base p base_prefix nb_asc nb_asc_max with_parent_families pers_to_piqi_fiche_person simple_graph_info no_event else (None, None) in
       let (father, mother) = if with_parent_families then fill_parents conf base p base_prefix else (None, None) in
       (* Returns simple person attributes only when nb of desc is 0. *)
@@ -1589,45 +1681,45 @@ let rec pers_to_piqi_fiche_person conf base p base_prefix is_main_person nb_asc 
       let (ref_index, ref_person) = fill_ref_if_is_main_person conf base is_main_person in
       let piqi_fiche_person =
         (* Fields shared by all the members of the family. *)
-        piqi_fiche_person.Mread.Fiche_person.birth_date_raw <- transform_empty_string_to_None (fill_birth_date_raw conf p_auth gen_p);
-        piqi_fiche_person.Mread.Fiche_person.birth_text <- transform_empty_string_to_None (fill_birth_text conf p p_auth);
-        piqi_fiche_person.Mread.Fiche_person.burial_date_raw <- transform_empty_string_to_None (fill_burial_date_raw_if_is_main_person conf p_auth gen_p is_main_person);
-        piqi_fiche_person.Mread.Fiche_person.burial_text <- transform_empty_string_to_None (fill_burial_text conf p p_auth);
-        piqi_fiche_person.Mread.Fiche_person.burial_type <- fill_burial_type p_auth gen_p;
-        piqi_fiche_person.Mread.Fiche_person.cremation_text <- transform_empty_string_to_None (fill_cremation_text conf p p_auth);
-        piqi_fiche_person.Mread.Fiche_person.death_date_raw <- transform_empty_string_to_None (fill_death_date_raw conf p_auth gen_p);
-        piqi_fiche_person.Mread.Fiche_person.death_text <- transform_empty_string_to_None (fill_death_text conf p p_auth);
-        piqi_fiche_person.Mread.Fiche_person.titles_links <- if not simple_graph_info then fill_titles_with_links conf base p else [];
-        piqi_fiche_person.Mread.Fiche_person.sosa_nb <- if sosa_nb = Sosa.zero then None else Some (Sosa.to_string sosa_nb);
-        piqi_fiche_person.Mread.Fiche_person.father <- fiche_father;
-        piqi_fiche_person.Mread.Fiche_person.mother <- fiche_mother;
+        piqi_fiche_person.Api_saisie_read_piqi.Fiche_person.birth_date_raw <- transform_empty_string_to_None (fill_birth_date_raw conf p_auth gen_p);
+        piqi_fiche_person.Api_saisie_read_piqi.Fiche_person.birth_text <- transform_empty_string_to_None (fill_birth_text conf p p_auth);
+        piqi_fiche_person.Api_saisie_read_piqi.Fiche_person.burial_date_raw <- transform_empty_string_to_None (fill_burial_date_raw_if_is_main_person conf p_auth gen_p is_main_person);
+        piqi_fiche_person.Api_saisie_read_piqi.Fiche_person.burial_text <- transform_empty_string_to_None (fill_burial_text conf p p_auth);
+        piqi_fiche_person.Api_saisie_read_piqi.Fiche_person.burial_type <- fill_burial_type p_auth gen_p;
+        piqi_fiche_person.Api_saisie_read_piqi.Fiche_person.cremation_text <- transform_empty_string_to_None (fill_cremation_text conf p p_auth);
+        piqi_fiche_person.Api_saisie_read_piqi.Fiche_person.death_date_raw <- transform_empty_string_to_None (fill_death_date_raw conf p_auth gen_p);
+        piqi_fiche_person.Api_saisie_read_piqi.Fiche_person.death_text <- transform_empty_string_to_None (fill_death_text conf p p_auth);
+        piqi_fiche_person.Api_saisie_read_piqi.Fiche_person.titles_links <- if not simple_graph_info then fill_titles_with_links conf base p else [];
+        piqi_fiche_person.Api_saisie_read_piqi.Fiche_person.sosa_nb <- if sosa_nb = Sosa.zero then None else Some (Sosa.to_string sosa_nb);
+        piqi_fiche_person.Api_saisie_read_piqi.Fiche_person.father <- fiche_father;
+        piqi_fiche_person.Api_saisie_read_piqi.Fiche_person.mother <- fiche_mother;
         if is_main_person || not simple_graph_info then
-          piqi_fiche_person.Mread.Fiche_person.families <- fill_fiche_families conf base p base_prefix nb_asc nb_desc nb_desc_max pers_to_piqi_fiche_person simple_graph_info no_event;
+          piqi_fiche_person.Api_saisie_read_piqi.Fiche_person.families <- fill_fiche_families conf base p base_prefix nb_asc nb_desc nb_desc_max pers_to_piqi_fiche_person simple_graph_info no_event;
 
         (* Fields only filled for the main person. *)
-        piqi_fiche_person.Mread.Fiche_person.baptism_date_raw <- if is_main_person then transform_empty_string_to_None (fill_baptism_date_raw conf p_auth gen_p) else None;
-        piqi_fiche_person.Mread.Fiche_person.baptism_text <- if is_main_person then transform_empty_string_to_None (fill_baptism_text conf p p_auth) else None;
-        piqi_fiche_person.Mread.Fiche_person.has_possible_duplications <- has_duplication_if_is_main_person conf base p is_main_person;
-        piqi_fiche_person.Mread.Fiche_person.ref_index <- ref_index;
-        piqi_fiche_person.Mread.Fiche_person.ref_person <- ref_person;
-        piqi_fiche_person.Mread.Fiche_person.has_history <- has_history_if_is_main_person conf base p p_auth is_main_person;
-        piqi_fiche_person.Mread.Fiche_person.linked_page_biblio <- linked_page_biblio;
-        piqi_fiche_person.Mread.Fiche_person.linked_page_bnote <- linked_page_bnote;
-        piqi_fiche_person.Mread.Fiche_person.linked_page_death <- linked_page_death;
-        piqi_fiche_person.Mread.Fiche_person.linked_page_head <- linked_page_head;
-        piqi_fiche_person.Mread.Fiche_person.linked_page_occu <- linked_page_occu;
-        piqi_fiche_person.Mread.Fiche_person.visible_for_visitors <- get_visibility conf base p;
-        piqi_fiche_person.Mread.Fiche_person.related <- if is_main_person && not simple_graph_info then get_related_piqi conf base p base_prefix gen_p pers_to_piqi_fiche_person_only fiche_relation_person_constructor else [];
-        piqi_fiche_person.Mread.Fiche_person.rparents <- if is_main_person && not simple_graph_info then get_rparents_piqi base conf base_prefix gen_p pers_to_piqi_fiche_person_only fiche_relation_person_constructor else [];
+        piqi_fiche_person.Api_saisie_read_piqi.Fiche_person.baptism_date_raw <- if is_main_person then transform_empty_string_to_None (fill_baptism_date_raw conf p_auth gen_p) else None;
+        piqi_fiche_person.Api_saisie_read_piqi.Fiche_person.baptism_text <- if is_main_person then transform_empty_string_to_None (fill_baptism_text conf p p_auth) else None;
+        piqi_fiche_person.Api_saisie_read_piqi.Fiche_person.has_possible_duplications <- has_duplication_if_is_main_person conf base p is_main_person;
+        piqi_fiche_person.Api_saisie_read_piqi.Fiche_person.ref_index <- ref_index;
+        piqi_fiche_person.Api_saisie_read_piqi.Fiche_person.ref_person <- ref_person;
+        piqi_fiche_person.Api_saisie_read_piqi.Fiche_person.has_history <- has_history_if_is_main_person conf base p p_auth is_main_person;
+        piqi_fiche_person.Api_saisie_read_piqi.Fiche_person.linked_page_biblio <- linked_page_biblio;
+        piqi_fiche_person.Api_saisie_read_piqi.Fiche_person.linked_page_bnote <- linked_page_bnote;
+        piqi_fiche_person.Api_saisie_read_piqi.Fiche_person.linked_page_death <- linked_page_death;
+        piqi_fiche_person.Api_saisie_read_piqi.Fiche_person.linked_page_head <- linked_page_head;
+        piqi_fiche_person.Api_saisie_read_piqi.Fiche_person.linked_page_occu <- linked_page_occu;
+        piqi_fiche_person.Api_saisie_read_piqi.Fiche_person.visible_for_visitors <- Api_util.get_visibility conf base p;
+        piqi_fiche_person.Api_saisie_read_piqi.Fiche_person.related <- if is_main_person && not simple_graph_info then get_related_piqi conf base p base_prefix gen_p pers_to_piqi_fiche_person_only fiche_relation_person_constructor else [];
+        piqi_fiche_person.Api_saisie_read_piqi.Fiche_person.rparents <- if is_main_person && not simple_graph_info then get_rparents_piqi base conf base_prefix gen_p pers_to_piqi_fiche_person_only fiche_relation_person_constructor else [];
         if not no_event then
-          piqi_fiche_person.Mread.Fiche_person.events_witnesses <- if is_main_person then get_events_witnesses conf base p base_prefix gen_p p_auth pers_to_piqi_fiche_person_only fiche_event_witness_constructor else [];
+          piqi_fiche_person.Api_saisie_read_piqi.Fiche_person.events_witnesses <- if is_main_person then get_events_witnesses conf base p base_prefix gen_p p_auth pers_to_piqi_fiche_person_only fiche_event_witness_constructor else [];
         if not no_event then
-          piqi_fiche_person.Mread.Fiche_person.events <- fill_events_if_is_main_person conf base p base_prefix p_auth is_main_person pers_to_piqi_fiche_person_only fiche_witness_constructor fiche_event_constructor;
-        piqi_fiche_person.Mread.Fiche_person.is_contemporary <- GWPARAM.is_contemporary conf base p;
+          piqi_fiche_person.Api_saisie_read_piqi.Fiche_person.events <- fill_events_if_is_main_person conf base p base_prefix p_auth is_main_person pers_to_piqi_fiche_person_only fiche_witness_constructor fiche_event_constructor;
+        piqi_fiche_person.Api_saisie_read_piqi.Fiche_person.is_contemporary <- Geneweb.GWPARAM.is_contemporary conf base p;
         piqi_fiche_person
       in
       {
-        Mread.Person.type_ = `fiche;
+        Api_saisie_read_piqi.Person.type_ = `fiche;
         fiche_person_person = Some piqi_fiche_person;
         n = fill_sn conf base p p_auth;
         p = fill_fn conf base p p_auth;
@@ -1646,7 +1738,7 @@ let rec pers_to_piqi_fiche_person conf base p base_prefix is_main_person nb_asc 
         death_src = transform_empty_string_to_None death_src;
         death_type = death_type;
         index = fill_index conf p p_auth;
-        image = get_portrait conf base p;
+        image = Api_util.get_portrait conf base p;
         firstname = fill_firstname conf p p_auth gen_p;
         lastname = fill_surname conf p p_auth gen_p;
         qualifiers = if (not simple_graph_info) || is_main_person then fill_qualifiers p_auth gen_p else [];
@@ -1682,7 +1774,7 @@ let rec pers_to_piqi_fiche_person conf base p base_prefix is_main_person nb_asc 
         related = if return_simple_attributes then get_related_piqi conf base p base_prefix gen_p pers_to_piqi_simple_person simple_relation_person_constructor else [];
         rparents = if return_simple_attributes then get_rparents_piqi base conf base_prefix gen_p pers_to_piqi_simple_person simple_relation_person_constructor else [];
         baseprefix = base_prefix;
-        is_contemporary = GWPARAM.is_contemporary conf base p;
+        is_contemporary = Geneweb.GWPARAM.is_contemporary conf base p;
         name_is_hidden = Geneweb.NameDisplay.is_hidden conf base p;
         name_is_restricted = Geneweb.NameDisplay.is_restricted conf base p;
       }
@@ -1700,26 +1792,26 @@ let rec pers_to_piqi_fiche_person conf base p base_prefix is_main_person nb_asc 
     [Rem] : Non exporté en clair hors de ce module.                      *)
 (* ********************************************************************* *)
 let print_person_tree conf base =
-  let params = get_params conf Mext_read.parse_index_person in
-  let ip = Gwdb.iper_of_string @@ Int32.to_string params.Mread.Index_person.index in
+  let params = Api_util.get_params conf Api_saisie_read_piqi_ext.parse_index_person in
+  let ip = Gwdb.iper_of_string @@ Int32.to_string params.Api_saisie_read_piqi.Index_person.index in
   if Gwdb.iper_exists base ip then
   (* Construction de la base avec calcul des sosas           *)
   (* Si iz présent, on prend iz comme souche pour le calcul  *)
   (* Sinon on prend la souche de l'arbre                     *)
   let () =
-    match params.Mread.Index_person.indexz with
-      | Some n -> SosaCache.build_sosa_tree_ht conf base (poi base (Gwdb.iper_of_string @@ Int32.to_string n))
-      | None -> SosaCache.build_sosa_ht conf base
+    match params.Api_saisie_read_piqi.Index_person.indexz with
+      | Some n -> Geneweb.SosaCache.build_sosa_tree_ht conf base (Gwdb.poi base (Gwdb.iper_of_string @@ Int32.to_string n))
+      | None -> Geneweb.SosaCache.build_sosa_ht conf base
     in
-  let p = poi base ip in
+  let p = Gwdb.poi base ip in
   (* cache lien inter arbre *)
-  let () = !GWPARAM_ITL.init_cache conf base ip 1 1 1 in
-  let pers_piqi = pers_to_piqi_person conf base p conf.command true in
-  let data = Mext_read.gen_person pers_piqi in
-  print_result conf data
+  let () = !Geneweb.GWPARAM_ITL.init_cache conf base ip 1 1 1 in
+  let pers_piqi = pers_to_piqi_person conf base p conf.Geneweb.Config.command true in
+  let data = Api_saisie_read_piqi_ext.gen_person pers_piqi in
+  Api_util.print_result conf data
   else begin
-    Output.status conf Def.Not_Found ;
-    Output.print_sstring conf ""
+    Geneweb.Output.status conf Def.Not_Found ;
+    Geneweb.Output.print_sstring conf ""
   end
 
 (* ********************************************************************* *)
@@ -1738,36 +1830,36 @@ let search_index conf base an search_order =
   let rec loop l =
     match l with
     | Sosa::le ->
-      begin match SearchName.search_by_sosa conf base an with
+      begin match Geneweb.SearchName.search_by_sosa conf base an with
         | [] ->  loop le
-        | [p] -> Some (get_iper p)
+        | [p] -> Some (Gwdb.get_iper p)
         | _ -> None
       end
     | Key::le ->
-      let pl = SearchName.search_by_key conf base an in
+      let pl = Geneweb.SearchName.search_by_key conf base an in
       begin match pl with
         | [] ->  loop le
-        | [p] -> Some (get_iper p)
+        | [p] -> Some (Gwdb.get_iper p)
         | _ -> None
       end
     | Surname::le ->
-      if Search_name_display.search_surname conf base an = []
+      if Geneweb.Search_name_display.search_surname conf base an = []
       then loop le
       else None
     | FirstName::le ->
-      if Search_name_display.search_first_name conf base an = []
+      if Geneweb.Search_name_display.search_first_name conf base an = []
       then loop le
       else None
     | ApproxKey::le ->
-      begin match SearchName.search_approx_key conf base an with
+      begin match Geneweb.SearchName.search_approx_key conf base an with
         | [] ->  loop le
-        | [p] -> Some (get_iper p)
+        | [p] -> Some (Gwdb.get_iper p)
         | _ -> None
       end
     | PartialKey::le ->
-      begin match SearchName.search_partial_key conf base an with
+      begin match Geneweb.SearchName.search_partial_key conf base an with
         | [] ->  loop le
-        | [p] -> Some (get_iper p)
+        | [p] -> Some (Gwdb.get_iper p)
         | _ -> None
       end
     | _ -> None
@@ -1776,16 +1868,16 @@ let search_index conf base an search_order =
 
 let print_result_fiche_person conf base ip nb_asc_max nb_desc_max simple_graph_info no_event =
   if Gwdb.iper_exists base ip then begin
-    let () = SosaCache.build_sosa_ht conf base in
-    let p = poi base ip in
+    let () = Geneweb.SosaCache.build_sosa_ht conf base in
+    let p = Gwdb.poi base ip in
     (* cache lien inter arbre *)
-    let () = !GWPARAM_ITL.init_cache conf base ip 1 1 1 in
-    let pers_piqi = pers_to_piqi_fiche_person conf base p conf.command true 0 nb_asc_max 0 nb_desc_max true simple_graph_info no_event in
-    let data = Mext_read.gen_person pers_piqi in
-    print_result conf data
+    let () = !Geneweb.GWPARAM_ITL.init_cache conf base ip 1 1 1 in
+    let pers_piqi = pers_to_piqi_fiche_person conf base p conf.Geneweb.Config.command true 0 nb_asc_max 0 nb_desc_max true simple_graph_info no_event in
+    let data = Api_saisie_read_piqi_ext.gen_person pers_piqi in
+    Api_util.print_result conf data
   end else begin
-    Output.status conf Def.Not_Found ;
-    Output.print_sstring conf ""
+    Geneweb.Output.status conf Def.Not_Found ;
+    Geneweb.Output.print_sstring conf ""
   end
 
 (* ********************************************************************* *)
@@ -1804,46 +1896,46 @@ let print_result_fiche_person conf base ip nb_asc_max nb_desc_max simple_graph_i
     [Rem] : Non exporté en clair hors de ce module.                      *)
 (* ********************************************************************* *)
 let print_from_identifier_person conf base print_result_from_ip identifier_person =
-  match identifier_person.Mread.Identifier_person.index with
+  match identifier_person.Api_saisie_read_piqi.Identifier_person.index with
   | Some index ->
     (* Traite l'index *)
     let ip = Gwdb.iper_of_string @@ Int32.to_string index in
-    if identifier_person.Mread.Identifier_person.track_visit = Some true
-    then record_visited conf ip;
+    if identifier_person.Api_saisie_read_piqi.Identifier_person.track_visit = Some true
+    then Geneweb.Util.record_visited conf ip;
     print_result_from_ip conf base ip
   | None ->
-    match (identifier_person.Mread.Identifier_person.oc) with
+    match (identifier_person.Api_saisie_read_piqi.Identifier_person.oc) with
     | (Some oc) ->
       begin
-        match ( identifier_person.Mread.Identifier_person.p
-              , identifier_person.Mread.Identifier_person.n) with
+        match ( identifier_person.Api_saisie_read_piqi.Identifier_person.p
+              , identifier_person.Api_saisie_read_piqi.Identifier_person.n) with
         | (Some fn, Some sn) ->
           (* Retourne une personne en fonction de son npoc *)
           begin
             match Gwdb.person_of_key base fn sn (Int32.to_int oc) with
             | Some ip ->
               let p = Gwdb.poi base ip in
-              if is_empty_person p || ((is_hide_names conf p) && not(authorized_age conf base p)) then
-                print_error conf `not_found ""
+              if Geneweb.Util.is_empty_person p || ((Geneweb.Util.is_hide_names conf p) && not(Geneweb.Util.authorized_age conf base p)) then
+                Api_util.print_error conf `not_found ""
               else
-                (if identifier_person.Mread.Identifier_person.track_visit
+                (if identifier_person.Api_saisie_read_piqi.Identifier_person.track_visit
                     = Some true
-                 then record_visited conf ip;
+                 then Geneweb.Util.record_visited conf ip;
                  print_result_from_ip conf base ip)
             | None ->
-              print_error conf `not_found ""
+              Api_util.print_error conf `not_found ""
           end
-        | _ -> print_error conf `bad_request ""
+        | _ -> Api_util.print_error conf `bad_request ""
         end
     | None ->
       (* Fait une recherche par mots-clé *)
       let (fn, sn) =
-        match ( identifier_person.Mread.Identifier_person.p
-              , identifier_person.Mread.Identifier_person.n) with
+        match ( identifier_person.Api_saisie_read_piqi.Identifier_person.p
+              , identifier_person.Api_saisie_read_piqi.Identifier_person.n) with
         | (Some fn, Some sn) -> (fn, sn)
         | (None, Some sn) -> ("", sn)
         | (Some fn, None) -> (fn, "")
-        | _ -> print_error conf `bad_request ""
+        | _ -> Api_util.print_error conf `bad_request ""
       in
       let (an, order) =
         if fn = "" then
@@ -1854,10 +1946,10 @@ let print_from_identifier_person conf base print_result_from_ip identifier_perso
           (fn ^ " " ^ sn, [ Key; ApproxKey; PartialKey ])
       in match search_index conf base an order with
       | Some ip ->
-        if identifier_person.Mread.Identifier_person.track_visit = Some true
-        then record_visited conf ip;
+        if identifier_person.Api_saisie_read_piqi.Identifier_person.track_visit = Some true
+        then Geneweb.Util.record_visited conf ip;
         print_result_from_ip conf base ip
-      | None -> print_error conf `not_found ""
+      | None -> Api_util.print_error conf `not_found ""
 
 (* ********************************************************************* *)
 (*  [Fonc] print_fiche_person : conf -> base -> unit                     *)
@@ -1870,26 +1962,26 @@ let print_from_identifier_person conf base print_result_from_ip identifier_perso
     [Rem] : Non exporté en clair hors de ce module.                      *)
 (* ********************************************************************* *)
 let print_fiche_person conf base =
-  let fiche_parameters = get_params conf Mext_read.parse_fiche_parameters in
-  let identifier_person = fiche_parameters.Mread.Fiche_parameters.identifier_person in
+  let fiche_parameters = Api_util.get_params conf Api_saisie_read_piqi_ext.parse_fiche_parameters in
+  let identifier_person = fiche_parameters.Api_saisie_read_piqi.Fiche_parameters.identifier_person in
   let print_result_from_ip conf base ip =
       let nb_asc_max =
-        match fiche_parameters.Mread.Fiche_parameters.nb_asc_max with
+        match fiche_parameters.Api_saisie_read_piqi.Fiche_parameters.nb_asc_max with
         | Some n -> Int32.to_int n
         | None -> 1 (* Add grand-parents. *)
       in
       let nb_desc_max =
-        match fiche_parameters.Mread.Fiche_parameters.nb_desc_max with
+        match fiche_parameters.Api_saisie_read_piqi.Fiche_parameters.nb_desc_max with
         | Some n -> Int32.to_int n
         | None -> 0
       in
       let simple_graph_info =
-        match fiche_parameters.Mread.Fiche_parameters.simple_graph_info with
+        match fiche_parameters.Api_saisie_read_piqi.Fiche_parameters.simple_graph_info with
         | Some b -> b
         | None -> false
       in
       let no_event =
-        match fiche_parameters.Mread.Fiche_parameters.no_event with
+        match fiche_parameters.Api_saisie_read_piqi.Fiche_parameters.no_event with
         | Some b -> b
         | None -> false
       in
@@ -1903,14 +1995,14 @@ let print_fiche_person conf base =
 let hash_id x = Int64.of_int (Hashtbl.hash x)
 
 let create_edge factor_from baseprefix_from p_from factor_to baseprefix_to p_to =
-  let from_node = hash_id (baseprefix_from, get_iper p_from, factor_from) in
-  let to_node = hash_id (baseprefix_to, get_iper p_to, factor_to) in
-  Mread.Edge.{ from_node ; to_node }
+  let from_node = hash_id (baseprefix_from, Gwdb.get_iper p_from, factor_from) in
+  let to_node = hash_id (baseprefix_to, Gwdb.get_iper p_to, factor_to) in
+  Api_saisie_read_piqi.Edge.{ from_node ; to_node }
 
 let create_node conf base max_gen ifam p gen more_info base_prefix factor =
-  let id = hash_id (base_prefix, get_iper p, factor) in
+  let id = hash_id (base_prefix, Gwdb.get_iper p, factor) in
   let p = pers_to_piqi_person_tree conf base p more_info gen max_gen base_prefix in
-  { Mread.Node.id = id
+  { Api_saisie_read_piqi.Node.id = id
   ; person = p
   ; ifam
   }
@@ -1934,24 +2026,23 @@ let build_graph_asc conf base p max_gen =
     | [] -> ()
     | (p, gen) :: l ->
       if gen >= max_gen then loop l
-      else match get_parents p with
+      else match Gwdb.get_parents p with
         | Some ifam ->
-          let p_factor = try Hashtbl.find ht (get_iper p) with Not_found -> 1 in
-          let cpl = foi base ifam in
-          let fath = poi base (get_father cpl) in
-          let moth = poi base (get_mother cpl) in
-          let fath_factor = factor ht (get_iper fath) in
-          let moth_factor = factor ht (get_iper moth) in
-          nodes := create_node fath gen Ancestor conf.command fath_factor :: !nodes;
-          nodes := create_node moth gen Ancestor conf.command moth_factor :: !nodes;
-          edges := create_edge p_factor conf.command p fath_factor conf.command fath :: !edges;
-          edges := create_edge p_factor conf.command p moth_factor conf.command moth :: !edges;
-          (*create_family ifam families;*)
+          let p_factor = try Hashtbl.find ht (Gwdb.get_iper p) with Not_found -> 1 in
+          let cpl = Gwdb.foi base ifam in
+          let fath = Gwdb.poi base (Gwdb.get_father cpl) in
+          let moth = Gwdb.poi base (Gwdb.get_mother cpl) in
+          let fath_factor = factor ht (Gwdb.get_iper fath) in
+          let moth_factor = factor ht (Gwdb.get_iper moth) in
+          nodes := create_node fath gen Ancestor conf.Geneweb.Config.command fath_factor :: !nodes;
+          nodes := create_node moth gen Ancestor conf.Geneweb.Config.command moth_factor :: !nodes;
+          edges := create_edge p_factor conf.Geneweb.Config.command p fath_factor conf.Geneweb.Config.command fath :: !edges;
+          edges := create_edge p_factor conf.Geneweb.Config.command p moth_factor conf.Geneweb.Config.command moth :: !edges;
           loop ((fath, gen + 1) :: (moth, gen + 1) :: l)
         | None ->
           (* lien inter arbre *)
-          let ip = get_iper p in
-          let () = !GWPARAM_ITL.init_cache conf base ip (max_gen - gen) 0 0 in
+          let ip = Gwdb.get_iper p in
+          let () = !Geneweb.GWPARAM_ITL.init_cache conf base ip (max_gen - gen) 0 0 in
           let () =
             let ht = Hashtbl.create 0 in
             let rec loop_parents l =
@@ -1960,13 +2051,13 @@ let build_graph_asc conf base p max_gen =
               | (base_prefix, p, gen) :: l ->
                 if gen >= max_gen then loop_parents l
                 else
-                  let ip = get_iper p in
-                  let p_factor = try Hashtbl.find ht (base_prefix, get_iper p) with Not_found -> 1 in
-                  match !GWPARAM_ITL.get_father conf base base_prefix ip
-                      , !GWPARAM_ITL.get_mother conf base base_prefix ip with
+                  let ip = Gwdb.get_iper p in
+                  let p_factor = try Hashtbl.find ht (base_prefix, Gwdb.get_iper p) with Not_found -> 1 in
+                  match !Geneweb.GWPARAM_ITL.get_father conf base base_prefix ip
+                      , !Geneweb.GWPARAM_ITL.get_mother conf base base_prefix ip with
                   | (Some ((fath, _), bpf), Some ((moth, _), bpm)) ->
-                    let fath_factor = factor ht (bpf, get_iper fath) in
-                    let moth_factor = factor ht (bpm, get_iper moth) in
+                    let fath_factor = factor ht (bpf, Gwdb.get_iper fath) in
+                    let moth_factor = factor ht (bpm, Gwdb.get_iper moth) in
                     nodes := create_node fath gen Ancestor bpf fath_factor :: !nodes;
                     nodes := create_node moth gen Ancestor bpm moth_factor :: !nodes;
                     edges := create_edge p_factor base_prefix p fath_factor bpf fath :: !edges;
@@ -1975,11 +2066,11 @@ let build_graph_asc conf base p max_gen =
                     loop_parents l
                   | _ -> loop_parents l
             in
-            loop_parents [ (conf.command, p, gen) ]
+            loop_parents [ (conf.Geneweb.Config.command, p, gen) ]
           in
           loop l
   in
-  nodes := create_node p 1 Root conf.command 1 :: !nodes;
+  nodes := create_node p 1 Root conf.Geneweb.Config.command 1 :: !nodes;
   loop [(p, 1)];
   (* On retourne la liste pour avoir les noeuds dans l'ordre *)
   (* la référence, suivi du père suivi, puis de la mère ...  *)
@@ -1998,29 +2089,28 @@ let build_graph_desc conf base p max_gen =
     | (p, gen) :: l ->
       if gen >= max_gen then loop l
       else
-        let p_factor = try Hashtbl.find ht (get_iper p) with Not_found -> 1 in
-        let ifam = get_family p in
+        let p_factor = try Hashtbl.find ht (Gwdb.get_iper p) with Not_found -> 1 in
+        let ifam = Gwdb.get_family p in
         let l =
           Array.fold_left (fun acc ifam  ->
-              let fam = foi base ifam in
-              let sp = poi base (Gutil.spouse (get_iper p) fam) in
-              let sp_factor = factor ht (get_iper sp) in
-              let children = Mutil.array_to_list_map (poi base) (limit_array @@ get_children fam) in
-              nodes := create_node ifam sp gen Spouse conf.command sp_factor :: !nodes;
-              edges := create_edge p_factor conf.command p sp_factor conf.command sp :: !edges;
+              let fam = Gwdb.foi base ifam in
+              let sp = Gwdb.poi base (Gutil.spouse (Gwdb.get_iper p) fam) in
+              let sp_factor = factor ht (Gwdb.get_iper sp) in
+              let children = Mutil.array_to_list_map (Gwdb.poi base) (limit_array @@ Gwdb.get_children fam) in
+              nodes := create_node ifam sp gen Spouse conf.Geneweb.Config.command sp_factor :: !nodes;
+              edges := create_edge p_factor conf.Geneweb.Config.command p sp_factor conf.Geneweb.Config.command sp :: !edges;
               if gen <> max_gen then begin
                 List.iter begin fun c ->
-                  let c_factor = factor ht (get_iper c) in
-                  nodes := create_node ifam c gen Children conf.command c_factor :: !nodes;
-                  edges := create_edge p_factor conf.command p c_factor conf.command c :: !edges;
-                  edges := create_edge sp_factor conf.command sp c_factor conf.command c :: !edges
+                  let c_factor = factor ht (Gwdb.get_iper c) in
+                  nodes := create_node ifam c gen Children conf.Geneweb.Config.command c_factor :: !nodes;
+                  edges := create_edge p_factor conf.Geneweb.Config.command p c_factor conf.Geneweb.Config.command c :: !edges;
+                  edges := create_edge sp_factor conf.Geneweb.Config.command sp c_factor conf.Geneweb.Config.command c :: !edges
                 end children;
-                (*create_family ifam families;*)
                 let child_local =
                   List.fold_left (fun acc c -> (c, gen + 1) :: acc) acc children
                 in
                 (* lien inter arbre *)
-                let () = !GWPARAM_ITL.init_cache conf base (get_iper p) 1 1 (max_gen - gen) in
+                let () = !Geneweb.GWPARAM_ITL.init_cache conf base (Gwdb.get_iper p) 1 1 (max_gen - gen) in
                 let () =
                   let ht = Hashtbl.create 0 in
                   let rec loop_child = function
@@ -2028,24 +2118,24 @@ let build_graph_desc conf base p max_gen =
                     | (base_prefix, p, gen) :: l ->
                       if gen >= max_gen then loop_child l
                       else
-                        let p_factor = try Hashtbl.find ht (base_prefix, get_iper p) with Not_found -> 1 in
+                        let p_factor = try Hashtbl.find ht (base_prefix, Gwdb.get_iper p) with Not_found -> 1 in
                         let l =
                           List.fold_left begin fun acc (fam_bp, (_, _, isp), children) ->
                             let sp_factor = factor ht (fam_bp, isp) in
                             List.fold_left begin fun acc ((c, _), baseprefix, can_merge) ->
                               if can_merge then acc
                               else
-                                let c_factor = factor ht (baseprefix, get_iper c) in
+                                let c_factor = factor ht (baseprefix, Gwdb.get_iper c) in
                                 nodes := create_node ifam c gen Children baseprefix c_factor :: !nodes;
                                 edges := create_edge p_factor base_prefix p c_factor baseprefix c :: !edges;
                                 edges := create_edge sp_factor baseprefix sp c_factor baseprefix c :: !edges;
                                 (baseprefix, c, gen + 1) :: acc
                             end acc children
-                          end l (limit_list @@ !GWPARAM_ITL.get_children' conf base (get_iper p) fam (get_iper sp))
+                          end l (limit_list @@ !Geneweb.GWPARAM_ITL.get_children' conf base (Gwdb.get_iper p) fam (Gwdb.get_iper sp))
                         in
                         loop_child l
                   in
-                  loop_child [(conf.command, p, gen)]
+                  loop_child [(conf.Geneweb.Config.command, p, gen)]
                 in
                 child_local
               end else acc)
@@ -2053,7 +2143,7 @@ let build_graph_desc conf base p max_gen =
         in
 
         (* lien inter arbre *)
-        let () = !GWPARAM_ITL.init_cache conf base (get_iper p) 1 1 (max_gen - gen) in
+        let () = !Geneweb.GWPARAM_ITL.init_cache conf base (Gwdb.get_iper p) 1 1 (max_gen - gen) in
         let () =
           let ht = Hashtbl.create 0 in
           let rec loop_desc = function
@@ -2061,32 +2151,32 @@ let build_graph_desc conf base p max_gen =
             | (base_prefix, p, gen) :: l ->
               if gen >= max_gen then loop_desc l
               else
-                let p_factor = try Hashtbl.find ht (base_prefix, get_iper p) with Not_found -> 1 in
+                let p_factor = try Hashtbl.find ht (base_prefix, Gwdb.get_iper p) with Not_found -> 1 in
                 let l =
                   List.fold_left begin fun acc (ifam, fam, (_ifath, _imoth, sp), baseprefix, can_merge) ->
                     if can_merge then acc
                     else
-                      let sp_factor = factor ht (baseprefix, get_iper sp) in
+                      let sp_factor = factor ht (baseprefix, Gwdb.get_iper sp) in
                       nodes := create_node ifam sp gen Spouse baseprefix sp_factor :: !nodes;
                       edges := create_edge p_factor base_prefix p sp_factor baseprefix sp :: !edges;
                       List.fold_left begin fun acc (_baseprefix, _cpl, children) ->
                         List.fold_left begin fun acc ((c, _), _, _) ->
-                          let c_factor = factor ht (baseprefix, get_iper c) in
+                          let c_factor = factor ht (baseprefix, Gwdb.get_iper c) in
                           nodes := create_node ifam c gen Children baseprefix c_factor :: !nodes;
                           edges := create_edge p_factor base_prefix p c_factor baseprefix c :: !edges;
                           edges := create_edge sp_factor baseprefix sp c_factor baseprefix c :: !edges;
                           (baseprefix, c, gen + 1) :: acc
                         end acc children
-                      end acc (limit_list @@ !GWPARAM_ITL.get_children' conf base (get_iper p) fam (get_iper sp))
-                  end l (!GWPARAM_ITL.get_families conf base p)
+                      end acc (limit_list @@ !Geneweb.GWPARAM_ITL.get_children' conf base (Gwdb.get_iper p) fam (Gwdb.get_iper sp))
+                  end l (!Geneweb.GWPARAM_ITL.get_families conf base p)
                 in loop_desc l
           in
-          loop_desc [(conf.command, p, gen)]
+          loop_desc [(conf.Geneweb.Config.command, p, gen)]
         in
 
         loop l
   in
-  nodes := create_node Gwdb.dummy_ifam p 1 Root conf.command 1 :: !nodes;
+  nodes := create_node Gwdb.dummy_ifam p 1 Root conf.Geneweb.Config.command 1 :: !nodes;
   loop [(p, 1)];
   (* On retourne la liste pour avoir les noeuds dans l'ordre *)
   (* la référence, suivi du père suivi, puis de la mère ...  *)
@@ -2104,75 +2194,61 @@ let build_graph_desc conf base p max_gen =
 (* ********************************************************************* *)
 let print_result_graph_tree conf base ip =
   if Gwdb.iper_exists base ip then
-  let params = get_params conf Mext_read.parse_graph_tree_params in
+  let params = Api_util.get_params conf Api_saisie_read_piqi_ext.parse_graph_tree_params in
   (* Construction de la base avec calcul des sosas           *)
   (* Si iz présent, on prend iz comme souche pour le calcul  *)
   (* Sinon on prend la souche de l'arbre                     *)
   let () =
-    match params.Mread.Graph_tree_params.indexz with
-      | Some n -> SosaCache.build_sosa_tree_ht conf base (poi base (Gwdb.iper_of_string @@ Int32.to_string n))
-      | None -> SosaCache.build_sosa_ht conf base
+    match params.Api_saisie_read_piqi.Graph_tree_params.indexz with
+      | Some n -> Geneweb.SosaCache.build_sosa_tree_ht conf base (Gwdb.poi base (Gwdb.iper_of_string @@ Int32.to_string n))
+      | None -> Geneweb.SosaCache.build_sosa_ht conf base
     in
-  let p = poi base ip in
+  let p = Gwdb.poi base ip in
   let max_asc = 12 in
   let nb_asc =
-    match params.Mread.Graph_tree_params.nb_asc with
+    match params.Api_saisie_read_piqi.Graph_tree_params.nb_asc with
     | Some n -> min max_asc (max (Int32.to_int n) 1)
     | None -> max_asc
   in
   (* cache lien inter arbre *)
-  let () = !GWPARAM_ITL.init_cache conf base ip 1 1 1 in
+  let () = !Geneweb.GWPARAM_ITL.init_cache conf base ip 1 1 1 in
   let (nodes_asc, edges_asc) = build_graph_asc conf base p nb_asc in
-  (*
-  let nodes_asc =
-    List.rev_map
-      (fun p ->
-        let id = Int32.of_string @@ Gwdb.string_of_iper (get_iper p) in
-        let p = pers_to_piqi_person_tree conf base p in
-        Mread.Node.({
-          id = id;
-          person = p;
-          ifam = None;
-        }))
-      nodes_asc
-  in
-  *)
   let max_desc = 12 in
   let nb_desc =
-    match params.Mread.Graph_tree_params.nb_desc with
+    match params.Api_saisie_read_piqi.Graph_tree_params.nb_desc with
     | Some n -> min max_desc (max (Int32.to_int n) 1)
     | None -> max_desc
   in
   let (nodes_desc, edges_desc) = build_graph_desc conf base p nb_desc in
   let nodes_siblings =
-    match get_parents p with
+    match Gwdb.get_parents p with
     | Some ifam ->
-        let fam = foi base ifam in
+        let fam = Gwdb.foi base ifam in
         Array.fold_right
           (fun ic acc ->
             if ic = ip then acc
             else
-              let c = poi base ic in
+              let c = Gwdb.poi base ic in
               (* Pour les liens inter arbres, on rend l'id unique avec *)
               (* le prefix de la base et l'index de la personne.       *)
-              let uniq_id = Hashtbl.hash (conf.command, ic) in
+              let uniq_id = Hashtbl.hash (conf.Geneweb.Config.command, ic) in
               let id = Int64.of_string @@ string_of_int uniq_id in
-              let c = pers_to_piqi_person_tree conf base c Siblings 1 1 conf.command in
+              let c = pers_to_piqi_person_tree conf base c Siblings 1 1 conf.Geneweb.Config.command in
               let node =
-                { Mread.Node.id = id
+                { Api_saisie_read_piqi.Node.id = id
                 ; person = c
                 ; ifam = None
                 }
               in
               node :: acc)
-          (limit_array @@ get_children fam) []
+          (limit_array @@ Gwdb.get_children fam) []
     | None -> []
   in
   let (nodes_siblings_before, nodes_siblings_after) =
-    match get_parents p with
+    match Gwdb.get_parents p with
     | Some ifam ->
-        let fam = foi base ifam in
-        let children = Array.to_list (limit_array @@ get_children fam) in
+        let fam = Gwdb.foi base ifam in
+        let children = Array.to_list (limit_array @@ Gwdb.get_children fam) in
         let rec split_at_person before after l =
           match l with
           | [] -> (List.rev before, after)
@@ -2181,13 +2257,13 @@ let print_result_graph_tree conf base ip =
                 let after =
                   List.map
                     (fun ic ->
-                      let c = poi base ic in
+                      let c = Gwdb.poi base ic in
                       (* Pour les liens inter arbres, on rend l'id unique avec *)
                       (* le prefix de la base et l'index de la personne.       *)
-                      let uniq_id = Hashtbl.hash (conf.command, ic) in
+                      let uniq_id = Hashtbl.hash (conf.Geneweb.Config.command, ic) in
                       let id = Int64.of_string @@ string_of_int uniq_id in
-                      let c = pers_to_piqi_person_tree conf base c Siblings 1 1 conf.command in
-                      { Mread.Node.id = id
+                      let c = pers_to_piqi_person_tree conf base c Siblings 1 1 conf.Geneweb.Config.command in
+                      { Api_saisie_read_piqi.Node.id = id
                       ; person = c
                       ; ifam = None
                       })
@@ -2195,14 +2271,14 @@ let print_result_graph_tree conf base ip =
                 in
                 (List.rev before, after)
               else
-                let c = poi base ic in
+                let c = Gwdb.poi base ic in
                 (* Pour les liens inter arbres, on rend l'id unique avec *)
                 (* le prefix de la base et l'index de la personne.       *)
-                let uniq_id = Hashtbl.hash (conf.command, ic) in
+                let uniq_id = Hashtbl.hash (conf.Geneweb.Config.command, ic) in
                 let id = Int64.of_string @@ string_of_int uniq_id in
-                let c = pers_to_piqi_person_tree conf base c Siblings 1 1 conf.command in
+                let c = pers_to_piqi_person_tree conf base c Siblings 1 1 conf.Geneweb.Config.command in
                 let node =
-                  { Mread.Node.id = id
+                  { Api_saisie_read_piqi.Node.id = id
                   ; person = c
                   ; ifam = None
                   }
@@ -2213,7 +2289,7 @@ let print_result_graph_tree conf base ip =
     | None -> ([], [])
   in
   let graph =
-    Mread.Graph_tree.({
+    Api_saisie_read_piqi.Graph_tree.({
       nodes_asc = nodes_asc;
       edges_asc = edges_asc;
       nodes_desc = nodes_desc;
@@ -2223,11 +2299,11 @@ let print_result_graph_tree conf base ip =
       nodes_siblings_after = nodes_siblings_after;
     })
   in
-  let data = Mext_read.gen_graph_tree graph in
-  print_result conf data
+  let data = Api_saisie_read_piqi_ext.gen_graph_tree graph in
+  Api_util.print_result conf data
   else begin
-    Output.status conf Def.Not_Found ;
-    Output.print_sstring conf ""
+    Geneweb.Output.status conf Def.Not_Found ;
+    Geneweb.Output.print_sstring conf ""
   end
 
 (* ************************************************************************ *)
@@ -2253,11 +2329,11 @@ let get_nb_ancestors base ip =
         else
           begin
             let not_visited_ips =
-              match get_parents (poi base current_ip) with
+              match Gwdb.get_parents (Gwdb.poi base current_ip) with
               | Some ifam ->
-                let cpl = foi base ifam in
+                let cpl = Gwdb.foi base ifam in
                 (* Ajoute les index des parents au tableau des noeuds à parcourir. *)
-                not_visited_ips@[get_father cpl]@[get_mother cpl]
+                not_visited_ips@[Gwdb.get_father cpl]@[Gwdb.get_mother cpl]
               | None ->
                 (* Si pas de parents, le tableau des noeuds à visiter ne change pas. *)
                 not_visited_ips
@@ -2282,9 +2358,9 @@ let get_nb_ancestors base ip =
     [Rem] : Non exporté en clair hors de ce module.                           *)
 (* ************************************************************************** *)
 let nb_to_piqi_nb_ancestors nb =
-    let piqi_nb_ancestors = Mread.default_nb_ancestors() in
-        piqi_nb_ancestors.Mread.Nb_ancestors.nb <- Int32.of_int nb;
-    Mext_read.gen_nb_ancestors piqi_nb_ancestors
+    let piqi_nb_ancestors = Api_saisie_read_piqi.default_nb_ancestors() in
+        piqi_nb_ancestors.Api_saisie_read_piqi.Nb_ancestors.nb <- Int32.of_int nb;
+    Api_saisie_read_piqi_ext.gen_nb_ancestors piqi_nb_ancestors
 
 (* ********************************************************************* *)
 (*  [Fonc] print_result_nb_ancestors : conf -> base -> ip -> unit        *)
@@ -2298,7 +2374,7 @@ let nb_to_piqi_nb_ancestors nb =
 (* ********************************************************************* *)
 let print_result_nb_ancestors conf base ip =
     let data = nb_to_piqi_nb_ancestors (get_nb_ancestors base ip) in
-    print_result conf data
+    Api_util.print_result conf data
 
 (* ********************************************************************* *)
 (*  [Fonc] print_nb_ancestors : conf -> base -> unit                     *)
@@ -2311,7 +2387,7 @@ let print_result_nb_ancestors conf base ip =
     [Rem] : Non exporté en clair hors de ce module.                      *)
 (* ********************************************************************* *)
 let print_nb_ancestors conf base =
-  print_from_identifier_person conf base print_result_nb_ancestors (get_params conf Mext_read.parse_identifier_person)
+  print_from_identifier_person conf base print_result_nb_ancestors (Api_util.get_params conf Api_saisie_read_piqi_ext.parse_identifier_person)
 
 (* ********************************************************************* *)
 (*  [Fonc] print_graph_tree : conf -> base -> unit                    *)
@@ -2324,6 +2400,6 @@ let print_nb_ancestors conf base =
     [Rem] : Non exporté en clair hors de ce module.                      *)
 (* ********************************************************************* *)
 let print_graph_tree conf base =
-  let params = get_params conf Mext_read.parse_graph_tree_params in
-  let identifier_person = params.Mread.Graph_tree_params.identifier_person in
+  let params = Api_util.get_params conf Api_saisie_read_piqi_ext.parse_graph_tree_params in
+  let identifier_person = params.Api_saisie_read_piqi.Graph_tree_params.identifier_person in
   print_from_identifier_person conf base print_result_graph_tree identifier_person
