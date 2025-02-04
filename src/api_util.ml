@@ -29,28 +29,8 @@ let get_portrait conf base p = Image.get_portrait conf base p |> Option.map Imag
 
 (**/**)
 
-
-(* ********************************************************************* *)
-(*  [Fonc] has_bas_loop : config -> base -> bool                         *)
-(** [Description] : Renvoie true s'il y a une boucle dans la base.
-    [Args] :
-      - conf : configuration de la base
-      - base : base de donnée
-    [Retour] :
-      - bool : Vrai s'il y a une boucle.
-    [Rem] : Non exporté en clair hors de ce module.                      *)
-(* ********************************************************************* *)
-let has_base_loop conf base =
-  try let _ = (Util.create_topological_sort conf base) in false
-  with (Consang.TopologicalSortError _) -> true
-
-let has_sosa_ref conf base =
-  Util.find_sosa_ref conf base <> None
-
-let compute_sosa conf base =
-  if not (has_sosa_ref conf base) then fun _ -> Sosa.zero
-  else if has_base_loop conf base then fun _ -> Sosa.zero
-  else fun person -> Geneweb.Sosa_cache.get_sosa_person ~conf ~base ~person
+let compute_sosa conf base person =
+  Geneweb.Sosa_cache.get_sosa_person ~conf ~base ~person
 
 (* Pour aller plus vite et ne pas tester l'existance de fichier    *)
 (* plusieurs fois en fonction des extensions, on prend le problème *)

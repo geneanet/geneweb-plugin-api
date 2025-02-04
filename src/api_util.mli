@@ -31,7 +31,6 @@ val get_portrait :
   Geneweb.Config.config -> Gwdb.base -> Gwdb.person -> string option
 
 val string_of_prec_dmy : Date.dmy -> string
-val has_base_loop : Geneweb.Config.config -> Gwdb.base -> bool
 
 val piqi_of_witness_kind :
   Def.witness_kind ->

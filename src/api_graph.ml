@@ -52,10 +52,8 @@ let print_close_person_relations conf base =
 
 let event_aux_pers_to_piqi_person conf base =
   fun p ->
-  let base_loop = has_base_loop conf base in
   let compute_sosa =
-    if base_loop then fun _ -> Sosa.zero
-    else (fun person -> Geneweb.Sosa_cache.get_sosa_person ~conf ~base ~person)
+    (fun person -> Geneweb.Sosa_cache.get_sosa_person ~conf ~base ~person)
   in
   Api_util.pers_to_piqi_person_light conf base p compute_sosa
 
