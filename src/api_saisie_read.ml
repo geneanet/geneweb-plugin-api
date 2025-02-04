@@ -338,7 +338,7 @@ let pers_to_piqi_person_tree conf base p more_info gen max_gen base_prefix =
     let sosa =
       if conf.bname <> Api_util.chop_base_prefix base_prefix then `no_sosa
       else
-        let sosa_nb = Geneweb.SosaCache.get_sosa_person p in
+        let sosa_nb = Geneweb.Sosa_cache.get_sosa_person ~conf ~base ~person:p in
         if Sosa.eq sosa_nb Sosa.zero then `no_sosa
         else if Sosa.eq sosa_nb Sosa.one then `sosa_ref
         else `sosa
@@ -417,8 +417,8 @@ let fill_sex p =
       | Female -> `female
       | Neuter -> `unknown
 
-let fill_sosa p =
-  let sosa_nb = Geneweb.SosaCache.get_sosa_person p in
+let fill_sosa conf base p =
+  let sosa_nb = Geneweb.Sosa_cache.get_sosa_person ~conf ~base ~person:p in
   if Sosa.eq sosa_nb Sosa.zero then `no_sosa
   else if Sosa.eq sosa_nb Sosa.one then `sosa_ref
   else `sosa
@@ -487,7 +487,7 @@ let pers_to_piqi_simple_person conf base p base_prefix =
       | Female -> `female
       | Neuter -> `unknown
     in
-    let sosa_nb_num = Geneweb.SosaCache.get_sosa_person p in
+    let sosa_nb_num = Geneweb.Sosa_cache.get_sosa_person ~conf ~base ~person:p in
     let sosa =
       if Sosa.eq sosa_nb_num Sosa.zero then `no_sosa
       else if Sosa.eq sosa_nb_num Sosa.one then `sosa_ref
@@ -1614,7 +1614,7 @@ let pers_to_piqi_person conf base p base_prefix is_main_person =
       father = father;
       mother = mother;
       families = fill_families conf base p;
-      sosa = fill_sosa p;
+      sosa = fill_sosa conf base p;
       events = fill_events conf base p base_prefix p_auth pers_to_piqi_simple_person simple_witness_constructor get_event_constructor;
       events_witnesses = get_events_witnesses conf base p base_prefix gen_p p_auth pers_to_piqi_simple_person simple_event_witness_constructor;
       baseprefix = base_prefix;
@@ -1673,7 +1673,7 @@ let rec pers_to_piqi_fiche_person conf base p base_prefix is_main_person nb_asc 
       let pers_to_piqi_fiche_person_only conf base p base_prefix =
         pers_to_piqi_fiche_person conf base p base_prefix false 0 0 0 0 false simple_graph_info no_event
       in
-      let sosa_nb = Geneweb.SosaCache.get_sosa_person p in
+      let sosa_nb = Geneweb.Sosa_cache.get_sosa_person ~conf ~base ~person:p in
       let (fiche_father, fiche_mother) = if is_main_person || not simple_graph_info then fill_fiche_parents conf base p base_prefix nb_asc nb_asc_max with_parent_families pers_to_piqi_fiche_person simple_graph_info no_event else (None, None) in
       let (father, mother) = if with_parent_families then fill_parents conf base p base_prefix else (None, None) in
       (* Returns simple person attributes only when nb of desc is 0. *)
@@ -1752,7 +1752,7 @@ let rec pers_to_piqi_fiche_person conf base p base_prefix is_main_person nb_asc 
         has_sources = has_sources;
         notes = if is_main_person && not simple_graph_info then transform_empty_string_to_None (fill_notes conf base p p_auth is_main_person gen_p) else None;
         psources = if is_main_person && not simple_graph_info then transform_empty_string_to_None psources else None;
-        sosa = if is_main_person then fill_sosa p else `no_sosa;
+        sosa = if is_main_person then fill_sosa conf base p else `no_sosa;
         surname_aliases = if is_main_person && not simple_graph_info then fill_surname_aliases p_auth gen_p else [];
 
         (* These fields should not be set because Fiche Person fields are better. *)
@@ -1798,11 +1798,11 @@ let print_person_tree conf base =
   (* Construction de la base avec calcul des sosas           *)
   (* Si iz présent, on prend iz comme souche pour le calcul  *)
   (* Sinon on prend la souche de l'arbre                     *)
-  let () =
+  let conf =
     match params.Api_saisie_read_piqi.Index_person.indexz with
-      | Some n -> Geneweb.SosaCache.build_sosa_tree_ht conf base (Gwdb.poi base (Gwdb.iper_of_string @@ Int32.to_string n))
-      | None -> Geneweb.SosaCache.build_sosa_ht conf base
-    in
+    | Some n -> Api_util.set_sosa_ref conf (Int32.to_string n |> Gwdb.iper_of_string)
+    | None -> conf
+  in
   let p = Gwdb.poi base ip in
   (* cache lien inter arbre *)
   let () = !Geneweb.GWPARAM_ITL.init_cache conf base ip 1 1 1 in
@@ -1871,7 +1871,6 @@ let search_index conf base an search_order =
 
 let print_result_fiche_person conf base ip nb_asc_max nb_desc_max simple_graph_info no_event =
   if Gwdb.iper_exists base ip then begin
-    let () = Geneweb.SosaCache.build_sosa_ht conf base in
     let p = Gwdb.poi base ip in
     (* cache lien inter arbre *)
     let () = !Geneweb.GWPARAM_ITL.init_cache conf base ip 1 1 1 in
@@ -2201,11 +2200,11 @@ let print_result_graph_tree conf base ip =
   (* Construction de la base avec calcul des sosas           *)
   (* Si iz présent, on prend iz comme souche pour le calcul  *)
   (* Sinon on prend la souche de l'arbre                     *)
-  let () =
+  let conf =
     match params.Api_saisie_read_piqi.Graph_tree_params.indexz with
-      | Some n -> Geneweb.SosaCache.build_sosa_tree_ht conf base (Gwdb.poi base (Gwdb.iper_of_string @@ Int32.to_string n))
-      | None -> Geneweb.SosaCache.build_sosa_ht conf base
-    in
+    | Some n -> Api_util.set_sosa_ref conf (Gwdb.iper_of_string @@ Int32.to_string n)
+    | None -> conf
+  in
   let p = Gwdb.poi base ip in
   let max_asc = 12 in
   let nb_asc =

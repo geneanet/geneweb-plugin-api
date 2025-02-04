@@ -47,13 +47,10 @@ let has_base_loop conf base =
 let has_sosa_ref conf base =
   Util.find_sosa_ref conf base <> None
 
-let compute_sosa conf base single_sosa =
+let compute_sosa conf base =
   if not (has_sosa_ref conf base) then fun _ -> Sosa.zero
   else if has_base_loop conf base then fun _ -> Sosa.zero
-  else if not single_sosa then
-    let () = SosaCache.build_sosa_ht conf base in
-    SosaCache.get_sosa_person
-  else (SosaCache.get_single_sosa conf base)
+  else fun person -> Geneweb.Sosa_cache.get_sosa_person ~conf ~base ~person
 
 (* Pour aller plus vite et ne pas tester l'existance de fichier    *)
 (* plusieurs fois en fonction des extensions, on prend le problème *)
@@ -632,8 +629,7 @@ let empty_piqi_person conf ref_person =
       - p         : person
       - fam       : family
       - base_loop : booléen pour savoir s'il y a une boucle dans la base.
-      - compute_sosa : appel de soit SosaCache.get_single_sosa,
-                                soit SosaCache.get_sosa_person
+      - compute_sosa : appel de Sosa_cache.get_sosa_person
     [Retour] :
       - Person : Retourne une personne dont tous les champs sont complétés.
     [Rem] : Non exporté en clair hors de ce module.                           *)
@@ -776,8 +772,7 @@ let spouse_to_piqi_spouse conf base p fam compute_sosa =
       - base      : base de donnée
       - p         : person
       - base_loop : booléen pour savoir s'il y a une boucle dans la base.
-      - compute_sosa : appel de soit SosaCache.get_single_sosa,
-                                soit SosaCache.get_sosa_person
+      - compute_sosa : appel de Sosa_cache.get_sosa_person
     [Retour] :
       - Person : Retourne une personne dont tous les champs sont complétés.
     [Rem] : Non exporté en clair hors de ce module.                           *)
@@ -925,8 +920,7 @@ let pers_to_piqi_person_light conf base p compute_sosa =
       - base      : base de donnée
       - p         : person
       - base_loop : booléen pour savoir s'il y a une boucle dans la base.
-      - compute_sosa : appel de soit SosaCache.get_single_sosa,
-                                soit SosaCache.get_sosa_person
+      - compute_sosa : appel de Sosa_cache.get_sosa_person
     [Retour] :
       - Person : Retourne une personne dont tous les champs sont complétés.
     [Rem] : Non exporté en clair hors de ce module.                           *)
@@ -1242,7 +1236,7 @@ let conv_data_list_person conf base filters l =
     let len = M.Internal_int32.({value = Int32.of_int len}) in
     Mext.gen_internal_int32 len
   else
-    let compute_sosa = compute_sosa conf base (len <= 1) in
+    let compute_sosa = compute_sosa conf base in
     let l = person_map conf base l compute_sosa in
     match l with
     | PLight pl ->
@@ -1254,7 +1248,7 @@ let conv_data_list_person conf base filters l =
 
 let data_list_person_option conf base filters l =
   let len = List.length l in
-  let compute_sosa = compute_sosa conf base (len <= 1) in
+  let compute_sosa = compute_sosa conf base in
   if filters.nb_results then
     let len = M.Internal_int32.({value = Int32.of_int len}) in
     Mext.gen_internal_int32 len
@@ -1296,8 +1290,7 @@ let data_list_person_option conf base filters l =
         Mext.gen_list_full_persons list
 
 let person_node_map conf base l =
-  let len = List.length l in
-  let compute_sosa = compute_sosa conf base (len <= 1) in
+  let compute_sosa = compute_sosa conf base in
   if p_getenvbin conf.env "full_infos" = Some "1" then
     PFull
       (List.rev_map
@@ -1381,3 +1374,6 @@ let piqi_death_type_of_death = function
 let opt_of_string = function
   | "" -> None
   | s -> Some s
+
+let set_sosa_ref conf iper =
+  {conf with env = ("iz", Adef.encoded (Gwdb.string_of_iper iper)) :: conf.env}
