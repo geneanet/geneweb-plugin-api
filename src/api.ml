@@ -340,7 +340,7 @@ let print_last_visited_persons conf base =
 let print_max_ancestors =
   fun conf base ->
   let ipers = Gwdb.ipers base in
-  let ancestors = Gwdb.iper_marker (Gwdb.ipers base) Geneweb.Util.IperSet.empty in
+  let ancestors = Gwdb.iper_marker (Gwdb.ipers base) Gwdb.IperSet.empty in
   let mark = Gwdb.iper_marker (Gwdb.ipers base) false in
   let has_children p =
     Array.exists
@@ -357,18 +357,18 @@ let print_max_ancestors =
           | Some ifam ->
               let cpl = Gwdb.foi base ifam in
               let anc =
-                Geneweb.Util.IperSet.add (Gwdb.get_father cpl) @@ Gwdb.Marker.get ancestors ip
+                Gwdb.IperSet.add (Gwdb.get_father cpl) @@ Gwdb.Marker.get ancestors ip
               in
               let anc =
-                Geneweb.Util.IperSet.add (Gwdb.get_mother cpl) anc
+                Gwdb.IperSet.add (Gwdb.get_mother cpl) anc
               in
               let anc2 =
-                Geneweb.Util.IperSet.union
+                Gwdb.IperSet.union
                   (nb_ancestors (Gwdb.get_father cpl))
                   (nb_ancestors (Gwdb.get_mother cpl))
               in
-              Geneweb.Util.IperSet.union anc anc2
-          | None -> Geneweb.Util.IperSet.empty
+              Gwdb.IperSet.union anc anc2
+          | None -> Gwdb.IperSet.empty
         in
         Gwdb.Marker.set ancestors ip anc;
         Gwdb.Marker.set mark ip true;
@@ -390,7 +390,7 @@ let print_max_ancestors =
   (* ip, nb_anc *)
   let res = ref (Gwdb.dummy_iper, 0) in
   Gwdb.Collection.iter begin fun i ->
-    let nb = Geneweb.Util.IperSet.cardinal @@ Gwdb.Marker.get ancestors i in
+    let nb = Gwdb.IperSet.cardinal @@ Gwdb.Marker.get ancestors i in
     if nb > snd !res then res := (i, nb)
   end ipers ;
   let ref_p = Api_util.person_to_reference_person base @@ Gwdb.poi base (fst !res) in
