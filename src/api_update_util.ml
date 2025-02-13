@@ -440,11 +440,7 @@ let date_of_piqi_date conf date =
                   | Some `sure | None -> Date.Sure
                 in
                 let dmy =
-                  match date.Api_saisie_write_piqi.Date.dmy with
-                  | Some dmy ->
-                      get_adef_dmy_from_saisie_write_dmy_if_valid conf dmy cal prec
-                  | None -> (* erreur*)
-                      {Date.day = 0; month = 0; year = 0; prec = Sure; delta = 0}
+                  get_adef_dmy_from_saisie_write_dmy_if_valid conf dmy cal prec
                 in
                 let dmy =
                   begin match cal with
