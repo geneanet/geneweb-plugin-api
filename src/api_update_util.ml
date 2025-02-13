@@ -330,18 +330,14 @@ let dmy_component ~kind dmy =
     | `Month -> dmy.Api_saisie_write_piqi.Dmy.month
     | `Year -> dmy.Api_saisie_write_piqi.Dmy.year
   in
-  match component with
-  | Some component -> Int32.to_int component
-  | None -> 0
+  Option.fold component ~some:Int32.to_int ~none:0
 
 let date_of_piqi_date conf date =
   match date.Api_saisie_write_piqi.Date.text with
   | Some txt -> Some (Date.Dtext txt)
   | None ->
       (* Si on a une année, on a une date. *)
-      match date.Api_saisie_write_piqi.Date.dmy with
-      | Some dmy ->
-          begin
+      Option.bind date.Api_saisie_write_piqi.Date.dmy (fun dmy ->
             match dmy.Api_saisie_write_piqi.Dmy.year with
             | Some _ ->
                 let cal =
@@ -355,9 +351,10 @@ let date_of_piqi_date conf date =
                   let month = dmy_component ~kind:`Month dmy in
                   let year = dmy_component ~kind:`Year dmy in
                   let delta =
-                    match dmy.Api_saisie_write_piqi.Dmy.delta with
-                    | Some delta -> Int32.to_int delta
-                    | None -> 0
+                    Option.fold
+                      dmy.Api_saisie_write_piqi.Dmy.delta
+                      ~some:Int32.to_int
+                      ~none:0
                   in
                   (* Error handling. *)
                   let (day, month, year) =
@@ -450,8 +447,7 @@ let date_of_piqi_date conf date =
                 in
                 Some (Date.Dgreg (dmy, cal))
           | None -> None
-          end
-      | None -> None
+      )
 
 
 (**/**) (* Convertion d'une personne pour la lecture. *)
