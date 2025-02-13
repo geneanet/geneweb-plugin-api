@@ -51,28 +51,6 @@ let load_image_ht conf =
         try
           let name = Filename.chop_extension img in
           Hashtbl.add ht_img name img
-(*
-          let i = String.rindex name '.' in
-          let key =
-            String.sub name 0 i ^ " " ^
-              String.sub name (i+1) (String.length name - i - 1)
-          in
-          (* Que c'est long !!! *)
-          match Gutil.person_ht_find_all base key with
-          | [] -> ()
-          | [ip] -> Hashtbl.add ht_img ip img
-          | l ->
-              let rec loop l =
-                match l with
-                | [] -> ()
-                | ip :: l ->
-                    let p = poi base ip in
-                    if Util.default_image_name base p = img then
-                      Hashtbl.add ht_img ip img
-                    else
-                      loop l
-              in loop l
-*)
         with _ -> ())
     images
 
