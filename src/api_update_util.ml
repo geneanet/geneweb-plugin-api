@@ -339,6 +339,7 @@ let date_of_piqi_date conf date =
       (* Si on a une année, on a une date. *)
       Option.bind date.Api_saisie_write_piqi.Date.dmy (fun dmy ->
             match dmy.Api_saisie_write_piqi.Dmy.year with
+            | None -> None
             | Some _ ->
                 let cal =
                   Option.fold
@@ -446,7 +447,6 @@ let date_of_piqi_date conf date =
                   Date.convert ~from:cal ~to_:Date.Dgregorian dmy
                 in
                 Some (Date.Dgreg (dmy, cal))
-          | None -> None
       )
 
 
