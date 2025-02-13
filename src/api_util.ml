@@ -176,16 +176,19 @@ struct
         text = Some txt;
       }
 
+  let calendar_of_piqi_calendar = function
+    | `julian -> Date.Djulian
+    | `french -> Dfrench
+    | `hebrew -> Dhebrew
+    | `gregorian  -> Dgregorian
+
   let date_of_piqi_date date =
     match date.M.Date.text with
     | Some txt -> Date.Dtext txt
     | _ ->
       let cal =
-        match date.M.Date.cal with
-        | Some `julian -> Date.Djulian
-        | Some `french -> Dfrench
-        | Some `hebrew -> Dhebrew
-        | Some `gregorian | None -> Dgregorian
+        Option.fold
+          date.M.Date.cal ~some:calendar_of_piqi_calendar ~none:Date.Dgregorian
       in
       let prec =
         match date.M.Date.prec with
