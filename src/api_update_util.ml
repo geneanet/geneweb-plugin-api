@@ -335,11 +335,10 @@ let date_of_piqi_date conf date =
             match dmy.Api_saisie_write_piqi.Dmy.year with
             | Some _ ->
                 let cal =
-                  match date.Api_saisie_write_piqi.Date.cal with
-                  | Some `julian -> Date.Djulian
-                  | Some `french -> Date.Dfrench
-                  | Some `hebrew -> Date.Dhebrew
-                  | Some `gregorian | None -> Date.Dgregorian
+                  Option.fold
+                    date.Api_saisie_write_piqi.Date.cal
+                    ~some:Api_util.calendar_of_piqi_calendar
+                    ~none:Date.Dgregorian
                 in
                 let get_adef_dmy_from_saisie_write_dmy_if_valid conf dmy cal prec =
                   let day =
