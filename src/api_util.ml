@@ -185,7 +185,7 @@ struct
         | Some `julian -> Date.Djulian
         | Some `french -> Dfrench
         | Some `hebrew -> Dhebrew
-        | _ -> Dgregorian
+        | Some `gregorian | None -> Dgregorian
       in
       let prec =
         match date.M.Date.prec with
