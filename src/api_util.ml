@@ -1,6 +1,3 @@
-module M = Api_piqi
-module Mext = Api_piqi_ext
-
 (* Dans un premier temps, ce module dupliques certaines  *)
 (* fonctions déjà présentes, mais c'est pour qu'il reste *)
 (* le plus indépendant possible des autres modules.      *)
@@ -87,7 +84,7 @@ let title_to_piqi_title t =
     | None -> None
   in
   let nth = Some (Int32.of_int t.t_nth) in
-  M.Title.{ title_type
+  Api_piqi.Title.{ title_type
           ; name = if name = "" then None else Some name
           ; title = if title = "" then None else Some title
           ; fief = if fief = "" then None else Some fief
@@ -227,7 +224,7 @@ struct
 
 end
 
-include Date_converter (M)
+include Date_converter (Api_piqi)
 
 
 (* ********************************************************************* *)
@@ -406,9 +403,9 @@ let apply_filters_p conf filters compute_sosa p =
 
 (**/**) (* Fonctions IO *)
 
-module Filter = Api_piqi_util.Filter (M) (Mext)
+module Filter = Api_piqi_util.Filter (Api_piqi) (Api_piqi_ext)
 
-module ReferencePerson = Api_piqi_util.ReferencePerson (M)
+module ReferencePerson = Api_piqi_util.ReferencePerson (Api_piqi)
 
 let person_to_reference_person = ReferencePerson.person_to_reference_person
 
@@ -437,7 +434,7 @@ let person_to_warning_person base p =
   let oc = Int32.of_int (Gwdb.get_occ p) in
   let n = Name.lower lastname in
   let p = Name.lower firstname in
-  { M.Warning_person.n
+  { Api_piqi.Warning_person.n
   ; p
   ; oc
   ; firstname
@@ -450,9 +447,9 @@ let person_to_warning_person base p =
 (**/**) (* Fonctions de transformation person <=> piqi person *)
 
 let piqi_ref_person_to_person base ref_person =
-  let sn = ref_person.M.Reference_person.n in
-  let fn = ref_person.M.Reference_person.p in
-  let occ = ref_person.M.Reference_person.oc in
+  let sn = ref_person.Api_piqi.Reference_person.n in
+  let fn = ref_person.Api_piqi.Reference_person.p in
+  let occ = ref_person.Api_piqi.Reference_person.oc in
   match Gwdb.person_of_key base fn sn (Int32.to_int occ) with
   | Some ip -> Some (Gwdb.poi base ip)
   | None -> None
@@ -469,11 +466,11 @@ let piqi_ref_person_to_person base ref_person =
     [Rem] : Non exporté en clair hors de ce module.                      *)
 (* ********************************************************************* *)
 let empty_piqi_person_light conf ref_person =
-  let sn = ref_person.M.Reference_person.n in
-  let fn = ref_person.M.Reference_person.p in
-  let occ = ref_person.M.Reference_person.oc in
+  let sn = ref_person.Api_piqi.Reference_person.n in
+  let fn = ref_person.Api_piqi.Reference_person.p in
+  let occ = ref_person.Api_piqi.Reference_person.oc in
   {
-    M.Person.sosa = "0";
+    Api_piqi.Person.sosa = "0";
     n = sn;
     p = fn;
     oc = occ;
@@ -514,11 +511,11 @@ let empty_piqi_person_light conf ref_person =
     [Rem] : Non exporté en clair hors de ce module.                      *)
 (* ********************************************************************* *)
 let empty_piqi_person_full conf ref_person =
-  let sn = ref_person.M.Reference_person.n in
-  let fn = ref_person.M.Reference_person.p in
-  let occ = ref_person.M.Reference_person.oc in
+  let sn = ref_person.Api_piqi.Reference_person.n in
+  let fn = ref_person.Api_piqi.Reference_person.p in
+  let occ = ref_person.Api_piqi.Reference_person.oc in
   {
-    M.Full_person.sosa = "0";
+    Api_piqi.Full_person.sosa = "0";
     n = sn;
     p = fn;
     oc = occ;
@@ -685,7 +682,7 @@ let spouse_to_piqi_spouse conf base p fam compute_sosa =
     else `not_divorced
   in
   {
-    M.Spouse.sosa = sosa_p;
+    Api_piqi.Spouse.sosa = sosa_p;
     n = sn;
     p = fn;
     oc = occ;
@@ -828,7 +825,7 @@ let pers_to_piqi_person_light conf base p compute_sosa =
   let baseprefix = conf.command in
   let index = Int32.of_string @@ Gwdb.string_of_iper gen_p.key_index in
   {
-    M.Person.sosa = sosa_p;
+    Api_piqi.Person.sosa = sosa_p;
     n = sn;
     p = fn;
     oc = occ;
@@ -1008,7 +1005,7 @@ let pers_to_piqi_person_full conf base p compute_sosa =
           | GodParent -> `rpt_god_parent
           | FosterParent -> `rpt_foster_parent
         in
-        M.Relation_parent.({
+        Api_piqi.Relation_parent.({
           father = father;
           mother = mother;
           source = if source = "" then None else Some source;
@@ -1027,7 +1024,7 @@ let pers_to_piqi_person_full conf base p compute_sosa =
   let baseprefix = conf.command
   in
   {
-    M.Full_person.sosa = sosa_p;
+    Api_piqi.Full_person.sosa = sosa_p;
     n = sn;
     p = fn;
     oc = occ;
@@ -1146,7 +1143,7 @@ let fam_to_piqi_family conf base ifam =
     List.map (fun x -> Int32.of_string @@ Gwdb.string_of_iper x) (Array.to_list (Gwdb.get_children fam))
   in
   {
-    M.Full_family.fsources = fsources;
+    Api_piqi.Full_family.fsources = fsources;
     marriage_date = marriage;
     marriage_place = marriage_place;
     marriage_src = marriage_src;
@@ -1165,8 +1162,8 @@ let fam_to_piqi_family conf base ifam =
 
 let data_person p =
   match p with
-  | Api_def.PLight p -> Mext.gen_person p
-  | Api_def.PFull p -> Mext.gen_full_person p
+  | Api_def.PLight p -> Api_piqi_ext.gen_person p
+  | Api_def.PFull p -> Api_piqi_ext.gen_full_person p
 
 let person_map conf base l compute_sosa =
   if p_getenvbin conf.Geneweb.Config.env "full_infos" = Some "1" then
@@ -1183,25 +1180,25 @@ let person_map conf base l compute_sosa =
 let conv_data_list_person conf base filters l =
   let len = List.length l in
   if filters.Api_def.nb_results then
-    let len = M.Internal_int32.({value = Int32.of_int len}) in
-    Mext.gen_internal_int32 len
+    let len = Api_piqi.Internal_int32.({value = Int32.of_int len}) in
+    Api_piqi_ext.gen_internal_int32 len
   else
     let compute_sosa = compute_sosa conf base in
     let l = person_map conf base l compute_sosa in
     match l with
     | Api_def.PLight pl ->
-        let list = M.List_persons.({list_persons = pl}) in
-        Mext.gen_list_persons list
+        let list = Api_piqi.List_persons.({list_persons = pl}) in
+        Api_piqi_ext.gen_list_persons list
     | Api_def.PFull pl ->
-        let list = M.List_full_persons.({persons = pl}) in
-        Mext.gen_list_full_persons list
+        let list = Api_piqi.List_full_persons.({persons = pl}) in
+        Api_piqi_ext.gen_list_full_persons list
 
 let data_list_person_option conf base filters l =
   let len = List.length l in
   let compute_sosa = compute_sosa conf base in
   if filters.Api_def.nb_results then
-    let len = M.Internal_int32.({value = Int32.of_int len}) in
-    Mext.gen_internal_int32 len
+    let len = Api_piqi.Internal_int32.({value = Int32.of_int len}) in
+    Api_piqi_ext.gen_internal_int32 len
   else
     let l =
       if p_getenvbin conf.env "full_infos" = Some "1" then
@@ -1233,11 +1230,11 @@ let data_list_person_option conf base filters l =
     in
     match l with
     | Api_def.PLight pl ->
-        let list = M.List_persons.({list_persons = pl}) in
-        Mext.gen_list_persons list
+        let list = Api_piqi.List_persons.({list_persons = pl}) in
+        Api_piqi_ext.gen_list_persons list
     | Api_def.PFull pl ->
-        let list = M.List_full_persons.({persons = pl}) in
-        Mext.gen_list_full_persons list
+        let list = Api_piqi.List_full_persons.({persons = pl}) in
+        Api_piqi_ext.gen_list_full_persons list
 
 let person_node_map conf base l =
   let compute_sosa = compute_sosa conf base in
@@ -1249,7 +1246,7 @@ let person_node_map conf base l =
            let p =
              pers_to_piqi_person_full conf base p compute_sosa
            in
-           M.Full_node.({
+           Api_piqi.Full_node.({
              id = id;
              person = p;
            }))
@@ -1262,7 +1259,7 @@ let person_node_map conf base l =
            let p =
              pers_to_piqi_person_light conf base p compute_sosa
            in
-           M.Node.({
+           Api_piqi.Node.({
              id = id;
              person = p;
            }))
