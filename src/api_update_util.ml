@@ -323,6 +323,16 @@ let piqi_date_of_date (date : Date.date) : Api_saisie_write_piqi.date =
         text = Some (Utf8.normalize txt);
       }
 
+let dmy_component ~kind dmy =
+  let component =
+    match kind with
+    | `Day -> dmy.Api_saisie_write_piqi.Dmy.day
+    | `Month -> dmy.Api_saisie_write_piqi.Dmy.month
+    | `Year -> dmy.Api_saisie_write_piqi.Dmy.year
+  in
+  match component with
+  | Some component -> Int32.to_int component
+  | None -> 0
 
 let date_of_piqi_date conf date =
   match date.Api_saisie_write_piqi.Date.text with
@@ -341,21 +351,9 @@ let date_of_piqi_date conf date =
                     ~none:Date.Dgregorian
                 in
                 let get_adef_dmy_from_saisie_write_dmy_if_valid conf dmy cal prec =
-                  let day =
-                    match dmy.Api_saisie_write_piqi.Dmy.day with
-                    | Some day -> Int32.to_int day
-                    | None -> 0
-                  in
-                  let month =
-                    match dmy.Api_saisie_write_piqi.Dmy.month with
-                    | Some month -> Int32.to_int month
-                    | None -> 0
-                  in
-                  let year =
-                    match dmy.Api_saisie_write_piqi.Dmy.year with
-                    | Some year -> Int32.to_int year
-                    | None -> 0
-                  in
+                  let day = dmy_component ~kind:`Day dmy in
+                  let month = dmy_component ~kind:`Month dmy in
+                  let year = dmy_component ~kind:`Year dmy in
                   let delta =
                     match dmy.Api_saisie_write_piqi.Dmy.delta with
                     | Some delta -> Int32.to_int delta
