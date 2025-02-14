@@ -407,7 +407,7 @@ let date_of_piqi_date conf date =
                     else
                       adef_dmy
                   else
-                    Geneweb.Update.bad_date conf adef_dmy
+                    Geneweb.Update.bad_date conf (`Date adef_dmy)
                 in
                 let delta2 = 0 in
                 let prec =
