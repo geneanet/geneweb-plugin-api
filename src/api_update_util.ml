@@ -339,7 +339,14 @@ let date_of_piqi_date conf date =
       (* Si on a une année, on a une date. *)
       Option.bind date.Api_saisie_write_piqi.Date.dmy (fun dmy ->
             match dmy.Api_saisie_write_piqi.Dmy.year with
-            | None -> None
+            | None ->
+                let is_specified component =
+                  Option.fold
+                    ~none:false ~some:(Fun.negate @@ Int32.equal 0l) component
+                in
+                if is_specified dmy.day || is_specified dmy.month
+                then Geneweb.Update.bad_date conf `Missing_year
+                else None
             | Some _ ->
                 let cal =
                   Option.fold
