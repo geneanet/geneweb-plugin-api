@@ -1830,24 +1830,27 @@ let search_index conf base an search_order =
   let rec loop l =
     match l with
     | Sosa::le ->
-      begin match Geneweb.SearchName.search_by_sosa conf base an with
-        | [] ->  loop le
-        | [p] -> Some (Gwdb.get_iper p)
-        | _ -> None
+      begin match Sosa.of_string an with
+      | Some sosa ->
+        begin match Geneweb.SearchName.search_by_sosa ~conf ~base ~sosa with
+          | None ->  loop le
+          | Some p -> Some (Gwdb.get_iper p)
+        end
+      | None -> loop le
       end
     | Key::le ->
-      let pl = Geneweb.SearchName.search_by_key conf base an in
-      begin match pl with
-        | [] ->  loop le
-        | [p] -> Some (Gwdb.get_iper p)
-        | _ -> None
+      begin match Geneweb.SearchName.search_by_key conf base an with
+        | None ->  loop le
+        | Some p -> Some (Gwdb.get_iper p)
       end
     | Surname::le ->
-      if Geneweb.Search_name_display.search_surname conf base an = []
+      if Geneweb.Search_name_display.sn_search_result_is_empty
+          (Geneweb.Search_name_display.search_surname conf base an)
       then loop le
       else None
     | FirstName::le ->
-      if Geneweb.Search_name_display.search_first_name conf base an = []
+      if Geneweb.Search_name_display.fn_search_result_is_empty
+          (Geneweb.Search_name_display.search_first_name conf base an)
       then loop le
       else None
     | ApproxKey::le ->
