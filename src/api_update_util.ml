@@ -539,7 +539,7 @@ let pers_to_piqi_simple_person (conf : Geneweb.Config.config) (base : Gwdb.base)
     | Def.Neuter -> `unknown
   in
   let sosa =
-    let sosa_nb = Geneweb.SosaCache.get_single_sosa conf base p in
+    let sosa_nb = Geneweb.Sosa_cache.get_sosa_person ~conf ~base ~person:p in
     if Sosa.eq sosa_nb Sosa.zero then `no_sosa
     else if Sosa.eq sosa_nb Sosa.one then `sosa_ref
     else `sosa
@@ -611,7 +611,7 @@ let pers_to_piqi_person_search conf base p =
     | Def.Neuter -> `unknown
   in
   let sosa =
-    let sosa_nb = Geneweb.SosaCache.get_sosa_person p in
+    let sosa_nb = Geneweb.Sosa_cache.get_sosa_person ~conf ~base ~person:p in
     if Sosa.eq sosa_nb Sosa.zero then `no_sosa
     else if Sosa.eq sosa_nb Sosa.one then `sosa_ref
     else `sosa
@@ -647,7 +647,7 @@ let pers_to_piqi_person_search_info conf base p =
     | Def.Neuter -> `unknown
   in
   let sosa =
-    let sosa_nb = Geneweb.SosaCache.get_single_sosa conf base p in
+    let sosa_nb = Geneweb.Sosa_cache.get_sosa_person ~conf ~base ~person:p in
     if Sosa.eq sosa_nb Sosa.zero then `no_sosa
     else if Sosa.eq sosa_nb Sosa.one then `sosa_ref
     else `sosa

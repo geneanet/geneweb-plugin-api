@@ -31,7 +31,6 @@ val get_portrait :
   Geneweb.Config.config -> Gwdb.base -> Gwdb.person -> string option
 
 val string_of_prec_dmy : Date.dmy -> string
-val has_base_loop : Geneweb.Config.config -> Gwdb.base -> bool
 
 val piqi_of_witness_kind :
   Def.witness_kind ->
@@ -116,7 +115,7 @@ val piqi_ref_person_to_person :
   Gwdb.base -> Api_piqi.reference_person -> Gwdb.person option
 
 val compute_sosa :
-  Geneweb.Config.config -> Gwdb.base -> bool -> Gwdb.person -> Sosa.t
+  Geneweb.Config.config -> Gwdb.base -> Gwdb.person -> Sosa.t
 
 val opt_of_string : string -> string option
 
@@ -144,3 +143,5 @@ val pers_to_piqi_person_full :
   Gwdb.person ->
   (Gwdb.person -> Sosa.t) ->
   Api_piqi.full_person
+
+val set_sosa_ref : Geneweb.Config.config -> Gwdb.iper -> Geneweb.Config.config

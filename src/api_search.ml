@@ -253,7 +253,9 @@ let print_list conf base filters list =
       (List.fold_left
          begin fun acc p ->
            let p = Gwdb.poi base p in
-           if Api_util.apply_filters_p conf filters Geneweb.SosaCache.get_sosa_person p
+           if Api_util.apply_filters_p conf filters
+               (fun person -> Geneweb.Sosa_cache.get_sosa_person ~conf ~base ~person)
+               p
            then PersonSet.add p acc
            else acc
          end

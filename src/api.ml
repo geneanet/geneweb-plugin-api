@@ -76,7 +76,7 @@ let print_loop conf base =
 let print_info_ind conf base =
   let ref_person = Api_util.get_params conf Api_piqi_ext.parse_reference_person in
   let filters = Api_util.get_filters conf in
-  let compute_sosa = Api_util.compute_sosa conf base true in
+  let compute_sosa = Api_util.compute_sosa conf base in
   let sn = ref_person.Api_piqi.Reference_person.n in
   let fn = ref_person.Api_piqi.Reference_person.p in
   let occ = ref_person.Api_piqi.Reference_person.oc in
@@ -261,7 +261,6 @@ let print_last_modified_persons conf base =
       with Sys_error _ -> None
     with
     | Some ic ->
-        let () = Geneweb.SosaCache.build_sosa_ht conf base in
         let pos = in_channel_length ic in
         let vv = (ref (Bytes.create 0), ref 0) in
         let rec loop list res pos =
@@ -287,7 +286,10 @@ let print_last_modified_persons conf base =
                                     let p = Gwdb.poi base ip in
                                     if not (Api_util.is_empty_or_quest_name p) &&
                                       Api_util.apply_filters_p
-                                        conf filters (Geneweb.SosaCache.get_sosa_person) p &&
+                                        conf filters
+                                        (fun person ->
+                                           Geneweb.Sosa_cache.get_sosa_person ~conf ~base ~person
+                                        ) p &&
                                       not (p_mem ip list)
                                     then loop (p :: list) (res - 1) pos
                                     else loop list res pos
@@ -325,7 +327,9 @@ let print_last_visited_persons conf base =
     List.fold_right begin fun (ip, _) acc ->
       if Gwdb.iper_exists base ip then
         let p = Gwdb.poi base ip in
-        if Api_util.apply_filters_p conf filters (Geneweb.SosaCache.get_single_sosa conf base) p
+        if Api_util.apply_filters_p conf filters
+            (fun person -> Geneweb.Sosa_cache.get_sosa_person ~conf ~base ~person)
+            p
         then p :: acc
         else acc
       else acc
@@ -533,10 +537,10 @@ let print_all_persons conf base =
     | (None, Some l) -> (0, Int32.to_int l)
     | (None, None) -> (0, Gwdb.nb_of_persons base - 1)
   in
-  let () = Geneweb.SosaCache.build_sosa_ht conf base in
   let list =
     Gwdb.Collection.fold ~from ~until (fun acc i ->
-        let pass_filters = Api_util.apply_filters_p conf filters Geneweb.SosaCache.get_sosa_person i in
+        let pass_filters = Api_util.apply_filters_p conf filters
+            (fun person -> Geneweb.Sosa_cache.get_sosa_person ~conf ~base ~person) i in
         if pass_filters then i :: acc else acc
       ) [] (Gwdb.persons base)
   in
@@ -556,7 +560,6 @@ let print_all_families conf base =
     | (None, Some l) -> (0, Int32.to_int l)
     | (None, None) -> (0, nb_families)
   in
-  let () = Geneweb.SosaCache.build_sosa_ht conf base in
   let len = limit - from in
   let list =
     Gwdb.Collection.fold_until

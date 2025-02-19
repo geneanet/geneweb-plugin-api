@@ -68,7 +68,6 @@ let print_person_search_list conf base =
   in
   (* On préfère limiter la liste ici, même si on perd un peu en performance. *)
   let list = Ext_list.take list max_res in
-  let () = Geneweb.SosaCache.build_sosa_ht conf base in
   let list =
     List.map
       (fun ip ->
@@ -1380,7 +1379,7 @@ let print_mod_family_request conf base =
          let dates = Api_util.opt_of_string @@ Api_saisie_read.short_dates_text conf base sp in
          let image = Api_util.get_portrait conf base sp in
          let sosa =
-           let sosa_nb = Geneweb.SosaCache.get_single_sosa conf base sp in
+           let sosa_nb = Geneweb.Sosa_cache.get_sosa_person ~conf ~base ~person:sp in
            if Sosa.eq sosa_nb Sosa.zero then `no_sosa
            else if Sosa.eq sosa_nb Sosa.one then `sosa_ref
            else `sosa
@@ -1817,7 +1816,7 @@ let print_add_child conf base =
          let dates = Api_saisie_read.short_dates_text conf base sp in
          let image = Api_util.get_portrait conf base sp in
          let sosa =
-           let sosa_nb = Geneweb.SosaCache.get_single_sosa conf base sp in
+           let sosa_nb = Geneweb.Sosa_cache.get_sosa_person ~conf ~base ~person:sp in
            if Sosa.eq sosa_nb Sosa.zero then `no_sosa
            else if Sosa.eq sosa_nb Sosa.one then `sosa_ref
            else `sosa
