@@ -59,8 +59,8 @@ let print_person_search_list conf base =
     else c1
   in
   let persons = List.sort cmp_per persons in
-  let list = List.map (fun p ->
-      Api_update_util.pers_to_piqi_person_search conf base p
+  let list = List.map (fun person ->
+      Api_update_util.pers_to_piqi_person_search ~conf ~base ~person ~first_name ~surname
     ) persons in
   let result = Api_saisie_write_piqi.Person_search_list.({ persons = list; }) in
   let data = Api_saisie_write_piqi_ext.gen_person_search_list result in
