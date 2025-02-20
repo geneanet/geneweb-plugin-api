@@ -598,29 +598,39 @@ let pers_to_piqi_simple_person (conf : Geneweb.Config.config) (base : Gwdb.base)
   }
 
 
-let pers_to_piqi_person_search conf base p =
-  let index = Int32.of_string @@ Gwdb.string_of_iper (Gwdb.get_iper p) in
+let pers_to_piqi_person_search ~conf ~base ~person ~first_name ~surname =
+  let index = Int32.of_string @@ Gwdb.string_of_iper (Gwdb.get_iper person) in
   let sex =
-    match Gwdb.get_sex p with
+    match Gwdb.get_sex person with
     | Def.Male -> `male
     | Def.Female -> `female
     | Def.Neuter -> `unknown
   in
   let sosa =
-    let sosa_nb = Geneweb.Sosa_cache.get_sosa_person ~conf ~base ~person:p in
+    let sosa_nb = Geneweb.Sosa_cache.get_sosa_person ~conf ~base ~person in
     if Sosa.eq sosa_nb Sosa.zero then `no_sosa
     else if Sosa.eq sosa_nb Sosa.one then `sosa_ref
     else `sosa
   in
-  let (first_name, surname) =
-    Api_saisie_read.person_firstname_surname_txt base p
+  let matching_first_name_aliases =
+    Geneweb.AdvSearchOk.prefix_matching_first_name_aliases
+      ~first_name
+      ~aliases:(List.map (Gwdb.sou base) (Gwdb.get_first_names_aliases person))
   in
-  let dates = Api_saisie_read.short_dates_text conf base p in
-  let image = Api_util.get_portrait conf base p in
+  let matching_surname_aliases =
+    Geneweb.AdvSearchOk.prefix_matching_surname_aliases
+      ~surname
+      ~aliases:(List.map (Gwdb.sou base) (Gwdb.get_surnames_aliases person))
+  in
+  let (first_name, surname) =
+    Api_saisie_read.person_firstname_surname_txt base person
+  in
+  let dates = Api_saisie_read.short_dates_text conf base person in
+  let image = Api_util.get_portrait conf base person in
   let family =
-    let hw = husband_wife conf base p in
+    let hw = husband_wife conf base person in
     if hw <> "" then hw
-    else child_of_parent conf base p
+    else child_of_parent conf base person
   in
   {
     Api_saisie_write_piqi.Person_search.index = index;
@@ -631,6 +641,8 @@ let pers_to_piqi_person_search conf base p =
     image;
     sosa = sosa;
     family = family;
+    matching_first_name_aliases;
+    matching_surname_aliases;
   }
 
 
