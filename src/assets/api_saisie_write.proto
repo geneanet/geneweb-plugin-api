@@ -85,6 +85,8 @@ message PersonSearch {
   optional string image = 6;
   required Sosa sosa = 7;
   required string family = 8;
+  repeated string matching_first_name_aliases = 9;
+  repeated string matching_surname_aliases = 10;
 }
 
 message SimplePerson {
