@@ -772,7 +772,7 @@ let fill_events conf base p base_prefix p_auth pers_to_piqi witness_constructor 
         in
           event_constructor name type_ date date_long date_raw date_conv date_conv_long date_cal place note src spouse witnesses
         )
-      (Ext_list.take (Geneweb.Event.sorted_events conf base p) 25)
+      (Geneweb.Event.sorted_events conf base p)
   else []
 
 
@@ -1030,9 +1030,7 @@ let get_rparents_piqi base conf base_prefix gen_p pers_to_piqi relation_person_c
                                                                          *)
 (* ********************************************************************* *)
 let get_events_witnesses conf base p base_prefix _gen_p p_auth pers_to_piqi event_witness_constructor =
-    let events_witnesses =
-      Ext_list.take (Geneweb.Relation.get_event_witnessed conf base p) 25
-    in
+    let events_witnesses = Geneweb.Relation.get_event_witnessed conf base p in
     List.map
       (fun (witness, wk, wnote, evt) ->
         let wk = Geneweb.Util.string_of_witness_kind conf (Gwdb.get_sex p) wk in
