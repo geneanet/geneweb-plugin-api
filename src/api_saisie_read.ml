@@ -1814,7 +1814,25 @@ let print_person_tree conf base =
   let p = Gwdb.poi base ip in
   (* cache lien inter arbre *)
   let () = !Geneweb.GWPARAM_ITL.init_cache conf base ip 1 1 1 in
-  let pers_piqi = pers_to_piqi_person conf base p conf.Geneweb.Config.command true in
+  let pers_piqi =
+    let events_limit =
+      Option.map
+        Int32.to_int params.Api_saisie_read_piqi.Index_person.events_limit
+    in
+    let events_witnesses_limit =
+      Option.map
+        Int32.to_int
+        params.Api_saisie_read_piqi.Index_person.events_witnesses_limit
+    in
+    pers_to_piqi_person
+      ?events_limit
+      ?events_witnesses_limit
+      conf
+      base
+      p
+      conf.Geneweb.Config.command
+      true
+  in
   let data = Api_saisie_read_piqi_ext.gen_person pers_piqi in
   Api_util.print_result conf data
   else begin

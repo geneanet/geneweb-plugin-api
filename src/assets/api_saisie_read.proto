@@ -457,6 +457,8 @@ message FicheFamily {
 message IndexPerson {
   required int32 index = 1;
   optional int32 indexz = 2;
+  optional int32 events_limit = 3;
+  optional int32 events_witnesses_limit = 4;
 }
 
 message Node {
