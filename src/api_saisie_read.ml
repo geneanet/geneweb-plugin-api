@@ -712,7 +712,11 @@ let fam_to_piqi_family_link conf base (ifath : Gwdb.iper) imoth sp ifam fam base
       - Array of events
                                                                          *)
 (* ********************************************************************* *)
-let fill_events conf base p base_prefix p_auth pers_to_piqi witness_constructor event_constructor =
+let fill_events ?limit conf base p base_prefix p_auth pers_to_piqi witness_constructor event_constructor =
+  let limit =
+    Option.fold
+      ~none:Fun.id ~some:(fun limit list -> Ext_list.take list limit) limit
+  in
   if p_auth then
     List.map
       (fun evt ->
@@ -772,7 +776,7 @@ let fill_events conf base p base_prefix p_auth pers_to_piqi witness_constructor 
         in
           event_constructor name type_ date date_long date_raw date_conv date_conv_long date_cal place note src spouse witnesses
         )
-      (Geneweb.Event.sorted_events conf base p)
+      (limit @@ Geneweb.Event.sorted_events conf base p)
   else []
 
 
@@ -1029,8 +1033,14 @@ let get_rparents_piqi base conf base_prefix gen_p pers_to_piqi relation_person_c
       - Array of events
                                                                          *)
 (* ********************************************************************* *)
-let get_events_witnesses conf base p base_prefix _gen_p p_auth pers_to_piqi event_witness_constructor =
-    let events_witnesses = Geneweb.Relation.get_event_witnessed conf base p in
+let get_events_witnesses ?limit conf base p base_prefix _gen_p p_auth pers_to_piqi event_witness_constructor =
+    let events_witnesses =
+      let limit =
+        Option.fold
+          ~none:Fun.id ~some:(fun limit list -> Ext_list.take list limit) limit
+      in
+      limit @@ Geneweb.Relation.get_event_witnessed conf base p
+    in
     List.map
       (fun (witness, wk, wnote, evt) ->
         let wk = Geneweb.Util.string_of_witness_kind conf (Gwdb.get_sex p) wk in
@@ -1545,7 +1555,7 @@ let fill_linked_page_if_is_main_person conf base p is_main_person =
       - Person : Retourne une personne dont tous les champs sont complétés.
     [Rem] : Non exporté en clair hors de ce module.                           *)
 (* ************************************************************************** *)
-let pers_to_piqi_person conf base p base_prefix is_main_person =
+let pers_to_piqi_person ?events_limit ?events_witnesses_limit conf base p base_prefix is_main_person =
   if Geneweb.Util.is_restricted conf base (Gwdb.get_iper p) then
     get_restricted_person ()
   else
@@ -1613,8 +1623,8 @@ let pers_to_piqi_person conf base p base_prefix is_main_person =
       mother = mother;
       families = fill_families conf base p;
       sosa = fill_sosa conf base p;
-      events = fill_events conf base p base_prefix p_auth pers_to_piqi_simple_person simple_witness_constructor get_event_constructor;
-      events_witnesses = get_events_witnesses conf base p base_prefix gen_p p_auth pers_to_piqi_simple_person simple_event_witness_constructor;
+      events = fill_events ?limit:events_limit conf base p base_prefix p_auth pers_to_piqi_simple_person simple_witness_constructor get_event_constructor;
+      events_witnesses = get_events_witnesses ?limit:events_witnesses_limit conf base p base_prefix gen_p p_auth pers_to_piqi_simple_person simple_event_witness_constructor;
       baseprefix = base_prefix;
       fiche_person_person = None;
       is_contemporary = Geneweb.GWPARAM.is_contemporary conf base p;
