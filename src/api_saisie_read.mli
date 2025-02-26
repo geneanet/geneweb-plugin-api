@@ -25,6 +25,6 @@ val print_fiche_person : Geneweb.Config.config -> Gwdb.base -> unit
 val print_nb_ancestors : Geneweb.Config.config -> Gwdb.base -> unit
 
 val print_graph_tree : Geneweb.Config.config -> Gwdb.base -> unit
-(** [Description] : Retourne un graph d'ascendance et de descendance
+(** [Description] : Retourne un graphe d'ascendance et de descendance
        d'une personne
  *)
