@@ -790,7 +790,7 @@ let fill_events_if_is_main_person conf base p base_prefix p_auth is_main_person 
     fill_events conf base p base_prefix p_auth pers_to_piqi witness_constructor event_constructor
   else []
 
-let get_related_piqi conf base p base_prefix _gen_p pers_to_piqi relation_person_constructor =
+let get_related_piqi conf base p base_prefix pers_to_piqi relation_person_constructor =
     List.map
       (fun (p, rp) ->
         let p = pers_to_piqi conf base p base_prefix in
@@ -959,7 +959,7 @@ let get_rparents_piqi base conf base_prefix gen_p pers_to_piqi relation_person_c
         | None -> rl)
       [] gen_p.Def.rparents
 
-let get_events_witnesses ?limit conf base p base_prefix _gen_p p_auth pers_to_piqi event_witness_constructor =
+let get_events_witnesses ?limit conf base p base_prefix p_auth pers_to_piqi event_witness_constructor =
     let events_witnesses =
       let limit =
         Option.fold
@@ -1536,14 +1536,14 @@ let pers_to_piqi_person
       psources = transform_empty_string_to_None psources;
       has_sources = has_sources;
       titles = fill_titles conf base p;
-      related = get_related_piqi conf base p base_prefix gen_p pers_to_piqi_simple_person simple_relation_person_constructor;
+      related = get_related_piqi conf base p base_prefix pers_to_piqi_simple_person simple_relation_person_constructor;
       rparents = get_rparents_piqi base conf base_prefix gen_p pers_to_piqi_simple_person simple_relation_person_constructor;
       father = father;
       mother = mother;
       families = fill_families conf base p;
       sosa = fill_sosa conf base p;
       events = fill_events ?limit:events_limit conf base p base_prefix p_auth pers_to_piqi_simple_person simple_witness_constructor get_event_constructor;
-      events_witnesses = get_events_witnesses ?limit:events_witnesses_limit conf base p base_prefix gen_p p_auth pers_to_piqi_simple_person simple_event_witness_constructor;
+      events_witnesses = get_events_witnesses ?limit:events_witnesses_limit conf base p base_prefix p_auth pers_to_piqi_simple_person simple_event_witness_constructor;
       baseprefix = base_prefix;
       fiche_person_person = None;
       is_contemporary = Geneweb.GWPARAM.is_contemporary conf base p;
@@ -1633,10 +1633,10 @@ let rec pers_to_piqi_fiche_person
         piqi_fiche_person.Api_saisie_read_piqi.Fiche_person.linked_page_head <- linked_page_head;
         piqi_fiche_person.Api_saisie_read_piqi.Fiche_person.linked_page_occu <- linked_page_occu;
         piqi_fiche_person.Api_saisie_read_piqi.Fiche_person.visible_for_visitors <- Api_util.get_visibility conf base p;
-        piqi_fiche_person.Api_saisie_read_piqi.Fiche_person.related <- if is_main_person && not simple_graph_info then get_related_piqi conf base p base_prefix gen_p pers_to_piqi_fiche_person_only fiche_relation_person_constructor else [];
+        piqi_fiche_person.Api_saisie_read_piqi.Fiche_person.related <- if is_main_person && not simple_graph_info then get_related_piqi conf base p base_prefix pers_to_piqi_fiche_person_only fiche_relation_person_constructor else [];
         piqi_fiche_person.Api_saisie_read_piqi.Fiche_person.rparents <- if is_main_person && not simple_graph_info then get_rparents_piqi base conf base_prefix gen_p pers_to_piqi_fiche_person_only fiche_relation_person_constructor else [];
         if not no_event then
-          piqi_fiche_person.Api_saisie_read_piqi.Fiche_person.events_witnesses <- if is_main_person then get_events_witnesses conf base p base_prefix gen_p p_auth pers_to_piqi_fiche_person_only fiche_event_witness_constructor else [];
+          piqi_fiche_person.Api_saisie_read_piqi.Fiche_person.events_witnesses <- if is_main_person then get_events_witnesses conf base p base_prefix p_auth pers_to_piqi_fiche_person_only fiche_event_witness_constructor else [];
         if not no_event then
           piqi_fiche_person.Api_saisie_read_piqi.Fiche_person.events <- fill_events_if_is_main_person conf base p base_prefix p_auth is_main_person pers_to_piqi_fiche_person_only fiche_witness_constructor fiche_event_constructor;
         piqi_fiche_person.Api_saisie_read_piqi.Fiche_person.is_contemporary <- Geneweb.GWPARAM.is_contemporary conf base p;
@@ -1690,12 +1690,12 @@ let rec pers_to_piqi_fiche_person
         burial_date_conv = None;
         burial_date_cal = None;
         events = if return_simple_attributes && not no_event then fill_events conf base p base_prefix p_auth pers_to_piqi_simple_person simple_witness_constructor get_event_constructor else [];
-        events_witnesses = if return_simple_attributes && not no_event then get_events_witnesses conf base p base_prefix gen_p p_auth pers_to_piqi_simple_person simple_event_witness_constructor else [];
+        events_witnesses = if return_simple_attributes && not no_event then get_events_witnesses conf base p base_prefix p_auth pers_to_piqi_simple_person simple_event_witness_constructor else [];
         families = if return_simple_attributes && not simple_graph_info then fill_families conf base p else [];
         father = if return_simple_attributes then father else None;
         mother = if return_simple_attributes then mother else None;
         titles = if not simple_graph_info then fill_titles conf base p else [];
-        related = if return_simple_attributes then get_related_piqi conf base p base_prefix gen_p pers_to_piqi_simple_person simple_relation_person_constructor else [];
+        related = if return_simple_attributes then get_related_piqi conf base p base_prefix pers_to_piqi_simple_person simple_relation_person_constructor else [];
         rparents = if return_simple_attributes then get_rparents_piqi base conf base_prefix gen_p pers_to_piqi_simple_person simple_relation_person_constructor else [];
         baseprefix = base_prefix;
         is_contemporary = Geneweb.GWPARAM.is_contemporary conf base p;
