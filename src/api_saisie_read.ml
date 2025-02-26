@@ -150,9 +150,6 @@ let string_of_french_dmy conf d =
 let string_of_hebrew_dmy conf d =
   Geneweb.DateDisplay.code_hebrew_date conf d.Date.day d.month d.year
 
-(** [Description] : Renvoie la date, la date traduite et le calendrier au
-                    format texte.
-      *)
 let string_of_date_and_conv conf d =
   match d with
   | Date.Dgreg (d, Dgregorian) ->
@@ -1707,10 +1704,6 @@ let rec pers_to_piqi_fiche_person
       }
     end
 
-(** [Description] : Renvoie un objet personne qui servira à afficher
-      toutes les informations sur le panneau latéral de l'arbre de
-      navigation.
- *)
 let print_person_tree conf base =
   let params = Api_util.get_params conf Api_saisie_read_piqi_ext.parse_index_person in
   let ip = Gwdb.iper_of_string @@ Int32.to_string params.Api_saisie_read_piqi.Index_person.index in
@@ -2259,9 +2252,6 @@ let print_result_nb_ancestors
 let print_nb_ancestors conf base =
   print_from_identifier_person conf base print_result_nb_ancestors (Api_util.get_params conf Api_saisie_read_piqi_ext.parse_identifier_person)
 
-(** [Description] : Retourne un graph d'ascendance et de descendance
-       d'une personne
- *)
 let print_graph_tree conf base =
   let params = Api_util.get_params conf Api_saisie_read_piqi_ext.parse_graph_tree_params in
   let identifier_person = params.Api_saisie_read_piqi.Graph_tree_params.identifier_person in
