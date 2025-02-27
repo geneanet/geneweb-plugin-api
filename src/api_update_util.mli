@@ -70,9 +70,11 @@ val date_of_piqi_date :
   Geneweb.Config.config -> Api_saisie_write_piqi.date -> Date.date option
 
 val pers_to_piqi_person_search :
-  Geneweb.Config.config ->
-  Gwdb.base ->
-  Gwdb.person ->
+  conf:Geneweb.Config.config ->
+  base:Gwdb.base ->
+  person:Gwdb.person ->
+  first_name:string ->
+  surname:string ->
   Api_saisie_write_piqi.person_search
 (** [Description] : Retourne une personne qui sert lors de la recherche pour
                     relier un individu dans la saisie.                        *)
