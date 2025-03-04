@@ -323,44 +323,46 @@ let piqi_date_of_date (date : Date.date) : Api_saisie_write_piqi.date =
         text = Some (Utf8.normalize txt);
       }
 
+let dmy_component ~kind dmy =
+  let component =
+    match kind with
+    | `Day -> dmy.Api_saisie_write_piqi.Dmy.day
+    | `Month -> dmy.Api_saisie_write_piqi.Dmy.month
+    | `Year -> dmy.Api_saisie_write_piqi.Dmy.year
+  in
+  Option.fold component ~some:Int32.to_int ~none:0
 
 let date_of_piqi_date conf date =
   match date.Api_saisie_write_piqi.Date.text with
   | Some txt -> Some (Date.Dtext txt)
   | None ->
       (* Si on a une année, on a une date. *)
-      match date.Api_saisie_write_piqi.Date.dmy with
-      | Some dmy ->
-          begin
+      Option.bind date.Api_saisie_write_piqi.Date.dmy (fun dmy ->
             match dmy.Api_saisie_write_piqi.Dmy.year with
+            | None ->
+                let is_specified component =
+                  Option.fold
+                    ~none:false ~some:(Fun.negate @@ Int32.equal 0l) component
+                in
+                if is_specified dmy.day || is_specified dmy.month
+                then Geneweb.Update.bad_date conf `Missing_year
+                else None
             | Some _ ->
                 let cal =
-                  match date.Api_saisie_write_piqi.Date.cal with
-                  | Some `julian -> Date.Djulian
-                  | Some `french -> Date.Dfrench
-                  | Some `hebrew -> Date.Dhebrew
-                  | Some `gregorian | None -> Date.Dgregorian
+                  Option.fold
+                    date.Api_saisie_write_piqi.Date.cal
+                    ~some:Api_util.calendar_of_piqi_calendar
+                    ~none:Date.Dgregorian
                 in
                 let get_adef_dmy_from_saisie_write_dmy_if_valid conf dmy cal prec =
-                  let day =
-                    match dmy.Api_saisie_write_piqi.Dmy.day with
-                    | Some day -> Int32.to_int day
-                    | None -> 0
-                  in
-                  let month =
-                    match dmy.Api_saisie_write_piqi.Dmy.month with
-                    | Some month -> Int32.to_int month
-                    | None -> 0
-                  in
-                  let year =
-                    match dmy.Api_saisie_write_piqi.Dmy.year with
-                    | Some year -> Int32.to_int year
-                    | None -> 0
-                  in
+                  let day = dmy_component ~kind:`Day dmy in
+                  let month = dmy_component ~kind:`Month dmy in
+                  let year = dmy_component ~kind:`Year dmy in
                   let delta =
-                    match dmy.Api_saisie_write_piqi.Dmy.delta with
-                    | Some delta -> Int32.to_int delta
-                    | None -> 0
+                    Option.fold
+                      dmy.Api_saisie_write_piqi.Dmy.delta
+                      ~some:Int32.to_int
+                      ~none:0
                   in
                   (* Error handling. *)
                   let (day, month, year) =
@@ -407,7 +409,7 @@ let date_of_piqi_date conf date =
                     else
                       adef_dmy
                   else
-                    Geneweb.Update.bad_date conf adef_dmy
+                    Geneweb.Update.bad_date conf (`Date adef_dmy)
                 in
                 let delta2 = 0 in
                 let prec =
@@ -441,11 +443,7 @@ let date_of_piqi_date conf date =
                   | Some `sure | None -> Date.Sure
                 in
                 let dmy =
-                  match date.Api_saisie_write_piqi.Date.dmy with
-                  | Some dmy ->
-                      get_adef_dmy_from_saisie_write_dmy_if_valid conf dmy cal prec
-                  | None -> (* erreur*)
-                      {Date.day = 0; month = 0; year = 0; prec = Sure; delta = 0}
+                  get_adef_dmy_from_saisie_write_dmy_if_valid conf dmy cal prec
                 in
                 let dmy =
                   begin match cal with
@@ -456,9 +454,7 @@ let date_of_piqi_date conf date =
                   Date.convert ~from:cal ~to_:Date.Dgregorian dmy
                 in
                 Some (Date.Dgreg (dmy, cal))
-          | None -> None
-          end
-      | None -> None
+      )
 
 
 (**/**) (* Convertion d'une personne pour la lecture. *)

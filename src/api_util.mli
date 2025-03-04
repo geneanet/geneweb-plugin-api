@@ -70,6 +70,8 @@ val person_to_reference_person :
 val print_error :
   Geneweb.Config.config -> Api_piqi.Api_piqi.error_code -> string -> _
 
+val calendar_of_piqi_calendar : Api_piqi.calendar -> Date.calendar
+
 val date_of_piqi_date : Api_piqi.date -> Date.date
 
 val pers_to_piqi_person :
