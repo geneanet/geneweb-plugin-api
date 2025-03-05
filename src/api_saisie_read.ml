@@ -108,16 +108,7 @@ let string_of_dmy conf d is_long =
   let open Api_util in
   !!(Geneweb.DateDisplay.string_of_prec_dmy conf sy sy2 d)
 
-(* ************************************************************************** *)
-(*  [Fonc] string_of_dmy_raw : Def.dmy -> string                              *)
-(** [Description] : Renvoie la date dans un format texte brut (analysable)
-    [Args] :
-      - d : date
-    [Retour] :
-      - date
-    [Rem] : Non exporté en clair hors de ce module.                           *)
-(* ************************************************************************** *)
-let string_of_dmy_raw d =
+let string_of_dmy_raw (d : Date.dmy) : string =
   let prec =
     match d.Date.prec with
     | About -> "~"
@@ -137,17 +128,7 @@ let string_of_dmy_raw d =
   in
   prec ^ "/" ^ date ^ "#" ^ delta
 
-(* ************************************************************************** *)
-(*  [Fonc] string_of_date_raw : Def.date -> string                            *)
-(** [Description] : Renvoie la date dans un format texte brut (analysable)
-    [Args] :
-      - conf : configuration de la base
-      - d : date
-    [Retour] :
-      - date
-    [Rem] : Non exporté en clair hors de ce module.                           *)
-(* ************************************************************************** *)
-let string_of_date_raw conf d =
+let string_of_date_raw (conf : Geneweb.Config.config) (d : Date.date) : string =
   match d with
   | Date.Dgreg (d, _) -> string_of_dmy_raw d
   | Date.Dtext t -> Geneweb.Util.string_with_macros ~conf ~env:[] t
@@ -169,19 +150,6 @@ let string_of_french_dmy conf d =
 let string_of_hebrew_dmy conf d =
   Geneweb.DateDisplay.code_hebrew_date conf d.Date.day d.month d.year
 
-(* ************************************************************************** *)
-(*  [Fonc] string_of_date_and_conv :
-             ?bool -> config -> Def.date -> (string * string * cal)           *)
-(** [Description] : Renvoie la date, la date traduite et le calendrier au
-                    format texte.
-    [Args] :
-      - is_long : définit si la date doit être au format long
-      - conf : configuration de la base
-      - d : date
-    [Retour] :
-      - (date greg * date * calendar option)
-    [Rem] : Non exporté en clair hors de ce module.                           *)
-(* ************************************************************************** *)
 let string_of_date_and_conv conf d =
   match d with
   | Date.Dgreg (d, Dgregorian) ->
@@ -277,16 +245,10 @@ let simple_witness_constructor witness_type witness witness_note =
   })
 
 
-(* ************************************************************************** *)
-(*  [Fonc] event_to_piqi_event : string -> event_type                         *)
-(** [Description] : Retourne à partir d'un évènement (gwdb) un évènement (piqi)
-    [Args] :
-      - evt_name : nom de l'évènement
-    [Retour] :
-      - event_type : évènement piqi
-    [Rem] : Non exporté en clair hors de ce module.                           *)
-(* ************************************************************************** *)
-let event_to_piqi_event pevt_name fevt_name =
+let event_to_piqi_event
+      (pevt_name : _ Def.gen_pers_event_name option)
+      (fevt_name : _ Def.gen_fam_event_name option)
+    : Api_saisie_read_piqi.event_type =
   match pevt_name with
   | Some (Def.Epers_Name _) -> `epers_custom
   | Some pevt -> Api_piqi_util.piqi_pevent_name_of_pevent_name pevt
@@ -295,20 +257,15 @@ let event_to_piqi_event pevt_name fevt_name =
     | Some fevt -> Api_piqi_util.piqi_fevent_name_of_fevent_name fevt
     | None -> failwith "event_to_piqi_event"
 
-(* ************************************************************************** *)
-(*  [Fonc] pers_to_piqi_person_tree :
-            config -> base -> person -> string -> PersonTree                  *)
-(** [Description] : Retourne à partir d'une person (gwdb) une PersonTree (piqi)
-    [Args] :
-      - conf        : configuration de la base
-      - base        : base de donnée
-      - p           : person
-      - base_prefix : nom de l'arbre (différent de base dans le cas des LIA)
-    [Retour] :
-      - Person : Retourne une personne dont tous les champs sont complétés.
-    [Rem] : Non exporté en clair hors de ce module.                           *)
-(* ************************************************************************** *)
-let pers_to_piqi_person_tree conf base p more_info gen max_gen base_prefix =
+let pers_to_piqi_person_tree
+      (conf : Geneweb.Config.config)
+      (base : Gwdb.base)
+      (p : Gwdb.person)
+      (more_info : graph_more_info)
+      (gen : int)
+      (max_gen : int)
+      (base_prefix : string)
+    : Api_saisie_read_piqi.person_tree =
   if Geneweb.Util.is_restricted conf base (Gwdb.get_iper p) then
     {
       Api_saisie_read_piqi.Person_tree.index = Int32.of_string @@ Gwdb.string_of_iper Gwdb.dummy_iper;
@@ -456,21 +413,12 @@ let fill_firstname_aliases p_auth gen_p =
 let fill_surname_aliases p_auth gen_p =
   if not p_auth then [] else gen_p.Def.surnames_aliases
 
-(* ************************************************************************** *)
-(*  [Fonc] pers_to_piqi_simple_person :
-             config -> base -> person -> string -> SimplePerson               *)
-(** [Description] : Retourne à partir d'une person (gwdb) une SimplePerson
-                    (piqi).
-    [Args] :
-      - conf        : configuration de la base
-      - base        : base de donnée
-      - p           : person
-      - base_prefix : nom de l'arbre (différent de base dans le cas des LIA)
-    [Retour] :
-      - Person : Retourne une personne dont tous les champs sont complétés.
-    [Rem] : Non exporté en clair hors de ce module.                           *)
-(* ************************************************************************** *)
-let pers_to_piqi_simple_person conf base p base_prefix =
+let pers_to_piqi_simple_person
+      (conf : Geneweb.Config.config)
+      (base : Gwdb.base)
+      (p : Gwdb.person)
+      (base_prefix : string)
+    : Api_saisie_read_piqi.simple_person =
   if Geneweb.Util.is_restricted conf base (Gwdb.get_iper p) then
     let restricted_person = Api_saisie_read_piqi.default_simple_person() in
     restricted_person.Api_saisie_read_piqi.Simple_person.index <- Int32.of_string @@ Gwdb.string_of_iper Gwdb.dummy_iper;
@@ -594,19 +542,61 @@ let pers_to_piqi_simple_person conf base p base_prefix =
     }
 
 
-(* ********************************************************************* *)
-(*  [Fonc] fam_to_piqi_family_link : config -> base -> ifam -> Family    *)
-(** [Description] : Retourne à partir d'une famille distante une Family
-                    (piqi app) dont tous les champs sont complétés.
-    [Args] :
-      - conf  : configuration de la base
-      - base  : base de donnée
-      - ifam  : ifam
-    [Retour] :
-      - Family : Retourne une famille dont tous les champs sont complétés.
-    [Rem] : Non exporté en clair hors de ce module.                      *)
-(* ********************************************************************* *)
-let fam_to_piqi_family_link conf base (ifath : Gwdb.iper) imoth sp ifam fam base_prefix spouse_to_piqi witness_to_piqi child_to_piqi family_link_constructor =
+let fam_to_piqi_family_link
+      (conf : Geneweb.Config.config)
+      (base : Gwdb.base)
+      (ifath : Gwdb.iper)
+      (imoth : Gwdb.iper)
+      (sp : Gwdb.person)
+      (ifam : Gwdb.ifam)
+      (fam : Gwdb.family)
+      (base_prefix : string)
+      (spouse_to_piqi :
+         Geneweb.Config.config ->
+         Gwdb.base ->
+         Gwdb.person ->
+         string ->
+         'person)
+      (witness_to_piqi :
+         Geneweb.Config.config ->
+         Gwdb.base ->
+         Gwdb.person ->
+         Def.witness_kind ->
+         string ->
+         string ->
+         'witness)
+      (child_to_piqi :
+         Geneweb.Config.config ->
+         Gwdb.base ->
+         Gwdb.person ->
+         string ->
+         'person)
+      (family_link_constructor :
+         int32 ->
+         'person ->
+         string ->
+         string ->
+         string ->
+         string ->
+         string ->
+         Api_saisie_read_piqi.calendar option ->
+         string ->
+         string ->
+         string ->
+         Api_saisie_read_piqi.marriage_type ->
+         Api_saisie_read_piqi.divorce_type ->
+         string ->
+         string ->
+         string ->
+         string ->
+         string ->
+         Api_saisie_read_piqi.calendar option ->
+         'witness list ->
+         string ->
+         string ->
+         'person list ->
+         'family)
+    : 'family =
   let spouse = spouse_to_piqi conf base sp base_prefix in
   let p_auth = true in
   let m_auth = true in
@@ -694,25 +684,44 @@ let fam_to_piqi_family_link conf base (ifath : Gwdb.iper) imoth sp ifam fam base
     marriage_cal marriage_date_text marriage_place marriage_src marriage_type divorce_type divorce_date divorce_date_long divorce_date_raw divorce_date_conv
     divorce_date_conv_long divorce_cal witnesses notes fsources children
 
-(* ********************************************************************* *)
-(*  [Fonc] get_events_piqi
-    conf -> base -> person -> string -> bool -> function -> function -> function
-                                                                         *)
-(** [Description] : Returns an array of events built by an event_constructor.
-    [Args] :
-      - conf                  : configuraion
-      - base                  : database
-      - p                     : the person
-      - base_prefix           : the name of the base of the person
-      - p_auth                : private informations are returned
-      - pers_to_piqi          : function to call to create the person object (spouse / witnesses)
-      - witness_constructor   : function to call to create the witness object
-      - event_constructor     : function to call to create the event object
-    [Returns] :
-      - Array of events
-                                                                         *)
-(* ********************************************************************* *)
-let fill_events conf base p base_prefix p_auth pers_to_piqi witness_constructor event_constructor =
+let fill_events
+      ?(limit : int option)
+      (conf : Geneweb.Config.config)
+      (base : Gwdb.base)
+      (p : Gwdb.person)
+      (base_prefix : string)
+      (p_auth : bool)
+      (pers_to_piqi :
+         Geneweb.Config.config ->
+         Gwdb.base ->
+         Gwdb.person ->
+         string ->
+         'person)
+      (witness_constructor :
+         Api_saisie_read_piqi.witness_type ->
+         'person ->
+         string ->
+         'witness)
+      (event_constructor :
+         string ->
+         Api_saisie_read_piqi.event_type ->
+         string ->
+         string ->
+         string ->
+         string ->
+         string ->
+         Api_saisie_read_piqi.calendar option ->
+         string ->
+         string ->
+         string ->
+         'person option ->
+         'witness list ->
+         'event)
+    : 'event list =
+  let limit =
+    Option.fold
+      ~none:Fun.id ~some:(fun limit list -> Ext_list.take list limit) limit
+  in
   if p_auth then
     List.map
       (fun evt ->
@@ -772,7 +781,7 @@ let fill_events conf base p base_prefix p_auth pers_to_piqi witness_constructor 
         in
           event_constructor name type_ date date_long date_raw date_conv date_conv_long date_cal place note src spouse witnesses
         )
-      (Ext_list.take (Geneweb.Event.sorted_events conf base p) 25)
+      (limit @@ Geneweb.Event.sorted_events conf base p)
   else []
 
 
@@ -781,23 +790,7 @@ let fill_events_if_is_main_person conf base p base_prefix p_auth is_main_person 
     fill_events conf base p base_prefix p_auth pers_to_piqi witness_constructor event_constructor
   else []
 
-(* ********************************************************************* *)
-(*  [Fonc] get_related_piqi                                              *)
-(** [Description] : Returns an array of related person built by an relation_person_constructor.
-    [Args] :
-      - conf                  : configuration
-      - base                  : database
-      - p                     : the person
-      - base_prefix           : the name of the base of the person
-      - p_auth                : private informations are returned
-      - pers_to_piqi          : function to call to create the person object (spouse / witnesses)
-      - witness_constructor   : function to call to create the witness object
-      - event_constructor     : function to call to create the event object
-    [Returns] :
-      - Array of related person
-                                                                         *)
-(* ********************************************************************* *)
-let get_related_piqi conf base p base_prefix _gen_p pers_to_piqi relation_person_constructor =
+let get_related_piqi conf base p base_prefix pers_to_piqi relation_person_constructor =
     List.map
       (fun (p, rp) ->
         let p = pers_to_piqi conf base p base_prefix in
@@ -813,23 +806,6 @@ let get_related_piqi conf base p base_prefix _gen_p pers_to_piqi relation_person
         )
       (Geneweb.Relation.get_others_related conf base p)
 
-(* ********************************************************************* *)
-(*  [Fonc] get_family_piqi                                               *)
-(** [Description] : Returns a family built by a family_constructor.
-    [Args] :
-      - conf                      : configuration
-      - base                      : database
-      - p                         : the person
-      - base_prefix               : the name of the base of the person
-      - p_auth                    : private informations are returned
-      - pers_to_piqi              : function to call to create a person object (spouse)
-      - witness_constructor       : function to call to create a witness object
-      - child_to_piqi             : function to call to create a child object
-      - event_constructor         : function to call to create an event object
-    [Returns] :
-      - Array of related person
-                                                                         *)
-(* ********************************************************************* *)
 let get_family_piqi base conf ifam p base_prefix spouse_to_piqi witnesses_to_piqi child_to_piqi family_constructor =
   let fam = Gwdb.foi base ifam in
   let sp = Gwdb.poi base (Gutil.spouse (Gwdb.get_iper p) fam) in
@@ -937,21 +913,6 @@ let get_family_piqi base conf ifam p base_prefix spouse_to_piqi witnesses_to_piq
     marriage_cal marriage_date_text marriage_place marriage_src marriage_type divorce_type divorce_date divorce_date_long divorce_date_raw divorce_date_conv
     divorce_date_conv_long divorce_cal witnesses notes fsources children
 
-(* ********************************************************************* *)
-(*  [Fonc] get_families_piqi                                             *)
-(** [Description] : Returns a array of family built by a family_constructor.
-    [Args] :
-      - conf                       : configuration
-      - base                       : database
-      - p                          : the person
-      - base_prefix                : the name of the base of the person
-      - spouse_to_piqi             : function to call to create the person object (spouse / witnesses)
-      - witnesses_to_piqi          : function to call to create the witness object
-      - child_to_piqi              : function to call to create the child object
-    [Returns] :
-      - Array of related person
-                                                                         *)
-(* ********************************************************************* *)
 let get_families_piqi base conf p base_prefix spouse_to_piqi witnesses_to_piqi child_to_piqi family_constructor =
   let families =
     Mutil.array_to_list_map
@@ -970,21 +931,6 @@ let get_families_piqi base conf p base_prefix spouse_to_piqi witnesses_to_piqi c
   in
     families @ families_link
 
-(* ********************************************************************* *)
-(*  [Fonc] get_rparents_piqi                                             *)
-(** [Description] : Returns a related parent built by a relation_person_constructor.
-    [Args] :
-      - conf                        : configuration
-      - base                        : database
-      - p                           : the person
-      - base_prefix                 : the name of the base of the person
-      - gen_p                       : the generation of the person
-      - pers_to_piqi                : function to call to create a person object
-      - relation_person_constructor : function to call to create the child object
-    [Returns] :
-      - Array of related parents
-                                                                         *)
-(* ********************************************************************* *)
 let get_rparents_piqi base conf base_prefix gen_p pers_to_piqi relation_person_constructor =
     List.fold_left
       (fun rl rp ->
@@ -1013,25 +959,13 @@ let get_rparents_piqi base conf base_prefix gen_p pers_to_piqi relation_person_c
         | None -> rl)
       [] gen_p.Def.rparents
 
-(* ********************************************************************* *)
-(*  [Fonc] get_events_witnesses                                          *)
-(** [Description] : Returns a related parent built by a relation_person_constructor.
-    [Args] :
-      - conf                      : configuration
-      - base                      : database
-      - p                         : the person
-      - base_prefix               : the name of the base of the person
-      - gen_p                     : the generation of the person
-      - p_auth                    : private informations are returned
-      - pers_to_piqi              : function to call to create a person object
-      - event_witness_constructor : function to call to create a event witness object
-    [Returns] :
-      - Array of events
-                                                                         *)
-(* ********************************************************************* *)
-let get_events_witnesses conf base p base_prefix _gen_p p_auth pers_to_piqi event_witness_constructor =
+let get_events_witnesses ?limit conf base p base_prefix p_auth pers_to_piqi event_witness_constructor =
     let events_witnesses =
-      Ext_list.take (Geneweb.Relation.get_event_witnessed conf base p) 25
+      let limit =
+        Option.fold
+          ~none:Fun.id ~some:(fun limit list -> Ext_list.take list limit) limit
+      in
+      limit @@ Geneweb.Relation.get_event_witnessed conf base p
     in
     List.map
       (fun (witness, wk, wnote, evt) ->
@@ -1532,22 +1466,15 @@ let fill_linked_page_if_is_main_person conf base p is_main_person =
   else
     ("", "", "", "", "")
 
-(* ************************************************************************** *)
-(*  [Fonc] pers_to_piqi_person : config -> base -> person -> string -> Person *)
-(** [Description] : Retourne à partir d'une person (gwdb) une Person (piqi)
-                    dont tous les champs sont complétés.
-    [Args] :
-      - conf           : configuration de la base
-      - base           : base de donnée
-      - p              : person
-      - base_prefix    : nom de l'arbre (différent de base dans le cas des LIA)
-      - is_main_person : si la personne est principale
-      - bypass_duplicate_fields       : ne calcule pas des champs en doublon à un objet FichePerson
-    [Retour] :
-      - Person : Retourne une personne dont tous les champs sont complétés.
-    [Rem] : Non exporté en clair hors de ce module.                           *)
-(* ************************************************************************** *)
-let pers_to_piqi_person conf base p base_prefix is_main_person =
+let pers_to_piqi_person
+      ?events_limit
+      ?events_witnesses_limit
+      (conf : Geneweb.Config.config)
+      (base : Gwdb.base)
+      (p : Gwdb.person)
+      (base_prefix : string)
+      (is_main_person : bool)
+    : Api_saisie_read_piqi.person =
   if Geneweb.Util.is_restricted conf base (Gwdb.get_iper p) then
     get_restricted_person ()
   else
@@ -1609,14 +1536,14 @@ let pers_to_piqi_person conf base p base_prefix is_main_person =
       psources = transform_empty_string_to_None psources;
       has_sources = has_sources;
       titles = fill_titles conf base p;
-      related = get_related_piqi conf base p base_prefix gen_p pers_to_piqi_simple_person simple_relation_person_constructor;
+      related = get_related_piqi conf base p base_prefix pers_to_piqi_simple_person simple_relation_person_constructor;
       rparents = get_rparents_piqi base conf base_prefix gen_p pers_to_piqi_simple_person simple_relation_person_constructor;
       father = father;
       mother = mother;
       families = fill_families conf base p;
       sosa = fill_sosa conf base p;
-      events = fill_events conf base p base_prefix p_auth pers_to_piqi_simple_person simple_witness_constructor get_event_constructor;
-      events_witnesses = get_events_witnesses conf base p base_prefix gen_p p_auth pers_to_piqi_simple_person simple_event_witness_constructor;
+      events = fill_events ?limit:events_limit conf base p base_prefix p_auth pers_to_piqi_simple_person simple_witness_constructor get_event_constructor;
+      events_witnesses = get_events_witnesses ?limit:events_witnesses_limit conf base p base_prefix p_auth pers_to_piqi_simple_person simple_event_witness_constructor;
       baseprefix = base_prefix;
       fiche_person_person = None;
       is_contemporary = Geneweb.GWPARAM.is_contemporary conf base p;
@@ -1633,23 +1560,20 @@ let fill_ref_if_is_main_person conf base is_main_person =
   else
     (None, None)
 
-(* ************************************************************************** *)
-(*  [Fonc] pers_to_piqi_fiche_person :
-    config -> base -> person -> base_prefix -> bool -> int -> int -> int
-    -> int -> bool -> bool -> bool -> Person                                  *)
-(** [Description] : Retourne à partir d'une person (gwdb) une Person fiche
-                    (piqi) dont tous les champs sont complétés.
-    [Args] :
-      - conf         : configuration de la base
-      - base         : base de donnée
-      - p            : person
-      - base_prefix  : nom de l'arbre (différent de base dans le cas des LIA)
-      - with_parents : bool
-    [Retour] :
-      - Person
-    [Rem] : Non exporté en clair hors de ce module.                           *)
-(* ************************************************************************** *)
-let rec pers_to_piqi_fiche_person conf base p base_prefix is_main_person nb_asc nb_asc_max nb_desc nb_desc_max with_parent_families simple_graph_info no_event =
+let rec pers_to_piqi_fiche_person
+          (conf : Geneweb.Config.config)
+          (base : Gwdb.base)
+          (p : Gwdb.person)
+          (base_prefix : string)
+          (is_main_person : bool)
+          (nb_asc : int)
+          (nb_asc_max : int)
+          (nb_desc : int)
+          (nb_desc_max : int)
+          (with_parent_families : bool)
+          (simple_graph_info : bool)
+          (no_event : bool)
+        : Api_saisie_read_piqi.person =
   (* Generates a fiche person by default. *)
   let piqi_fiche_person = Api_saisie_read_piqi.default_fiche_person() in
   (* If the access is restricted, returns the person with default fields. *)
@@ -1709,10 +1633,10 @@ let rec pers_to_piqi_fiche_person conf base p base_prefix is_main_person nb_asc 
         piqi_fiche_person.Api_saisie_read_piqi.Fiche_person.linked_page_head <- linked_page_head;
         piqi_fiche_person.Api_saisie_read_piqi.Fiche_person.linked_page_occu <- linked_page_occu;
         piqi_fiche_person.Api_saisie_read_piqi.Fiche_person.visible_for_visitors <- Api_util.get_visibility conf base p;
-        piqi_fiche_person.Api_saisie_read_piqi.Fiche_person.related <- if is_main_person && not simple_graph_info then get_related_piqi conf base p base_prefix gen_p pers_to_piqi_fiche_person_only fiche_relation_person_constructor else [];
+        piqi_fiche_person.Api_saisie_read_piqi.Fiche_person.related <- if is_main_person && not simple_graph_info then get_related_piqi conf base p base_prefix pers_to_piqi_fiche_person_only fiche_relation_person_constructor else [];
         piqi_fiche_person.Api_saisie_read_piqi.Fiche_person.rparents <- if is_main_person && not simple_graph_info then get_rparents_piqi base conf base_prefix gen_p pers_to_piqi_fiche_person_only fiche_relation_person_constructor else [];
         if not no_event then
-          piqi_fiche_person.Api_saisie_read_piqi.Fiche_person.events_witnesses <- if is_main_person then get_events_witnesses conf base p base_prefix gen_p p_auth pers_to_piqi_fiche_person_only fiche_event_witness_constructor else [];
+          piqi_fiche_person.Api_saisie_read_piqi.Fiche_person.events_witnesses <- if is_main_person then get_events_witnesses conf base p base_prefix p_auth pers_to_piqi_fiche_person_only fiche_event_witness_constructor else [];
         if not no_event then
           piqi_fiche_person.Api_saisie_read_piqi.Fiche_person.events <- fill_events_if_is_main_person conf base p base_prefix p_auth is_main_person pers_to_piqi_fiche_person_only fiche_witness_constructor fiche_event_constructor;
         piqi_fiche_person.Api_saisie_read_piqi.Fiche_person.is_contemporary <- Geneweb.GWPARAM.is_contemporary conf base p;
@@ -1766,12 +1690,12 @@ let rec pers_to_piqi_fiche_person conf base p base_prefix is_main_person nb_asc 
         burial_date_conv = None;
         burial_date_cal = None;
         events = if return_simple_attributes && not no_event then fill_events conf base p base_prefix p_auth pers_to_piqi_simple_person simple_witness_constructor get_event_constructor else [];
-        events_witnesses = if return_simple_attributes && not no_event then get_events_witnesses conf base p base_prefix gen_p p_auth pers_to_piqi_simple_person simple_event_witness_constructor else [];
+        events_witnesses = if return_simple_attributes && not no_event then get_events_witnesses conf base p base_prefix p_auth pers_to_piqi_simple_person simple_event_witness_constructor else [];
         families = if return_simple_attributes && not simple_graph_info then fill_families conf base p else [];
         father = if return_simple_attributes then father else None;
         mother = if return_simple_attributes then mother else None;
         titles = if not simple_graph_info then fill_titles conf base p else [];
-        related = if return_simple_attributes then get_related_piqi conf base p base_prefix gen_p pers_to_piqi_simple_person simple_relation_person_constructor else [];
+        related = if return_simple_attributes then get_related_piqi conf base p base_prefix pers_to_piqi_simple_person simple_relation_person_constructor else [];
         rparents = if return_simple_attributes then get_rparents_piqi base conf base_prefix gen_p pers_to_piqi_simple_person simple_relation_person_constructor else [];
         baseprefix = base_prefix;
         is_contemporary = Geneweb.GWPARAM.is_contemporary conf base p;
@@ -1780,17 +1704,6 @@ let rec pers_to_piqi_fiche_person conf base p base_prefix is_main_person nb_asc 
       }
     end
 
-(* ********************************************************************* *)
-(*  [Fonc] print_person_tree : conf -> base -> unit                      *)
-(** [Description] : Renvoie un objet personne qui servira à afficher
-      toutes les informations sur le panneau latéral de l'arbre de
-      navigation.
-    [Args] :
-      - conf  : configuration de la base
-      - base  : base de donnée
-    [Retour] : Néant
-    [Rem] : Non exporté en clair hors de ce module.                      *)
-(* ********************************************************************* *)
 let print_person_tree conf base =
   let params = Api_util.get_params conf Api_saisie_read_piqi_ext.parse_index_person in
   let ip = Gwdb.iper_of_string @@ Int32.to_string params.Api_saisie_read_piqi.Index_person.index in
@@ -1806,7 +1719,25 @@ let print_person_tree conf base =
   let p = Gwdb.poi base ip in
   (* cache lien inter arbre *)
   let () = !Geneweb.GWPARAM_ITL.init_cache conf base ip 1 1 1 in
-  let pers_piqi = pers_to_piqi_person conf base p conf.Geneweb.Config.command true in
+  let pers_piqi =
+    let events_limit =
+      Option.map
+        Int32.to_int params.Api_saisie_read_piqi.Index_person.events_limit
+    in
+    let events_witnesses_limit =
+      Option.map
+        Int32.to_int
+        params.Api_saisie_read_piqi.Index_person.events_witnesses_limit
+    in
+    pers_to_piqi_person
+      ?events_limit
+      ?events_witnesses_limit
+      conf
+      base
+      p
+      conf.Geneweb.Config.command
+      true
+  in
   let data = Api_saisie_read_piqi_ext.gen_person pers_piqi in
   Api_util.print_result conf data
   else begin
@@ -1814,19 +1745,13 @@ let print_person_tree conf base =
     Geneweb.Output.print_sstring conf ""
   end
 
-(* ********************************************************************* *)
-(*  [Fonc] search_index : conf -> base -> key -> search_index_type list  *)
-(** [Description] : Retourne l'index d'une personne en fonction de mots clé
-    [Args] :
-      - conf  : configuration de la base
-      - base  : base de donnée
-      - key  : mot clé
-      - list  : liste du type de recherche à faire
-    [Retour] : index|None
-    [Rem] : Non exporté en clair hors de ce module.                      *)
-(* ********************************************************************* *)
 type search_index_type =  Sosa | Key | Surname | FirstName | ApproxKey | PartialKey;;
-let search_index conf base an search_order =
+let search_index
+      (conf : Geneweb.Config.config)
+      (base : Gwdb.base)
+      (an : string)
+      (search_order : search_index_type list)
+    : Gwdb.iper option =
   let rec loop l =
     match l with
     | Sosa::le ->
@@ -1882,22 +1807,13 @@ let print_result_fiche_person conf base ip nb_asc_max nb_desc_max simple_graph_i
     Geneweb.Output.print_sstring conf ""
   end
 
-(* ********************************************************************* *)
-(*  [Fonc] print_from_identifier_person : conf -> base ->                *)
-(*   print_result_from_ip -> Identifier_person -> unit                   *)
-(** [Description] : Utilise un identifiant de personne pour appeler une
-    fonction qui utilise l'ip (index de la personne) récupéré.
-    Affiche des erreurs si la personne n'est pas trouvée
-    ou si les paramètres sont incorrects.
-    [Args] :
-      - conf                 : configuration de la base
-      - base                 : base de donnée
-      - print_result_from_ip : fonction permettant d'afficher les resultats
-      - identifier_person    : Objet identifiant une personne
-    [Retour] : Néant
-    [Rem] : Non exporté en clair hors de ce module.                      *)
-(* ********************************************************************* *)
-let print_from_identifier_person conf base print_result_from_ip identifier_person =
+let print_from_identifier_person
+      (conf : Geneweb.Config.config)
+      (base : Gwdb.base)
+      (print_result_from_ip :
+         Geneweb.Config.config -> Gwdb.base -> Gwdb.iper -> unit)
+      (identifier_person : Api_saisie_read_piqi.identifier_person)
+    : unit =
   match identifier_person.Api_saisie_read_piqi.Identifier_person.index with
   | Some index ->
     (* Traite l'index *)
@@ -1953,16 +1869,6 @@ let print_from_identifier_person conf base print_result_from_ip identifier_perso
         print_result_from_ip conf base ip
       | None -> Api_util.print_error conf `not_found ""
 
-(* ********************************************************************* *)
-(*  [Fonc] print_fiche_person : conf -> base -> unit                     *)
-(** [Description] : Affiche une fiche personne en fonction
-    d'un identifiant.
-    [Args] :
-      - conf  : configuration de la base
-      - base  : base de donnée
-    [Retour] : Néant
-    [Rem] : Non exporté en clair hors de ce module.                      *)
-(* ********************************************************************* *)
 let print_fiche_person conf base =
   let fiche_parameters = Api_util.get_params conf Api_saisie_read_piqi_ext.parse_fiche_parameters in
   let identifier_person = fiche_parameters.Api_saisie_read_piqi.Fiche_parameters.identifier_person in
@@ -2185,16 +2091,9 @@ let build_graph_desc conf base p max_gen =
   (List.rev !nodes, List.rev !edges)
 
 
-(* ********************************************************************* *)
-(*  [Fonc] print_result_graph_tree : conf -> base -> todo                    *)
-(** [Description] :
-    [Args] :
-      - conf  : configuration de la base
-      - base  : base de donnée
-    [Retour] :
-    [Rem] : Non exporté en clair hors de ce module.                      *)
-(* ********************************************************************* *)
-let print_result_graph_tree conf base ip =
+let print_result_graph_tree
+      (conf : Geneweb.Config.config) (base : Gwdb.base) (ip : Gwdb.iper)
+    : unit =
   if Gwdb.iper_exists base ip then
   let params = Api_util.get_params conf Api_saisie_read_piqi_ext.parse_graph_tree_params in
   (* Construction de la base avec calcul des sosas           *)
@@ -2308,17 +2207,7 @@ let print_result_graph_tree conf base ip =
     Geneweb.Output.print_sstring conf ""
   end
 
-(* ************************************************************************ *)
-(*  [Fonc] get_nb_ancestors : config -> base -> ip -> int                   *)
-(** [Description] : Retourne le nombre d'ascendants d'une personne.
-    [Args] :
-      - conf : configuration de la base
-      - base : base de donnée
-      - ip   : l'index de la personne
-    [Retour] : int
-    [Rem] : Non exporté en clair hors de ce module.                         *)
-(* ************************************************************************ *)
-let get_nb_ancestors base ip =
+let get_nb_ancestors (base : Gwdb.base) (ip : Gwdb.iper) : int =
   (* Tableau qui conserve les index des personnes déjà parcourues. *)
   let visited_ips = Gwdb.iper_marker (Gwdb.ipers base) false in
   let rec count_nb_ancestors base not_visited_ips nb_visited_ips =
@@ -2349,58 +2238,20 @@ let get_nb_ancestors base ip =
   (* Le nombre d'ascendants d'un individu est le nombre de personnes parcourues moins 1 (lui-même). *)
   count_nb_ancestors base [ip] (-1)
 
-(* ************************************************************************** *)
-(*  [Fonc] pers_to_piqi_nb_ancestors : conf -> base -> int -> NbAncestors     *)
-(** [Description] : Retourne à partir d'un nombre un NbAncestors (piqi).
-    [Args] :
-      - conf : configuration de la base
-      - base : base de donnée
-      - nb   : nombre d'ascendants
-    [Retour] : NbAncestors
-    [Rem] : Non exporté en clair hors de ce module.                           *)
-(* ************************************************************************** *)
-let nb_to_piqi_nb_ancestors nb =
+let nb_to_piqi_nb_ancestors (nb : int) : Piqirun_ext.output_format -> string =
     let piqi_nb_ancestors = Api_saisie_read_piqi.default_nb_ancestors() in
         piqi_nb_ancestors.Api_saisie_read_piqi.Nb_ancestors.nb <- Int32.of_int nb;
     Api_saisie_read_piqi_ext.gen_nb_ancestors piqi_nb_ancestors
 
-(* ********************************************************************* *)
-(*  [Fonc] print_result_nb_ancestors : conf -> base -> ip -> unit        *)
-(** [Description] : Retourne le nombre d'ascendants d'un individu.
-    [Args] :
-      - conf : configuration de la base.
-      - base : base.
-      - ip   : l'index de la personne.
-    [Retour] : unit
-    [Rem] : Non exporté en clair hors de ce module.                      *)
-(* ********************************************************************* *)
-let print_result_nb_ancestors conf base ip =
+let print_result_nb_ancestors
+      (conf : Geneweb.Config.config) (base : Gwdb.base) (ip : Gwdb.iper)
+    : unit =
     let data = nb_to_piqi_nb_ancestors (get_nb_ancestors base ip) in
     Api_util.print_result conf data
 
-(* ********************************************************************* *)
-(*  [Fonc] print_nb_ancestors : conf -> base -> unit                     *)
-(** [Description] : Retourne le nombre d'ascendants d'un individu.
-    [Args] :
-      - conf : configuration de la base.
-      - base : base.
-      - ip   : l'index de la personne.
-    [Retour] : unit (NbAncestors | Error)
-    [Rem] : Non exporté en clair hors de ce module.                      *)
-(* ********************************************************************* *)
 let print_nb_ancestors conf base =
   print_from_identifier_person conf base print_result_nb_ancestors (Api_util.get_params conf Api_saisie_read_piqi_ext.parse_identifier_person)
 
-(* ********************************************************************* *)
-(*  [Fonc] print_graph_tree : conf -> base -> unit                    *)
-(** [Description] : Retourne un graph d'ascendance et de descendance
-       d'une personne
-    [Args] :
-      - conf : configuration de la base.
-      - base : base.
-    [Retour] : unit (graph | Error)
-    [Rem] : Non exporté en clair hors de ce module.                      *)
-(* ********************************************************************* *)
 let print_graph_tree conf base =
   let params = Api_util.get_params conf Api_saisie_read_piqi_ext.parse_graph_tree_params in
   let identifier_person = params.Api_saisie_read_piqi.Graph_tree_params.identifier_person in
