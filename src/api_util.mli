@@ -147,3 +147,16 @@ val pers_to_piqi_person_full :
   Api_piqi.full_person
 
 val set_sosa_ref : Geneweb.Config.config -> Gwdb.iper -> Geneweb.Config.config
+
+module Page : sig
+  type t
+
+  val first : element_count:int -> t
+end
+
+module Paginated_data : sig
+  type 'element t =
+    private {elements : 'element list; page_number : int; total_count : int}
+
+  val extract : Page.t -> 'element list -> 'element t
+end

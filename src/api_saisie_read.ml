@@ -685,7 +685,7 @@ let fam_to_piqi_family_link
     divorce_date_conv_long divorce_cal witnesses notes fsources children
 
 let fill_events
-      ?(limit : int option)
+      ?(page : Api_util.Page.t option)
       (conf : Geneweb.Config.config)
       (base : Gwdb.base)
       (p : Gwdb.person)
@@ -718,9 +718,12 @@ let fill_events
          'witness list ->
          'event)
     : 'event list =
-  let limit =
+  let extract_page =
     Option.fold
-      ~none:Fun.id ~some:(fun limit list -> Ext_list.take list limit) limit
+      ~none:Fun.id
+      ~some:
+      (fun page list -> (Api_util.Paginated_data.extract page list).elements)
+      page
   in
   if p_auth then
     List.map
@@ -781,7 +784,7 @@ let fill_events
         in
           event_constructor name type_ date date_long date_raw date_conv date_conv_long date_cal place note src spouse witnesses
         )
-      (limit @@ Geneweb.Event.sorted_events conf base p)
+      (extract_page @@ Geneweb.Event.sorted_events conf base p)
   else []
 
 
@@ -959,13 +962,17 @@ let get_rparents_piqi base conf base_prefix gen_p pers_to_piqi relation_person_c
         | None -> rl)
       [] gen_p.Def.rparents
 
-let get_events_witnesses ?limit conf base p base_prefix p_auth pers_to_piqi event_witness_constructor =
+let get_events_witnesses ?page conf base p base_prefix p_auth pers_to_piqi event_witness_constructor =
     let events_witnesses =
-      let limit =
+      let extract_page =
         Option.fold
-          ~none:Fun.id ~some:(fun limit list -> Ext_list.take list limit) limit
+          ~none:Fun.id
+          ~some:
+          (fun page list ->
+            (Api_util.Paginated_data.extract page list).elements)
+          page
       in
-      limit @@ Geneweb.Relation.get_event_witnessed conf base p
+      extract_page @@ Geneweb.Relation.get_event_witnessed conf base p
     in
     List.map
       (fun (witness, wk, wnote, evt) ->
@@ -1542,8 +1549,8 @@ let pers_to_piqi_person
       mother = mother;
       families = fill_families conf base p;
       sosa = fill_sosa conf base p;
-      events = fill_events ?limit:events_limit conf base p base_prefix p_auth pers_to_piqi_simple_person simple_witness_constructor get_event_constructor;
-      events_witnesses = get_events_witnesses ?limit:events_witnesses_limit conf base p base_prefix p_auth pers_to_piqi_simple_person simple_event_witness_constructor;
+      events = fill_events ?page:(Option.map (fun element_count -> Api_util.Page.first ~element_count) events_limit) conf base p base_prefix p_auth pers_to_piqi_simple_person simple_witness_constructor get_event_constructor;
+      events_witnesses = get_events_witnesses ?page:(Option.map (fun element_count -> Api_util.Page.first ~element_count) events_witnesses_limit) conf base p base_prefix p_auth pers_to_piqi_simple_person simple_event_witness_constructor;
       baseprefix = base_prefix;
       fiche_person_person = None;
       is_contemporary = Geneweb.GWPARAM.is_contemporary conf base p;

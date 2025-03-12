@@ -1327,3 +1327,28 @@ let opt_of_string = function
 
 let set_sosa_ref conf iper =
   {conf with Geneweb.Config.env = ("iz", Adef.encoded (Gwdb.string_of_iper iper)) :: conf.Geneweb.Config.env}
+
+module Page = struct
+  type t = {number : int; element_count : int}
+
+  let make ~number ~element_count = {number; element_count}
+
+  let first ~element_count = make ~number:1 ~element_count
+end
+
+module Paginated_data = struct
+  type 'element t =
+    {elements : 'element list; page_number : int; total_count : int}
+
+  let count_elements_before {Page.number; element_count} =
+    pred number * element_count
+
+  let extract page all_elements =
+    let elements =
+      Ext_list.sublist
+        all_elements (count_elements_before page) page.element_count
+    in
+    {elements;
+     page_number = page.number;
+     total_count = List.length all_elements}
+end
