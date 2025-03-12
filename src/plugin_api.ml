@@ -50,6 +50,25 @@ let choose_timeout_behaviour conf timeout_mode : unit = match timeout_mode with
   | `TIMEOUT_504 -> set_request_timeout ()
   | `TIMEOUT_EMPTY_WARNINGS -> set_warning_timeout conf
 
+let get_paginated_data conf base =
+  let data =
+    let params =
+      Plugin_api_lib.Api_util.get_params
+        conf
+        Plugin_api_lib.Api_saisie_read_piqi_ext.parse_paginated_data_parameters
+    in
+    match
+      Plugin_api_lib.Api_saisie_read.get_paginated_data ~conf ~base params
+    with
+    | `Personal_events events ->
+       Plugin_api_lib.Api_saisie_read_piqi_ext.gen_paginated_personal_events
+         events
+    | `Witnessed_events events ->
+       Plugin_api_lib.Api_saisie_read_piqi_ext.gen_paginated_witnessed_events
+         events
+  in
+  Plugin_api_lib.Api_util.print_result conf data
+
 let () =
   let assets = !Gwd_lib.GwdPlugin.assets in
   let aux dico_type s lang =
@@ -186,5 +205,6 @@ let () =
       , aux @@ w_base @@ Plugin_api_lib.Api_stats.print_stats)
     ; ( "API_SELECT_EVENTS"
       , aux @@ w_base @@ Plugin_api_lib.Api_graph.print_select_events);
+    ( "API_GET_PAGINATED_DATA" , aux @@ w_base @@ get_paginated_data);
       ("API_HISTORY", aux @@ friend @@ w_base @@ Plugin_api_lib.Api.history)
     ]

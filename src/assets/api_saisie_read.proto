@@ -512,3 +512,19 @@ message IdentifierPerson {
 message NbAncestors {
   required int32 nb = 1;
 }
+
+enum PaginatedDataType {
+  PERSONAL_EVENT = 0;
+  WITNESSED_EVENT = 1;
+}
+
+message Page {
+  required int32 number = 1;
+  required int32 element_count = 2;
+}
+
+message PaginatedDataParameters {
+  required int64 person_id = 1;
+  required PaginatedDataType type = 2;
+  required Page page = 3;
+}

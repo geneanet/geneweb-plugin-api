@@ -2316,3 +2316,44 @@ let print_graph_tree conf base =
   let params = Api_util.get_params conf Api_saisie_read_piqi_ext.parse_graph_tree_params in
   let identifier_person = params.Api_saisie_read_piqi.Graph_tree_params.identifier_person in
   print_from_identifier_person conf base print_result_graph_tree identifier_person
+
+let get_paginated_data ~conf ~base params =
+  let page =
+    Api_util.Page.Piqi.from_page
+      params.Api_saisie_read_piqi.Paginated_data_parameters.page
+  in
+  let person =
+    params.Api_saisie_read_piqi.Paginated_data_parameters.person_id
+    |> Int64.to_string
+    |> Gwdb.iper_of_string
+    |> Gwdb.poi base
+  in
+  let person_is_visible = Geneweb.Util.authorized_age conf base person in
+  match params.Api_saisie_read_piqi.Paginated_data_parameters.type_ with
+  | `personal_event ->
+     let events =
+       fill_events
+         ~page
+         conf
+         base
+         person
+         conf.Geneweb.Config.command
+         person_is_visible
+         pers_to_piqi_simple_person
+         simple_witness_constructor
+         get_event_constructor
+     in
+     `Personal_events (Api_util.Paginated_data.Piqi.to_personal_events events)
+  | `witnessed_event ->
+     let events =
+       get_events_witnesses
+         ~page
+         conf
+         base
+         person
+         conf.Geneweb.Config.command
+         person_is_visible
+         pers_to_piqi_simple_person
+         simple_event_witness_constructor
+     in
+     `Witnessed_events (Api_util.Paginated_data.Piqi.to_witnessed_events events)

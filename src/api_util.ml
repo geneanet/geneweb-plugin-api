@@ -1334,6 +1334,11 @@ module Page = struct
   let make ~number ~element_count = {number; element_count}
 
   let first ~element_count = make ~number:1 ~element_count
+
+  module Piqi = struct
+    let from_page {Api_saisie_read_piqi.Page.number; element_count} =
+      {number = Int32.to_int number; element_count = Int32.to_int element_count}
+  end
 end
 
 module Paginated_data = struct

@@ -152,6 +152,10 @@ module Page : sig
   type t
 
   val first : element_count:int -> t
+
+  module Piqi : sig
+    val from_page : Api_saisie_read_piqi.Page.t -> t
+  end
 end
 
 module Paginated_data : sig
