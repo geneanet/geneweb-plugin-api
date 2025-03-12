@@ -726,65 +726,65 @@ let fill_events
       page
   in
   if p_auth then
-    List.map
-      (fun evt ->
-         let name = Geneweb.Event.get_name evt in
-         let date = Geneweb.Event.get_date evt in
-         let place = Geneweb.Event.get_place evt in
-         let note = Geneweb.Event.get_note evt in
-         let src = Geneweb.Event.get_src evt in
-         let w = Geneweb.Event.get_witnesses_and_notes evt in
-         let isp = Geneweb.Event.get_spouse_iper evt in
-         let (name, type_) =
-          match name with
-          | Geneweb.Event.Pevent name ->
-             let open Api_util in
-             ( !!(Geneweb.Util.string_of_pevent_name conf base name)
-                                 , event_to_piqi_event (Some name) None)
-          | Geneweb.Event.Fevent name ->
-             let open Api_util in
-             ( !!(Geneweb.Util.string_of_fevent_name conf base name)
-                                 , event_to_piqi_event None (Some name) )
-        in
-        let (date, date_long, date_conv, date_conv_long, date_cal, date_raw) =
-          match Date.od_of_cdate date with
-          | Some d ->
-            let (date, date_long, date_conv, date_conv_long, date_cal) = string_of_date_and_conv conf d in
-            (date, date_long, date_conv, date_conv_long, date_cal, string_of_date_raw conf d)
-          | _ -> ("", "", "", "", None, "")
-        in
-        let place =
+    let make_event evt =
+      let name = Geneweb.Event.get_name evt in
+      let date = Geneweb.Event.get_date evt in
+      let place = Geneweb.Event.get_place evt in
+      let note = Geneweb.Event.get_note evt in
+      let src = Geneweb.Event.get_src evt in
+      let w = Geneweb.Event.get_witnesses_and_notes evt in
+      let isp = Geneweb.Event.get_spouse_iper evt in
+      let (name, type_) =
+        match name with
+        | Geneweb.Event.Pevent name ->
+           let open Api_util in
+           ( !!(Geneweb.Util.string_of_pevent_name conf base name)
+           , event_to_piqi_event (Some name) None)
+        | Geneweb.Event.Fevent name ->
+           let open Api_util in
+           ( !!(Geneweb.Util.string_of_fevent_name conf base name)
+           , event_to_piqi_event None (Some name) )
+      in
+      let (date, date_long, date_conv, date_conv_long, date_cal, date_raw) =
+        match Date.od_of_cdate date with
+        | Some d ->
+           let (date, date_long, date_conv, date_conv_long, date_cal) = string_of_date_and_conv conf d in
+           (date, date_long, date_conv, date_conv_long, date_cal, string_of_date_raw conf d)
+        | _ -> ("", "", "", "", None, "")
+      in
+      let place =
+        let open Api_util in
+        !!(Geneweb.Util.string_of_place (Gwdb.sou base place))
+      in
+      let note =
+        if not conf.Geneweb.Config.no_note
+        then
           let open Api_util in
-          !!(Geneweb.Util.string_of_place (Gwdb.sou base place))
-        in
-        let note =
-          if not conf.Geneweb.Config.no_note
-          then
-            let open Api_util in
-            !!(Geneweb.Notes.person_note conf base p (Gwdb.sou base note))
-          else ""
-        in
-        let src =
-          let open Api_util in
-          !!(Geneweb.Notes.source conf base (Gwdb.sou base src))
-        in
-        let spouse =
-          Option.map (fun ip -> pers_to_piqi conf base (Gwdb.poi base ip) base_prefix) isp
-        in
-        let witnesses =
-          Mutil.array_to_list_map
-            (fun (ip, wk, wnote) ->
-               let witness_type = Api_util.piqi_of_witness_kind wk in
-               let witness = Gwdb.poi base ip in
-               let witness = pers_to_piqi conf base witness base_prefix in
-               let wnote = Utf8.normalize @@ Gwdb.sou base wnote in
-               witness_constructor witness_type witness wnote
-               )
-            w
-        in
-          event_constructor name type_ date date_long date_raw date_conv date_conv_long date_cal place note src spouse witnesses
-        )
-      (extract_page @@ Geneweb.Event.sorted_events conf base p)
+          !!(Geneweb.Notes.person_note conf base p (Gwdb.sou base note))
+        else ""
+      in
+      let src =
+        let open Api_util in
+        !!(Geneweb.Notes.source conf base (Gwdb.sou base src))
+      in
+      let spouse =
+        Option.map (fun ip -> pers_to_piqi conf base (Gwdb.poi base ip) base_prefix) isp
+      in
+      let witnesses =
+        Mutil.array_to_list_map
+          (fun (ip, wk, wnote) ->
+            let witness_type = Api_util.piqi_of_witness_kind wk in
+            let witness = Gwdb.poi base ip in
+            let witness = pers_to_piqi conf base witness base_prefix in
+            let wnote = Utf8.normalize @@ Gwdb.sou base wnote in
+            witness_constructor witness_type witness wnote
+          )
+          w
+      in
+      event_constructor name type_ date date_long date_raw date_conv date_conv_long date_cal place note src spouse witnesses
+    in
+    let events = Geneweb.Event.sorted_events conf base p in
+    List.map make_event (extract_page events)
   else []
 
 
@@ -972,47 +972,47 @@ let get_events_witnesses ?page conf base p base_prefix p_auth pers_to_piqi event
             (Api_util.Paginated_data.extract page list).elements)
           page
       in
-      extract_page @@ Geneweb.Relation.get_event_witnessed conf base p
+      let events_witnesses = Geneweb.Relation.get_event_witnessed conf base p in
+      extract_page events_witnesses
     in
-    List.map
-      (fun (witness, wk, wnote, evt) ->
-        let wk = Geneweb.Util.string_of_witness_kind conf (Gwdb.get_sex p) wk in
-        let event_name =
-          match Geneweb.Event.get_name evt with
-          | Geneweb.Event.Pevent name ->
-             if p_auth then
-               let open Api_util in
-               !!(Geneweb.Util.string_of_pevent_name conf base name)
-             else  ""
-          | Geneweb.Event.Fevent name ->
-             if p_auth then
-               let open Api_util in
-               !!(Geneweb.Util.string_of_fevent_name conf base name)
-             else  ""
-        in
-        let s =
-          match Date.cdate_to_dmy_opt (Geneweb.Event.get_date evt) with
-          | None ->
-              let open Api_util in
-              Printf.sprintf "(%s) : %s"
-              !!(wk) event_name
-          | Some dmy ->
-              let open Api_util in
-              Printf.sprintf "%s (%s) : %s"
-              (Geneweb.DateDisplay.year_text dmy) !!(wk) event_name
-        in
-        let event_witness_type = Geneweb.Util.translate_eval (Geneweb.Util.transl_a_of_b conf s "" "") in
-        let husband = pers_to_piqi conf base witness base_prefix in
-        let wife =
-          match Geneweb.Event.get_spouse_iper evt with
-          | Some isp ->
-              let sp = Gwdb.poi base isp in
-              Some (pers_to_piqi conf base sp base_prefix )
-          | None -> None
-        in
-        event_witness_constructor event_witness_type husband wife wnote
-        )
-      events_witnesses
+    let make_event_witness (witness, wk, wnote, evt) =
+      let wk = Geneweb.Util.string_of_witness_kind conf (Gwdb.get_sex p) wk in
+      let event_name =
+        match Geneweb.Event.get_name evt with
+        | Geneweb.Event.Pevent name ->
+           if p_auth then
+             let open Api_util in
+             !!(Geneweb.Util.string_of_pevent_name conf base name)
+           else  ""
+        | Geneweb.Event.Fevent name ->
+           if p_auth then
+             let open Api_util in
+             !!(Geneweb.Util.string_of_fevent_name conf base name)
+           else  ""
+      in
+      let s =
+        match Date.cdate_to_dmy_opt (Geneweb.Event.get_date evt) with
+        | None ->
+           let open Api_util in
+           Printf.sprintf "(%s) : %s"
+             !!(wk) event_name
+        | Some dmy ->
+           let open Api_util in
+           Printf.sprintf "%s (%s) : %s"
+             (Geneweb.DateDisplay.year_text dmy) !!(wk) event_name
+      in
+      let event_witness_type = Geneweb.Util.translate_eval (Geneweb.Util.transl_a_of_b conf s "" "") in
+      let husband = pers_to_piqi conf base witness base_prefix in
+      let wife =
+        match Geneweb.Event.get_spouse_iper evt with
+        | Some isp ->
+           let sp = Gwdb.poi base isp in
+           Some (pers_to_piqi conf base sp base_prefix )
+        | None -> None
+      in
+      event_witness_constructor event_witness_type husband wife wnote
+    in
+    List.map make_event_witness events_witnesses
 
 let fill_birth_place p_auth gen_p =
   if p_auth then
@@ -1501,6 +1501,35 @@ let pers_to_piqi_person
     let death_src = fill_death_src conf base p_auth gen_p in
     let burial_src = fill_burial_src conf base p_auth gen_p in
     let has_sources = has_sources p_auth psources birth_src baptism_src death_src burial_src in
+    let events =
+      fill_events
+        ?page:
+        (Option.map
+           (fun element_count -> Api_util.Page.first ~element_count)
+           events_limit)
+        conf
+        base
+        p
+        base_prefix
+        p_auth
+        pers_to_piqi_simple_person
+        simple_witness_constructor
+        get_event_constructor
+    in
+    let events_witnesses =
+      get_events_witnesses
+        ?page:
+        (Option.map
+           (fun element_count -> Api_util.Page.first ~element_count)
+           events_witnesses_limit)
+        conf
+        base
+        p
+        base_prefix
+        p_auth
+        pers_to_piqi_simple_person
+        simple_event_witness_constructor
+    in
 
     {
       Api_saisie_read_piqi.Person.type_ = `simple;
@@ -1549,8 +1578,8 @@ let pers_to_piqi_person
       mother = mother;
       families = fill_families conf base p;
       sosa = fill_sosa conf base p;
-      events = fill_events ?page:(Option.map (fun element_count -> Api_util.Page.first ~element_count) events_limit) conf base p base_prefix p_auth pers_to_piqi_simple_person simple_witness_constructor get_event_constructor;
-      events_witnesses = get_events_witnesses ?page:(Option.map (fun element_count -> Api_util.Page.first ~element_count) events_witnesses_limit) conf base p base_prefix p_auth pers_to_piqi_simple_person simple_event_witness_constructor;
+      events;
+      events_witnesses;
       baseprefix = base_prefix;
       fiche_person_person = None;
       is_contemporary = Geneweb.GWPARAM.is_contemporary conf base p;
@@ -1649,6 +1678,31 @@ let rec pers_to_piqi_fiche_person
         piqi_fiche_person.Api_saisie_read_piqi.Fiche_person.is_contemporary <- Geneweb.GWPARAM.is_contemporary conf base p;
         piqi_fiche_person
       in
+      let events =
+        if return_simple_attributes && not no_event then
+          fill_events
+            conf
+            base
+            p
+            base_prefix
+            p_auth
+            pers_to_piqi_simple_person
+            simple_witness_constructor
+            get_event_constructor
+        else []
+      in
+      let events_witnesses =
+        if return_simple_attributes && not no_event then
+          get_events_witnesses
+            conf
+            base
+            p
+            base_prefix
+            p_auth
+            pers_to_piqi_simple_person
+            simple_event_witness_constructor
+        else []
+      in
       {
         Api_saisie_read_piqi.Person.type_ = `fiche;
         fiche_person_person = Some piqi_fiche_person;
@@ -1696,8 +1750,8 @@ let rec pers_to_piqi_fiche_person
         burial_date = None;
         burial_date_conv = None;
         burial_date_cal = None;
-        events = if return_simple_attributes && not no_event then fill_events conf base p base_prefix p_auth pers_to_piqi_simple_person simple_witness_constructor get_event_constructor else [];
-        events_witnesses = if return_simple_attributes && not no_event then get_events_witnesses conf base p base_prefix p_auth pers_to_piqi_simple_person simple_event_witness_constructor else [];
+        events;
+        events_witnesses;
         families = if return_simple_attributes && not simple_graph_info then fill_families conf base p else [];
         father = if return_simple_attributes then father else None;
         mother = if return_simple_attributes then mother else None;
