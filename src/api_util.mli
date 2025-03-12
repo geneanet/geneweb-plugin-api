@@ -158,5 +158,19 @@ module Paginated_data : sig
   type 'element t =
     private {elements : 'element list; page_number : int; total_count : int}
 
+  val all : 'element list -> 'element t
+
   val extract : Page.t -> 'element list -> 'element t
+
+  val map : ('a -> 'b) -> 'a t -> 'b t
+
+  module Piqi : sig
+    val to_personal_events :
+      Api_saisie_read_piqi.Event.t t ->
+      Api_saisie_read_piqi.Paginated_personal_events.t
+
+    val to_witnessed_events :
+      Api_saisie_read_piqi.Event_witness.t t ->
+      Api_saisie_read_piqi.Paginated_witnessed_events.t
+  end
 end

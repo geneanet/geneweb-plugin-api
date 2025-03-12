@@ -301,6 +301,18 @@ message EventFicheWitness {
   required string witness_note = 4;
 }
 
+message PaginatedPersonalEvents {
+  repeated Event elements = 1;
+  required int32 page_number = 2;
+  required int32 total_count = 3;
+}
+
+message PaginatedWitnessedEvents {
+  repeated EventWitness elements = 1;
+  required int32 page_number = 2;
+  required int32 total_count = 3;
+}
+
 message Person {
   extensions 100 to 150;
 
@@ -357,8 +369,8 @@ message Person {
   optional SimplePerson mother = 44;
   repeated Family families = 45;
   required Sosa sosa = 46;
-  repeated Event events = 47;
-  repeated EventWitness events_witnesses = 48;
+  required PaginatedPersonalEvents events = 47;
+  required PaginatedWitnessedEvents events_witnesses = 48;
   required string baseprefix = 49;
   required bool is_contemporary = 50;
   required bool name_is_hidden = 51;
