@@ -1,10 +1,10 @@
-syntax = "proto2" ;
+syntax = "proto3" ;
 
 package Geneanet.Geneweb.Api.Proto.Standard.Model;
 
 message InfosBase {
-  required int64 nb_persons = 1;
-  required int64 nb_families = 2;
+  int64 nb_persons = 1;
+  int64 nb_families = 2;
   optional ReferencePerson sosa = 3;
   optional int64 last_modified_person = 4;
   optional int64 real_nb_persons = 5;
@@ -12,9 +12,9 @@ message InfosBase {
 }
 
 message ReferencePerson {
-  required string n = 1;
-  required string p = 2;
-  required int32 oc = 3;
+  string n = 1;
+  string p = 2;
+  int32 oc = 3;
 }
 
 message ReferencePersonI {
@@ -75,7 +75,7 @@ message RelationParent {
   optional int32 father = 1;
   optional int32 mother = 2;
   optional string source = 3;
-  required RelationParentType rpt_type = 4;
+  RelationParentType rpt_type = 4;
 }
 
 enum TitleType {
@@ -91,7 +91,7 @@ enum Visibility {
 }
 
 message Title {
-  required TitleType title_type = 1;
+  TitleType title_type = 1;
   optional string name = 2;
   optional string title = 3;
   optional string fief = 4;
@@ -101,70 +101,70 @@ message Title {
 }
 
 message Spouse {
-  required string sosa = 1;
-  required string n = 2;
-  required string p = 3;
-  required int32 oc = 4;
-  required Sex sex = 5;
-  required string lastname = 6;
-  required string firstname = 7;
+  string sosa = 1;
+  string n = 2;
+  string p = 3;
+  int32 oc = 4;
+  Sex sex = 5;
+  string lastname = 6;
+  string firstname = 7;
   optional string public_name = 8;
-  required string image = 9;
-  required string birth_date = 10;
-  required string birth_place = 11;
-  required string baptism_date = 12;
-  required string baptism_place = 13;
-  required string death_date = 14;
-  required string death_place = 15;
-  required DeathType death_type = 16;
-  required string burial_date = 17;
-  required string burial_place = 18;
-  required string marriage_date = 19;
-  required string marriage_place = 20;
-  required DivorceType divorce_type = 21;
-  required Visibility visible_for_visitors = 22;
-  required int32 index = 23;
+  string image = 9;
+  string birth_date = 10;
+  string birth_place = 11;
+  string baptism_date = 12;
+  string baptism_place = 13;
+  string death_date = 14;
+  string death_place = 15;
+  DeathType death_type = 16;
+  string burial_date = 17;
+  string burial_place = 18;
+  string marriage_date = 19;
+  string marriage_place = 20;
+  DivorceType divorce_type = 21;
+  Visibility visible_for_visitors = 22;
+  int32 index = 23;
 }
 
 message Person {
-  required string sosa = 1;
-  required string n = 2;
-  required string p = 3;
-  required int32 oc = 4;
-  required Sex sex = 5;
-  required string lastname = 6;
-  required string firstname = 7;
+  string sosa = 1;
+  string n = 2;
+  string p = 3;
+  int32 oc = 4;
+  Sex sex = 5;
+  string lastname = 6;
+  string firstname = 7;
   optional string public_name = 8;
-  required string image = 9;
-  required string birth_date = 10;
-  required string birth_place = 11;
-  required string baptism_date = 12;
-  required string baptism_place = 13;
-  required string death_date = 14;
-  required string death_place = 15;
-  required DeathType death_type = 16;
-  required string burial_date = 17;
-  required string burial_place = 18;
+  string image = 9;
+  string birth_date = 10;
+  string birth_place = 11;
+  string baptism_date = 12;
+  string baptism_place = 13;
+  string death_date = 14;
+  string death_place = 15;
+  DeathType death_type = 16;
+  string burial_date = 17;
+  string burial_place = 18;
   repeated Spouse spouses = 19;
-  required bool ascend = 20;
-  required bool descend = 21;
-  required Visibility visible_for_visitors = 22;
-  required string baseprefix = 23;
-  required int32 index = 24;
-  required bool is_contemporary = 25;
-  required bool name_is_hidden = 26;
-  required bool name_is_restricted = 27;
+  bool ascend = 20;
+  bool descend = 21;
+  Visibility visible_for_visitors = 22;
+  string baseprefix = 23;
+  int32 index = 24;
+  bool is_contemporary = 25;
+  bool name_is_hidden = 26;
+  bool name_is_restricted = 27;
 }
 
 message FullPerson {
-  required string sosa = 1;
-  required string n = 2;
-  required string p = 3;
-  required int32 oc = 4;
-  required int32 index = 5;
-  required Sex sex = 6;
-  required string lastname = 7;
-  required string firstname = 8;
+  string sosa = 1;
+  string n = 2;
+  string p = 3;
+  int32 oc = 4;
+  int32 index = 5;
+  Sex sex = 6;
+  string lastname = 7;
+  string firstname = 8;
   optional string public_name = 9;
   repeated string aliases = 10;
   repeated string qualifiers = 11;
@@ -180,7 +180,7 @@ message FullPerson {
   optional string death_date = 22;
   optional string death_place = 23;
   optional string death_src = 24;
-  required DeathType death_type = 25;
+  DeathType death_type = 25;
   optional string burial_date = 26;
   optional string burial_place = 27;
   optional string burial_src = 28;
@@ -189,13 +189,13 @@ message FullPerson {
   repeated Title titles = 32;
   repeated int32 related = 33;
   repeated RelationParent rparents = 34;
-  required Visibility visible_for_visitors = 35;
+  Visibility visible_for_visitors = 35;
   optional int32 parents = 36;
   repeated int32 families = 37;
-  required string baseprefix = 38;
-  required bool is_contemporary = 39;
-  required bool name_is_hidden = 40;
-  required bool name_is_restricted = 41;
+  string baseprefix = 38;
+  bool is_contemporary = 39;
+  bool name_is_hidden = 40;
+  bool name_is_restricted = 41;
 }
 
 message FullFamily {
@@ -203,18 +203,18 @@ message FullFamily {
   optional string marriage_date = 2;
   optional string marriage_place = 3;
   optional string marriage_src = 4;
-  required MarriageType marriage_type = 5;
-  required DivorceType divorce_type = 6;
+  MarriageType marriage_type = 5;
+  DivorceType divorce_type = 6;
   optional string divorce_date = 7;
   repeated int32 witnesses = 8;
-  required int32 father = 9;
-  required int32 mother = 10;
+  int32 father = 9;
+  int32 mother = 10;
   repeated int32 children = 11;
-  required int32 index = 12;
+  int32 index = 12;
 }
 
 message InternalInt32 {
-  required int32 value = 1;
+  int32 value = 1;
 }
 
 message ListPersons {
@@ -236,17 +236,17 @@ enum SearchType {
 }
 
 message SearchParams {
-  optional SearchType search_type = 1 [default = STARTING_WITH];
+  optional SearchType search_type = 1;
   optional string lastname = 2;
   optional string firstname = 3;
-  optional bool only_sosa = 4 [default = false];
-  optional bool only_recent = 5 [default = false];
-  optional bool maiden_name = 6 [default = false];
+  optional bool only_sosa = 4;
+  optional bool only_recent = 5;
+  optional bool maiden_name = 6;
 }
 
 message Image {
-  required ReferencePerson person = 1;
-  required string img = 2;
+  ReferencePerson person = 1;
+  string img = 2;
 }
 
 message ListImages {
@@ -254,8 +254,8 @@ message ListImages {
 }
 
 message PersImg {
-  required ReferencePerson person = 1;
-  required string img = 2;
+  ReferencePerson person = 1;
+  string img = 2;
 }
 
 message ListPersImg {
@@ -263,19 +263,19 @@ message ListPersImg {
 }
 
 message Index {
-  required int32 index = 1;
+  int32 index = 1;
 }
 
 message ImageAddress {
-  required string img = 1;
+  string img = 1;
 }
 
 message ClosePersonsParams {
-  required ReferencePerson person = 1;
+  ReferencePerson person = 1;
   optional int32 nb_gen_asc = 2;
   optional int32 nb_gen_desc = 3;
-  optional bool spouse_ascend = 4 [default = false];
-  optional bool only_recent = 5 [default = false];
+  optional bool spouse_ascend = 4;
+  optional bool only_recent = 5;
 }
 
 message AnniversaryParams {
@@ -284,32 +284,32 @@ message AnniversaryParams {
 
 message GraphParams {
   optional int32 generation = 1;
-  required ReferencePerson person = 2;
+  ReferencePerson person = 2;
 }
 
 message GraphRelParams {
-  required ReferencePerson person1 = 1;
-  required ReferencePerson person2 = 2;
+  ReferencePerson person1 = 1;
+  ReferencePerson person2 = 2;
 }
 
 message CplRelParams {
-  required ReferencePerson person1 = 1;
-  required ReferencePerson person2 = 2;
+  ReferencePerson person1 = 1;
+  ReferencePerson person2 = 2;
 }
 
 message Node {
-  required int64 id = 1;
-  required Person person = 2;
+  int64 id = 1;
+  Person person = 2;
 }
 
 message FullNode {
-  required int64 id = 1;
-  required FullPerson person = 2;
+  int64 id = 1;
+  FullPerson person = 2;
 }
 
 message Edge {
-  required int64 from_node = 1;
-  required int64 to_node = 2;
+  int64 from_node = 1;
+  int64 to_node = 2;
 }
 
 message Graph {
@@ -407,163 +407,163 @@ message WarningEvent {
 }
 
 message WarningPerson {
-  required string n = 1;
-  required string p = 2;
-  required int32 oc = 3;
-  required string lastname = 6;
-  required string firstname = 7;
+  string n = 1;
+  string p = 2;
+  int32 oc = 3;
+  string lastname = 6;
+  string firstname = 7;
   optional string birth_date = 8;
   optional string death_date = 9;
-  required string iper = 10;
+  string iper = 10;
 }
 
 message WarningAlreadyDefined {
-  required WarningPerson person = 1;
+  WarningPerson person = 1;
 }
 
 message WarningOwnAncestor {
-  required WarningPerson person = 1;
+  WarningPerson person = 1;
 }
 
 message WarningBadSexOfMarriedPerson {
-  required WarningPerson person = 1;
+  WarningPerson person = 1;
 }
 
 message WarningBirthAfterDeath {
-  required WarningPerson person = 1;
+  WarningPerson person = 1;
 }
 
 message WarningIncoherentSex {
-  required WarningPerson person = 1;
+  WarningPerson person = 1;
 }
 
 message WarningChangedOrderOfChildren {
-  required WarningPerson father = 1;
-  required WarningPerson mother = 2;
+  WarningPerson father = 1;
+  WarningPerson mother = 2;
 }
 
 message WarningChangedOrderOfMarriages {
-  required WarningPerson person = 1;
+  WarningPerson person = 1;
 }
 
 message WarningChildrenNotInOrder {
-  required WarningPerson father = 1;
-  required WarningPerson mother = 2;
+  WarningPerson father = 1;
+  WarningPerson mother = 2;
 }
 
 message WarningDeadTooEarlyToBeFather {
-  required WarningPerson son = 1;
-  required WarningPerson father = 2;
+  WarningPerson son = 1;
+  WarningPerson father = 2;
 }
 
 message WarningIncoherentAncestorDate {
-  required WarningPerson person = 1;
-  required WarningPerson ancestor = 2;
+  WarningPerson person = 1;
+  WarningPerson ancestor = 2;
 }
 
 message WarningMarriageDateAfterDeath {
-  required WarningPerson person = 1;
+  WarningPerson person = 1;
 }
 
 message WarningMarriageDateBeforeBirth {
-  required WarningPerson person = 1;
+  WarningPerson person = 1;
 }
 
 message WarningMotherDeadBeforeChildBirth {
-  required WarningPerson mother = 1;
-  required WarningPerson child = 2;
+  WarningPerson mother = 1;
+  WarningPerson child = 2;
 }
 
 message WarningParentBornAfterChild {
-  required WarningPerson parent = 1;
-  required WarningPerson child = 2;
+  WarningPerson parent = 1;
+  WarningPerson child = 2;
 }
 
 message WarningParentTooYoung {
-  required WarningPerson parent = 1;
-  required string date = 2;
-  required WarningPerson child = 3;
+  WarningPerson parent = 1;
+  string date = 2;
+  WarningPerson child = 3;
 }
 
 message WarningPossibleDuplicateFam {
-  required WarningPerson father1 = 1;
-  required WarningPerson mother1 = 2;
-  required WarningPerson father2 = 3;
-  required WarningPerson mother2 = 4;
+  WarningPerson father1 = 1;
+  WarningPerson mother1 = 2;
+  WarningPerson father2 = 3;
+  WarningPerson mother2 = 4;
 }
 
 message WarningPossibleDuplicateFamHomonymous {
-  required WarningPerson father1 = 1;
-  required WarningPerson mother1 = 2;
-  required WarningPerson father2 = 3;
-  required WarningPerson mother2 = 4;
-  required WarningPerson homonymous = 5;
+  WarningPerson father1 = 1;
+  WarningPerson mother1 = 2;
+  WarningPerson father2 = 3;
+  WarningPerson mother2 = 4;
+  WarningPerson homonymous = 5;
 }
 
 message WarningTitleDatesError {
-  required WarningPerson person = 1;
-  required Title title = 2;
+  WarningPerson person = 1;
+  Title title = 2;
 }
 
 message WarningUndefinedSex {
-  required WarningPerson person = 1;
+  WarningPerson person = 1;
 }
 
 message WarningYoungForMarriage {
-  required WarningPerson person = 1;
-  required string date = 2;
+  WarningPerson person = 1;
+  string date = 2;
 }
 
 message WarningOldForMarriage {
-  required WarningPerson person = 1;
-  required string date = 2;
+  WarningPerson person = 1;
+  string date = 2;
 }
 
 message WarningParentTooOld {
-  required WarningPerson parent = 1;
-  required string date = 2;
-  required WarningPerson child = 3;
+  WarningPerson parent = 1;
+  string date = 2;
+  WarningPerson child = 3;
 }
 
 message WarningCloseChildren {
-  required WarningPerson father = 1;
-  required WarningPerson mother = 2;
-  required WarningPerson child1 = 3;
-  required WarningPerson child2 = 4;
+  WarningPerson father = 1;
+  WarningPerson mother = 2;
+  WarningPerson child1 = 3;
+  WarningPerson child2 = 4;
 }
 
 message WarningDistantChildren {
-  required WarningPerson father = 1;
-  required WarningPerson mother = 2;
-  required WarningPerson child1 = 3;
-  required WarningPerson child2 = 4;
+  WarningPerson father = 1;
+  WarningPerson mother = 2;
+  WarningPerson child1 = 3;
+  WarningPerson child2 = 4;
 }
 
 message WarningBigAgeBetweenSpouses {
-  required WarningPerson father = 1;
-  required WarningPerson mother = 2;
-  required string date = 3;
+  WarningPerson father = 1;
+  WarningPerson mother = 2;
+  string date = 3;
 }
 
 message WarningDeadOld {
-  required WarningPerson person = 1;
-  required string date = 3;
+  WarningPerson person = 1;
+  string date = 3;
 }
 
 message WarningWitnessDateAfterDeath {
-  required WarningPerson person = 1;
-  required WarningEvent event = 2 ;
+  WarningPerson person = 1;
+  WarningEvent event = 2 ;
   repeated WarningPerson origin = 3;
 }
 
 message WarningWitnessDateBeforeBirth {
-  required WarningPerson person = 1;
-  required WarningEvent event = 2 ;
+  WarningPerson person = 1;
+  WarningEvent event = 2 ;
   repeated WarningPerson origin = 3;
 }
 
 message WarningEventOrder {
-  required WarningPerson person = 1;
+  WarningPerson person = 1;
   repeated PeventName pevents = 2 ;
   repeated FeventName fevents = 3 ;
 }
@@ -602,29 +602,29 @@ message BaseWarnings {
 }
 
 message FilterDate {
-  required int32 day = 1;
-  required int32 month = 2;
-  required int32 year = 3;
+  int32 day = 1;
+  int32 month = 2;
+  int32 year = 3;
 }
 
 message FilterDateRange {
-  required FilterDate date_begin = 1;
-  required FilterDate date_end = 2;
-  optional bool only_exact = 3 [default = false];
+  FilterDate date_begin = 1;
+  FilterDate date_end = 2;
+  optional bool only_exact = 3;
 }
 
 message Filters {
-  optional bool only_sosa = 1 [default = false];
-  optional bool only_recent = 2 [default = false];
+  optional bool only_sosa = 1;
+  optional bool only_recent = 2;
   optional Sex sex = 3;
-  optional bool nb_results = 4 [default = false];
+  optional bool nb_results = 4;
   optional FilterDateRange date_birth = 5;
   optional FilterDateRange date_death = 6;
 }
 
 message ModificationStatus {
-  required bool status = 1;
-  required BaseWarnings base_warnings = 2;
+  bool status = 1;
+  BaseWarnings base_warnings = 2;
   optional int32 index = 3;
 }
 
@@ -633,9 +633,9 @@ message ModificationStatus {
 // ***************************************************************************
 
 message PersonStart {
-  required string lastname = 1;
-  required string firstname = 2;
-  required Sex sex = 3;
+  string lastname = 1;
+  string firstname = 2;
+  Sex sex = 3;
   optional int32 birth_date_day = 4;
   optional int32 birth_date_month = 5;
   optional int32 birth_date_year = 6;
@@ -654,7 +654,7 @@ message LastModifications {
 // Dernières visites
 // ***************************************************************************
 message LastVisits {
-  required string user = 1;
+  string user = 1;
 }
 
 enum WitnessType {
@@ -686,10 +686,10 @@ enum Precision {
 }
 
 message Dmy {
-  required int32 day = 1;
-  required int32 month = 2;
-  required sint32 year = 3;
-  required int32 delta = 4;
+  int32 day = 1;
+  int32 month = 2;
+  sint32 year = 3;
+  int32 delta = 4;
 }
 
 message Date {
@@ -709,14 +709,14 @@ message EventsQueryParams {
 }
 
 message EventQueryResult {
-  required Person p = 1 ;
+  Person p = 1 ;
   optional Person sp = 2 ;
   optional PeventName pevent_name = 3 ;
   optional FeventName fevent_name = 4 ;
-  required Date date = 5;
-  required string place = 6;
-  required string note = 7;
-  required string src = 8;
+  Date date = 5;
+  string place = 6;
+  string note = 7;
+  string src = 8;
 }
 
 message EventQueryResultList {
@@ -724,40 +724,40 @@ message EventQueryResultList {
 }
 
 message NameFrequencyResult {
-  required string key = 1 ;
-  required string name = 2 ;
-  required int32 count = 3 ;
+  string key = 1 ;
+  string name = 2 ;
+  int32 count = 3 ;
 }
 
 message NameFrequencyResultList {
   repeated NameFrequencyResult result = 1 ;
-  required int32 total = 2 ;
+  int32 total = 2 ;
 }
 
 message NameFrequencyParams {
   enum Type {
-    LAST_NAME = 1;
-    FIRST_NAME = 2;
+    LAST_NAME = 0;
+    FIRST_NAME = 1;
   }
-  required Type type = 1;
+  Type type = 1;
   optional int32 from = 2 ;
   optional int32 to = 3 ;
 }
 
 message Error {
   enum Code {
-    BAD_REQUEST = 400;
+    BAD_REQUEST = 0;
     UNAUTHORIZED = 401;
     FORBIDDEN = 403;
     NOT_FOUND = 404;
     CONFLICT = 409;
   }
-  required Code code = 998;
+  Code code = 998;
   optional string message = 999;
 }
 
 enum ModificationType {
-    PERSON_ADDED = 1;
+    PERSON_ADDED = 0;
     PERSON_MODIFIED = 2;
     PERSON_DELETED = 3;
     PERSON_MERGED = 4;
@@ -777,46 +777,46 @@ enum ModificationType {
 }
 
 message Time {
-    required int32 year = 1;
-    required int32 month = 2;
-    required int32 day = 3;
-    required int32 hour = 4;
-    required int32 minute = 5;
-    required int32 second = 6;
+    int32 year = 1;
+    int32 month = 2;
+    int32 day = 3;
+    int32 hour = 4;
+    int32 minute = 5;
+    int32 second = 6;
 }
 message HistoryRequest {
-    required int32 page = 1;
-    required int32 elements_per_page = 2;
+    int32 page = 1;
+    int32 elements_per_page = 2;
     optional string filter_user = 3;
 }
 
 message HistoryPerson {
-    required string n = 1;
-    required string p = 2;
-    required int32 oc = 3;
-    required string firstname = 4;
-    required string lastname = 5;
+    string n = 1;
+    string p = 2;
+    int32 oc = 3;
+    string firstname = 4;
+    string lastname = 5;
     optional int32 year1 = 6;
     optional int32 year2 = 7;
-    required bool exists_in_base = 8;
-    required bool has_history = 9;
+    bool exists_in_base = 8;
+    bool has_history = 9;
 }
 
 message HistoryNote {
-    required string link_parameters = 1;
-    required string link_txt = 2;
+    string link_parameters = 1;
+    string link_txt = 2;
 }
 
 message HistoryEntry {
-    required ModificationType modification_type = 1;
-    required Time time = 2;
-    required string editor = 3;
+    ModificationType modification_type = 1;
+    Time time = 2;
+    string editor = 3;
     optional HistoryPerson person = 4;
     optional HistoryNote note = 5;
 }
 
 message History {
     repeated HistoryEntry entries = 1;
-    required int32 page = 2;
-    required int32 total_elements = 3;
+    int32 page = 2;
+    int32 total_elements = 3;
 }

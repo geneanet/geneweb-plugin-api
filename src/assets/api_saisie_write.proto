@@ -1,4 +1,4 @@
-syntax = "proto2" ;
+syntax = "proto3" ;
 
 package Geneanet.Geneweb.Api.Proto.SaisieWrite.Model;
 
@@ -77,37 +77,37 @@ enum DeathType {
 // ***************************************************************************
 
 message PersonSearch {
-  required int32 index = 1;
-  required Sex sex = 2;
-  required string lastname = 3;
-  required string firstname = 4;
+  int32 index = 1;
+  Sex sex = 2;
+  string lastname = 3;
+  string firstname = 4;
   optional string dates = 5;
   optional string image = 6;
-  required Sosa sosa = 7;
-  required string family = 8;
+  Sosa sosa = 7;
+  string family = 8;
 }
 
 message SimplePerson {
-  required int32 index = 1;
-  required Sex sex = 2;
-  required string lastname = 3;
-  required string firstname = 4;
+  int32 index = 1;
+  Sex sex = 2;
+  string lastname = 3;
+  string firstname = 4;
   optional string birth_short_date = 5;
   optional string birth_place = 6;
   optional string death_short_date = 7;
   optional string death_place = 8;
   optional string image = 9;
-  required Sosa sosa = 10;
+  Sosa sosa = 10;
 }
 
 message WitnessEvent {
-  required WitnessType witness_type = 1;
-  required SimplePerson witness = 2;
+  WitnessType witness_type = 1;
+  SimplePerson witness = 2;
   optional string witness_note = 3;
 }
 
 message Event {
-  required string name = 1;
+  string name = 1;
   optional string date = 2;
   optional string date_conv = 3;
   optional Calendar date_cal = 4;
@@ -133,20 +133,20 @@ enum RelationType {
 }
 
 message RelationPerson {
-  required RelationType r_type = 1;
-  required SimplePerson person = 2;
+  RelationType r_type = 1;
+  SimplePerson person = 2;
 }
 
 message WasWitness {
-  required string husband = 1;
-  required string wife = 2;
+  string husband = 1;
+  string wife = 2;
 }
 
 message PersonSearchInfo {
-  required int32 index = 1;
-  required Sex sex = 2;
-  required string lastname = 3;
-  required string firstname = 4;
+  int32 index = 1;
+  Sex sex = 2;
+  string lastname = 3;
+  string firstname = 4;
   optional string public_name = 5;
   repeated string aliases = 6;
   repeated string qualifiers = 7;
@@ -157,12 +157,12 @@ message PersonSearchInfo {
   optional string occupation = 12;
   optional string notes = 13;
   optional string psources = 14;
-  required bool has_sources = 15;
+  bool has_sources = 15;
   repeated string titles = 16;
   repeated RelationPerson related = 17;
   repeated RelationPerson rparents = 18;
   repeated WasWitness was_witness = 19;
-  required Sosa sosa = 20;
+  Sosa sosa = 20;
 }
 
 
@@ -177,17 +177,17 @@ enum CreateOrLink {
 }
 
 message PersonLink {
-  required CreateOrLink create_link = 1;
-  required int32 index = 2;
-  required Sex sex = 3;
-  required string lastname = 4;
-  required string firstname = 5;
+  CreateOrLink create_link = 1;
+  int32 index = 2;
+  Sex sex = 3;
+  string lastname = 4;
+  string firstname = 5;
   optional int32 occ = 6;
   optional string dates = 7;
 }
 
 message Witness {
-  required WitnessType witness_type = 1;
+  WitnessType witness_type = 1;
   optional PersonLink person = 2;
   optional string witness_note = 3;
 }
@@ -232,7 +232,7 @@ enum RelationParentType {
 }
 
 message RelationParent {
-  required RelationParentType rpt_type = 1;
+  RelationParentType rpt_type = 1;
   optional PersonLink person = 2;
   optional string source = 3;
 }
@@ -317,12 +317,12 @@ enum Access {
 }
 
 message Person {
-  required string digest = 1;
-  required CreateOrLink create_link = 2;
-  required int32 index = 3;
-  required Sex sex = 4;
-  required string lastname = 5;
-  required string firstname = 6;
+  string digest = 1;
+  CreateOrLink create_link = 2;
+  int32 index = 3;
+  Sex sex = 4;
+  string lastname = 5;
+  string firstname = 6;
   optional int32 occ = 7;
   optional string public_name = 8;
   repeated string aliases = 9;
@@ -330,7 +330,7 @@ message Person {
   repeated string firstname_aliases = 11;
   repeated string surname_aliases = 12;
   optional string image = 13;
-  required DeathType death_type = 14;
+  DeathType death_type = 14;
   optional string occupation = 15;
   optional string psources = 16;
   optional string notes = 17;
@@ -338,23 +338,23 @@ message Person {
   repeated Pevent pevents = 19;
   repeated int32 related = 20;
   repeated RelationParent rparents = 21;
-  optional Access access = 22 [default = ACCESS_IFTITLES];
+  optional Access access = 22;
   optional int32 parents = 23;
   repeated int32 families = 24;
-  required bool is_contemporary = 25;
-  required bool name_is_hidden = 26;
-  required bool name_is_restricted = 27;
+  bool is_contemporary = 25;
+  bool name_is_hidden = 26;
+  bool name_is_restricted = 27;
 }
 
 message Family {
-  required string digest = 1;
-  required int32 index = 2;
+  string digest = 1;
+  int32 index = 2;
   repeated Fevent fevents = 3;
   optional string fsources = 4;
   optional string origin_file = 5;
   optional string comment = 6;
-  required Person father = 7;
-  required Person mother = 8;
+  Person father = 7;
+  Person mother = 8;
   repeated PersonLink children = 9;
   repeated int32 old_witnesses = 10;
 }
@@ -382,28 +382,28 @@ enum PersonOrFamily {
 
 message CreateConflict {
   optional PersonOrFamily form = 1;
-  required bool witness = 2;
-  required bool rparents = 3;
-  required bool event = 4;
+  bool witness = 2;
+  bool rparents = 3;
+  bool event = 4;
   optional int32 pos = 5;
   optional int32 pos_witness = 6;
-  required string lastname = 7;
-  required string firstname = 8;
+  string lastname = 7;
+  string firstname = 8;
 }
 
 message CreatedPerson {
-  required string n = 1;
-  required string p = 2;
-  required int32 oc = 3;
+  string n = 1;
+  string p = 2;
+  int32 oc = 3;
 }
 
 message ModificationStatus {
-  required bool is_base_updated = 1;
+  bool is_base_updated = 1;
   repeated string base_warnings = 2;
   repeated string base_miscs = 13;
   optional int32 index_person = 3;
-  required string lastname = 4;
-  required string firstname = 5;
+  string lastname = 4;
+  string firstname = 5;
   optional int32 occ = 6;
   optional int32 index_family = 7;
   optional CreateConflict conflict = 8;
@@ -420,69 +420,69 @@ message ModificationStatus {
 // ***************************************************************************
 
 message IndexPerson {
-  required int32 index = 1;
+  int32 index = 1;
 }
 
 message IndexFamily {
-  required int32 index = 1;
+  int32 index = 1;
 }
 
 message IndexPersonAndFamily {
-  required int32 index_person = 1;
-  required int32 index_family = 2;
+  int32 index_person = 1;
+  int32 index_family = 2;
 }
 
 message FamilySpouse {
-  required int32 index_family = 1;
-  required int32 index_person = 2;
-  required Sex sex = 3;
-  required string lastname = 4;
-  required string firstname = 5;
+  int32 index_family = 1;
+  int32 index_person = 2;
+  Sex sex = 3;
+  string lastname = 4;
+  string firstname = 5;
   optional string dates = 6;
   optional string image = 7;
-  required Sosa sosa = 8;
+  Sosa sosa = 8;
 }
 
 message AddChildRequest {
-  required int32 index = 1;
+  int32 index = 1;
   optional int32 index_family = 2;
   optional Sex sex = 3;
 }
 
 message AddChild {
-  required string person_lastname = 1;
-  required string person_firstname = 2;
+  string person_lastname = 1;
+  string person_firstname = 2;
   repeated FamilySpouse family_spouse = 3;
-  required Person child = 4;
+  Person child = 4;
 }
 
 message AddChildOk {
-  required int32 index_person = 1;
-  required int32 index_family = 2;
-  required bool new_family = 3;
-  required Person child = 4;
+  int32 index_person = 1;
+  int32 index_family = 2;
+  bool new_family = 3;
+  Person child = 4;
 }
 
 message AddParents {
-  required string person_lastname = 1;
-  required string person_firstname = 2;
-  required Family family = 3;
+  string person_lastname = 1;
+  string person_firstname = 2;
+  Family family = 3;
 }
 
 message AddParentsOk {
-  required int32 index_person = 1;
-  required Family family = 2;
+  int32 index_person = 1;
+  Family family = 2;
 }
 
 message AddFamily {
-  required string person_lastname = 1;
-  required string person_firstname = 2;
-  required Family family = 3;
+  string person_lastname = 1;
+  string person_firstname = 2;
+  Family family = 3;
 }
 
 message AddFamilyOk {
-  required int32 index_person = 1;
-  required Family family = 2;
+  int32 index_person = 1;
+  Family family = 2;
 }
 
 message EditFamilyRequest {
@@ -491,37 +491,37 @@ message EditFamilyRequest {
 }
 
 message EditFamily {
-  required string person_lastname = 1;
-  required string person_firstname = 2;
-  required Family family = 3;
+  string person_lastname = 1;
+  string person_firstname = 2;
+  Family family = 3;
 }
 
 message EditFamilyOk {
-  required int32 index_person = 1;
-  required Family family = 2;
+  int32 index_person = 1;
+  Family family = 2;
 }
 
 message AddSiblingRequest {
-  required int32 index = 1;
+  int32 index = 1;
   optional Sex sex = 2;
 }
 
 message AddSibling {
-  required string person_lastname = 1;
-  required string person_firstname = 2;
-  required Person sibling = 3;
+  string person_lastname = 1;
+  string person_firstname = 2;
+  Person sibling = 3;
 }
 
 message AddSiblingOk {
-  required int32 index_person = 1;
-  required Person sibling = 2;
+  int32 index_person = 1;
+  Person sibling = 2;
 }
 
 message AddFirstFam {
-  required Person sosa = 1;
-  required Person father = 2;
-  required Person mother = 3;
-  required Person spouse = 4;
+  Person sosa = 1;
+  Person father = 2;
+  Person mother = 3;
+  Person spouse = 4;
   repeated Person children = 5;
 }
 
@@ -548,10 +548,10 @@ enum AutoCompleteField {
 }
 
 message AutoComplete {
-  required AutoCompleteField field = 1;
+  AutoCompleteField field = 1;
   optional AutoCompletePlaceField place_field = 2;
-  required string input = 3;
-  required int32 limit = 4;
+  string input = 3;
+  int32 limit = 4;
 }
 
 message AutoCompleteResult {
@@ -561,7 +561,7 @@ message AutoCompleteResult {
 message PersonSearchListParams {
   optional string lastname = 1;
   optional string firstname = 2;
-  required int32 limit = 3;
+  int32 limit = 3;
 }
 
 message PersonSearchList {
@@ -573,8 +573,8 @@ message PersonSearchList {
 // ***************************************************************************
 
 message TranslCalendar {
-  required Calendar pos = 1;
-  required string sval = 2;
+  Calendar pos = 1;
+  string sval = 2;
 }
 
 message ConfigTranslCalendar {
@@ -582,8 +582,8 @@ message ConfigTranslCalendar {
 }
 
 message TranslWitnessType {
-  required WitnessType pos = 1;
-  required string sval = 2;
+  WitnessType pos = 1;
+  string sval = 2;
 }
 
 message ConfigTranslWitnessType {
@@ -591,8 +591,8 @@ message ConfigTranslWitnessType {
 }
 
 message TranslPrecision {
-  required Precision pos = 1;
-  required string sval = 2;
+  Precision pos = 1;
+  string sval = 2;
 }
 
 message ConfigTranslPrecision {
@@ -600,8 +600,8 @@ message ConfigTranslPrecision {
 }
 
 message TranslDeathType {
-  required DeathType pos = 1;
-  required string sval = 2;
+  DeathType pos = 1;
+  string sval = 2;
 }
 
 message ConfigTranslDeathType {
@@ -609,8 +609,8 @@ message ConfigTranslDeathType {
 }
 
 message TranslRelationParentType {
-  required RelationParentType pos = 1;
-  required string sval = 2;
+  RelationParentType pos = 1;
+  string sval = 2;
 }
 
 message ConfigTranslRelationParentType {
@@ -618,8 +618,8 @@ message ConfigTranslRelationParentType {
 }
 
 message TranslFeventName {
-  required FeventName pos = 1;
-  required string sval = 2;
+  FeventName pos = 1;
+  string sval = 2;
 }
 
 message ConfigTranslFeventName {
@@ -627,8 +627,8 @@ message ConfigTranslFeventName {
 }
 
 message TranslPeventName {
-  required PeventName pos = 1;
-  required string sval = 2;
+  PeventName pos = 1;
+  string sval = 2;
 }
 
 message ConfigTranslPeventName {
@@ -636,8 +636,8 @@ message ConfigTranslPeventName {
 }
 
 message TranslAccess {
-  required Access pos = 1;
-  required string sval = 2;
+  Access pos = 1;
+  string sval = 2;
 }
 
 message ConfigTranslAccess {
@@ -645,8 +645,8 @@ message ConfigTranslAccess {
 }
 
 message TranslUpdateWarningJS {
-  required UpdateWarningJS pos = 1;
-  required string sval = 2;
+  UpdateWarningJS pos = 1;
+  string sval = 2;
 }
 
 message ConfigTranslUpdateWarningJS {
@@ -669,8 +669,8 @@ enum ShortGregMonth {
 }
 
 message TranslShortGregMonth {
-  required ShortGregMonth pos = 1;
-  required string sval = 2;
+  ShortGregMonth pos = 1;
+  string sval = 2;
 }
 
 message ConfigTranslShortGregMonth {
@@ -694,8 +694,8 @@ enum FrenchMonth {
 }
 
 message TranslFrenchMonth {
-  required FrenchMonth pos = 1;
-  required string sval = 2;
+  FrenchMonth pos = 1;
+  string sval = 2;
 }
 
 message ConfigTranslFrenchMonth {
@@ -719,8 +719,8 @@ enum HebrewMonth {
 }
 
 message TranslHebrewMonth {
-  required HebrewMonth pos = 1;
-  required string sval = 2;
+  HebrewMonth pos = 1;
+  string sval = 2;
 }
 
 message ConfigTranslHebrewMonth {
@@ -728,18 +728,18 @@ message ConfigTranslHebrewMonth {
 }
 
 message Config {
-  required ConfigTranslCalendar transl_cal = 1;
-  required ConfigTranslWitnessType transl_wit = 2;
-  required ConfigTranslPrecision transl_prec = 3;
-  required ConfigTranslDeathType transl_death = 4;
-  required ConfigTranslRelationParentType transl_rel = 5;
-  required ConfigTranslFeventName transl_fevents = 6;
-  required ConfigTranslPeventName transl_pevents = 7;
-  required ConfigTranslAccess transl_access = 8;
-  required ConfigTranslUpdateWarningJS transl_warning = 9;
-  required ConfigTranslShortGregMonth transl_short_greg_month = 10;
-  required ConfigTranslFrenchMonth transl_french_month = 11;
-  required ConfigTranslHebrewMonth transl_hebrew_month = 12;
-  required string gwf_place_format = 13;
-  required string gwf_place_format_placeholder = 14;
+  ConfigTranslCalendar transl_cal = 1;
+  ConfigTranslWitnessType transl_wit = 2;
+  ConfigTranslPrecision transl_prec = 3;
+  ConfigTranslDeathType transl_death = 4;
+  ConfigTranslRelationParentType transl_rel = 5;
+  ConfigTranslFeventName transl_fevents = 6;
+  ConfigTranslPeventName transl_pevents = 7;
+  ConfigTranslAccess transl_access = 8;
+  ConfigTranslUpdateWarningJS transl_warning = 9;
+  ConfigTranslShortGregMonth transl_short_greg_month = 10;
+  ConfigTranslFrenchMonth transl_french_month = 11;
+  ConfigTranslHebrewMonth transl_hebrew_month = 12;
+  string gwf_place_format = 13;
+  string gwf_place_format_placeholder = 14;
 }

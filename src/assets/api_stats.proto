@@ -1,4 +1,4 @@
-syntax = "proto2" ;
+syntax = "proto3" ;
 
 package Geneanet.Geneweb.Api.Proto.Stats.Model;
 
@@ -105,8 +105,8 @@ enum Serie {
 }
 
 message Data {
-  required int32 nb = 1;
-  required int32 value = 2;
+  int32 nb = 1;
+  int32 value = 2;
 }
 
 message DataL {
@@ -114,7 +114,7 @@ message DataL {
 }
 
 message Stat {
-  required Title title = 1;
+  Title title = 1;
   repeated int32 labels = 2;
   repeated Serie series = 3;
   repeated string series_string = 4;
