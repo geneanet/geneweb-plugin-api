@@ -1,12 +1,9 @@
-open Geneweb
-open Def
-open Date
-open Config
-
 let p_getenvbin env label =
   let decode_varenv = Mutil.gen_decode false in
   try Some (decode_varenv (List.assoc label env))
   with Not_found -> None
+
+module Geneweb_date = Date
 
 module Date
 
@@ -31,7 +28,7 @@ module Date
 = struct
 
   let piqi_date_of_date = function
-    | Dgreg (dmy, cal) ->
+    | Date.Dgreg (dmy, cal) ->
       let cal =
         match cal with
         | Dgregorian -> `gregorian
@@ -130,14 +127,14 @@ module Filter
 
   let get_filters conf =
     let filters =
-      match (Util.p_getenv conf.env "filters", Util.p_getenv conf.env "input") with
+      match (Geneweb.Util.p_getenv conf.Geneweb.Config.env "filters", Geneweb.Util.p_getenv conf.Geneweb.Config.env "input") with
       | (Some d, Some "pb") -> Mext.parse_filters d `pb
       | (Some d, Some "json") -> Mext.parse_filters d `json
       | (Some d, Some "xml") -> Mext.parse_filters d `xml
       | _ -> Mext.parse_filters "" `pb
     in
     let dmy d =
-      { day = Int32.to_int d.M.Filter_date.day
+      { Geneweb_date.day = Int32.to_int d.M.Filter_date.day
       ; month = Int32.to_int d.M.Filter_date.month
       ; year = Int32.to_int d.M.Filter_date.year
       ; prec = Sure
@@ -192,15 +189,15 @@ end
 
 let print_result conf data =
   let (content_type, output) =
-    match p_getenvbin conf.env "output" with
+    match p_getenvbin conf.Geneweb.Config.env "output" with
     | Some "pb" -> ("application/octet-stream", `pb)
     | Some "json" -> ("application/json", `json)
     | Some "xml" -> ("application/xml", `xml)
     | _ -> exit (-2)
   in
   let data = data output in
-  Util.html ~content_type conf ;
-  Output.print_sstring conf data
+  Geneweb.Util.html ~content_type conf ;
+  Geneweb.Output.print_sstring conf data
 
 let from_piqi_status = function
   | `bad_request -> Def.Bad_Request
@@ -217,12 +214,12 @@ let print_error conf code msg =
   piqi_error.Api_piqi.Error.code <- code ;
   piqi_error.Api_piqi.Error.message <- (match msg with | "" -> None | s -> Some s);
   let data = Api_piqi_ext.gen_error piqi_error in
-  Output.status conf (from_piqi_status code) ;
+  Geneweb.Output.status conf (from_piqi_status code) ;
   print_result conf data ;
   raise Exit
 
 let get_params conf parse =
-  match (p_getenvbin conf.env "data", p_getenvbin conf.env "input") with
+  match (p_getenvbin conf.Geneweb.Config.env "data", p_getenvbin conf.Geneweb.Config.env "input") with
   | (Some d, Some "pb") -> parse d `pb
   | (Some d, Some "json") -> parse d `json
   | (Some d, Some "xml") -> parse d `xml
@@ -233,7 +230,7 @@ let get_params conf parse =
   with e -> print_error conf `bad_request (Printexc.to_string e)
 
 let piqi_fevent_name_of_fevent_name = function
-  | Efam_Marriage -> `efam_marriage
+  | Def.Efam_Marriage -> `efam_marriage
   | Efam_NoMarriage -> `efam_no_marriage
   | Efam_NoMention -> `efam_no_mention
   | Efam_Engage -> `efam_engage
@@ -248,7 +245,7 @@ let piqi_fevent_name_of_fevent_name = function
   | Efam_Name _ -> failwith __LOC__
 
 let piqi_pevent_name_of_pevent_name = function
-  | Epers_Birth -> `epers_birth
+  | Def.Epers_Birth -> `epers_birth
   | Epers_Baptism -> `epers_baptism
   | Epers_Death -> `epers_death
   | Epers_Burial -> `epers_burial
@@ -301,7 +298,7 @@ let piqi_pevent_name_of_pevent_name = function
   | Epers_Name _ -> failwith __LOC__
 
 let pevent_name_of_piqi_pevent_name = function
-  | `epers_birth -> Epers_Birth
+  | `epers_birth -> Def.Epers_Birth
   | `epers_baptism -> Epers_Baptism
   | `epers_death -> Epers_Death
   | `epers_burial -> Epers_Burial
@@ -353,7 +350,7 @@ let pevent_name_of_piqi_pevent_name = function
   | `epers_will -> Epers_Will
 
 let fevent_name_of_piqi_fevent_name = function
-  | `efam_marriage -> Efam_Marriage
+  | `efam_marriage -> Def.Efam_Marriage
   | `efam_no_marriage -> Efam_NoMarriage
   | `efam_no_mention -> Efam_NoMention
   | `efam_engage -> Efam_Engage
@@ -367,6 +364,6 @@ let fevent_name_of_piqi_fevent_name = function
   | `efam_residence -> Efam_Residence
 
 let piqi_access_to_access = function
-  | `access_iftitles -> IfTitles
+  | `access_iftitles -> Def.IfTitles
   | `access_public -> Public
   | `access_private -> Private
