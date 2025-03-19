@@ -81,13 +81,13 @@ module ReferencePerson : functor
 end
 
 val print_result :
-  Geneweb.Config.config -> ([> `json | `pb | `xml ] -> string) -> unit
+  Geneweb.Config.config -> (Protoc_fmt.t -> string) -> unit
 
 val print_error :
-  Geneweb.Config.config -> Api_piqi.Api_piqi.error_code -> string -> _
+  Geneweb.Config.config -> Api_piqi.error_code -> string -> _
 
 val get_params :
-  Geneweb.Config.config -> (string -> [> `json | `pb | `xml ] -> 'a) -> 'a
+  Geneweb.Config.config -> (string -> Protoc_fmt.t  -> 'a) -> 'a
 
 val piqi_fevent_name_of_fevent_name :
   _ Def.gen_fam_event_name ->

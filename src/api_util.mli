@@ -8,7 +8,7 @@ val apply_filters_p :
 val ( !! ) : _ Adef.astring -> string
 
 val get_params :
-  Geneweb.Config.config -> (string -> [> `json | `pb | `xml ] -> 'a) -> 'a
+  Geneweb.Config.config -> (string -> Protoc_fmt.t -> 'a) -> 'a
 
 val person_to_warning_person :
   Gwdb.base -> Gwdb.person -> Api_piqi.warning_person
@@ -25,7 +25,7 @@ val conv_data_list_person :
   string
 
 val print_result :
-  Geneweb.Config.config -> ([> `json | `pb | `xml ] -> string) -> unit
+  Geneweb.Config.config -> (Protoc_fmt.t -> string) -> unit
 
 val get_portrait :
   Geneweb.Config.config -> Gwdb.base -> Gwdb.person -> string option
