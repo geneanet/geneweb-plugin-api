@@ -75,7 +75,7 @@
     api_saisie_autocomplete
     api_saisie_read
     api_saisie_read_piqi
-    api_saisi_read_piqi_ext
+    api_saisie_read_piqi_ext
     api_saisie_write
     api_saisie_write_piqi
     api_saisie_write_piqi_ext
