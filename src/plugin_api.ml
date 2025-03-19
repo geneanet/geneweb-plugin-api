@@ -38,7 +38,7 @@ let w_base =
 let set_warning_timeout conf : unit =
   Wserver.set_on_timeout (fun _ ->
       let empty = Plugin_api_lib.Api_warnings.empty in
-      let data = Plugin_api_lib.Api_piqi_ext.gen_base_warnings empty in
+      let data = Plugin_api_lib.Encoders.Api.encode_base_warnings empty in
       Plugin_api_lib.Api_util.print_result conf data
     )
 

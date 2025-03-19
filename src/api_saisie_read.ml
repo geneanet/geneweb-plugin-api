@@ -1765,7 +1765,7 @@ let rec pers_to_piqi_fiche_person
     end
 
 let print_person_tree conf base =
-  let params = Api_util.get_params conf Api_saisie_read_piqi_ext.parse_index_person in
+  let params = Api_util.get_params conf Decoders.Api_saisie_read.decode_index_person in
   let ip = Gwdb.iper_of_string @@ Int32.to_string params.Api_saisie_read_piqi.Index_person.index in
   if Gwdb.iper_exists base ip then
   (* Construction de la base avec calcul des sosas           *)
@@ -1798,7 +1798,7 @@ let print_person_tree conf base =
       conf.Geneweb.Config.command
       true
   in
-  let data = Api_saisie_read_piqi_ext.gen_person pers_piqi in
+  let data = Encoders.Api_saisie_read.encode_person pers_piqi in
   Api_util.print_result conf data
   else begin
     Geneweb.Output.status conf Def.Not_Found ;
@@ -1860,7 +1860,7 @@ let print_result_fiche_person conf base ip nb_asc_max nb_desc_max simple_graph_i
     (* cache lien inter arbre *)
     let () = !Geneweb.GWPARAM_ITL.init_cache conf base ip 1 1 1 in
     let pers_piqi = pers_to_piqi_fiche_person conf base p conf.Geneweb.Config.command true 0 nb_asc_max 0 nb_desc_max true simple_graph_info no_event in
-    let data = Api_saisie_read_piqi_ext.gen_person pers_piqi in
+    let data = Encoders.Api_saisie_read.encode_person pers_piqi in
     Api_util.print_result conf data
   end else begin
     Geneweb.Output.status conf Def.Not_Found ;
@@ -1930,7 +1930,7 @@ let print_from_identifier_person
       | None -> Api_util.print_error conf `not_found ""
 
 let print_fiche_person conf base =
-  let fiche_parameters = Api_util.get_params conf Api_saisie_read_piqi_ext.parse_fiche_parameters in
+  let fiche_parameters = Api_util.get_params conf Decoders.Api_saisie_read.decode_fiche_parameters in
   let identifier_person = fiche_parameters.Api_saisie_read_piqi.Fiche_parameters.identifier_person in
   let print_result_from_ip conf base ip =
       let nb_asc_max =
@@ -2155,7 +2155,7 @@ let print_result_graph_tree
       (conf : Geneweb.Config.config) (base : Gwdb.base) (ip : Gwdb.iper)
     : unit =
   if Gwdb.iper_exists base ip then
-  let params = Api_util.get_params conf Api_saisie_read_piqi_ext.parse_graph_tree_params in
+  let params = Api_util.get_params conf Decoders.Api_saisie_read.decode_graph_tree_params in
   (* Construction de la base avec calcul des sosas           *)
   (* Si iz présent, on prend iz comme souche pour le calcul  *)
   (* Sinon on prend la souche de l'arbre                     *)
@@ -2260,7 +2260,7 @@ let print_result_graph_tree
       nodes_siblings_after = nodes_siblings_after;
     })
   in
-  let data = Api_saisie_read_piqi_ext.gen_graph_tree graph in
+  let data = Encoders.Api_saisie_read.encode_graph_tree graph in
   Api_util.print_result conf data
   else begin
     Geneweb.Output.status conf Def.Not_Found ;
@@ -2301,7 +2301,7 @@ let get_nb_ancestors (base : Gwdb.base) (ip : Gwdb.iper) : int =
 let nb_to_piqi_nb_ancestors (nb : int) : Piqirun_ext.output_format -> string =
     let piqi_nb_ancestors = Api_saisie_read_piqi.default_nb_ancestors() in
         piqi_nb_ancestors.Api_saisie_read_piqi.Nb_ancestors.nb <- Int32.of_int nb;
-    Api_saisie_read_piqi_ext.gen_nb_ancestors piqi_nb_ancestors
+    Encoders.Api_saisie_read.encode_nb_ancestors piqi_nb_ancestors
 
 let print_result_nb_ancestors
       (conf : Geneweb.Config.config) (base : Gwdb.base) (ip : Gwdb.iper)
@@ -2310,10 +2310,10 @@ let print_result_nb_ancestors
     Api_util.print_result conf data
 
 let print_nb_ancestors conf base =
-  print_from_identifier_person conf base print_result_nb_ancestors (Api_util.get_params conf Api_saisie_read_piqi_ext.parse_identifier_person)
+  print_from_identifier_person conf base print_result_nb_ancestors (Api_util.get_params conf Decoders.Api_saisie_read.decode_identifier_person)
 
 let print_graph_tree conf base =
-  let params = Api_util.get_params conf Api_saisie_read_piqi_ext.parse_graph_tree_params in
+  let params = Api_util.get_params conf Decoders.Api_saisie_read.decode_graph_tree_params in
   let identifier_person = params.Api_saisie_read_piqi.Graph_tree_params.identifier_person in
   print_from_identifier_person conf base print_result_graph_tree identifier_person
 

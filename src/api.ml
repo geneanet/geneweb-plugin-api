@@ -44,7 +44,7 @@ let print_info_base conf base =
       has_ignored_duplicates;
     })
   in
-  let data = Api_piqi_ext.gen_infos_base info_base in
+  let data = Encoders.Api.encode_infos_base info_base in
   Api_util.print_result conf data
 
 let print_loop conf base =
@@ -74,7 +74,7 @@ let print_loop conf base =
   Api_util.print_result conf data
 
 let print_info_ind conf base =
-  let ref_person = Api_util.get_params conf Api_piqi_ext.parse_reference_person in
+  let ref_person = Api_util.get_params conf Decoders.Api.decode_reference_person in
   let filters = Api_util.get_filters conf in
   let compute_sosa = Api_util.compute_sosa conf base in
   let sn = ref_person.Api_piqi.Reference_person.n in
@@ -94,7 +94,7 @@ let print_info_ind conf base =
   Api_util.print_result conf data
 
 let print_list_ref_person conf base =
-  let list_ref_person = Api_util.get_params conf Api_piqi_ext.parse_list_reference_persons in
+  let list_ref_person = Api_util.get_params conf Decoders.Api.decode_list_reference_persons in
   let filters = Api_util.get_filters conf in
   let pl =
     List.map
@@ -115,10 +115,10 @@ let print_list_ref_person conf base =
   Api_util.print_result conf data
 
 let print_ref_person_from_ip conf base =
-  let id = Api_util.get_params conf Api_piqi_ext.parse_index in
+  let id = Api_util.get_params conf Decoders.Api.decode_index in
   let ip = Gwdb.iper_of_string @@ Int32.to_string id.Api_piqi.Index.index in
   let ref_p = Api_util.person_to_reference_person base @@ Gwdb.poi base ip in
-  let data = Api_piqi_ext.gen_reference_person ref_p in
+  let data = Encoders.Api.encode_reference_person ref_p in
   Api_util.print_result conf data
 
 
@@ -138,7 +138,7 @@ let print_first_available_person conf base =
         continue := false
       end
   end () (Gwdb.persons base) ;
-  let data = Api_piqi_ext.gen_reference_person !res in
+  let data = Encoders.Api.encode_reference_person !res in
   Api_util.print_result conf data
 
 
@@ -148,7 +148,7 @@ let print_first_available_person conf base =
        Elle prend une référence_person et si elle a des enfants, alors on
        renvoi le premier enfant, sinon on renvoi la même personne. *)
 let print_find_sosa conf base =
-  let ref_person = Api_util.get_params conf Api_piqi_ext.parse_reference_person in
+  let ref_person = Api_util.get_params conf Decoders.Api.decode_reference_person in
   let n = ref_person.Api_piqi.Reference_person.n in
   let p = ref_person.Api_piqi.Reference_person.p in
   let oc = ref_person.Api_piqi.Reference_person.oc in
@@ -172,14 +172,14 @@ let print_find_sosa conf base =
       loop 0
     | None -> Api_util.empty_reference_person
   in
-  let data = Api_piqi_ext.gen_reference_person ref_p in
+  let data = Encoders.Api.encode_reference_person ref_p in
   Api_util.print_result conf data
 
 
 (**/**) (* API_LAST_MODIFIED_PERSONS *)
 
 let print_last_modified_persons conf base =
-  let params = Api_util.get_params conf Api_piqi_ext.parse_last_modifications in
+  let params = Api_util.get_params conf Decoders.Api.decode_last_modifications in
   let filters = Api_util.get_filters conf in
   let wiz =
     match params.Api_piqi.Last_modifications.wizard with
@@ -314,7 +314,7 @@ let print_last_modified_persons conf base =
 (**/**) (* API_LAST_VISITED_PERSONS *)
 
 let print_last_visited_persons conf base =
-  let last_visits = Api_util.get_params conf Api_piqi_ext.parse_last_visits in
+  let last_visits = Api_util.get_params conf Decoders.Api.decode_last_visits in
   let user = last_visits.Api_piqi.Last_visits.user in
   let filters = Api_util.get_filters conf in
   let list =
@@ -398,7 +398,7 @@ let print_max_ancestors =
     if nb > snd !res then res := (i, nb)
   end ipers ;
   let ref_p = Api_util.person_to_reference_person base @@ Gwdb.poi base (fst !res) in
-  let data = Api_piqi_ext.gen_reference_person ref_p in
+  let data = Encoders.Api.encode_reference_person ref_p in
   Api_util.print_result conf data
 
 
@@ -416,7 +416,7 @@ let print_img_all conf base =
     in
     if filters.nb_results then
       let len = Api_piqi.Internal_int32.({value = Int32.of_int (List.length list)}) in
-      let data = Api_piqi_ext.gen_internal_int32 len in
+      let data fmt = Api_piqi_ext.gen_internal_int32 len (Protoc_fmt.to_piqi fmt)in
       Api_util.print_result conf data
     else
       Api_util.print_result conf (fl list)
@@ -426,17 +426,17 @@ let print_img_all conf base =
        let p = Api_util.person_to_reference_person base p in
        Api_piqi.Image.({person = p; img}))
     (fun list ->
-       Api_piqi_ext.gen_list_images @@ Api_piqi.List_images.({list_images = list}))
+       Encoders.Api.encode_list_images @@ Api_piqi.List_images.({list_images = list}))
 
 (**/**) (* API_IMAGE_APP *)
 
 let print_img_person conf base =
-  let id = Api_util.get_params conf Api_piqi_ext.parse_index in
+  let id = Api_util.get_params conf Decoders.Api.decode_index in
   let ip = Gwdb.iper_of_string @@ Int32.to_string id.Api_piqi.Index.index in
   let p = Gwdb.poi base ip in
   let img_addr = Api_util.get_portrait conf base p |> Option.value ~default:"" in
   let img_from_ip = Api_piqi.Image_address.({img = img_addr}) in
-  let data = Api_piqi_ext.gen_image_address img_from_ip in
+  let data = Encoders.Api.encode_image_address img_from_ip in
   Api_util.print_result conf data
 
 
@@ -444,7 +444,7 @@ let print_img_person conf base =
 (**/**) (* API_UPDT_IMAGE *)
 
 let print_updt_image conf base =
-  let pers_img_l = Api_util.get_params conf Api_piqi_ext.parse_list_pers_img in
+  let pers_img_l = Api_util.get_params conf Decoders.Api.decode_list_pers_img in
   let pers_img_l = pers_img_l.Api_piqi.List_pers_img.list_pers_img in
   List.iter
     (fun pers_img ->
@@ -478,7 +478,7 @@ let print_base_warnings conf base =
     if filters.Api_def.nb_results then
       let len = List.length !errors + List.length warnings in
       let len = Api_piqi.Internal_int32.({value = Int32.of_int len}) in
-      Api_piqi_ext.gen_internal_int32 len
+      fun fmt -> Api_piqi_ext.gen_internal_int32 len (Protoc_fmt.to_piqi fmt)
     else
       let result =
         List.fold_left
@@ -492,7 +492,7 @@ let print_base_warnings conf base =
           Api_warnings.add_warning_to_piqi_warning_list base acc x
         end result warnings
       in
-      Api_piqi_ext.gen_base_warnings result
+      Encoders.Api.encode_base_warnings result
   in
   Api_util.print_result conf data
 
@@ -505,7 +505,7 @@ let person_warnings conf base p =
   else Api_warnings.empty
 
 let print_person_warnings conf base =
-  let ref_person = Api_piqi_util.get_params conf Api_piqi_ext.parse_reference_person_i in
+  let ref_person = Api_piqi_util.get_params conf Decoders.Api.decode_reference_person_i in
   match
     match ref_person.Api_piqi.Reference_person_i.i with
     | Some i -> Some (Gwdb.iper_of_string i)
@@ -522,13 +522,13 @@ let print_person_warnings conf base =
   | Some ip ->
     Geneweb.Util.pget conf base ip
     |> person_warnings conf base
-    |> Api_piqi_ext.gen_base_warnings
+    |> Encoders.Api.encode_base_warnings
     |> Api_util.print_result conf
 
 (**/**) (* Récupération de toute une base. *)
 
 let print_all_persons conf base =
-  let params = Api_util.get_params conf Api_piqi_ext.parse_all_persons_params in
+  let params = Api_util.get_params conf Decoders.Api.decode_all_persons_params in
   let filters = Api_util.get_filters conf in
   let (from, until) =
     match (params.Api_piqi.All_persons_params.from, params.Api_piqi.All_persons_params.limit) with
@@ -548,7 +548,7 @@ let print_all_persons conf base =
   Api_util.print_result conf data
 
 let print_all_families conf base =
-  let params = Api_util.get_params conf Api_piqi_ext.parse_all_families_params in
+  let params = Api_util.get_params conf Decoders.Api.decode_all_families_params in
   let filters = Api_util.get_filters conf in
   let from = params.Api_piqi.All_families_params.from in
   let limit = params.Api_piqi.All_families_params.limit in
@@ -572,11 +572,11 @@ let print_all_families conf base =
   let data =
     if filters.nb_results then
       let len = Api_piqi.Internal_int32.({value = Int32.of_int (List.length @@ fst list)}) in
-      Api_piqi_ext.gen_internal_int32 len
+      fun fmt -> Api_piqi_ext.gen_internal_int32 len (Protoc_fmt.to_piqi fmt)
     else
       let list = List.map (Api_util.fam_to_piqi_family conf base) (List.rev @@ fst list) in
       let list = Api_piqi.List_full_families.({families = list}) in
-      Api_piqi_ext.gen_list_full_families list
+      Encoders.Api.encode_list_full_families list
   in
   Api_util.print_result conf data
 
@@ -746,11 +746,11 @@ module HistoryApi = struct
         ~f
     in
     let total_elements = Int32.of_int (Geneweb.History.total_entries ~conf ~filter) in
-    Api_piqi_ext.gen_history {Api_piqi.History.entries; page; total_elements}
+    Encoders.Api.encode_history {Api_piqi.History.entries; page; total_elements}
 end
 
 let history conf base =
-  let params = Api_util.get_params conf Api_piqi_ext.parse_history_request in
+  let params = Api_util.get_params conf Decoders.Api.decode_history_request in
   let page = params.Api_piqi.History_request.page in
   let elements_per_page = params.Api_piqi.History_request.elements_per_page in
   let filter_user = params.Api_piqi.History_request.filter_user in

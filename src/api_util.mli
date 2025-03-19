@@ -21,7 +21,7 @@ val conv_data_list_person :
   Gwdb.base ->
   Api_def.filters ->
   Gwdb.person list ->
-  Piqirun_ext.output_format ->
+  Protoc_fmt.t ->
   string
 
 val print_result :
@@ -108,7 +108,7 @@ val fam_to_piqi_family :
 
 val data_person :
   (Api_piqi.person, Api_piqi.full_person) Api_def.pb_person ->
-  Piqirun_ext.output_format ->
+  Protoc_fmt.t ->
   string
 
 val witness_kinds : Def.witness_kind list
@@ -132,7 +132,7 @@ val data_list_person_option :
   Gwdb.base ->
   Api_def.filters ->
   (Api_piqi.reference_person, Gwdb.person) Api_def.pb_person list ->
-  Piqirun_ext.output_format ->
+  Protoc_fmt.t ->
   string
 
 val is_empty_or_quest_name : Gwdb.person -> bool

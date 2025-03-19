@@ -1165,8 +1165,8 @@ let fam_to_piqi_family conf base ifam =
 
 let data_person p =
   match p with
-  | Api_def.PLight p -> Api_piqi_ext.gen_person p
-  | Api_def.PFull p -> Api_piqi_ext.gen_full_person p
+  | Api_def.PLight p -> Encoders.Api.encode_person p
+  | Api_def.PFull p -> Encoders.Api.encode_full_person p
 
 let person_map conf base l compute_sosa =
   if p_getenvbin conf.Geneweb.Config.env "full_infos" = Some "1" then
@@ -1184,24 +1184,24 @@ let conv_data_list_person conf base filters l =
   let len = List.length l in
   if filters.Api_def.nb_results then
     let len = Api_piqi.Internal_int32.({value = Int32.of_int len}) in
-    Api_piqi_ext.gen_internal_int32 len
+    fun fmt -> Mext.gen_internal_int32 len (match fmt with Protoc_fmt.Protobuf -> `pb | Protoc_fmt.Json -> `json)
   else
     let compute_sosa = compute_sosa conf base in
     let l = person_map conf base l compute_sosa in
     match l with
     | Api_def.PLight pl ->
         let list = Api_piqi.List_persons.({list_persons = pl}) in
-        Api_piqi_ext.gen_list_persons list
+      fun fmt -> Encoders.Api.encode_list_persons list fmt
     | Api_def.PFull pl ->
         let list = Api_piqi.List_full_persons.({persons = pl}) in
-        Api_piqi_ext.gen_list_full_persons list
+      fun fmt -> Encoders.Api.encode_list_full_persons list fmt
 
 let data_list_person_option conf base filters l =
   let len = List.length l in
   let compute_sosa = compute_sosa conf base in
   if filters.Api_def.nb_results then
     let len = Api_piqi.Internal_int32.({value = Int32.of_int len}) in
-    Api_piqi_ext.gen_internal_int32 len
+    fun fmt -> Mext.gen_internal_int32 len (Protoc_fmt.to_piqi fmt)
   else
     let l =
       if p_getenvbin conf.env "full_infos" = Some "1" then
@@ -1234,10 +1234,10 @@ let data_list_person_option conf base filters l =
     match l with
     | Api_def.PLight pl ->
         let list = Api_piqi.List_persons.({list_persons = pl}) in
-        Api_piqi_ext.gen_list_persons list
+        Encoders.Api.encode_list_persons list
     | Api_def.PFull pl ->
         let list = Api_piqi.List_full_persons.({persons = pl}) in
-        Api_piqi_ext.gen_list_full_persons list
+        Encoders.Api.encode_list_full_persons list
 
 let person_node_map conf base l =
   let compute_sosa = compute_sosa conf base in
