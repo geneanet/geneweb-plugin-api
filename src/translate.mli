@@ -1,9 +1,9 @@
 
 module Api : sig
-  module PiqiToProtoc : sig
+(*  module PiqiToProtoc : sig
     (* val truc : Api_piqi.truc -> Api_protoc.truc *)
     val reference_person : Api_piqi.reference_person -> Api_protoc.reference_person
-    val search_params : Api_piqi.search_params -> Api_protoc.search_params
+    (*    val search_params : Api_piqi.search_params -> Api_protoc.search_params*)
     val list_reference_person : Api_piqi.list_reference_persons -> Api_protoc.list_reference_persons
     val index : Api_piqi.index -> Api_protoc.index
     val close_persons_params : Api_piqi.close_persons_params -> Api_protoc.close_persons_params
@@ -11,16 +11,26 @@ module Api : sig
     val error : Api_piqi.error -> Api_protoc.error
     val list_persons : Api_piqi.list_persons -> Api_protoc.list_persons
     val list_full_persons : Api_piqi.list_full_persons -> Api_protoc.list_full_persons
-  end
+    end*)
   module ProtocToPiqi : sig
     (* val truc : Api_protoc.truc -> Api_piqi.truc *)
     val reference_person : Api_protoc.reference_person -> Api_piqi.reference_person
+    val reference_person_i : Api_protoc.reference_person_i -> Api_piqi.reference_person_i
     val search_params : Api_protoc.search_params -> Api_piqi.search_params
     val list_reference_person : Api_protoc.list_reference_persons -> Api_piqi.list_reference_persons
     val index : Api_protoc.index -> Api_piqi.index
     val close_persons_params : Api_protoc.close_persons_params -> Api_piqi.close_persons_params
     val person_start : Api_protoc.person_start -> Api_piqi.person_start
     val events_query_params : Api_protoc.events_query_params -> Api_piqi.events_query_params
+    val graph_params : Api_protoc.graph_params -> Api_piqi.graph_params
+    val graph_rel_params : Api_protoc.graph_rel_params -> Api_piqi.graph_rel_params
+    val cpl_rel_params : Api_protoc.cpl_rel_params -> Api_piqi.cpl_rel_params
+    val last_modifications : Api_protoc.last_modifications -> Api_piqi.last_modifications
+    val last_visits : Api_protoc.last_visits -> Api_piqi.last_visits
+    val all_persons_params : Api_protoc.all_persons_params -> Api_piqi.all_persons_params
+    val all_families_params : Api_protoc.all_families_params -> Api_piqi.all_families_params
+    val list_pers_img : Api_protoc.list_pers_img -> Api_piqi.list_pers_img
+    val history_request : Api_protoc.history_request -> Api_piqi.history_request
   end
 end
 module Api_saisie_write : sig
@@ -41,5 +51,26 @@ module Api_saisie_write : sig
     val index_person : Api_saisie_write_protoc.index_person -> Api_saisie_write_piqi.index_person
     val person : Api_saisie_write_protoc.person -> Api_saisie_write_piqi.person
     val index_person_and_family : Api_saisie_write_protoc.index_person_and_family -> Api_saisie_write_piqi.index_person_and_family
+    val add_family_ok : Api_saisie_write_protoc.add_family_ok -> Api_saisie_write_piqi.add_family_ok
+    val add_child_request : Api_saisie_write_protoc.add_child_request -> Api_saisie_write_piqi.add_child_request
+    val edit_family_ok : Api_saisie_write_protoc.edit_family_ok -> Api_saisie_write_piqi.edit_family_ok
+    val add_child_ok : Api_saisie_write_protoc.add_child_ok -> Api_saisie_write_piqi.add_child_ok
+    val add_parents_ok : Api_saisie_write_protoc.add_parents_ok -> Api_saisie_write_piqi.add_parents_ok
+    val add_sibling_request : Api_saisie_write_protoc.add_sibling_request -> Api_saisie_write_piqi.add_sibling_request
+    val add_sibling_ok : Api_saisie_write_protoc.add_sibling_ok -> Api_saisie_write_piqi.add_sibling_ok
+    val add_first_fam : Api_saisie_write_protoc.add_first_fam -> Api_saisie_write_piqi.add_first_fam
+  end
+end
+module Api_stats : sig
+  module ProtocToPiqi : sig
+    val stats_params : Api_stats_protoc.stats_params -> Api_stats_piqi.stats_params
+  end
+end
+module Api_saisie_read : sig
+  module ProtocToPiqi : sig
+    val graph_tree_params : Api_saisie_read_protoc.graph_tree_params -> Api_saisie_read_piqi.graph_tree_params
+    val index_person : Api_saisie_read_protoc.index_person -> Api_saisie_read_piqi.index_person
+    val fiche_parameters : Api_saisie_read_protoc.fiche_parameters -> Api_saisie_read_piqi.fiche_parameters
+    val identifier_person : Api_saisie_read_protoc.identifier_person -> Api_saisie_read_piqi.identifier_person
   end
 end

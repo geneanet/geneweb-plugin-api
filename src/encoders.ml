@@ -27,15 +27,15 @@ module Api = struct
     encode Api_protoc.encode_pb_list_persons Api_protoc.encode_json_list_persons
   let encode_list_full_persons =
     encode Api_protoc.encode_pb_list_full_persons Api_protoc.encode_json_list_full_persons
-  let encode_event_query_result_list = assert false
-  let encode_graph = assert false
-  let encode_full_graph = assert false
-  let encode_person = assert false
-  let encode_full_person = assert false
-  let encode_list_images = assert false
-  let encode_image_address = assert false
-  let encode_list_full_families = assert false
-  let encode_history = assert false
+  let encode_event_query_result_list _ = assert false
+  let encode_graph _ = assert false
+  let encode_full_graph _ = assert false
+  let encode_person _ = assert false
+  let encode_full_person _ = assert false
+  let encode_list_images _ = assert false
+  let encode_image_address _ = assert false
+  let encode_list_full_families _ = assert false
+  let encode_history _ = assert false
 end
 
 module Api_saisie_write = struct
@@ -55,21 +55,21 @@ module Api_saisie_write = struct
   let encode_add_family =
     encode Api_saisie_write_protoc.encode_pb_add_family Api_saisie_write_protoc.encode_json_add_family
 
-  let encode_edit_family_request = assert false
-  let encode_edit_family = assert false
-  let encode_edit_family_ok = assert false
-  let encode_add_parents = assert false
-  let encode_add_child = assert false
-  let encode_add_sibling = assert false
+  let encode_edit_family_request _ = assert false
+  let encode_edit_family _ = assert false
+  let encode_edit_family_ok _ = assert false
+  let encode_add_parents _ = assert false
+  let encode_add_child _ = assert false
+  let encode_add_sibling _ = assert false
   
 end
 
 module Api_stats = struct
-  let encode_stats = assert false
+  let encode_stats _ = assert false
 end
 
 module Api_saisie_read = struct
-  let encode_person = assert false
-  let encode_graph_tree = assert false
-  let encode_nb_ancestors = assert false
+  let encode_person _ = assert false
+  let encode_graph_tree _ = assert false
+  let encode_nb_ancestors _ = assert false
 end
