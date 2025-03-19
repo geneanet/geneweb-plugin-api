@@ -58,7 +58,7 @@
 (library
   (name plugin_api_lib)
   (public_name geneweb_plugin_api.lib)
-  (libraries geneweb geneweb.gwd_lib geneweb.util geneweb.caches csv pbrt yojson pbrt_yojson)
+  (libraries geneweb geneweb.gwd_lib geneweb.util geneweb.caches csv piqirun.ext pbrt yojson pbrt_yojson)
   (modules
     api_saisie_read_protoc
     api_saisie_write_protoc
