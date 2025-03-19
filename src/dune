@@ -69,12 +69,20 @@
     api_def
     api_graph
     api_marshal_dico
+    api_piqi
     api_piqi_util
+    api_piqi_ext
     api_saisie_autocomplete
     api_saisie_read
+    api_saisie_read_piqi
+    api_saisi_read_piqi_ext
     api_saisie_write
+    api_saisie_write_piqi
+    api_saisie_write_piqi_ext
     api_search
     api_stats
+    api_stats_piqi
+    api_stats_piqi_ext
     api_update_family
     api_update_person
     api_update_util
