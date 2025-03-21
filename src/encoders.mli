@@ -28,7 +28,6 @@ module Api_saisie_write : sig
   val encode_add_family : Api_saisie_write_piqi.add_family t
   val encode_edit_family_request : Api_saisie_write_piqi.edit_family_request t
   val encode_edit_family : Api_saisie_write_piqi.edit_family t
-  val encode_edit_family_ok : Api_saisie_write_piqi.edit_family_ok t
   val encode_add_parents : Api_saisie_write_piqi.add_parents t
   val encode_add_child : Api_saisie_write_piqi.add_child t
   val encode_add_sibling : Api_saisie_write_piqi.add_sibling t

@@ -1,4 +1,4 @@
-(env ( _ (flags (:standard -w +a-4-9-30-35-40-42-44-48)) ) )
+(env ( _ (flags (:standard -w +a-4-9-30-35-40-41-42-44-45-48)) ) )
 
 (alias
   (name plugin)

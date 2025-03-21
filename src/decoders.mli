@@ -22,10 +22,16 @@ end
 
 module Api_saisie_write : sig
   val decode_auto_complete : Api_saisie_write_piqi.auto_complete t
-  val decode_person_search_list_params : Api_saisie_write_piqi.person_search_list_params t
+
+  val decode_person_search_list_params :
+    Api_saisie_write_piqi.person_search_list_params t
+
   val decode_index_person : Api_saisie_write_piqi.index_person t
-  val decode_person  : Api_saisie_write_piqi.person t
-  val decode_index_person_and_family : Api_saisie_write_piqi.index_person_and_family t
+  val decode_person : Api_saisie_write_piqi.person t
+
+  val decode_index_person_and_family :
+    Api_saisie_write_piqi.index_person_and_family t
+
   val decode_add_family_ok : Api_saisie_write_piqi.add_family_ok t
   val decode_add_child_request : Api_saisie_write_piqi.add_child_request t
   val decode_edit_family_ok : Api_saisie_write_piqi.edit_family_ok t
