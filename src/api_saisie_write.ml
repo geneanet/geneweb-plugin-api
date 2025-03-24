@@ -1273,6 +1273,8 @@ let compute_add_family_ok'
     end
   with
   | Geneweb.Update.ModErr s -> None, Api_update_util.UpdateError s
+  | Gwdb.Not_plain_text s ->
+     (None, Api_update_util.UpdateError (Geneweb.Update.not_plain_text_error s))
   | Api_update_util.ModErrApiConflict c -> None, Api_update_util.UpdateErrorConflict c
 
 let compute_add_family_ok conf base family =
@@ -1516,6 +1518,8 @@ let print_mod_family_ok conf base =
       end
     with
     | Geneweb.Update.ModErr s -> Api_update_util.UpdateError s
+    | Gwdb.Not_plain_text s ->
+       Api_update_util.UpdateError (Geneweb.Update.not_plain_text_error s)
     | Api_update_util.ModErrApiConflict c -> Api_update_util.UpdateErrorConflict c
   in
   let data = compute_modification_status conf base ip ifam resp in
@@ -1635,6 +1639,8 @@ let do_mod_fam_add_child_aux conf base name ip mod_c mod_f fn =
         Api_update_util.UpdateSuccess (all_wl, all_ml, all_hr, cp)
     with
     | Geneweb.Update.ModErr s -> Api_update_util.UpdateError s
+    | Gwdb.Not_plain_text s ->
+       Api_update_util.UpdateError (Geneweb.Update.not_plain_text_error s)
     | Api_update_util.ModErrApiConflict c -> Api_update_util.UpdateErrorConflict c
   in
   let ifam = Gwdb.ifam_of_string @@ Int32.to_string mod_f.Api_saisie_write_piqi.Family.index in
@@ -1780,6 +1786,8 @@ let print_add_parents_ok conf base =
         Api_update_util.UpdateSuccess (all_wl, all_ml, all_hr, cp)
       with
       | Geneweb.Update.ModErr s -> Api_update_util.UpdateError s
+      | Gwdb.Not_plain_text s ->
+         Api_update_util.UpdateError (Geneweb.Update.not_plain_text_error s)
       | Api_update_util.ModErrApiConflict c -> Api_update_util.UpdateErrorConflict c
     in
     let data = compute_modification_status conf base ip Gwdb.dummy_ifam resp in
@@ -2039,6 +2047,8 @@ let print_add_sibling_ok conf base =
               Api_update_util.UpdateSuccess (all_wl, all_ml, all_hr, cp)
           with
           | Geneweb.Update.ModErr s -> Api_update_util.UpdateError s
+          | Gwdb.Not_plain_text s ->
+             Api_update_util.UpdateError (Geneweb.Update.not_plain_text_error s)
           | Api_update_util.ModErrApiConflict c -> Api_update_util.UpdateErrorConflict c
         in
         let data = compute_modification_status conf base ip !new_ifam resp in
@@ -2108,6 +2118,8 @@ let print_add_sibling_ok conf base =
             end
           with
           | Geneweb.Update.ModErr s -> Api_update_util.UpdateError s
+          | Gwdb.Not_plain_text s ->
+             Api_update_util.UpdateError (Geneweb.Update.not_plain_text_error s)
           | Api_update_util.ModErrApiConflict c -> Api_update_util.UpdateErrorConflict c
         in
         let data = compute_modification_status conf base ip ifam resp in
@@ -2266,6 +2278,8 @@ let compute_add_first_fam conf =
       end
     with
     | Geneweb.Update.ModErr s -> Api_update_util.UpdateError s
+    | Gwdb.Not_plain_text s ->
+       Api_update_util.UpdateError (Geneweb.Update.not_plain_text_error s)
     | Api_update_util.ModErrApiConflict c ->
         Api_update_util.UpdateErrorConflict c
   in
@@ -2590,6 +2604,8 @@ let print_add_first_fam_ok conf base =
       end
     with
     | Geneweb.Update.ModErr s -> Api_update_util.UpdateError s
+    | Gwdb.Not_plain_text s ->
+       Api_update_util.UpdateError (Geneweb.Update.not_plain_text_error s)
     | Api_update_util.ModErrApiConflict c -> Api_update_util.UpdateErrorConflict c
   in
   let data = compute_modification_status conf base !ip !ifam resp in
