@@ -3396,9 +3396,9 @@ module Api_saisie_read = struct
 
     let identifier_person = identifier_person'
 
-    let index_person Api_saisie_read_protoc.(({ index; indexz } : index_person))
+    let index_person Api_saisie_read_protoc.(({ index; indexz; events_limit; events_witnesses_limit } : index_person))
         =
-      Api_saisie_read_piqi.Index_person.{ index; indexz }
+      Api_saisie_read_piqi.Index_person.{ index; indexz; events_limit; events_witnesses_limit }
 
     let fiche_parameters
         Api_saisie_read_protoc.(

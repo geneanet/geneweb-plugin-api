@@ -2298,7 +2298,7 @@ let get_nb_ancestors (base : Gwdb.base) (ip : Gwdb.iper) : int =
   (* Le nombre d'ascendants d'un individu est le nombre de personnes parcourues moins 1 (lui-même). *)
   count_nb_ancestors base [ip] (-1)
 
-let nb_to_piqi_nb_ancestors (nb : int) : Piqirun_ext.output_format -> string =
+let nb_to_piqi_nb_ancestors (nb : int) : Protoc_fmt.t -> string =
     let piqi_nb_ancestors = Api_saisie_read_piqi.default_nb_ancestors() in
         piqi_nb_ancestors.Api_saisie_read_piqi.Nb_ancestors.nb <- Int32.of_int nb;
     Encoders.Api_saisie_read.encode_nb_ancestors piqi_nb_ancestors
