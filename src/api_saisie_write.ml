@@ -39,14 +39,22 @@ let print_person_search_list conf base =
   let first_name = params.Api_saisie_write_piqi.Person_search_list_params.firstname in
   let first_name = Option.value first_name ~default:"" in
 
-  let limit = Int32.to_int params.Api_saisie_write_piqi.Person_search_list_params.limit in
-  let conf = {conf with Geneweb.Config.env =
-                          ("first_name", Adef.encoded first_name)
-                          :: ("surname", Adef.encoded surname)
-                          :: ("exact_first_name", Adef.encoded "pfx")
-                          :: ("exact_surname", Adef.encoded "pfx")
-                          :: conf.env} in
-  let persons = fst @@ Geneweb.AdvSearchOk.advanced_search conf base limit in
+
+  let persons =
+    let person = Geneweb.SearchName.search_by_sosa_in_env
+        {conf with Geneweb.Config.env = ("surname", Adef.encoded surname) :: conf.env} base in
+    match person with
+    | Some p -> [ p ]
+    | None ->
+      let limit = Int32.to_int params.Api_saisie_write_piqi.Person_search_list_params.limit in
+      let conf = {conf with Geneweb.Config.env =
+                              ("first_name", Adef.encoded first_name)
+                              :: ("surname", Adef.encoded surname)
+                              :: ("exact_first_name", Adef.encoded "pfx")
+                              :: ("exact_surname", Adef.encoded "pfx")
+                              :: conf.env} in
+      fst @@ Geneweb.AdvSearchOk.advanced_search conf base limit
+  in
   let cmp_per p1 p2 =
     let c1 = String.compare
         (Gwdb.sou base (Gwdb.get_surname p1))
