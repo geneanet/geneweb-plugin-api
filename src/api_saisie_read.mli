@@ -28,3 +28,10 @@ val print_graph_tree : Geneweb.Config.config -> Gwdb.base -> unit
 (** [Description] : Retourne un graphe d'ascendance et de descendance
        d'une personne
  *)
+
+val get_paginated_data :
+  conf:Geneweb.Config.config ->
+  base:Gwdb.base ->
+  Api_saisie_read_piqi.Paginated_data_parameters.t ->
+  [> `Personal_events of Api_saisie_read_piqi.Paginated_personal_events.t
+  | `Witnessed_events of Api_saisie_read_piqi.Paginated_witnessed_events.t]

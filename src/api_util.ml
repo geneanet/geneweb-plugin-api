@@ -1327,3 +1327,50 @@ let opt_of_string = function
 
 let set_sosa_ref conf iper =
   {conf with Geneweb.Config.env = ("iz", Adef.encoded (Gwdb.string_of_iper iper)) :: conf.Geneweb.Config.env}
+
+module Page = struct
+  type t = {number : int; element_count : int}
+
+  let make ~number ~element_count = {number; element_count}
+
+  let first ~element_count = make ~number:1 ~element_count
+
+  module Piqi = struct
+    let from_page {Api_saisie_read_piqi.Page.number; element_count} =
+      {number = Int32.to_int number; element_count = Int32.to_int element_count}
+  end
+end
+
+module Paginated_data = struct
+  type 'element t =
+    {elements : 'element list; page_number : int; total_count : int}
+
+  let all elements =
+    {elements; page_number = 1; total_count = List.length elements}
+
+  let count_elements_before {Page.number; element_count} =
+    pred number * element_count
+
+  let extract page all_elements =
+    let elements =
+      Ext_list.sublist
+        all_elements (count_elements_before page) page.element_count
+    in
+    {elements;
+     page_number = page.number;
+     total_count = List.length all_elements}
+
+  let map f content = {content with elements = List.map f content.elements}
+
+  module Piqi = struct
+    let to_personal_events {elements; page_number; total_count} =
+      {Api_saisie_read_piqi.Paginated_personal_events.elements;
+       page_number = Int32.of_int page_number;
+       total_count = Int32.of_int total_count}
+
+    let to_witnessed_events {elements; page_number; total_count} =
+      {Api_saisie_read_piqi.Paginated_witnessed_events.elements;
+       page_number = Int32.of_int page_number;
+       total_count = Int32.of_int total_count}
+  end
+end
