@@ -1183,8 +1183,7 @@ let person_map conf base l compute_sosa =
 let conv_data_list_person conf base filters l =
   let len = List.length l in
   if filters.Api_def.nb_results then
-    let len = Api_piqi.Internal_int32.({value = Int32.of_int len}) in
-    fun fmt -> Api_piqi_ext.gen_internal_int32 len (match fmt with Protoc_fmt.Protobuf -> `pb | Protoc_fmt.Json -> `json)
+    Encoders.encode_int32 (Int32.of_int len)
   else
     let compute_sosa = compute_sosa conf base in
     let l = person_map conf base l compute_sosa in
@@ -1200,8 +1199,7 @@ let data_list_person_option conf base filters l =
   let len = List.length l in
   let compute_sosa = compute_sosa conf base in
   if filters.Api_def.nb_results then
-    let len = Api_piqi.Internal_int32.({value = Int32.of_int len}) in
-    fun fmt -> Api_piqi_ext.gen_internal_int32 len (Protoc_fmt.to_piqi fmt)
+    Encoders.encode_int32 (Int32.of_int len)
   else
     let l =
       if p_getenvbin conf.env "full_infos" = Some "1" then

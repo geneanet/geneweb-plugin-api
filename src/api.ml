@@ -477,8 +477,7 @@ let print_base_warnings conf base =
   let data =
     if filters.Api_def.nb_results then
       let len = List.length !errors + List.length warnings in
-      let len = Api_piqi.Internal_int32.({value = Int32.of_int len}) in
-      fun fmt -> Api_piqi_ext.gen_internal_int32 len (Protoc_fmt.to_piqi fmt)
+      Encoders.encode_int32 (Int32.of_int len)
     else
       let result =
         List.fold_left
@@ -571,8 +570,7 @@ let print_all_families conf base =
   in
   let data =
     if filters.nb_results then
-      let len = Api_piqi.Internal_int32.({value = Int32.of_int (List.length @@ fst list)}) in
-      fun fmt -> Api_piqi_ext.gen_internal_int32 len (Protoc_fmt.to_piqi fmt)
+      Encoders.encode_int32 (Int32.of_int (List.length @@ fst list))
     else
       let list = List.map (Api_util.fam_to_piqi_family conf base) (List.rev @@ fst list) in
       let list = Api_piqi.List_full_families.({families = list}) in

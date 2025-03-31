@@ -42,3 +42,5 @@ module Api_saisie_read : sig
   val encode_graph_tree : Api_saisie_read_piqi.graph_tree t
   val encode_nb_ancestors : Api_saisie_read_piqi.nb_ancestors t
 end
+
+val encode_int32 : int32 t

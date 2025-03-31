@@ -159,3 +159,12 @@ module Api_saisie_read = struct
       Api_saisie_read_protoc.encode_pb_nb_ancestors
       Api_saisie_read_protoc.encode_json_nb_ancestors
 end
+
+let encode_int32 i = function
+  | Protoc_fmt.Json ->
+    let json = `Assoc ["value", `String (Int32.to_string i)] in
+    Yojson.Basic.to_string json
+  | Protobuf ->
+    let encoder = Pbrt.Encoder.create () in
+    Pbrt.Encoder.wrapper_int32_value (Some i) encoder;
+    Pbrt.Encoder.to_string encoder

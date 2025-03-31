@@ -253,8 +253,7 @@ let print_graph_asc conf base =
   in
   let data =
     if filters.nb_results then
-      let len = M.Internal_int32.({value = Int32.of_int (List.length nodes)}) in
-      fun fmt -> Mext.gen_internal_int32 len (Protoc_fmt.to_piqi fmt) 
+      Encoders.encode_int32 (Int32.of_int (List.length nodes))
     else
       let nodes = person_node_map conf base nodes in
       match nodes with
@@ -351,8 +350,7 @@ let print_graph_desc conf base =
   in
   let data =
     if filters.nb_results then
-      let len = M.Internal_int32.({value = Int32.of_int (List.length nodes)}) in
-      fun fmt -> Mext.gen_internal_int32 len (Protoc_fmt.to_piqi fmt)
+      Encoders.encode_int32 (Int32.of_int (List.length nodes))
     else
       let nodes = person_node_map conf base nodes in
       match nodes with
@@ -454,8 +452,7 @@ let print_graph_rel conf base =
   in
   let data =
     if filters.nb_results then
-      let len = M.Internal_int32.({value = Int32.of_int (List.length nodes)}) in
-      fun fmt -> Mext.gen_internal_int32 len (Protoc_fmt.to_piqi fmt)
+      Encoders.encode_int32 (Int32.of_int (List.length nodes))
     else
       let nodes = person_node_map conf base nodes in
       match nodes with
