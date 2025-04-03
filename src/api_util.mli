@@ -178,3 +178,6 @@ module Paginated_data : sig
       Api_saisie_read_piqi.Paginated_witnessed_events.t
   end
 end
+
+val person_reference :
+  Gwdb.base -> Gwdb.person -> Api_saisie_write_piqi.Person_reference.t

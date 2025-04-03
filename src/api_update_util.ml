@@ -644,6 +644,7 @@ let pers_to_piqi_person_search ~conf ~base ~person ~first_name ~surname =
     family = family;
     matching_first_name_aliases;
     matching_surname_aliases;
+    reference = Api_util.person_reference base person;
   }
 
 
