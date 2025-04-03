@@ -1374,3 +1374,11 @@ module Paginated_data = struct
        total_count = Int32.of_int total_count}
   end
 end
+
+let person_reference base person =
+  let {Gwdb.surname = n; first_name = p; occurrence_number} =
+    Gwdb.person_reference base person
+  in
+  {Api_saisie_write_piqi.Person_reference.n;
+   p;
+   oc = Int32.of_int occurrence_number}
