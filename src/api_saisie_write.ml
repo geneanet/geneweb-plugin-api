@@ -53,6 +53,15 @@ let print_person_search_list conf base =
                               :: ("exact_first_name", Adef.encoded "pfx")
                               :: ("exact_surname", Adef.encoded "pfx")
                               :: conf.env} in
+      let () =
+        if Gwdb.search_indexes_can_be_initialized_on_the_fly base then
+          let () =
+            if first_name <> "" then
+              Gwdb.initialize_lowercase_name_index ~kind:`First_name base
+          in
+          if surname <> "" then
+            Gwdb.initialize_lowercase_name_index ~kind:`Surname base
+      in
       fst @@ Geneweb.AdvSearchOk.advanced_search conf base limit
   in
   let cmp_per p1 p2 =
