@@ -2685,72 +2685,6 @@ module Api_saisie_read = struct
       | `visibility_semi_public -> Visibility_semi_public
       | `visibility_private -> Visibility_private
 
-    let simple_person
-        Api_saisie_read_piqi.Simple_person.
-          {
-            index;
-            sex;
-            lastname;
-            firstname;
-            n;
-            p;
-            occ;
-            birth_short_date;
-            birth_date_raw;
-            birth_place;
-            death_short_date;
-            death_date_raw;
-            death_place;
-            image;
-            sosa;
-            baseprefix;
-            sosa_nb;
-            visible_for_visitors;
-            has_parent;
-            has_spouse;
-            has_child;
-            is_contemporary;
-            name_is_hidden;
-            name_is_restricted;
-          } =
-      let sex = translate_sex sex in
-      let sosa = translate_sosa sosa in
-      let visible_for_visitors = translate_visibility visible_for_visitors in
-      Api_saisie_read_protoc.(
-        ({
-           index;
-           sex;
-           lastname;
-           firstname;
-           n;
-           p;
-           occ;
-           birth_short_date;
-           birth_date_raw;
-           birth_place;
-           death_short_date;
-           death_date_raw;
-           death_place;
-           image;
-           sosa;
-           baseprefix;
-           sosa_nb;
-           visible_for_visitors;
-           has_parent;
-           has_spouse;
-           has_child;
-           is_contemporary;
-           name_is_hidden;
-           name_is_restricted;
-         }
-          : simple_person))
-
-    let relation_person Api_saisie_read_piqi.Relation_person.{ r_type; person }
-        =
-      let r_type = translate_relation_type r_type in
-      let person = Some (simple_person person) in
-      Api_saisie_read_protoc.(({ r_type; person } : relation_person))
-
     let translate_marriage_type = function
       | `married -> Api_saisie_read_protoc.Married
       | `not_married -> Not_married
@@ -2778,76 +2712,6 @@ module Api_saisie_read = struct
       | `witness_attending -> Witness_attending
       | `witness_mentioned -> Witness_mentioned
       | `witness_other -> Witness_other
-
-    let witness_event
-        Api_saisie_read_piqi.Witness_event.
-          { witness_type; witness; witness_note } =
-      let witness_type = translate_witness_type witness_type in
-      let witness = Some (simple_person witness) in
-      Api_saisie_read_protoc.(
-        ({ witness_type; witness; witness_note } : witness_event))
-
-    let translate_family
-        Api_saisie_read_piqi.Family.
-          {
-            index;
-            spouse;
-            marriage_date;
-            marriage_date_long;
-            marriage_date_raw;
-            marriage_date_conv;
-            marriage_date_conv_long;
-            marriage_date_text;
-            marriage_date_cal;
-            marriage_place;
-            marriage_src;
-            marriage_type;
-            divorce_type;
-            divorce_date;
-            divorce_date_long;
-            divorce_date_raw;
-            divorce_date_conv;
-            divorce_date_conv_long;
-            divorce_date_cal;
-            witnesses;
-            notes;
-            fsources;
-            children;
-          } =
-      let spouse = Some (simple_person spouse) in
-      let marriage_date_cal = Option.map calendar marriage_date_cal in
-      let marriage_type = translate_marriage_type marriage_type in
-      let divorce_type = translate_divorce_type divorce_type in
-      let divorce_date_cal = Option.map calendar divorce_date_cal in
-      let witnesses = List.map witness_event witnesses in
-      let children = List.map simple_person children in
-      Api_saisie_read_protoc.(
-        ({
-           index;
-           spouse;
-           marriage_date;
-           marriage_date_long;
-           marriage_date_raw;
-           marriage_date_conv;
-           marriage_date_conv_long;
-           marriage_date_text;
-           marriage_date_cal;
-           marriage_place;
-           marriage_src;
-           marriage_type;
-           divorce_type;
-           divorce_date;
-           divorce_date_long;
-           divorce_date_raw;
-           divorce_date_conv;
-           divorce_date_conv_long;
-           divorce_date_cal;
-           witnesses;
-           notes;
-           fsources;
-           children;
-         }
-          : family))
 
     let event_type = function
       | `epers_birth -> Api_saisie_read_protoc.Epers_birth
@@ -2915,7 +2779,131 @@ module Api_saisie_read = struct
       | `efam_residence -> Efam_residence
       | `efam_custom -> Efam_custom
 
-    let translate_event
+    let translate_burial_type = function
+      | `dont_know -> Api_saisie_read_protoc.Dont_know
+      | `buried -> Buried
+      | `cremated -> Cremated
+
+    let rec simple_person
+        Api_saisie_read_piqi.Simple_person.
+          {
+            index;
+            sex;
+            lastname;
+            firstname;
+            n;
+            p;
+            occ;
+            birth_short_date;
+            birth_date_raw;
+            birth_place;
+            death_short_date;
+            death_date_raw;
+            death_place;
+            image;
+            sosa;
+            baseprefix;
+            sosa_nb;
+            visible_for_visitors;
+            has_parent;
+            has_spouse;
+            has_child;
+            is_contemporary;
+            name_is_hidden;
+            name_is_restricted;
+          } =
+      let sex = translate_sex sex in
+      let sosa = translate_sosa sosa in
+      let visible_for_visitors =
+        Some (translate_visibility visible_for_visitors)
+      in
+      let has_parent = Some has_parent in
+      let has_spouse = Some has_spouse in
+      let has_child = Some has_child in
+      Api_saisie_read_protoc.default_person ~type_:Api_saisie_read_protoc.Simple
+        ~index ~sex ~lastname ~firstname ~n ~p ~occ ~birth_short_date
+        ~birth_date_raw ~birth_place ~death_short_date ~death_date_raw
+        ~death_place ~image ~sosa ~baseprefix ~sosa_nb ~visible_for_visitors
+        ~has_parent ~has_spouse ~has_child ~is_contemporary ~name_is_hidden
+        ~name_is_restricted ()
+
+    and relation_person Api_saisie_read_piqi.Relation_person.{ r_type; person }
+        =
+      let r_type = translate_relation_type r_type in
+      let person = Some (simple_person person) in
+      Api_saisie_read_protoc.(({ r_type; person } : relation_person))
+
+    and witness_event
+        Api_saisie_read_piqi.Witness_event.
+          { witness_type; witness; witness_note } =
+      let witness_type = translate_witness_type witness_type in
+      let witness = Some (simple_person witness) in
+      Api_saisie_read_protoc.(
+        ({ witness_type; witness; witness_note } : witness_event))
+
+    and translate_family
+        Api_saisie_read_piqi.Family.
+          {
+            index;
+            spouse;
+            marriage_date;
+            marriage_date_long;
+            marriage_date_raw;
+            marriage_date_conv;
+            marriage_date_conv_long;
+            marriage_date_text;
+            marriage_date_cal;
+            marriage_place;
+            marriage_src;
+            marriage_type;
+            divorce_type;
+            divorce_date;
+            divorce_date_long;
+            divorce_date_raw;
+            divorce_date_conv;
+            divorce_date_conv_long;
+            divorce_date_cal;
+            witnesses;
+            notes;
+            fsources;
+            children;
+          } =
+      let spouse = Some (simple_person spouse) in
+      let marriage_date_cal = Option.map calendar marriage_date_cal in
+      let marriage_type = translate_marriage_type marriage_type in
+      let divorce_type = translate_divorce_type divorce_type in
+      let divorce_date_cal = Option.map calendar divorce_date_cal in
+      let witnesses = List.map witness_event witnesses in
+      let children = List.map simple_person children in
+      Api_saisie_read_protoc.(
+        ({
+           index;
+           spouse;
+           marriage_date;
+           marriage_date_long;
+           marriage_date_raw;
+           marriage_date_conv;
+           marriage_date_conv_long;
+           marriage_date_text;
+           marriage_date_cal;
+           marriage_place;
+           marriage_src;
+           marriage_type;
+           divorce_type;
+           divorce_date;
+           divorce_date_long;
+           divorce_date_raw;
+           divorce_date_conv;
+           divorce_date_conv_long;
+           divorce_date_cal;
+           witnesses;
+           notes;
+           fsources;
+           children;
+         }
+          : family))
+
+    and translate_event
         Api_saisie_read_piqi.Event.
           {
             name;
@@ -2956,7 +2944,7 @@ module Api_saisie_read = struct
          }
           : event))
 
-    let event_witness
+    and event_witness
         Api_saisie_read_piqi.Event_witness.
           { event_witness_type; husband; wife; witness_note } =
       let husband = Some (simple_person husband) in
@@ -2964,12 +2952,7 @@ module Api_saisie_read = struct
       Api_saisie_read_protoc.(
         ({ event_witness_type; husband; wife; witness_note } : event_witness))
 
-    let translate_burial_type = function
-      | `dont_know -> Api_saisie_read_protoc.Dont_know
-      | `buried -> Buried
-      | `cremated -> Cremated
-
-    let fiche_person person_protoc
+    and fiche_person person_protoc
         Api_saisie_read_piqi.Fiche_person.
           {
             birth_date_raw;
@@ -3031,7 +3014,7 @@ module Api_saisie_read = struct
          }
           : person))
 
-    let person
+    and person
         Api_saisie_read_piqi.Person.
           {
             type_;
@@ -3178,6 +3161,11 @@ module Api_saisie_read = struct
              linked_page_head = None;
              linked_page_occu = None;
              visible_for_visitors = None;
+             has_parent = None;
+             has_spouse = None;
+             has_child = None;
+             birth_short_date = None;
+             death_short_date = None;
            }
             : person))
       in
