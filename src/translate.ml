@@ -2969,137 +2969,7 @@ module Api_saisie_read = struct
       | `buried -> Buried
       | `cremated -> Cremated
 
-    let rec witness_fiche_event
-        Api_saisie_read_piqi.Witness_fiche_event.
-          { witness_type; witness; witness_note } =
-      let witness_type = translate_witness_type witness_type in
-      let witness = Some (person witness) in
-      Api_saisie_read_protoc.(
-        ({ witness_type; witness; witness_note } : witness_fiche_event))
-
-    and fiche_family
-        Api_saisie_read_piqi.Fiche_family.
-          {
-            index;
-            spouse;
-            marriage_date;
-            marriage_date_long;
-            marriage_date_raw;
-            marriage_date_conv;
-            marriage_date_conv_long;
-            marriage_date_text;
-            marriage_date_cal;
-            marriage_place;
-            marriage_src;
-            marriage_type;
-            divorce_type;
-            divorce_date;
-            divorce_date_long;
-            divorce_date_raw;
-            divorce_date_conv;
-            divorce_date_conv_long;
-            divorce_date_cal;
-            witnesses;
-            notes;
-            fsources;
-            children;
-          } =
-      let spouse = Some (person spouse) in
-      let marriage_date_cal = Option.map calendar marriage_date_cal in
-      let marriage_type = translate_marriage_type marriage_type in
-      let divorce_type = translate_divorce_type divorce_type in
-      let divorce_date_cal = Option.map calendar divorce_date_cal in
-      let witnesses = List.map witness_fiche_event witnesses in
-      let children : Api_saisie_read_protoc.person list =
-        List.map person children
-      in
-      Api_saisie_read_protoc.(
-        ({
-           index;
-           spouse;
-           marriage_date;
-           marriage_date_long;
-           marriage_date_raw;
-           marriage_date_conv;
-           marriage_date_conv_long;
-           marriage_date_text;
-           marriage_date_cal;
-           marriage_place;
-           marriage_src;
-           marriage_type;
-           divorce_type;
-           divorce_date;
-           divorce_date_long;
-           divorce_date_raw;
-           divorce_date_conv;
-           divorce_date_conv_long;
-           divorce_date_cal;
-           witnesses;
-           notes;
-           fsources;
-           children;
-         }
-          : fiche_family))
-
-    and relation_fiche_person d =
-      let r_type =
-        translate_relation_type
-          d.Api_saisie_read_piqi.Relation_fiche_person.r_type
-      in
-      let person = Some (person d.person) in
-      Api_saisie_read_protoc.(({ r_type; person } : relation_fiche_person))
-
-    and event_fiche_witness
-        Api_saisie_read_piqi.Event_fiche_witness.
-          { event_witness_type; husband; wife; witness_note } =
-      let husband = Some (person husband) in
-      let wife = Option.map person wife in
-      Api_saisie_read_protoc.(
-        ({ event_witness_type; husband; wife; witness_note }
-          : event_fiche_witness))
-
-    and fiche_event
-        Api_saisie_read_piqi.Fiche_event.
-          {
-            name;
-            type_;
-            date;
-            date_long;
-            date_raw;
-            date_conv;
-            date_conv_long;
-            date_cal;
-            place;
-            reason;
-            note;
-            src;
-            spouse;
-            witnesses;
-          } =
-      let type_ = event_type type_ in
-      let date_cal = Option.map calendar date_cal in
-      let spouse = Option.map person spouse in
-      let witnesses = List.map witness_fiche_event witnesses in
-      Api_saisie_read_protoc.(
-        ({
-           name;
-           type_;
-           date;
-           date_long;
-           date_raw;
-           date_conv;
-           date_conv_long;
-           date_cal;
-           place;
-           reason;
-           note;
-           src;
-           spouse;
-           witnesses;
-         }
-          : fiche_event))
-
-    and fiche_person person_protoc
+    let fiche_person person_protoc
         Api_saisie_read_piqi.Fiche_person.
           {
             birth_date_raw;
@@ -3161,7 +3031,7 @@ module Api_saisie_read = struct
          }
           : person))
 
-    and person
+    let person
         Api_saisie_read_piqi.Person.
           {
             type_;
