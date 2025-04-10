@@ -974,7 +974,6 @@ module Api = struct
 
         end*)
   module ProtocToPiqi = struct
-
     let reference_person Api_protoc.(({ n; p; oc } : reference_person)) =
       Api_piqi.Reference_person.{ n; p; oc }
 
@@ -988,7 +987,8 @@ module Api = struct
       let person = reference_person (required person) in
       Api_piqi.Graph_params.{ generation; person }
 
-    let graph_rel_params Api_protoc.(({ person1; person2 } : graph_rel_params)) =
+    let graph_rel_params Api_protoc.(({ person1; person2 } : graph_rel_params))
+        =
       let person1 = reference_person (required person1) in
       let person2 = reference_person (required person2) in
       Api_piqi.Graph_rel_params.{ person1; person2 }
@@ -1002,22 +1002,26 @@ module Api = struct
       Api_piqi.Filter_date.{ day; month; year }
 
     let filter_date_range
-        Api_protoc.(({ date_begin; date_end; only_exact } : filter_date_range)) =
+        Api_protoc.(({ date_begin; date_end; only_exact } : filter_date_range))
+        =
       let date_begin = filter_date (required date_begin) in
       let date_end = filter_date (required date_end) in
       let only_exact = Option.value ~default:false only_exact in
       Api_piqi.Filter_date_range.{ date_begin; date_end; only_exact }
 
-    let last_modifications Api_protoc.(({ wizard; max_res; range } : last_modifications)) =
+    let last_modifications
+        Api_protoc.(({ wizard; max_res; range } : last_modifications)) =
       let range = Option.map filter_date_range range in
       Api_piqi.Last_modifications.{ wizard; max_res; range }
 
-    let last_visits Api_protoc.(({ user } : last_visits)) = Api_piqi.Last_visits.{ user }
+    let last_visits Api_protoc.(({ user } : last_visits)) =
+      Api_piqi.Last_visits.{ user }
 
     let all_persons_params Api_protoc.(({ from; limit } : all_persons_params)) =
       Api_piqi.All_persons_params.{ from; limit }
 
-    let all_families_params Api_protoc.(({ from; limit } : all_families_params)) =
+    let all_families_params Api_protoc.(({ from; limit } : all_families_params))
+        =
       Api_piqi.All_families_params.{ from; limit }
 
     let pers_img Api_protoc.(({ person; img } : pers_img)) =
@@ -1034,15 +1038,16 @@ module Api = struct
       | Lastname_or_firstname -> `lastname_or_firstname
 
     let search_params
-        Api_protoc.(({
-           search_type;
-           lastname;
-           firstname;
-           only_sosa;
-           only_recent;
-           maiden_name;
-         } :
-          search_params)) =
+        Api_protoc.(
+          ({
+             search_type;
+             lastname;
+             firstname;
+             only_sosa;
+             only_recent;
+             maiden_name;
+           } :
+            search_params)) =
       let search_type =
         translate_search_type (Option.value ~default:Starting_with search_type)
       in
@@ -1060,18 +1065,21 @@ module Api = struct
         }
 
     let history_request
-        Api_protoc.(({ page; elements_per_page; filter_user } : history_request)) =
+        Api_protoc.(
+          ({ page; elements_per_page; filter_user } : history_request)) =
       Api_piqi.History_request.{ page; elements_per_page; filter_user }
 
     let index Api_protoc.(({ index } : index)) = Api_piqi.Index.{ index }
 
-    let list_reference_person Api_protoc.(({ list_ref_persons } : list_reference_persons)) =
+    let list_reference_person
+        Api_protoc.(({ list_ref_persons } : list_reference_persons)) =
       let list_ref_persons = List.map reference_person list_ref_persons in
       Api_piqi.List_reference_persons.{ list_ref_persons }
 
     let close_persons_params
-        Api_protoc.(({ person; nb_gen_asc; nb_gen_desc; spouse_ascend; only_recent } :
-          close_persons_params)) =
+        Api_protoc.(
+          ({ person; nb_gen_asc; nb_gen_desc; spouse_ascend; only_recent } :
+            close_persons_params)) =
       let person = reference_person (required person) in
       let spouse_ascend = Option.value ~default:false spouse_ascend in
       let only_recent = Option.value ~default:false only_recent in
@@ -1084,15 +1092,16 @@ module Api = struct
       | Unknown -> `unknown
 
     let person_start
-        Api_protoc.(({
-           lastname;
-           firstname;
-           sex;
-           birth_date_day;
-           birth_date_month;
-           birth_date_year;
-         } :
-          person_start)) =
+        Api_protoc.(
+          ({
+             lastname;
+             firstname;
+             sex;
+             birth_date_day;
+             birth_date_month;
+             birth_date_year;
+           } :
+            person_start)) =
       let sex = translate_sex sex in
       Api_piqi.Person_start.
         {
@@ -3090,7 +3099,7 @@ module Api_saisie_read = struct
          }
           : fiche_event))
 
-    and fiche_person
+    and fiche_person person_protoc
         Api_saisie_read_piqi.Fiche_person.
           {
             birth_date_raw;
@@ -3107,35 +3116,27 @@ module Api_saisie_read = struct
             sosa_nb;
             has_history;
             has_possible_duplications;
-            ref_index;
-            ref_person;
             linked_page_biblio;
             linked_page_bnote;
             linked_page_death;
             linked_page_head;
             linked_page_occu;
             visible_for_visitors;
-            father;
-            mother;
-            families;
-            related;
-            rparents;
-            events_witnesses;
-            events;
             is_contemporary;
           } =
-      let burial_type = translate_burial_type burial_type in
-      let ref_person = Option.map person ref_person in
+      let burial_type = Some (translate_burial_type burial_type) in
       let visible_for_visitors = translate_visibility visible_for_visitors in
-      let father = Option.map person father in
-      let mother = Option.map person mother in
-      let families = List.map fiche_family families in
-      let related = List.map relation_fiche_person related in
-      let rparents = List.map relation_fiche_person rparents in
-      let events_witnesses = List.map event_fiche_witness events_witnesses in
-      let events = List.map fiche_event events in
+      let has_history = Some has_history in
+      let has_possible_duplications = Some has_possible_duplications in
+      let linked_page_biblio = Some linked_page_biblio in
+      let linked_page_bnote = Some linked_page_bnote in
+      let linked_page_death = Some linked_page_death in
+      let linked_page_head = Some linked_page_head in
+      let linked_page_occu = Some linked_page_occu in
+      let visible_for_visitors = Some visible_for_visitors in
       Api_saisie_read_protoc.(
         ({
+           person_protoc with
            birth_date_raw;
            birth_text;
            baptism_date_raw;
@@ -3150,24 +3151,15 @@ module Api_saisie_read = struct
            sosa_nb;
            has_history;
            has_possible_duplications;
-           ref_index;
-           ref_person;
            linked_page_biblio;
            linked_page_bnote;
            linked_page_death;
            linked_page_head;
            linked_page_occu;
            visible_for_visitors;
-           father;
-           mother;
-           families;
-           related;
-           rparents;
-           events_witnesses;
-           events;
            is_contemporary;
          }
-          : fiche_person))
+          : person))
 
     and person
         Api_saisie_read_piqi.Person.
@@ -3241,64 +3233,87 @@ module Api_saisie_read = struct
       let sosa = translate_sosa sosa in
       let events = List.map translate_event events in
       let events_witnesses = List.map event_witness events_witnesses in
-      let person = Option.map fiche_person fiche_person_person in
-      Api_saisie_read_protoc.(
-        ({
-           type_;
-           index;
-           sex;
-           lastname;
-           firstname;
-           n;
-           p;
-           occ;
-           public_name;
-           aliases;
-           qualifiers;
-           firstname_aliases;
-           surname_aliases;
-           image;
-           birth_date;
-           birth_date_conv;
-           birth_date_cal;
-           birth_place;
-           birth_src;
-           baptism_date;
-           baptism_date_conv;
-           baptism_date_cal;
-           baptism_place;
-           baptism_src;
-           death_date;
-           death_date_conv;
-           death_date_cal;
-           death_place;
-           death_src;
-           death_type;
-           burial_date;
-           burial_date_conv;
-           burial_date_cal;
-           burial_place;
-           burial_src;
-           occupation;
-           notes;
-           psources;
-           has_sources;
-           titles;
-           related;
-           rparents;
-           father;
-           mother;
-           families;
-           sosa;
-           events;
-           events_witnesses;
-           baseprefix;
-           is_contemporary;
-           name_is_hidden;
-           name_is_restricted;
-           person;
-         }
-          : person))
+      let person =
+        Api_saisie_read_protoc.(
+          ({
+             type_;
+             index;
+             sex;
+             lastname;
+             firstname;
+             n;
+             p;
+             occ;
+             public_name;
+             aliases;
+             qualifiers;
+             firstname_aliases;
+             surname_aliases;
+             image;
+             birth_date;
+             birth_date_conv;
+             birth_date_cal;
+             birth_place;
+             birth_src;
+             baptism_date;
+             baptism_date_conv;
+             baptism_date_cal;
+             baptism_place;
+             baptism_src;
+             death_date;
+             death_date_conv;
+             death_date_cal;
+             death_place;
+             death_src;
+             death_type;
+             burial_date;
+             burial_date_conv;
+             burial_date_cal;
+             burial_place;
+             burial_src;
+             occupation;
+             notes;
+             psources;
+             has_sources;
+             titles;
+             related;
+             rparents;
+             father;
+             mother;
+             families;
+             sosa;
+             events;
+             events_witnesses;
+             baseprefix;
+             is_contemporary;
+             name_is_hidden;
+             name_is_restricted;
+             birth_date_raw = None;
+             birth_text = None;
+             baptism_date_raw = None;
+             baptism_text = None;
+             death_date_raw = None;
+             death_text = None;
+             burial_date_raw = None;
+             burial_text = None;
+             cremation_text = None;
+             burial_type = None;
+             titles_links = [];
+             sosa_nb = None;
+             has_history = None;
+             has_possible_duplications = None;
+             linked_page_biblio = None;
+             linked_page_bnote = None;
+             linked_page_death = None;
+             linked_page_head = None;
+             linked_page_occu = None;
+             visible_for_visitors = None;
+           }
+            : person))
+      in
+      match fiche_person_person with
+      | Some fp -> fiche_person person fp
+      | None -> person
 
     let person_tree
         Api_saisie_read_piqi.Person_tree.
@@ -3396,9 +3411,12 @@ module Api_saisie_read = struct
 
     let identifier_person = identifier_person'
 
-    let index_person Api_saisie_read_protoc.(({ index; indexz; events_limit; events_witnesses_limit } : index_person))
-        =
-      Api_saisie_read_piqi.Index_person.{ index; indexz; events_limit; events_witnesses_limit }
+    let index_person
+        Api_saisie_read_protoc.(
+          ({ index; indexz; events_limit; events_witnesses_limit } :
+            index_person)) =
+      Api_saisie_read_piqi.Index_person.
+        { index; indexz; events_limit; events_witnesses_limit }
 
     let fiche_parameters
         Api_saisie_read_protoc.(
