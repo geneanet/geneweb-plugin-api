@@ -301,39 +301,6 @@ message EventFicheWitness {
   string witness_note = 4;
 }
 
-message FichePerson {
-  optional string birth_date_raw = 1;
-  optional string birth_text = 2;
-  optional string baptism_date_raw = 3;
-  optional string baptism_text = 4;
-  optional string death_date_raw = 5;
-  optional string death_text = 6;
-  optional string burial_date_raw = 7;
-  optional string burial_text = 8;
-  optional string cremation_text = 9;
-  BurialType burial_type = 10;
-  repeated string titles_links = 11;
-  optional string sosa_nb = 12;
-  bool has_history = 13;
-  bool has_possible_duplications = 14;
-  optional int32 ref_index = 15;
-  optional Person ref_person = 16;
-  string linked_page_biblio = 17;
-  string linked_page_bnote = 18;
-  string linked_page_death = 19;
-  string linked_page_head = 20;
-  string linked_page_occu = 21;
-  Visibility visible_for_visitors = 22;
-  optional Person father = 23;
-  optional Person mother = 24;
-  repeated FicheFamily families = 25;
-  repeated RelationFichePerson related = 26;
-  repeated RelationFichePerson rparents = 27;
-  repeated EventFicheWitness events_witnesses = 28;
-  repeated FicheEvent events = 29;
-  bool is_contemporary = 30;
-}
-
 message PaginatedPersonalEvents {
   repeated Event elements = 1;
   int32 page_number = 2;
@@ -408,7 +375,26 @@ message Person {
   bool name_is_hidden = 51;
   bool name_is_restricted = 52;
 
-  optional FichePerson person = 103;
+  optional string birth_date_raw = 53;
+  optional string birth_text = 54;
+  optional string baptism_date_raw = 55;
+  optional string baptism_text = 56;
+  optional string death_date_raw = 57;
+  optional string death_text = 58;
+  optional string burial_date_raw = 59;
+  optional string burial_text = 60;
+  optional string cremation_text = 61;
+  optional BurialType burial_type = 62;
+  repeated string titles_links = 63;
+  optional string sosa_nb = 64;
+  optional bool has_history = 65;
+  optional bool has_possible_duplications = 66;
+  optional string linked_page_biblio = 67;
+  optional string linked_page_bnote = 68;
+  optional string linked_page_death = 69;
+  optional string linked_page_head = 70;
+  optional string linked_page_occu = 71;
+  optional Visibility visible_for_visitors = 72;
 }
 
 message Family {
