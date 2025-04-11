@@ -293,7 +293,7 @@ let reconstitute_family conf base mod_f =
      fevents; witnesses = Array.of_list witnesses;
      relation; divorce; comment;
      origin_file; fsources; fam_index}
-  and cpl = Futil.parent conf.multi_parents (Array.of_list parents)
+  and cpl = Adef.parent (Array.of_list parents)
   and des = {Def.children = Array.of_list children} in
   (* On vérifie s'il y a des conflits de personne. *)
   (* Normalement, il ne doit plus y avoir de lever *)
