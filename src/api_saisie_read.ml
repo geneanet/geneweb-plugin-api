@@ -654,7 +654,7 @@ let fam_to_piqi_family_link
     | Separated -> (`separated, "", "", "", "", None, "")
   in
   let witnesses =
-    Mutil.array_to_list_map
+    Ext_array.to_list_map
       (fun (ip, wkind, wnote) ->
          let p = Gwdb.poi base ip in
          let wnote = Utf8.normalize @@ Gwdb.sou base wnote in
@@ -770,7 +770,7 @@ let fill_events
         Option.map (fun ip -> pers_to_piqi conf base (Gwdb.poi base ip) base_prefix) isp
       in
       let witnesses =
-        Mutil.array_to_list_map
+        Ext_array.to_list_map
           (fun (ip, wk, wnote) ->
             let witness_type = Api_util.piqi_of_witness_kind wk in
             let witness = Gwdb.poi base ip in
@@ -873,7 +873,7 @@ let get_family_piqi base conf ifam p base_prefix spouse_to_piqi witnesses_to_piq
     | Separated -> (`separated, "", "", "", "", None, "")
   in
   let witnesses =
-    Mutil.array_to_list_map
+    Ext_array.to_list_map
       (fun (ip, wkind, wnote) ->
          let p = Gwdb.poi base ip in
          let wnote = Utf8.normalize @@ Gwdb.sou base wnote in
@@ -897,7 +897,7 @@ let get_family_piqi base conf ifam p base_prefix spouse_to_piqi witnesses_to_piq
   in
   let children =
     let children_array = limit_array @@ Gwdb.get_children fam in
-    Mutil.array_to_list_map
+    Ext_array.to_list_map
       (fun ip -> child_to_piqi conf base (Gwdb.poi base ip) base_prefix)
       children_array
   in
@@ -917,7 +917,7 @@ let get_family_piqi base conf ifam p base_prefix spouse_to_piqi witnesses_to_piq
 
 let get_families_piqi base conf p base_prefix spouse_to_piqi witnesses_to_piqi child_to_piqi family_constructor =
   let families =
-    Mutil.array_to_list_map
+    Ext_array.to_list_map
       (fun ifam ->
          get_family_piqi base conf ifam p base_prefix spouse_to_piqi witnesses_to_piqi child_to_piqi family_constructor
       )
@@ -2064,7 +2064,7 @@ let build_graph_desc conf base p max_gen =
               let fam = Gwdb.foi base ifam in
               let sp = Gwdb.poi base (Gutil.spouse (Gwdb.get_iper p) fam) in
               let sp_factor = factor ht (Gwdb.get_iper sp) in
-              let children = Mutil.array_to_list_map (Gwdb.poi base) (limit_array @@ Gwdb.get_children fam) in
+              let children = Ext_array.to_list_map (Gwdb.poi base) (limit_array @@ Gwdb.get_children fam) in
               nodes := create_node ifam sp gen Spouse conf.Geneweb.Config.command sp_factor :: !nodes;
               edges := create_edge p_factor conf.Geneweb.Config.command p sp_factor conf.Geneweb.Config.command sp :: !edges;
               if gen <> max_gen then begin

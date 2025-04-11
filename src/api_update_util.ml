@@ -697,7 +697,7 @@ let pers_to_piqi_person_search_info conf base p =
           | None -> None
         in
         let witnesses =
-          Mutil.array_to_list_map
+          Ext_array.to_list_map
             (fun (ip, wk, wnote) ->
               let witness_type = Api_util.piqi_of_witness_kind wk in
                let witness = pers_to_piqi_simple_person conf base @@ Gwdb.poi base ip in
@@ -1076,7 +1076,7 @@ let pers_to_piqi_mod_person conf base p =
          let note = Gwdb.sou base (Gwdb.get_pevent_note evt) in
          let src = Gwdb.sou base (Gwdb.get_pevent_src evt) in
          let witnesses =
-           Mutil.array_to_list_map
+           Ext_array.to_list_map
              (fun (ip, wk, wnote) ->
                 let witness_type = Api_util.piqi_of_witness_kind wk in
                 let p = Gwdb.poi base ip in
@@ -1244,7 +1244,7 @@ let pers_to_piqi_mod_person conf base p =
     | None -> None
   in
   let families =
-    Mutil.array_to_list_map (fun x -> Int32.of_string @@ Gwdb.string_of_ifam x) (Gwdb.get_family p)
+    Ext_array.to_list_map (fun x -> Int32.of_string @@ Gwdb.string_of_ifam x) (Gwdb.get_family p)
   in
   let is_contemporary = Geneweb.GWPARAM.is_contemporary conf base p in
   {
@@ -1309,7 +1309,7 @@ let fam_to_piqi_mod_family conf base ifam fam =
          let note = Gwdb.sou base (Gwdb.get_fevent_note evt) in
          let src = Gwdb.sou base (Gwdb.get_fevent_src evt) in
          let witnesses =
-           Mutil.array_to_list_map
+           Ext_array.to_list_map
              (fun (ip, wk, wnote) ->
                 let witness_type = Api_util.piqi_of_witness_kind wk in
                 let p = Gwdb.poi base ip in
@@ -1343,13 +1343,13 @@ let fam_to_piqi_mod_family conf base ifam fam =
   let mother = Gwdb.poi base (Gwdb.get_mother fam) in
   let mother = pers_to_piqi_mod_person conf base mother in
   let children =
-    Mutil.array_to_list_map
+    Ext_array.to_list_map
       (fun ip -> pers_to_piqi_person_link conf base @@ Gwdb.poi base ip)
       (Gwdb.get_children fam)
   in
   (* Compatibilité avec GeneWeb. *)
   let old_witnesses =
-    Mutil.array_to_list_map (fun x -> Int32.of_string @@ Gwdb.string_of_iper x) (Gwdb.get_witnesses fam)
+    Ext_array.to_list_map (fun x -> Int32.of_string @@ Gwdb.string_of_iper x) (Gwdb.get_witnesses fam)
   in
   {
     Api_saisie_write_piqi.Family.digest = digest;
