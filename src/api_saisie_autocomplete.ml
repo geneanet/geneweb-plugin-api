@@ -51,12 +51,14 @@ let add_sources_of_person base filter l person =
   let l = add_if_valid base filter (Gwdb.get_death_src person) l in
   let l = add_if_valid base filter (Gwdb.get_baptism_src person) l in
   let l = add_if_valid base filter (Gwdb.get_burial_src person) l in
+  let l = add_if_valid base filter (Gwdb.get_psources person) l in
   List.fold_left (fun l pe ->
       add_if_valid base filter (Gwdb.get_pevent_src pe) l
     ) l (Gwdb.get_pevents person)
 
 let add_sources_of_family base filter l family =
   let l = add_if_valid base filter (Gwdb.get_marriage_src family) l in
+  let l = add_if_valid base filter (Gwdb.get_fsources family) l in
   List.fold_left (fun l fe ->
       add_if_valid base filter (Gwdb.get_fevent_src fe) l
     ) l (Gwdb.get_fevents family)
