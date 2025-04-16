@@ -587,12 +587,12 @@ let empty_piqi_person conf ref_person =
 let spouse_to_piqi_spouse conf base p fam compute_sosa =
   let gen_p = Geneweb.Util.string_gen_person base (Gwdb.gen_person_of_person p) in
   let gen_p = Futil.map_person_ps Fun.id Utf8.normalize gen_p in
-  let p_auth = Geneweb.Util.authorized_age conf base p in
+  let p_auth = Geneweb.Person.is_visible conf base p in
   let ifath = Gwdb.get_father fam in
   let imoth = Gwdb.get_mother fam in
   let m_auth =
-    Geneweb.Util.authorized_age conf base (Geneweb.Util.pget conf base ifath) &&
-    Geneweb.Util.authorized_age conf base (Geneweb.Util.pget conf base imoth)
+    Geneweb.Person.is_visible conf base (Geneweb.Util.pget conf base ifath) &&
+    Geneweb.Person.is_visible conf base (Geneweb.Util.pget conf base imoth)
   in
   let sosa_p = Sosa.to_string (compute_sosa p) in
   let sex =
@@ -730,7 +730,7 @@ let spouse_to_piqi_spouse conf base p fam compute_sosa =
 let pers_to_piqi_person_light conf base p compute_sosa =
   let gen_p = Geneweb.Util.string_gen_person base (Gwdb.gen_person_of_person p) in
   let gen_p = Futil.map_person_ps Fun.id Utf8.normalize gen_p in
-  let p_auth = Geneweb.Util.authorized_age conf base p in
+  let p_auth = Geneweb.Person.is_visible conf base p in
   let sosa_p = Sosa.to_string (compute_sosa p) in
   let sex =
     match gen_p.sex with
@@ -852,7 +852,7 @@ let pers_to_piqi_person_light conf base p compute_sosa =
     descend = descend;
     visible_for_visitors = get_visibility conf base p;
     baseprefix = baseprefix;
-    is_contemporary = Geneweb.GWPARAM.is_contemporary conf base p;
+    is_contemporary = Geneweb.Person.is_contemporary conf base p;
     name_is_hidden = Geneweb.NameDisplay.is_hidden conf base p;
     name_is_restricted = Geneweb.NameDisplay.is_restricted conf base p;
   }
@@ -878,7 +878,7 @@ let pers_to_piqi_person_light conf base p compute_sosa =
 let pers_to_piqi_person_full conf base p compute_sosa =
   let gen_p = Geneweb.Util.string_gen_person base (Gwdb.gen_person_of_person p) in
   let gen_p = Futil.map_person_ps Fun.id Utf8.normalize gen_p in
-  let p_auth = Geneweb.Util.authorized_age conf base p in
+  let p_auth = Geneweb.Person.is_visible conf base p in
   let sosa_p = Sosa.to_string (compute_sosa p) in
   let sex =
     match gen_p.sex with
@@ -1063,7 +1063,7 @@ let pers_to_piqi_person_full conf base p compute_sosa =
     parents = parents;
     families = families;
     baseprefix = baseprefix;
-    is_contemporary = Geneweb.GWPARAM.is_contemporary conf base p;
+    is_contemporary = Geneweb.Person.is_contemporary conf base p;
     name_is_hidden = Geneweb.NameDisplay.is_hidden conf base p;
     name_is_restricted = Geneweb.NameDisplay.is_restricted conf base p;
   }
@@ -1093,8 +1093,8 @@ let fam_to_piqi_family conf base ifam =
   let ifath = Gwdb.get_father fam in
   let imoth = Gwdb.get_mother fam in
   let m_auth =
-    Geneweb.Util.authorized_age conf base (Geneweb.Util.pget conf base ifath) &&
-    Geneweb.Util.authorized_age conf base (Geneweb.Util.pget conf base imoth)
+    Geneweb.Person.is_visible conf base (Geneweb.Util.pget conf base ifath) &&
+    Geneweb.Person.is_visible conf base (Geneweb.Util.pget conf base imoth)
   in
   let index = Int32.of_string @@ Gwdb.string_of_ifam ifam in
   let fsources =
