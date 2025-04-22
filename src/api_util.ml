@@ -28,7 +28,7 @@ let compute_sosa conf base person =
 let ht_img = Hashtbl.create 5003
 
 let load_image_ht conf =
-  let dir_img = Geneweb.Util.base_path ["images"] conf.Geneweb.Config.bname in
+  let dir_img = Geneweb.GWPARAM.base_path ["images"] conf.Geneweb.Config.bname in
   let images =
     if Sys.file_exists dir_img then Sys.readdir dir_img
     else [||]
@@ -1017,7 +1017,7 @@ let pers_to_piqi_person_full conf base p compute_sosa =
       gen_p.rparents
   in
   let families =
-    Mutil.array_to_list_map (fun x -> Int32.of_string @@ Gwdb.string_of_ifam x) (Gwdb.get_family p)
+    Ext_array.to_list_map (fun x -> Int32.of_string @@ Gwdb.string_of_ifam x) (Gwdb.get_family p)
   in
   let parents =
     match Gwdb.get_parents p with

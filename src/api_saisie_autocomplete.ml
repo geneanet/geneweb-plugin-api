@@ -8,7 +8,7 @@ let cache_file_of_cache_data base_file = function
   | `occupation -> Caches.occupation_cache_fname base_file
 
 let has_cache ~conf ~mode =
-  let base_file = Geneweb.Util.bpath (conf.Geneweb.Config.bname ^ ".gwb") in
+  let base_file = Geneweb.GWPARAM.bpath (conf.Geneweb.Config.bname ^ ".gwb") in
   let file = cache_file_of_cache_data base_file mode in
   Sys.file_exists file
 
@@ -103,7 +103,7 @@ let complete_with_patch mode base filter data =
   complete_with_families_patch mode base filter data
 
 let get_list_from_cache ~conf ~base ~mode ~place_mode ~n ~ini =
-  let bfile = Geneweb.Util.bpath (conf.Geneweb.Config.bname ^ ".gwb") in
+  let bfile = Geneweb.GWPARAM.bpath (conf.Geneweb.Config.bname ^ ".gwb") in
   let cache_file = cache_file_of_cache_data bfile mode in
   let cache =
     let ic = Secure.open_in_bin cache_file in

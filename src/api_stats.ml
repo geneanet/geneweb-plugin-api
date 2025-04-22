@@ -208,7 +208,7 @@ let format_stats_m_f2 l1 l2 title series1 series2 =
       l2
   in
   let datas =
-    Mutil.array_to_list_map
+    Ext_array.to_list_map
       (fun s -> Mstats.Data_l.({data = Array.to_list s;}))
       data
   in
@@ -259,7 +259,7 @@ let format_stats_dmy l title series =
   in
   let () = loop 0 labels in
   let datas =
-    Mutil.array_to_list_map
+    Ext_array.to_list_map
       (fun s -> Mstats.Data_l.({data = Array.to_list s;}))
       data
   in
