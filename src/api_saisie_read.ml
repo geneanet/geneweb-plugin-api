@@ -47,7 +47,7 @@ let partial_short_dates_text conf birth_date death_date p =
   | (_, _) -> ""
 
 let short_dates_text conf base p =
-  if Geneweb.Util.authorized_age conf base p then
+  if Geneweb.Person.is_visible conf base p then
     let (birth_date, death_date, _) = Gutil.get_birth_death_date p in
     match (birth_date, death_date) with
     | (Some (Date.Dgreg (b, _)), Some (Date.Dgreg (d, _))) ->
@@ -284,7 +284,7 @@ let pers_to_piqi_person_tree
       name_is_restricted = Geneweb.NameDisplay.is_restricted conf base p;
     }
   else
-    let p_auth = Geneweb.Util.authorized_age conf base p in
+    let p_auth = Geneweb.Person.is_visible conf base p in
     let index = Int32.of_string @@ Gwdb.string_of_iper (Gwdb.get_iper p) in
     let sex =
       match Gwdb.get_sex p with
@@ -427,7 +427,7 @@ let pers_to_piqi_simple_person
     restricted_person.Api_saisie_read_piqi.Simple_person.visible_for_visitors <- `visibility_private;
     restricted_person
   else
-    let p_auth = Geneweb.Util.authorized_age conf base p in
+    let p_auth = Geneweb.Person.is_visible conf base p in
     let index = Int32.of_string @@ Gwdb.string_of_iper (Gwdb.get_iper p) in
     let sex =
       match Gwdb.get_sex p with
@@ -536,7 +536,7 @@ let pers_to_piqi_simple_person
       has_parent = has_parent;
       has_spouse = has_spouse;
       has_child = has_child;
-      is_contemporary = Geneweb.GWPARAM.is_contemporary conf base p;
+      is_contemporary = Geneweb.Person.is_contemporary conf base p;
       name_is_hidden = Geneweb.NameDisplay.is_hidden conf base p;
       name_is_restricted = Geneweb.NameDisplay.is_restricted conf base p;
     }
@@ -814,10 +814,10 @@ let get_family_piqi base conf ifam p base_prefix spouse_to_piqi witnesses_to_piq
   let spouse = spouse_to_piqi conf base sp base_prefix in
   let ifath = Gwdb.get_father fam in
   let imoth = Gwdb.get_mother fam in
-  let p_auth = Geneweb.Util.authorized_age conf base p in
+  let p_auth = Geneweb.Person.is_visible conf base p in
   let m_auth =
-    Geneweb.Util.authorized_age conf base (Geneweb.Util.pget conf base ifath) &&
-    Geneweb.Util.authorized_age conf base (Geneweb.Util.pget conf base imoth)
+    Geneweb.Person.is_visible conf base (Geneweb.Util.pget conf base ifath) &&
+    Geneweb.Person.is_visible conf base (Geneweb.Util.pget conf base imoth)
   in
   let gen_f = Geneweb.Util.string_gen_family base (Gwdb.gen_family_of_family fam) in
   let gen_f = Futil.map_family_ps Fun.id Fun.id Utf8.normalize gen_f in
@@ -1482,7 +1482,7 @@ let pers_to_piqi_person
   if Geneweb.Util.is_restricted conf base (Gwdb.get_iper p) then
     get_restricted_person ()
   else
-    let p_auth = Geneweb.Util.authorized_age conf base p in
+    let p_auth = Geneweb.Person.is_visible conf base p in
     let gen_p = Geneweb.Util.string_gen_person base (Gwdb.gen_person_of_person p) in
     let gen_p = Futil.map_person_ps Fun.id Utf8.normalize gen_p in
     let (baptism_date, _, baptism_date_conv, _, baptism_cal) = fill_baptism conf p_auth gen_p in
@@ -1580,7 +1580,7 @@ let pers_to_piqi_person
         Api_util.Paginated_data.Piqi.to_witnessed_events events_witnesses;
       baseprefix = base_prefix;
       fiche_person_person = None;
-      is_contemporary = Geneweb.GWPARAM.is_contemporary conf base p;
+      is_contemporary = Geneweb.Person.is_contemporary conf base p;
       name_is_hidden = Geneweb.NameDisplay.is_hidden conf base p;
       name_is_restricted = Geneweb.NameDisplay.is_restricted conf base p;
     }
@@ -1615,7 +1615,7 @@ let rec pers_to_piqi_fiche_person
     get_restricted_fiche_person ()
   else
     begin
-      let p_auth = Geneweb.Util.authorized_age conf base p in
+      let p_auth = Geneweb.Person.is_visible conf base p in
       let gen_p = Geneweb.Util.string_gen_person base (Gwdb.gen_person_of_person p) in
       let gen_p = Futil.map_person_ps Fun.id Utf8.normalize gen_p in
       (* Sources only returned for the main person. *)
@@ -1673,7 +1673,7 @@ let rec pers_to_piqi_fiche_person
           piqi_fiche_person.Api_saisie_read_piqi.Fiche_person.events_witnesses <- if is_main_person then (get_events_witnesses conf base p base_prefix p_auth pers_to_piqi_fiche_person_only fiche_event_witness_constructor).elements else [];
         if not no_event then
           piqi_fiche_person.Api_saisie_read_piqi.Fiche_person.events <- fill_events_if_is_main_person conf base p base_prefix p_auth is_main_person pers_to_piqi_fiche_person_only fiche_witness_constructor fiche_event_constructor;
-        piqi_fiche_person.Api_saisie_read_piqi.Fiche_person.is_contemporary <- Geneweb.GWPARAM.is_contemporary conf base p;
+        piqi_fiche_person.Api_saisie_read_piqi.Fiche_person.is_contemporary <- Geneweb.Person.is_contemporary conf base p;
         piqi_fiche_person
       in
       let events =
@@ -1758,7 +1758,7 @@ let rec pers_to_piqi_fiche_person
         related = if return_simple_attributes then get_related_piqi conf base p base_prefix pers_to_piqi_simple_person simple_relation_person_constructor else [];
         rparents = if return_simple_attributes then get_rparents_piqi base conf base_prefix gen_p pers_to_piqi_simple_person simple_relation_person_constructor else [];
         baseprefix = base_prefix;
-        is_contemporary = Geneweb.GWPARAM.is_contemporary conf base p;
+        is_contemporary = Geneweb.Person.is_contemporary conf base p;
         name_is_hidden = Geneweb.NameDisplay.is_hidden conf base p;
         name_is_restricted = Geneweb.NameDisplay.is_restricted conf base p;
       }
@@ -1893,7 +1893,7 @@ let print_from_identifier_person
             match Gwdb.person_of_key base fn sn (Int32.to_int oc) with
             | Some ip ->
               let p = Gwdb.poi base ip in
-              if Geneweb.Util.is_empty_person p || ((Geneweb.Util.is_hide_names conf p) && not(Geneweb.Util.authorized_age conf base p)) then
+              if Geneweb.Person.is_empty p || ((Geneweb.Util.is_hide_names conf p) && not(Geneweb.Person.is_visible conf base p)) then
                 Api_util.print_error conf `not_found ""
               else
                 (if identifier_person.Api_saisie_read_piqi.Identifier_person.track_visit
@@ -2328,7 +2328,7 @@ let get_paginated_data ~conf ~base params =
     |> Gwdb.iper_of_string
     |> Gwdb.poi base
   in
-  let person_is_visible = Geneweb.Util.authorized_age conf base person in
+  let person_is_visible = Geneweb.Person.is_visible conf base person in
   match params.Api_saisie_read_piqi.Paginated_data_parameters.type_ with
   | `personal_event ->
      let events =

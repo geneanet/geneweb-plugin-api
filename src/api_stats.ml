@@ -822,7 +822,7 @@ let print_ind_stats conf base =
         List.iter
           (fun ip ->
             let p = poi base ip in
-            let p_auth = Util.authorized_age conf base p in
+            let p_auth = Person.is_visible conf base p in
             if p_auth then
               let s = sou base (proj p) in
               let sl =
@@ -889,7 +889,7 @@ let print_ind_stats conf base =
         List.iter
           (fun ip ->
             let p = poi base ip in
-            let p_auth = Util.authorized_age conf base p in
+            let p_auth = Person.is_visible conf base p in
             if p_auth then
               begin
                 let s = sou base (proj p) in
@@ -1060,7 +1060,7 @@ let print_all_stats conf base =
 
   Gwdb.Collection.iter begin fun p ->
 
-    if Util.authorized_age conf base p then begin
+    if Person.is_visible conf base p then begin
 
       begin (* Count surnames *)
         let s = sou base @@ get_surname p in
@@ -1153,7 +1153,7 @@ let print_all_stats conf base =
                 else begin
                   let ifam = Array.unsafe_get fams i in
                   let fam = foi base ifam in
-                  if not @@ Util.authorized_age conf base (poi base (Gutil.spouse (get_iper p) fam))
+                  if not @@ Person.is_visible conf base (poi base (Gutil.spouse (get_iper p) fam))
                   then loop (i + 1)
                   else begin match Date.od_of_cdate (get_marriage fam) with
                     | Some (Dgreg ({ prec = Sure } as dmy, _)) ->
@@ -1236,8 +1236,8 @@ let print_all_stats conf base =
   Gwdb.Collection.iter begin fun fam ->
     let f = poi base (get_father fam) in
     let m = poi base (get_mother fam) in
-    if Util.authorized_age conf base f
-    && Util.authorized_age conf base m
+    if Person.is_visible conf base f
+    && Person.is_visible conf base m
     then begin match Date.od_of_cdate (get_marriage fam) with
       | Some (Dgreg ({ prec = Sure } as dmy, _) as d) -> begin
 
@@ -1307,8 +1307,8 @@ let print_all_stats conf base =
               if i < len - 1 then begin
                 let c1 = poi base (Array.unsafe_get children i) in
                 let c2 = poi base (Array.unsafe_get children @@ i + 1) in
-                if Util.authorized_age conf base c1
-                && Util.authorized_age conf base c2
+                if Person.is_visible conf base c1
+                && Person.is_visible conf base c2
                 then begin match
                     ( Gutil.get_birth_death_date c1
                     , Gutil.get_birth_death_date c2 )
@@ -1328,7 +1328,7 @@ let print_all_stats conf base =
 
           let aux_age_at_birth ht ic =
               let c = poi base ic in
-              if Util.authorized_age conf base c then
+              if Person.is_visible conf base c then
                 match Gutil.get_birth_death_date c with
                 | (Some (Dgreg (({ prec = Sure } as dmy_c), _)), _, _) ->
                   let aux p = match Gutil.get_birth_death_date p with
@@ -1356,8 +1356,8 @@ let print_all_stats conf base =
           if len > 1 then begin
             let c1 = poi base @@ Array.unsafe_get children 0 in
             let c2 = poi base @@ Array.unsafe_get children @@ len - 1 in
-            if Util.authorized_age conf base c1
-            && Util.authorized_age conf base c2
+            if Person.is_visible conf base c1
+            && Person.is_visible conf base c2
             then match (Gutil.get_birth_death_date c1, Gutil.get_birth_death_date c2) with
               | ( (Some (Dgreg (({prec = Sure} as dmy1), _)), _, _)
                 , (Some (Dgreg (({prec = Sure} as dmy2), _)), _, _) ) ->

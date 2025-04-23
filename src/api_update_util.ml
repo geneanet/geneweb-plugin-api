@@ -872,12 +872,12 @@ let pers_to_piqi_person_search_info conf base p =
          let imoth = Gwdb.get_mother fam in
          let father = Gwdb.poi base ifath in
          let mother = Gwdb.poi base imoth in
-         let father_auth = Geneweb.Util.authorized_age conf base father in
+         let father_auth = Geneweb.Person.is_visible conf base father in
          let husband =
            if not father_auth && (Geneweb.Util.is_hide_names conf father) then "x x"
            else Gwdb.p_first_name base father ^ " " ^ Gwdb.p_surname base father
          in
-         let mother_auth = Geneweb.Util.authorized_age conf base mother in
+         let mother_auth = Geneweb.Person.is_visible conf base mother in
          let wife =
            if not mother_auth && (Geneweb.Util.is_hide_names conf mother) then "x x"
            else Gwdb.p_first_name base mother ^ " " ^ Gwdb.p_surname base mother
@@ -1246,7 +1246,7 @@ let pers_to_piqi_mod_person conf base p =
   let families =
     Ext_array.to_list_map (fun x -> Int32.of_string @@ Gwdb.string_of_ifam x) (Gwdb.get_family p)
   in
-  let is_contemporary = Geneweb.GWPARAM.is_contemporary conf base p in
+  let is_contemporary = Geneweb.Person.is_contemporary conf base p in
   {
     Api_saisie_write_piqi.Person.digest = digest;
     index = index;

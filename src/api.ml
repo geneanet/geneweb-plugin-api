@@ -130,7 +130,7 @@ let print_first_available_person conf base =
   let res = ref empty_ref in
   Gwdb.Collection.fold_until (fun () -> !continue) begin fun () p ->
     if Geneweb.Util.is_hide_names conf p || Api_util.is_empty_or_quest_name p ||
-       not (Geneweb.Util.authorized_age conf base p)
+       not (Geneweb.Person.is_visible conf base p)
     then ()
     else
       begin
