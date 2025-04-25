@@ -63,8 +63,7 @@ let pevent_to_warning_event e =
       with _ -> None
   }
 
-let add_warning_to_piqi_warning_list conf base =
-  let _ = conf in
+let add_warning_to_piqi_warning_list base =
   let get_pevent_name e = e.Def.epers_name in
   let get_fevent_name e = e.Def.efam_name in
   let p2wp = Api_util.person_to_warning_person in
