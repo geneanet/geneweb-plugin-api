@@ -263,7 +263,6 @@ let add_warning_to_piqi_warning_list conf base =
                  ; fevents = [ Api_piqi_util.piqi_fevent_name_of_fevent_name (get_fevent_name e1)
                              ; Api_piqi_util.piqi_fevent_name_of_fevent_name (get_fevent_name e2) ]
                  } :: w.warning_event_order }
-      [@warning "-45"]
     | PEventOrder (p, e1, e2) ->
       { w with warning_event_order =
                  Api_piqi.Warning_event_order.{
@@ -272,7 +271,6 @@ let add_warning_to_piqi_warning_list conf base =
                              ; Api_piqi_util.piqi_pevent_name_of_pevent_name (get_pevent_name e2) ]
                  ; fevents = []
                  } :: w.warning_event_order }
-      [@warning "-45"]
     (* Not included in api *)
     | ChangedOrderOfFamilyEvents (_, _, _) -> w
     | ChangedOrderOfPersonEvents (_, _, _) -> w
