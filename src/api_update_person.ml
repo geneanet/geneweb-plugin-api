@@ -281,6 +281,8 @@ let print_add conf base mod_p =
         Api_update_util.UpdateSuccess (wl, [], hr, Some created_person)
   with
   | Geneweb.Update.ModErr s -> Api_update_util.UpdateError s
+  | Gwdb.Not_plain_text s ->
+     Api_update_util.UpdateError (Geneweb.Update.not_plain_text_error s)
   | Api_update_util.ModErrApiConflict c -> Api_update_util.UpdateErrorConflict c
 
 let print_mod_aux conf base no_check_name mod_p callback =
@@ -308,6 +310,8 @@ let print_mod_aux conf base no_check_name mod_p callback =
       Geneweb.Update.error_digest conf
   with
   | Geneweb.Update.ModErr s -> Api_update_util.UpdateError s
+  | Gwdb.Not_plain_text s ->
+     Api_update_util.UpdateError (Geneweb.Update.not_plain_text_error s)
   | Api_update_util.ModErrApiConflict c -> Api_update_util.UpdateErrorConflict c
 
 let print_mod ?(no_check_name = false) ?(fexclude = []) ?(with_history = true) conf base mod_p =
@@ -440,4 +444,6 @@ let print_add_nobase conf mod_p =
     Api_update_util.UpdateSuccess ([], [], [], None)
   with
   | Geneweb.Update.ModErr s -> Api_update_util.UpdateError s
+  | Gwdb.Not_plain_text s ->
+     Api_update_util.UpdateError (Geneweb.Update.not_plain_text_error s)
   | Api_update_util.ModErrApiConflict c -> Api_update_util.UpdateErrorConflict c

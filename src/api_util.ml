@@ -586,7 +586,7 @@ let empty_piqi_person conf ref_person =
 (* ************************************************************************** *)
 let spouse_to_piqi_spouse conf base p fam compute_sosa =
   let gen_p = Geneweb.Util.string_gen_person base (Gwdb.gen_person_of_person p) in
-  let gen_p = Futil.map_person_ps Fun.id Utf8.normalize gen_p in
+  let gen_p = Futil.map_person_ps Fun.id (fun ?format:_ -> Utf8.normalize) gen_p in
   let p_auth = Geneweb.Person.is_visible conf base p in
   let ifath = Gwdb.get_father fam in
   let imoth = Gwdb.get_mother fam in
@@ -729,7 +729,7 @@ let spouse_to_piqi_spouse conf base p fam compute_sosa =
 (* ************************************************************************** *)
 let pers_to_piqi_person_light conf base p compute_sosa =
   let gen_p = Geneweb.Util.string_gen_person base (Gwdb.gen_person_of_person p) in
-  let gen_p = Futil.map_person_ps Fun.id Utf8.normalize gen_p in
+  let gen_p = Futil.map_person_ps Fun.id (fun ?format:_ -> Utf8.normalize) gen_p in
   let p_auth = Geneweb.Person.is_visible conf base p in
   let sosa_p = Sosa.to_string (compute_sosa p) in
   let sex =
@@ -877,7 +877,7 @@ let pers_to_piqi_person_light conf base p compute_sosa =
 (* ************************************************************************** *)
 let pers_to_piqi_person_full conf base p compute_sosa =
   let gen_p = Geneweb.Util.string_gen_person base (Gwdb.gen_person_of_person p) in
-  let gen_p = Futil.map_person_ps Fun.id Utf8.normalize gen_p in
+  let gen_p = Futil.map_person_ps Fun.id (fun ?format:_ -> Utf8.normalize) gen_p in
   let p_auth = Geneweb.Person.is_visible conf base p in
   let sosa_p = Sosa.to_string (compute_sosa p) in
   let sex =
@@ -1089,7 +1089,7 @@ let pers_to_piqi_person conf base p compute_sosa =
 let fam_to_piqi_family conf base ifam =
   let fam = Gwdb.foi base ifam in
   let gen_f = Geneweb.Util.string_gen_family base (Gwdb.gen_family_of_family fam) in
-  let gen_f = Futil.map_family_ps Fun.id Fun.id Utf8.normalize gen_f in
+  let gen_f = Futil.map_family_ps Fun.id Fun.id (fun ?format:_ -> Utf8.normalize) gen_f in
   let ifath = Gwdb.get_father fam in
   let imoth = Gwdb.get_mother fam in
   let m_auth =

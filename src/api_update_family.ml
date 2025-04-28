@@ -403,6 +403,8 @@ let print_add conf base mod_f mod_fath mod_moth =
           end)
   with
   | Geneweb.Update.ModErr s -> None, Api_update_util.UpdateError s
+  | Gwdb.Not_plain_text s ->
+     (None, Api_update_util.UpdateError (Geneweb.Update.not_plain_text_error s))
   | Api_update_util.ModErrApiConflict c -> None, Api_update_util.UpdateErrorConflict c)
 
 
@@ -419,6 +421,8 @@ let print_mod_aux conf base mod_f callback =
           callback sfam scpl sdes
   with
   | Geneweb.Update.ModErr s -> Api_update_util.UpdateError s
+  | Gwdb.Not_plain_text s ->
+     Api_update_util.UpdateError (Geneweb.Update.not_plain_text_error s)
   | Api_update_util.ModErrApiConflict c -> Api_update_util.UpdateErrorConflict c
 
 

@@ -513,7 +513,7 @@ let pers_to_piqi_simple_person
     in
     let gen_p = Geneweb.Util.string_gen_person base (Gwdb.gen_person_of_person p)
     in
-    let gen_p = Futil.map_person_ps Fun.id Utf8.normalize gen_p in
+    let gen_p = Futil.map_person_ps Fun.id (fun ?format:_ -> Utf8.normalize) gen_p in
     {
       Api_saisie_read_piqi.Simple_person.index = index;
       sex = sex;
@@ -601,7 +601,7 @@ let fam_to_piqi_family_link
   let p_auth = true in
   let m_auth = true in
   let gen_f = Geneweb.Util.string_gen_family base (Gwdb.gen_family_of_family fam) in
-  let gen_f = Futil.map_family_ps Fun.id Fun.id Utf8.normalize gen_f in
+  let gen_f = Futil.map_family_ps Fun.id Fun.id (fun ?format:_ -> Utf8.normalize) gen_f in
   let index = Int32.of_string @@ Gwdb.string_of_ifam gen_f.fam_index in
   let (marriage_date, marriage_date_long, marriage_date_conv, marriage_date_conv_long, marriage_cal, marriage_date_raw) =
     match (m_auth, Date.od_of_cdate gen_f.marriage) with
@@ -820,7 +820,7 @@ let get_family_piqi base conf ifam p base_prefix spouse_to_piqi witnesses_to_piq
     Geneweb.Person.is_visible conf base (Geneweb.Util.pget conf base imoth)
   in
   let gen_f = Geneweb.Util.string_gen_family base (Gwdb.gen_family_of_family fam) in
-  let gen_f = Futil.map_family_ps Fun.id Fun.id Utf8.normalize gen_f in
+  let gen_f = Futil.map_family_ps Fun.id Fun.id (fun ?format:_ -> Utf8.normalize) gen_f in
   let index = Int32.of_string @@ Gwdb.string_of_ifam gen_f.fam_index in
   let (marriage_date, marriage_date_long, marriage_date_conv, marriage_date_conv_long, marriage_cal, marriage_date_raw) =
     match (m_auth, Date.od_of_cdate gen_f.marriage) with
@@ -1484,7 +1484,7 @@ let pers_to_piqi_person
   else
     let p_auth = Geneweb.Person.is_visible conf base p in
     let gen_p = Geneweb.Util.string_gen_person base (Gwdb.gen_person_of_person p) in
-    let gen_p = Futil.map_person_ps Fun.id Utf8.normalize gen_p in
+    let gen_p = Futil.map_person_ps Fun.id (fun ?format:_ -> Utf8.normalize) gen_p in
     let (baptism_date, _, baptism_date_conv, _, baptism_cal) = fill_baptism conf p_auth gen_p in
     let (birth_date, _, birth_date_conv, _, birth_cal) = fill_birth conf p_auth gen_p in
     let (burial_date, _, burial_date_conv, _,burial_cal) = fill_burial conf p_auth gen_p in
@@ -1617,7 +1617,7 @@ let rec pers_to_piqi_fiche_person
     begin
       let p_auth = Geneweb.Person.is_visible conf base p in
       let gen_p = Geneweb.Util.string_gen_person base (Gwdb.gen_person_of_person p) in
-      let gen_p = Futil.map_person_ps Fun.id Utf8.normalize gen_p in
+      let gen_p = Futil.map_person_ps Fun.id (fun ?format:_ -> Utf8.normalize) gen_p in
       (* Sources only returned for the main person. *)
       let psources = if is_main_person then fill_sources conf base p_auth gen_p is_main_person else "" in
       let birth_src = if is_main_person then fill_birth_src conf base p_auth gen_p else "" in
