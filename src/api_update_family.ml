@@ -367,7 +367,6 @@ let print_add conf base mod_f mod_fath mod_moth =
             in
             (* TODO *)
             let (changed, act) =
-              let fam = Geneweb.Util.string_gen_family base fam in
               let (ip, act) =
                 match Geneweb.Util.p_getenv conf.env "ip" with
                 | Some i ->
@@ -383,16 +382,10 @@ let print_add conf base mod_f mod_fath mod_moth =
               in
               match act with
               | "af" ->
-                  let gen_p =
-                    Geneweb.Util.string_gen_person
-                      base (Gwdb.gen_person_of_person (Gwdb.poi base ip))
-                  in
+                  let gen_p = Gwdb.gen_person_of_person (Gwdb.poi base ip) in
                   (Def.U_Add_family (gen_p, fam), "af")
               | _ ->
-                  let gen_p =
-                    Geneweb.Util.string_gen_person
-                      base (Gwdb.gen_person_of_person (Gwdb.poi base ip))
-                  in
+                  let gen_p = Gwdb.gen_person_of_person (Gwdb.poi base ip) in
                   (Def.U_Add_parent (gen_p, fam), "aa")
             in
             let hr =
@@ -428,10 +421,7 @@ let print_mod_aux conf base mod_f callback =
 
 let print_mod conf base ip mod_f =
   let ifam = Gwdb.ifam_of_string @@ Int32.to_string mod_f.Api_saisie_write_piqi.Family.index in
-  let o_f =
-    Geneweb.Util.string_gen_family
-      base (Gwdb.gen_family_of_family (Gwdb.foi base ifam))
-  in
+  let o_f = Gwdb.gen_family_of_family (Gwdb.foi base ifam) in
   let callback sfam scpl sdes =
     begin
       let ofs = Geneweb.UpdateFamOk.family_structure base sfam.Def.fam_index in
@@ -460,12 +450,8 @@ let print_mod conf base ip mod_f =
           conf base ifam fam cpl des (scpl, sdes, onfs)
       in
       let changed =
-        let p =
-          Geneweb.Util.string_gen_person
-            base (Gwdb.gen_person_of_person (Gwdb.poi base ip))
-        in
-        let n_f = Geneweb.Util.string_gen_family base fam in
-        Def.U_Modify_family (p, o_f, n_f)
+        let p = Gwdb.gen_person_of_person (Gwdb.poi base ip) in
+        Def.U_Modify_family (p, o_f, fam)
       in
       let hr =
         [(fun () -> Geneweb.History.record conf base changed "mf");
