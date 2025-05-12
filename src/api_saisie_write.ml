@@ -1621,7 +1621,7 @@ let do_mod_fam_add_child_aux conf base name ip mod_c mod_f fn =
               | Api_update_util.UpdateSuccess (wl, ml, hr, cp) ->
                 if child_is_created then
                   let child_p = Gwdb.gen_person_of_person (Gwdb.poi base ip_child) in
-                  let changed = Def.U_Add_person (Geneweb.Util.string_gen_person base child_p) in
+                  let changed = Def.U_Add_person child_p in
                   let action = "ap" in
                   let child_hr = fun () ->
                     Geneweb.History.record conf base changed action

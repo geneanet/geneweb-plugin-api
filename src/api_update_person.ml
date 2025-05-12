@@ -275,7 +275,7 @@ let print_add conf base mod_p =
         let (p, a) = Geneweb.UpdateIndOk.effective_add conf base (sp : ('a, string * string * int * Geneweb.Update.create * string, string) Def.gen_person) in
         let u = {Def.family = Gwdb.get_family (Gwdb.poi base p.key_index)} in
         let wl = Geneweb.UpdateIndOk.all_checks_person base p a u in
-        let changed = Def.U_Add_person (Geneweb.Util.string_gen_person base p) in
+        let changed = Def.U_Add_person p in
         let hr = [(fun () -> Geneweb.History.record conf base changed "ap")] in
         let created_person = Api_update_util.created_person_of_person base p in
         Api_update_util.UpdateSuccess (wl, [], hr, Some created_person)
@@ -316,9 +316,7 @@ let print_mod_aux conf base no_check_name mod_p callback =
 
 let print_mod ?(no_check_name = false) ?(fexclude = []) ?(with_history = true) conf base mod_p =
   let ip = Gwdb.iper_of_string @@ Int32.to_string mod_p.Api_saisie_write_piqi.Person.index in
-  let o_p =
-    Geneweb.Util.string_gen_person base (Gwdb.gen_person_of_person (Gwdb.poi base ip))
-  in
+  let o_p = Gwdb.gen_person_of_person (Gwdb.poi base ip) in
   let callback p =
     begin
       let p =
@@ -360,10 +358,10 @@ let print_mod ?(no_check_name = false) ?(fexclude = []) ?(with_history = true) c
       in
       let changed, action = match mod_p.Api_saisie_write_piqi.Person.create_link with
         | `link ->
-          Def.U_Modify_person (o_p, (Geneweb.Util.string_gen_person base p)), "mp"
+          Def.U_Modify_person (o_p, p), "mp"
         | `create
         | `create_default_occ ->
-          Def.U_Add_person (Geneweb.Util.string_gen_person base p), "ap"
+          Def.U_Add_person p, "ap"
       in
       let hr =
         [(fun () ->
