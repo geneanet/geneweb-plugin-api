@@ -489,7 +489,7 @@ let print_base_warnings conf base =
       let result =
         (* Make the warning list uniq *)
         List.fold_left begin fun acc (x : Geneweb.Warning.base_warning) ->
-          Api_warnings.add_warning_to_piqi_warning_list conf base acc x
+          Api_warnings.add_warning_to_piqi_warning_list base acc x
         end result warnings
       in
       Api_piqi_ext.gen_base_warnings result
@@ -500,7 +500,7 @@ let person_warnings conf base p =
   let ws = Geneweb.CheckItem.person_warnings conf base p in
   if List.length ws < 100 then
     List.fold_left begin fun acc x ->
-      Api_warnings.add_warning_to_piqi_warning_list conf base acc x
+      Api_warnings.add_warning_to_piqi_warning_list base acc x
     end Api_warnings.empty ws
   else Api_warnings.empty
 

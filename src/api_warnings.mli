@@ -1,7 +1,6 @@
 val empty : Api_piqi.Base_warnings.t
 
 val add_warning_to_piqi_warning_list :
-  _ ->
   Gwdb.base ->
   Api_piqi.base_warnings ->
   Geneweb.Warning.base_warning ->
