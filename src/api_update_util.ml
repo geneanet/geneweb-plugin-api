@@ -1271,9 +1271,6 @@ let pers_to_piqi_mod_person conf base p =
     parents = parents;
     families = families;
     create_link = create_link;
-    is_contemporary = None;
-    name_is_hidden = None;
-    name_is_restricted = None;
   }
 
 let fam_to_piqi_mod_family conf base ifam fam =
