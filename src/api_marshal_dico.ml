@@ -1,5 +1,3 @@
-module StrSet = Set.Make (String)
-
 let escape_dquote s =
   String.split_on_char '"' s
   |> String.concat "\\\""
@@ -15,7 +13,7 @@ let build_line =
 
 let add_opt l set = match l with
   | x :: _ when x <> "" ->
-     StrSet.add (build_line l) set
+     Ext_string.Set.add (build_line l) set
   | _ -> set
 
 let generate assets lang data_type data =
@@ -30,7 +28,7 @@ let generate assets lang data_type data =
      close_out oc
 
 let sorted_array_of_set s =
-  let a = StrSet.elements s |> Array.of_list in
+  let a = Ext_string.Set.elements s |> Array.of_list in
   Array.sort Utf8.alphabetic_order a ;
   a
 
@@ -42,25 +40,25 @@ module PlacesData : sig
   val add_county : t -> string list -> t
   val add_region : t -> string list -> t
   val add_country : t -> string list -> t
-  val get_towns : t -> StrSet.t
-  val get_area_codes : t -> StrSet.t
-  val get_counties : t -> StrSet.t
-  val get_regions : t -> StrSet.t
-  val get_countries : t -> StrSet.t
+  val get_towns : t -> Ext_string.Set.t
+  val get_area_codes : t -> Ext_string.Set.t
+  val get_counties : t -> Ext_string.Set.t
+  val get_regions : t -> Ext_string.Set.t
+  val get_countries : t -> Ext_string.Set.t
 end = struct
   type t = {
-    towns : StrSet.t;
-    area_codes : StrSet.t;
-    counties : StrSet.t;
-    regions : StrSet.t;
-    countries : StrSet.t;
+    towns : Ext_string.Set.t;
+    area_codes : Ext_string.Set.t;
+    counties : Ext_string.Set.t;
+    regions : Ext_string.Set.t;
+    countries : Ext_string.Set.t;
   }
   let empty = {
-    towns = StrSet.empty;
-    area_codes = StrSet.empty;
-    counties = StrSet.empty;
-    regions = StrSet.empty;
-    countries = StrSet.empty;
+    towns = Ext_string.Set.empty;
+    area_codes = Ext_string.Set.empty;
+    counties = Ext_string.Set.empty;
+    regions = Ext_string.Set.empty;
+    countries = Ext_string.Set.empty;
   }
   let add_town t town =
     let towns = add_opt town t.towns in
@@ -129,11 +127,11 @@ let write_dico_profession_set ~assets ~fname_csv ~lang =
   let professions_set = Api_csv.fold_left (fun set ->
       function
       | [profession] ->
-        StrSet.add (Utf8.capitalize_fst profession) set
+        Ext_string.Set.add (Utf8.capitalize_fst profession) set
       | l ->
         malformed_line fname_csv l;
         set
-    ) StrSet.empty csv
+    ) Ext_string.Set.empty csv
   in
   generate assets lang `profession
     (sorted_array_of_set professions_set)
