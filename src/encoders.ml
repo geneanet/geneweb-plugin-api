@@ -158,6 +158,18 @@ module Api_saisie_read = struct
     encode Translate.Api_saisie_read.PiqiToProtoc.nb_ancestors
       Api_saisie_read_protoc.encode_pb_nb_ancestors
       Api_saisie_read_protoc.encode_json_nb_ancestors
+
+  let encode_paginated_personal_events =
+    encode
+      Translate.Api_saisie_read.PiqiToProtoc.paginated_personal_events
+      Api_saisie_read_protoc.encode_pb_paginated_personal_events
+      Api_saisie_read_protoc.encode_json_paginated_personal_events
+
+  let encode_paginated_witnessed_events =
+    encode
+      Translate.Api_saisie_read.PiqiToProtoc.paginated_witnessed_events
+      Api_saisie_read_protoc.encode_pb_paginated_witnessed_events
+      Api_saisie_read_protoc.encode_json_paginated_witnessed_events
 end
 
 let encode_int32 i = function

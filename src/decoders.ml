@@ -179,4 +179,9 @@ module Api_saisie_read = struct
     decode Translate.Api_saisie_read.ProtocToPiqi.identifier_person
       Api_saisie_read_protoc.decode_pb_identifier_person
       Api_saisie_read_protoc.decode_json_identifier_person
+
+  let decode_paginated_data_parameters =
+    decode Translate.Api_saisie_read.ProtocToPiqi.paginated_data_parameters
+      Api_saisie_read_protoc.decode_pb_paginated_data_parameters
+      Api_saisie_read_protoc.decode_json_paginated_data_parameters
 end

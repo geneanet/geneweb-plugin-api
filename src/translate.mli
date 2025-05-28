@@ -212,6 +212,14 @@ module Api_saisie_read : sig
 
     val nb_ancestors :
       Api_saisie_read_piqi.nb_ancestors -> Api_saisie_read_protoc.nb_ancestors
+
+    val paginated_personal_events :
+      Api_saisie_read_piqi.paginated_personal_events ->
+      Api_saisie_read_protoc.paginated_personal_events
+
+    val paginated_witnessed_events :
+      Api_saisie_read_piqi.paginated_witnessed_events ->
+      Api_saisie_read_protoc.paginated_witnessed_events
   end
 
   module ProtocToPiqi : sig
@@ -229,5 +237,9 @@ module Api_saisie_read : sig
     val identifier_person :
       Api_saisie_read_protoc.identifier_person ->
       Api_saisie_read_piqi.identifier_person
+
+    val paginated_data_parameters :
+      Api_saisie_read_protoc.paginated_data_parameters ->
+      Api_saisie_read_piqi.paginated_data_parameters
   end
 end

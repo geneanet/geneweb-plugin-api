@@ -2952,6 +2952,24 @@ module Api_saisie_read = struct
       Api_saisie_read_protoc.(
         ({ event_witness_type; husband; wife; witness_note } : event_witness))
 
+    and translate_paginated_personal_events
+          {Api_saisie_read_piqi.Paginated_personal_events.elements;
+           page_number;
+           total_count} :
+          Api_saisie_read_protoc.paginated_personal_events =
+      {Api_saisie_read_protoc.elements = List.map translate_event elements;
+       page_number;
+       total_count}
+
+    and translate_paginated_witnessed_events
+          {Api_saisie_read_piqi.Paginated_witnessed_events.elements;
+           page_number;
+           total_count} :
+          Api_saisie_read_protoc.paginated_witnessed_events =
+      {Api_saisie_read_protoc.elements = List.map event_witness elements;
+       page_number;
+       total_count}
+
     and fiche_person person_protoc
         Api_saisie_read_piqi.Fiche_person.
           {
@@ -3084,8 +3102,10 @@ module Api_saisie_read = struct
       let mother = Option.map simple_person mother in
       let families = List.map translate_family families in
       let sosa = translate_sosa sosa in
-      let events = List.map translate_event events in
-      let events_witnesses = List.map event_witness events_witnesses in
+      let events = translate_paginated_personal_events events in
+      let events_witnesses =
+        translate_paginated_witnessed_events events_witnesses
+      in
       let person =
         Api_saisie_read_protoc.(
           ({
@@ -3135,8 +3155,8 @@ module Api_saisie_read = struct
              mother;
              families;
              sosa;
-             events;
-             events_witnesses;
+             events = Some events;
+             events_witnesses = Some events_witnesses;
              baseprefix;
              is_contemporary;
              name_is_hidden;
@@ -3251,6 +3271,12 @@ module Api_saisie_read = struct
 
     let nb_ancestors Api_saisie_read_piqi.Nb_ancestors.{ nb } =
       Api_saisie_read_protoc.(({ nb } : nb_ancestors))
+
+    let paginated_personal_events events =
+      translate_paginated_personal_events events
+
+    let paginated_witnessed_events events =
+      translate_paginated_witnessed_events events
   end
 
   module ProtocToPiqi = struct
@@ -3295,5 +3321,21 @@ module Api_saisie_read = struct
           simple_graph_info;
           no_event;
         }
+
+    let page {Api_saisie_read_protoc.number; element_count} =
+      {Api_saisie_read_piqi.Page.number; element_count}
+
+    let paginated_data_type = function
+      | Api_saisie_read_protoc.Personal_event -> `personal_event
+      | Api_saisie_read_protoc.Witnessed_event -> `witnessed_event
+
+    let paginated_data_parameters
+          {Api_saisie_read_protoc.person_id; type_; page = page_} =
+      {Api_saisie_read_piqi.Paginated_data_parameters.person_id;
+       type_ = paginated_data_type type_;
+       page =
+         page
+           (Option.value
+              ~default:(Api_saisie_read_protoc.default_page ()) page_)}
   end
 end

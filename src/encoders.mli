@@ -41,6 +41,10 @@ module Api_saisie_read : sig
   val encode_person : Api_saisie_read_piqi.person t
   val encode_graph_tree : Api_saisie_read_piqi.graph_tree t
   val encode_nb_ancestors : Api_saisie_read_piqi.nb_ancestors t
+  val encode_paginated_personal_events :
+    Api_saisie_read_piqi.paginated_personal_events t
+  val encode_paginated_witnessed_events :
+    Api_saisie_read_piqi.paginated_witnessed_events t
 end
 
 val encode_int32 : int32 t

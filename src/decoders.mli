@@ -51,4 +51,6 @@ module Api_saisie_read : sig
   val decode_index_person : Api_saisie_read_piqi.index_person t
   val decode_fiche_parameters : Api_saisie_read_piqi.fiche_parameters t
   val decode_identifier_person : Api_saisie_read_piqi.identifier_person t
+  val decode_paginated_data_parameters :
+    Api_saisie_read_piqi.paginated_data_parameters t
 end
