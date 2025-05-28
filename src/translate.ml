@@ -2113,9 +2113,9 @@ module Api_saisie_write = struct
 
     let translate_sosa = function
       | Api_saisie_write_protoc.Sosa_ref -> `sosa_ref
-      | Sosa -> `sosa 
+      | Sosa -> `sosa
       | No_sosa  -> `no_sosa
-    
+
     let translate_person_search Api_saisie_write_protoc.(({
         index;
         sex;
