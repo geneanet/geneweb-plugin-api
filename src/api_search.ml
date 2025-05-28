@@ -242,24 +242,19 @@ let select_all base is_surnames ini =
   end (Gwdb.persons base) ;
   !list
 
-module PersonSet = Set.Make (struct
-    type t = Gwdb.person
-    let compare i1 i2 = Stdlib.compare (Gwdb.get_iper i1) (Gwdb.get_iper i2)
-  end)
-
 let print_list conf base filters list =
   let person_l =
-    PersonSet.elements
+    Gwdb.PersonSet.elements
       (List.fold_left
          begin fun acc p ->
            let p = Gwdb.poi base p in
            if Api_util.apply_filters_p conf filters
                (fun person -> Geneweb.Sosa_cache.get_sosa_person ~conf ~base ~person)
                p
-           then PersonSet.add p acc
+           then Gwdb.PersonSet.add p acc
            else acc
          end
-         PersonSet.empty list)
+         Gwdb.PersonSet.empty list)
   in
   let person_l =
     if filters.nb_results then person_l
