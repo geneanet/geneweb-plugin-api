@@ -1467,7 +1467,7 @@ let piqi_empty_family conf base ifam =
     old_witnesses = [];
   }
 
-let reconstitute_somebody base person =
+let reconstitute_somebody ?event ~conf base person =
   let create_link = person.Api_saisie_write_piqi.Person_link.create_link in
   let (fn, sn, occ, create, force_create) = match create_link with
     | `link ->
@@ -1508,7 +1508,40 @@ let reconstitute_somebody base person =
            if occ = 0 then person.Api_saisie_write_piqi.Person_link.occ <- None
            else person.Api_saisie_write_piqi.Person_link.occ <- Some (Int32.of_int occ)
       in
-      (fn, sn, occ, Geneweb.Update.Create (sex, None), force_create)
+      let make_creation_info
+            (`Family {Api_saisie_write_piqi.Fevent.date; witnesses} |
+               `Personal {Api_saisie_write_piqi.Pevent.date; witnesses}) =
+        let existing_witnesses =
+          List.filter_map
+            (fun (witness : Api_saisie_write_piqi.Witness.t) ->
+              Option.bind
+                witness.person
+                (fun (person : Api_saisie_write_piqi.Person_link.t) ->
+                  match person.create_link with
+                  | `create | `create_default_occ -> None
+                  | `link ->
+                     person.index
+                     |> Int32.to_string
+                     |> Gwdb.iper_of_string
+                     |> Option.some))
+            witnesses
+        in
+        let death =
+          Geneweb.Update.infer_witness_death_from_event
+            ~conf
+            ~base
+            ~date:(Option.bind date (date_of_piqi_date conf))
+            ~existing_witnesses
+        in
+        {Geneweb.Update.ci_birth_date = None;
+         ci_birth_place = "";
+         ci_death = death;
+         ci_death_date = None;
+         ci_death_place = "";
+         ci_occupation = "";
+         ci_public = false;}
+      in
+      (fn, sn, occ, Geneweb.Update.Create (sex, Option.map make_creation_info event), force_create)
   in
   let (fn, sn) =
     (* If there are forbidden characters, delete them. *)

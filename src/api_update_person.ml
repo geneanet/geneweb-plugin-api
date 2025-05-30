@@ -200,8 +200,8 @@ let reconstitute_person conf base mod_p
         in
         let (r_fath, r_moth) =
           match person.Api_saisie_write_piqi.Person_link.sex with
-          | `female -> (None, Some (Api_update_util.reconstitute_somebody base person))
-          | `male | `unknown -> (Some (Api_update_util.reconstitute_somebody base person), None)
+          | `female -> (None, Some (Api_update_util.reconstitute_somebody ~conf base person))
+          | `male | `unknown -> (Some (Api_update_util.reconstitute_somebody ~conf base person), None)
         in
         let r_sources =
           match r.Api_saisie_write_piqi.Relation_parent.source with
@@ -222,7 +222,7 @@ let reconstitute_person conf base mod_p
         let wk = Api_util.witness_kind_of_piqi witness.Api_saisie_write_piqi.Witness.witness_type in
         let wnote = witness.Api_saisie_write_piqi.Witness.witness_note in
         let wnote = Option.fold ~none:"" ~some:Fun.id wnote in
-        let wit = (Api_update_util.reconstitute_somebody base person, wk, wnote) in
+        let wit = (Api_update_util.reconstitute_somebody ~conf ~event:(`Personal evt) base person, wk, wnote) in
         wit :: accu
       | None -> accu
     end evt.Api_saisie_write_piqi.Pevent.witnesses []

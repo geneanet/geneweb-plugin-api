@@ -125,7 +125,7 @@ let reconstitute_family conf base mod_f =
                   let wk = Api_util.witness_kind_of_piqi witness.Api_saisie_write_piqi.Witness.witness_type in
                   let wnote = witness.Api_saisie_write_piqi.Witness.witness_note in
                   let wnote = Option.fold ~none:"" ~some:Fun.id wnote in
-                  let wit = (Api_update_util.reconstitute_somebody base person, wk, wnote) in
+                  let wit = (Api_update_util.reconstitute_somebody ~conf ~event:(`Family evt) base person, wk, wnote) in
                   wit :: accu
               | None -> accu)
             evt.Api_saisie_write_piqi.Fevent.witnesses []
