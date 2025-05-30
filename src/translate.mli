@@ -28,20 +28,7 @@ module Api : sig
     val history : Api_piqi.history -> Api_protoc.history
   end
 
-  (* module PiqiToProtoc : sig
-     (* val truc : Api_piqi.truc -> Api_protoc.truc *)
-
-     (*    val search_params : Api_piqi.search_params -> Api_protoc.search_params*)
-     val list_reference_person : Api_piqi.list_reference_persons -> Api_protoc.list_reference_persons
-     val index : Api_piqi.index -> Api_protoc.index
-     val close_persons_params : Api_piqi.close_persons_params -> Api_protoc.close_persons_params
-     val person_start : Api_piqi.person_start -> Api_protoc.person_start
-
-     val list_persons : Api_piqi.list_persons -> Api_protoc.list_persons
-     val list_full_persons : Api_piqi.list_full_persons -> Api_protoc.list_full_persons
-     end*)
   module ProtocToPiqi : sig
-    (* val truc : Api_protoc.truc -> Api_piqi.truc *)
     val reference_person :
       Api_protoc.reference_person -> Api_piqi.reference_person
 
@@ -130,22 +117,13 @@ module Api_saisie_write : sig
 
     val add_sibling :
       Api_saisie_write_piqi.add_sibling -> Api_saisie_write_protoc.add_sibling
-    (* val truc : Api_saisie_write_piqi.truc -> Api_saisie_write_protoc.truc *)
-    (* val auto_complete : Api_saisie_write_piqi.auto_complete -> Api_saisie_write_protoc.auto_complete
-       val person_search_list : Api_saisie_write_piqi.person_search_list -> Api_saisie_write_protoc.person_search_list
-       val person_search_list_params : Api_saisie_write_piqi.person_search_list_params -> Api_saisie_write_protoc.person_search_list_params
-       val index_person : Api_saisie_write_piqi.index_person -> Api_saisie_write_protoc.index_person
-       val person : Api_saisie_write_piqi.person -> Api_saisie_write_protoc.person
-         val index_person_and_family : Api_saisie_write_piqi.index_person_and_family -> Api_saisie_write_protoc.index_person_and_family*)
   end
 
   module ProtocToPiqi : sig
-    (* val truc : Api_saisie_write_protoc.truc -> Api_saisie_write_piqi.truc *)
     val auto_complete :
       Api_saisie_write_protoc.auto_complete ->
       Api_saisie_write_piqi.auto_complete
 
-    (*    val person_search_list : Api_saisie_write_protoc.person_search_list -> Api_saisie_write_piqi.person_search_list*)
     val person_search_list_params :
       Api_saisie_write_protoc.person_search_list_params ->
       Api_saisie_write_piqi.person_search_list_params

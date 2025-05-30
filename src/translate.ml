@@ -310,12 +310,6 @@ module Api = struct
       let person = Some (warning_person person) in
       Api_protoc.(({ person; date } : warning_old_for_marriage))
 
-    (*
-    let translate_warning_truc Api_piqi.Warning_truc.{person} =
-      let person = Some (warning_person person) in
-      Api_protoc.(({person} : warning_truc))
-*)
-
     let base_warnings
         Api_piqi.Base_warnings.
           {
@@ -359,9 +353,6 @@ module Api = struct
         List.map translate_warning_bad_sex_of_married_person
           warning_bad_sex_of_married_person
       in
-      (*
-      let warning_truc = List.map translate_warning_truc warning_truc in
-*)
       let warning_old_for_marriage =
         List.map translate_warning_old_for_marriage warning_old_for_marriage
       in
@@ -954,25 +945,6 @@ module Api = struct
       Api_protoc.(({ entries; page; total_elements } : history))
   end
 
-  (*module PiqiToProtoc = struct
-        let reference_person (Api_piqi.Reference_person.{n;p;oc}) = Api_protoc.({n;p;oc})
-    (*
-        let transl_search_type = function
-          | `starting_with -> Api_protoc.Starting_with
-          | `approximative -> Approximative
-          | `lastname_or_firstname -> Lastname_or_firstname
-
-        let search_params (Api_piqi.Search_params.{search_type; lastname; firstname; only_sosa; only_recent; maiden_name}) =
-          let search_type = Some (transl_search_type search_type) in
-          Api_protoc.({search_type; lastname; firstname; only_sosa; only_recent; maiden_name})*)
-        let index _ = assert false
-        let list_reference_person _ = assert false
-        let close_persons_params _ = assert false
-        let person_start _ = assert false
-        let error _ = assert false
-        let list_persons _ = assert false
-
-        end*)
   module ProtocToPiqi = struct
     let reference_person Api_protoc.(({ n; p; oc } : reference_person)) =
       Api_piqi.Reference_person.{ n; p; oc }
@@ -2108,41 +2080,6 @@ module Api_saisie_write = struct
       let place_field = Option.map auto_complete_place_field place_field in
       Api_saisie_write_piqi.Auto_complete.{ field; place_field; input; limit }
 
-    (*
-
-
-    let translate_sosa = function
-      | Api_saisie_write_protoc.Sosa_ref -> `sosa_ref
-      | Sosa -> `sosa
-      | No_sosa  -> `no_sosa
-
-    let translate_person_search Api_saisie_write_protoc.(({
-        index;
-        sex;
-        lastname;
-        firstname;
-        dates;
-        image;
-        sosa;
-        family
-      } : person_search))=
-      let sex = translate_sex sex in
-      let sosa = translate_sosa sosa in
-      Api_saisie_write_piqi.Person_search.{
-          index;
-          sex;
-          lastname;
-          firstname;
-          dates;
-          image;
-          sosa;
-          family
-        }
-  *)
-    (*let person_search_list  Api_saisie_write_protoc.(({persons} : person_search_list)) =
-      let persons = List.map translate_person_search persons in
-      Api_saisie_write_piqi.Person_search_list.{persons}
-    *)
     let person_search_list_params
         Api_saisie_write_protoc.(
           ({ lastname; firstname; limit } : person_search_list_params)) =
