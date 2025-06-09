@@ -2770,11 +2770,25 @@ module Api_saisie_read = struct
       let person = Some (simple_person person) in
       Api_saisie_read_protoc.(({ r_type; person } : relation_person))
 
+    and relation_fiche_person Api_saisie_read_piqi.Relation_fiche_person.{ r_type; person }
+        =
+      let r_type = translate_relation_type r_type in
+      let person = Some (translate_person person) in
+      Api_saisie_read_protoc.(({ r_type; person } : relation_person))
+
     and witness_event
         Api_saisie_read_piqi.Witness_event.
           { witness_type; witness; witness_note } =
       let witness_type = translate_witness_type witness_type in
       let witness = Some (simple_person witness) in
+      Api_saisie_read_protoc.(
+        ({ witness_type; witness; witness_note } : witness_event))
+
+    and witness_fiche_event
+        Api_saisie_read_piqi.Witness_fiche_event.
+          { witness_type; witness; witness_note } =
+      let witness_type = translate_witness_type witness_type in
+      let witness = Some (translate_person witness) in
       Api_saisie_read_protoc.(
         ({ witness_type; witness; witness_note } : witness_event))
 
@@ -2812,6 +2826,68 @@ module Api_saisie_read = struct
       let divorce_date_cal = Option.map calendar divorce_date_cal in
       let witnesses = List.map witness_event witnesses in
       let children = List.map simple_person children in
+      Api_saisie_read_protoc.(
+        ({
+           index;
+           spouse;
+           marriage_date;
+           marriage_date_long;
+           marriage_date_raw;
+           marriage_date_conv;
+           marriage_date_conv_long;
+           marriage_date_text;
+           marriage_date_cal;
+           marriage_place;
+           marriage_src;
+           marriage_type;
+           divorce_type;
+           divorce_date;
+           divorce_date_long;
+           divorce_date_raw;
+           divorce_date_conv;
+           divorce_date_conv_long;
+           divorce_date_cal;
+           witnesses;
+           notes;
+           fsources;
+           children;
+         }
+          : family))
+
+    and translate_fiche_family
+        Api_saisie_read_piqi.Fiche_family.
+          {
+            index;
+            spouse;
+            marriage_date;
+            marriage_date_long;
+            marriage_date_raw;
+            marriage_date_conv;
+            marriage_date_conv_long;
+            marriage_date_text;
+            marriage_date_cal;
+            marriage_place;
+            marriage_src;
+            marriage_type;
+            divorce_type;
+            divorce_date;
+            divorce_date_long;
+            divorce_date_raw;
+            divorce_date_conv;
+            divorce_date_conv_long;
+            divorce_date_cal;
+            witnesses;
+            notes;
+            fsources;
+            children;
+          } =
+      let spouse = Some (translate_person spouse) in
+      let marriage_date_cal = Option.map calendar marriage_date_cal in
+      let marriage_type = translate_marriage_type marriage_type in
+      let divorce_type = translate_divorce_type divorce_type in
+      let divorce_date_cal = Option.map calendar divorce_date_cal in
+      let witnesses = List.map witness_fiche_event witnesses in
+      let children = List.map translate_person children in
       Api_saisie_read_protoc.(
         ({
            index;
@@ -2907,7 +2983,7 @@ module Api_saisie_read = struct
        page_number;
        total_count}
 
-    and fiche_person person_protoc
+    and fiche_person (person_protoc : Api_saisie_read_protoc.person)
         Api_saisie_read_piqi.Fiche_person.
           {
             birth_date_raw;
@@ -2931,6 +3007,12 @@ module Api_saisie_read = struct
             linked_page_occu;
             visible_for_visitors;
             is_contemporary;
+            father;
+            mother;
+            families;
+            related;
+            rparents;
+            ref_person;
           } =
       let burial_type = Some (translate_burial_type burial_type) in
       let visible_for_visitors = translate_visibility visible_for_visitors in
@@ -2942,6 +3024,18 @@ module Api_saisie_read = struct
       let linked_page_head = Some linked_page_head in
       let linked_page_occu = Some linked_page_occu in
       let visible_for_visitors = Some visible_for_visitors in
+      let related = List.map relation_fiche_person related in
+      let rparents = List.map relation_fiche_person rparents in
+      let father = Option.map translate_person father in
+      let mother = Option.map translate_person mother in
+      let families = List.map translate_fiche_family families in
+      let events, events_witnesses = match ref_person with
+          Some ref_person ->
+          Some (translate_paginated_personal_events ref_person.Api_saisie_read_piqi.Person.events),
+          Some (translate_paginated_witnessed_events ref_person.events_witnesses)
+        | None ->
+          person_protoc.events, person_protoc.events_witnesses
+      in
       Api_saisie_read_protoc.(
         ({
            person_protoc with
@@ -2957,6 +3051,7 @@ module Api_saisie_read = struct
            burial_type;
            titles_links;
            sosa_nb;
+           sosa = (match sosa_nb with Some "1" -> Sosa_ref | Some _ -> Sosa | None -> No_sosa);
            has_history;
            has_possible_duplications;
            linked_page_biblio;
@@ -2966,10 +3061,17 @@ module Api_saisie_read = struct
            linked_page_occu;
            visible_for_visitors;
            is_contemporary;
+           father;
+           mother;
+           families;
+           related;
+           rparents;
+           events_witnesses;
+           events;
          }
           : person))
 
-    and person
+    and translate_person
         Api_saisie_read_piqi.Person.
           {
             type_;
@@ -3214,6 +3316,8 @@ module Api_saisie_read = struct
 
     let paginated_witnessed_events events =
       translate_paginated_witnessed_events events
+
+    let person = translate_person
   end
 
   module ProtocToPiqi = struct
