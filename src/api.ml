@@ -732,11 +732,12 @@ module HistoryApi = struct
     in
     let ipage = Int32.to_int page in
     let elements_per_page = Int32.to_int elements_per_page in
-    let filter = match filter_user with
-      | Some filter_user ->
-        fun ~time:_ ~user ~action:_ ~keyo:_ -> filter_user = user
-      | None ->
-        fun ~time:_ ~user:_ ~action:_ ~keyo:_ -> true
+    let filter =
+      let filter_user = match filter_user with
+        | Some filter_user -> fun user -> filter_user = user
+        | None -> fun _ -> true
+      in
+      fun ~time:_ ~user ~action:_ ~keyo:_ -> filter_user user
     in
     let entries = Geneweb.History.filter_map_history
         ~conf
