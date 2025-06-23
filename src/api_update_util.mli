@@ -123,6 +123,12 @@ val piqi_empty_family :
   Api_saisie_write_piqi.family
 
 val reconstitute_somebody :
-  Gwdb.base -> Api_saisie_write_piqi.person_link -> person_update
+  ?event:
+    [< `Family of Api_saisie_write_piqi.Fevent.t |
+     `Personal of Api_saisie_write_piqi.Pevent.t ]->
+  conf:Geneweb.Config.config ->
+  Gwdb.base ->
+  Api_saisie_write_piqi.person_link ->
+  person_update
 
 val to_update_key : person_update -> Geneweb.Update.key
