@@ -106,9 +106,7 @@ let reconstitute_person_aux conf fn_occ fn_rparents fn_pevt_witnesses mod_p =
   let (bi, bp, de, bu, pevents) =
     (* [reconstitute_from_pevents] sorts pevents.
        We need to keep the original pevents list in case of error.  *)
-    Geneweb.UpdateIndOk.reconstitute_from_pevents original_pevents false
-      (Date.cdate_None, "", "", "")
-      (Date.cdate_None, "", "", "")
+    Geneweb.UpdateIndOk.reconstitute_from_pevents original_pevents
       (death, "", "", "")
       (UnknownBurial, "", "", "")
   in
