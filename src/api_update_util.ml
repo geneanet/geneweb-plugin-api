@@ -275,11 +275,11 @@ let piqi_date_of_date (date : Date.date) : Api_saisie_write_piqi.date =
         | Date.Dislamic -> (Some `islamic, d)
       in
       let (prec, dmy, dmy2) =
-        let d = Some (Int32.of_int dmy.day) in
-        let m = Some (Int32.of_int dmy.month) in
-        let y = Some (Int32.of_int dmy.year) in
+        let day = Some (Int32.of_int dmy.day) in
+        let month = Some (Int32.of_int dmy.month) in
+        let year = Some (Int32.of_int dmy.year) in
         let delta = Some (Int32.of_int dmy.delta) in
-        let dmy1 = {Api_saisie_write_piqi.Dmy.day = d; month = m; year = y; delta;} in
+        let dmy1 = {Api_saisie_write_piqi.Dmy.day; month; year; delta;} in
         let (prec, dmy2) =
           match dmy.prec with
           | Date.Sure -> (`sure, None)
@@ -288,21 +288,21 @@ let piqi_date_of_date (date : Date.date) : Api_saisie_write_piqi.date =
           | Date.Before -> (`before, None)
           | Date.After -> (`after, None)
           | Date.OrYear dmy2 ->
-              let d = Some (Int32.of_int dmy2.day2) in
-              let m = Some (Int32.of_int dmy2.month2) in
-              let y = Some (Int32.of_int dmy2.year2) in
+              let day = Some (Int32.of_int dmy2.day2) in
+              let month = Some (Int32.of_int dmy2.month2) in
+              let year = Some (Int32.of_int dmy2.year2) in
               let delta = Some (Int32.of_int dmy2.delta2) in
               let dmy2 =
-                {Api_saisie_write_piqi.Dmy.day = d; month = m; year = y; delta;}
+                {Api_saisie_write_piqi.Dmy.day; month; year; delta;}
               in
               (`oryear, Some dmy2)
           | Date.YearInt dmy2 ->
-              let d = Some (Int32.of_int dmy2.day2) in
-              let m = Some (Int32.of_int dmy2.month2) in
-              let y = Some (Int32.of_int dmy2.year2) in
+              let day = Some (Int32.of_int dmy2.day2) in
+              let month = Some (Int32.of_int dmy2.month2) in
+              let year = Some (Int32.of_int dmy2.year2) in
               let delta = Some (Int32.of_int dmy2.delta2) in
               let dmy2 =
-                {Api_saisie_write_piqi.Dmy.day = d; month = m; year = y; delta;}
+                {Api_saisie_write_piqi.Dmy.day; month; year; delta;}
               in
               (`yearint, Some dmy2)
         in
@@ -541,7 +541,7 @@ let pers_to_piqi_simple_person (conf : Geneweb.Config.config) (base : Gwdb.base)
     else if Sosa.eq sosa_nb Sosa.one then `sosa_ref
     else `sosa
   in
-  let (first_name, surname) =
+  let (firstname, lastname) =
     Api_saisie_read.person_firstname_surname_txt base p
   in
   let (birth_short, birth_place, death_short, death_place) =
@@ -588,8 +588,8 @@ let pers_to_piqi_simple_person (conf : Geneweb.Config.config) (base : Gwdb.base)
   {
     Api_saisie_write_piqi.Simple_person.index;
     sex;
-    lastname = surname;
-    firstname = first_name;
+    lastname;
+    firstname;
     birth_short_date = if birth_short = "" then None else Some birth_short;
     birth_place = if birth_place = "" then None else Some birth_place;
     death_short_date = if death_short = "" then None else Some death_short;
@@ -623,7 +623,7 @@ let pers_to_piqi_person_search ~conf ~base ~person ~first_name ~surname =
       ~surname
       ~aliases:(List.map (Gwdb.sou base) (Gwdb.get_surnames_aliases person))
   in
-  let (first_name, surname) =
+  let (firstname, lastname) =
     Api_saisie_read.person_firstname_surname_txt base person
   in
   let dates = Api_saisie_read.short_dates_text conf base person in
@@ -636,8 +636,8 @@ let pers_to_piqi_person_search ~conf ~base ~person ~first_name ~surname =
   {
     Api_saisie_write_piqi.Person_search.index;
     sex;
-    lastname = surname;
-    firstname = first_name;
+    lastname;
+    firstname;
     dates = if dates = "" then None else Some dates;
     image;
     sosa;
@@ -662,8 +662,8 @@ let pers_to_piqi_person_search_info conf base p =
     else if Sosa.eq sosa_nb Sosa.one then `sosa_ref
     else `sosa
   in
-  let surname = Gwdb.sou base (Gwdb.get_surname p) in
-  let first_name = Gwdb.sou base (Gwdb.get_first_name p) in
+  let lastname = Gwdb.sou base (Gwdb.get_surname p) in
+  let firstname = Gwdb.sou base (Gwdb.get_first_name p) in
   let publicname = Gwdb.sou base (Gwdb.get_public_name p) in
   let aliases = List.map (Gwdb.sou base) (Gwdb.get_aliases p) in
   let qualifiers = List.map (Gwdb.sou base) (Gwdb.get_qualifiers p) in
@@ -791,7 +791,7 @@ let pers_to_piqi_person_search_info conf base p =
     in
     List.map
       (fun (p, rp) ->
-        let p = pers_to_piqi_simple_person conf base p in
+        let person = pers_to_piqi_simple_person conf base p in
         let r_type =
           match rp.Def.r_type with
           | Adoption -> `rchild_adoption
@@ -802,7 +802,7 @@ let pers_to_piqi_person_search_info conf base p =
         in
         {
           Api_saisie_write_piqi.Relation_person.r_type;
-          person = p;
+          person;
         } )
       list
   in
@@ -821,11 +821,11 @@ let pers_to_piqi_person_search_info conf base p =
           match rp.Def.r_fath with
           | Some ip ->
               let p = Gwdb.poi base ip in
-              let p = pers_to_piqi_simple_person conf base p in
+              let person = pers_to_piqi_simple_person conf base p in
               let p =
                 {
                   Api_saisie_write_piqi.Relation_person.r_type;
-                  person = p;
+                  person;
                 }
               in
               p :: rl
@@ -834,11 +834,11 @@ let pers_to_piqi_person_search_info conf base p =
         match rp.Def.r_moth with
         | Some ip ->
           let p = Gwdb.poi base ip in
-          let p = pers_to_piqi_simple_person conf base p in
+          let person = pers_to_piqi_simple_person conf base p in
           let p =
             {
               Api_saisie_write_piqi.Relation_person.r_type;
-              person = p;
+              person;
             }
           in
           p :: rl
@@ -905,8 +905,8 @@ let pers_to_piqi_person_search_info conf base p =
   {
     Api_saisie_write_piqi.Person_search_info.index;
     sex;
-    lastname = surname;
-    firstname = first_name;
+    lastname;
+    firstname;
     public_name = if publicname = "" then None else Some publicname;
     aliases;
     qualifiers;
@@ -1419,7 +1419,7 @@ let piqi_mod_person_of_person_start conf base start_p =
           None
     | None -> None
   in
-  let birth_date =
+  let date =
     match birth_date with
     | Some d -> Some (piqi_date_of_date d)
     | None -> None
@@ -1427,7 +1427,7 @@ let piqi_mod_person_of_person_start conf base start_p =
   let birth =
     {
       Api_saisie_write_piqi.Pevent.pevent_type = Some `epers_birth;
-      date = birth_date;
+      date;
       place = None;
       reason = None;
       note = None;
@@ -1484,7 +1484,7 @@ let piqi_empty_family conf base ifam =
 
 let reconstitute_somebody ?event ~conf base person =
   let create_link = person.Api_saisie_write_piqi.Person_link.create_link in
-  let (fn, sn, occ, create, force_create) = match create_link with
+  let (fn, sn, occurrence_number, kind, force) = match create_link with
     | `link ->
       let ip = Gwdb.iper_of_string @@ Int32.to_string person.Api_saisie_write_piqi.Person_link.index in
       let p = Gwdb.poi base ip in
@@ -1558,7 +1558,7 @@ let reconstitute_somebody ?event ~conf base person =
       in
       (fn, sn, occ, Geneweb.Update.Create (sex, Option.map make_creation_info event), force_create)
   in
-  let (fn, sn) =
+  let (first_name, surname) =
     (* If there are forbidden characters, delete them. *)
     let contain_fn = String.contains fn in
     let contain_sn = String.contains sn in
@@ -1567,11 +1567,11 @@ let reconstitute_somebody ?event ~conf base person =
     then (Name.purge fn, Name.purge sn)
     else (fn, sn)
   in
-  {first_name = fn;
-   surname = sn;
-   occurrence_number = occ;
-   kind = create;
-   force = force_create}
+  {first_name;
+   surname;
+   occurrence_number;
+   kind;
+   force}
 
 let to_update_key person_update =
   (person_update.first_name,
