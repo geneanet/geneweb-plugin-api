@@ -278,7 +278,7 @@ let piqi_date_of_date (date : Date.date) : Api_saisie_write_piqi.date =
         let m = Some (Int32.of_int dmy.month) in
         let y = Some (Int32.of_int dmy.year) in
         let delta = Some (Int32.of_int dmy.delta) in
-        let dmy1 = {Api_saisie_write_piqi.Dmy.day = d; month = m; year = y; delta = delta;} in
+        let dmy1 = {Api_saisie_write_piqi.Dmy.day = d; month = m; year = y; delta;} in
         let (prec, dmy2) =
           match dmy.prec with
           | Date.Sure -> (`sure, None)
@@ -292,7 +292,7 @@ let piqi_date_of_date (date : Date.date) : Api_saisie_write_piqi.date =
               let y = Some (Int32.of_int dmy2.year2) in
               let delta = Some (Int32.of_int dmy2.delta2) in
               let dmy2 =
-                {Api_saisie_write_piqi.Dmy.day = d; month = m; year = y; delta = delta;}
+                {Api_saisie_write_piqi.Dmy.day = d; month = m; year = y; delta;}
               in
               (`oryear, Some dmy2)
           | Date.YearInt dmy2 ->
@@ -301,17 +301,17 @@ let piqi_date_of_date (date : Date.date) : Api_saisie_write_piqi.date =
               let y = Some (Int32.of_int dmy2.year2) in
               let delta = Some (Int32.of_int dmy2.delta2) in
               let dmy2 =
-                {Api_saisie_write_piqi.Dmy.day = d; month = m; year = y; delta = delta;}
+                {Api_saisie_write_piqi.Dmy.day = d; month = m; year = y; delta;}
               in
               (`yearint, Some dmy2)
         in
         (prec, dmy1, dmy2)
       in
       {
-        Api_saisie_write_piqi.Date.cal = cal;
+        Api_saisie_write_piqi.Date.cal;
         prec = Some prec;
         dmy = Some dmy;
-        dmy2 = dmy2;
+        dmy2;
         text = None;
       }
   | Date.Dtext txt ->
@@ -373,7 +373,7 @@ let date_of_piqi_date conf date =
                         (day, month, year)
                   in
                   let adef_dmy =
-                    {Date.day = day; month = month; year = year; delta = delta; prec = prec}
+                    {Date.day; month; year; delta; prec}
                   in
                   let day_to_check =
                     adef_dmy.day >= 1 && adef_dmy.day <= 31
@@ -391,7 +391,7 @@ let date_of_piqi_date conf date =
                     then
                       begin
                         (* The day is set to 1 for checking. *)
-                        Geneweb.Update.check_greg_day conf {Date.day = 1; month = adef_dmy.month; year = adef_dmy.year; delta = delta; prec = prec};
+                        Geneweb.Update.check_greg_day conf {Date.day = 1; month = adef_dmy.month; year = adef_dmy.year; delta; prec};
                         adef_dmy
                       end
                     else
@@ -403,7 +403,7 @@ let date_of_piqi_date conf date =
                     if cal = Date.Dgregorian
                     then
                       begin
-                        Geneweb.Update.check_greg_day conf {Date.day = adef_dmy.day; month = adef_dmy.month; year = adef_dmy.year; delta = delta; prec = prec};
+                        Geneweb.Update.check_greg_day conf {Date.day = adef_dmy.day; month = adef_dmy.month; year = adef_dmy.year; delta; prec};
                         adef_dmy
                       end
                     else
@@ -425,7 +425,7 @@ let date_of_piqi_date conf date =
                             match dmy.Api_saisie_write_piqi.Dmy.year with
                             | Some _ ->
                               let adef_dmy = get_adef_dmy_from_saisie_write_dmy_if_valid conf dmy cal Date.Sure in
-                              Date.OrYear {day2 = adef_dmy.day; month2 = adef_dmy.month; year2 = adef_dmy.year; delta2 = delta2}
+                              Date.OrYear {day2 = adef_dmy.day; month2 = adef_dmy.month; year2 = adef_dmy.year; delta2}
                             | None -> Date.Sure
                           end
                       | None -> Date.Sure (* erreur*))
@@ -436,7 +436,7 @@ let date_of_piqi_date conf date =
                             match dmy.Api_saisie_write_piqi.Dmy.year with
                             | Some _ ->
                               let adef_dmy = get_adef_dmy_from_saisie_write_dmy_if_valid conf dmy cal Date.Sure in
-                              Date.YearInt {day2 = adef_dmy.day; month2 = adef_dmy.month; year2 = adef_dmy.year; delta2 = delta2}
+                              Date.YearInt {day2 = adef_dmy.day; month2 = adef_dmy.month; year2 = adef_dmy.year; delta2}
                             | None -> Date.Sure
                           end
                       | None -> Date.Sure (* erreur*))
@@ -585,8 +585,8 @@ let pers_to_piqi_simple_person (conf : Geneweb.Config.config) (base : Gwdb.base)
   in
   let image = Api_util.get_portrait conf base p in
   {
-    Api_saisie_write_piqi.Simple_person.index = index;
-    sex = sex;
+    Api_saisie_write_piqi.Simple_person.index;
+    sex;
     lastname = surname;
     firstname = first_name;
     birth_short_date = if birth_short = "" then None else Some birth_short;
@@ -594,7 +594,7 @@ let pers_to_piqi_simple_person (conf : Geneweb.Config.config) (base : Gwdb.base)
     death_short_date = if death_short = "" then None else Some death_short;
     death_place = if death_place = "" then None else Some death_place;
     image;
-    sosa = sosa;
+    sosa;
   }
 
 
@@ -633,14 +633,14 @@ let pers_to_piqi_person_search ~conf ~base ~person ~first_name ~surname =
     else child_of_parent conf base person
   in
   {
-    Api_saisie_write_piqi.Person_search.index = index;
-    sex = sex;
+    Api_saisie_write_piqi.Person_search.index;
+    sex;
     lastname = surname;
     firstname = first_name;
     dates = if dates = "" then None else Some dates;
     image;
-    sosa = sosa;
-    family = family;
+    sosa;
+    family;
     matching_first_name_aliases;
     matching_surname_aliases;
     reference = Api_util.person_reference base person;
@@ -720,16 +720,16 @@ let pers_to_piqi_person_search_info conf base p =
             (Geneweb.Event.get_witnesses_and_notes evt)
         in
         {
-          Api_saisie_write_piqi.Event.name = name;
+          Api_saisie_write_piqi.Event.name;
           date = if date = "" then None else Some date;
           date_conv = if date_conv = "" then None else Some date_conv;
-          date_cal = date_cal;
+          date_cal;
           place = if place = "" then None else Some place;
           reason = None;
           note = if note = "" then None else Some note;
           src = if src= "" then None else Some src;
-          spouse = spouse;
-          witnesses = witnesses;
+          spouse;
+          witnesses;
         })
       (Geneweb.Event.sorted_events conf base p)
   in
@@ -800,7 +800,7 @@ let pers_to_piqi_person_search_info conf base p =
           | FosterParent -> `rchild_foster_parent
         in
         {
-          Api_saisie_write_piqi.Relation_person.r_type = r_type;
+          Api_saisie_write_piqi.Relation_person.r_type;
           person = p;
         } )
       list
@@ -823,7 +823,7 @@ let pers_to_piqi_person_search_info conf base p =
               let p = pers_to_piqi_simple_person conf base p in
               let p =
                 {
-                  Api_saisie_write_piqi.Relation_person.r_type = r_type;
+                  Api_saisie_write_piqi.Relation_person.r_type;
                   person = p;
                 }
               in
@@ -836,7 +836,7 @@ let pers_to_piqi_person_search_info conf base p =
           let p = pers_to_piqi_simple_person conf base p in
           let p =
             {
-              Api_saisie_write_piqi.Relation_person.r_type = r_type;
+              Api_saisie_write_piqi.Relation_person.r_type;
               person = p;
             }
           in
@@ -896,32 +896,32 @@ let pers_to_piqi_person_search_info conf base p =
            else Gwdb.p_first_name base mother ^ " " ^ Gwdb.p_surname base mother
          in
          Api_saisie_write_piqi.Was_witness.({
-           husband = husband;
-           wife = wife;
+           husband;
+           wife;
          }) )
       list
   in
   {
-    Api_saisie_write_piqi.Person_search_info.index = index;
-    sex = sex;
+    Api_saisie_write_piqi.Person_search_info.index;
+    sex;
     lastname = surname;
     firstname = first_name;
     public_name = if publicname = "" then None else Some publicname;
-    aliases = aliases;
-    qualifiers = qualifiers;
-    firstname_aliases = firstname_aliases;
-    surname_aliases = surname_aliases;
+    aliases;
+    qualifiers;
+    firstname_aliases;
+    surname_aliases;
     image;
-    events = events;
+    events;
     occupation = if occupation = "" then None else Some occupation;
     notes = if notes = "" then None else Some notes;
     psources = if psources = "" then None else Some psources;
-    has_sources = has_sources;
-    titles = titles;
-    related = related;
-    rparents = rparents;
-    was_witness = was_witness;
-    sosa = sosa;
+    has_sources;
+    titles;
+    related;
+    rparents;
+    was_witness;
+    sosa;
   }
 
 
@@ -947,12 +947,12 @@ let pers_to_piqi_person_link conf base p =
     else Some ("(" ^ dates ^ ")")
   in
   {
-    Api_saisie_write_piqi.Person_link.create_link = create_link;
-    index = index;
-    sex = sex;
+    Api_saisie_write_piqi.Person_link.create_link;
+    index;
+    sex;
     lastname = Utf8.normalize surname;
     firstname = Utf8.normalize first_name;
-    occ = occ;
+    occ;
     dates = Option.map Utf8.normalize dates;
   }
 
@@ -1016,9 +1016,9 @@ let pers_to_piqi_mod_person conf base p =
           name = if name = "" then None else Some name;
           title = if title = "" then None else Some title;
           fief = if fief = "" then None else Some fief;
-          date_begin = date_begin;
-          date_end = date_end;
-          nth = nth;
+          date_begin;
+          date_end;
+          nth;
         }))
       (Gwdb.get_titles p)
   in
@@ -1100,14 +1100,14 @@ let pers_to_piqi_mod_person conf base p =
              (Gwdb.get_pevent_witnesses_and_notes evt)
          in
          {
-           Api_saisie_write_piqi.Pevent.pevent_type = pevent_type;
-           date = date;
+           Api_saisie_write_piqi.Pevent.pevent_type;
+           date;
            place = if place = "" then None else Some (Utf8.normalize place);
-           reason = reason;
+           reason;
            note = if note = "" then None else Some (Utf8.normalize note);
            src = if src = "" then None else Some (Utf8.normalize src);
-           witnesses = witnesses;
-           event_perso = event_perso;
+           witnesses;
+           event_perso;
          })
       (Geneweb.Event.sort_events
          (fun e -> Geneweb.Event.Pevent (Gwdb.get_pevent_name e))
@@ -1214,7 +1214,7 @@ let pers_to_piqi_mod_person conf base p =
               in
               let r =
                 Api_saisie_write_piqi.Relation_parent.({
-                  rpt_type = rpt_type;
+                  rpt_type;
                   person = Some father;
                   source = if source = "" then None else Some (Utf8.normalize source);
                 })
@@ -1236,7 +1236,7 @@ let pers_to_piqi_mod_person conf base p =
           in
           let r =
             Api_saisie_write_piqi.Relation_parent.({
-                rpt_type = rpt_type;
+                rpt_type;
                 person = Some mother;
                 source = if source = "" then None else Some (Utf8.normalize source);
               })
@@ -1261,30 +1261,30 @@ let pers_to_piqi_mod_person conf base p =
   in
   let is_contemporary = Geneweb.Person.is_contemporary conf base p in
   {
-    Api_saisie_write_piqi.Person.digest = digest;
-    index = index;
-    sex = sex;
+    Api_saisie_write_piqi.Person.digest;
+    index;
+    sex;
     lastname = Utf8.normalize surname;
     firstname = Utf8.normalize first_name;
-    occ = occ;
+    occ;
     public_name = if publicname = "" then None else Some (Utf8.normalize publicname);
     aliases = List.map Utf8.normalize aliases;
     qualifiers = List.map Utf8.normalize qualifiers;
     firstname_aliases = List.map Utf8.normalize firstname_aliases;
     surname_aliases = List.map Utf8.normalize surname_aliases;
     image = Option.map Utf8.normalize image;
-    death_type = death_type;
+    death_type;
     occupation = if occupation = "" then None else Some (Utf8.normalize occupation);
     psources = if psources = "" then None else Some (Utf8.normalize psources);
     notes = if notes = "" then None else Some (Utf8.normalize notes);
-    titles = titles;
-    pevents = pevents;
-    related = related;
-    rparents = rparents;
-    access = access;
-    parents = parents;
-    families = families;
-    create_link = create_link;
+    titles;
+    pevents;
+    related;
+    rparents;
+    access;
+    parents;
+    families;
+    create_link;
     is_contemporary;
     name_is_hidden = Geneweb.NameDisplay.is_hidden conf base p;
     name_is_restricted = Geneweb.NameDisplay.is_restricted conf base p;
@@ -1333,14 +1333,14 @@ let fam_to_piqi_mod_family conf base ifam fam =
              (Gwdb.get_fevent_witnesses_and_notes evt)
          in
          {
-           Api_saisie_write_piqi.Fevent.fevent_type = fevent_type;
-           date = date;
+           Api_saisie_write_piqi.Fevent.fevent_type;
+           date;
            place = if place = "" then None else Some (Utf8.normalize place);
            reason = reason;
            note = if note = "" then None else Some (Utf8.normalize note);
            src = if src = "" then None else Some (Utf8.normalize src);
-           witnesses = witnesses;
-           event_perso = event_perso;
+           witnesses;
+           event_perso;
          })
       (Geneweb.Event.sort_events
          (fun e -> Geneweb.Event.Fevent (Gwdb.get_fevent_name e))
@@ -1366,15 +1366,15 @@ let fam_to_piqi_mod_family conf base ifam fam =
   in
   {
     Api_saisie_write_piqi.Family.digest = digest;
-    index = index;
-    fevents = fevents;
+    index;
+    fevents;
     fsources = if fsources = "" then None else Some (Utf8.normalize fsources);
     comment = if comment = "" then None else Some (Utf8.normalize comment);
     origin_file = if origin_file = "" then None else Some (Utf8.normalize origin_file);
-    father = father;
-    mother = mother;
-    children = children;
-    old_witnesses = old_witnesses;
+    father;
+    mother;
+    children;
+    old_witnesses;
   }
 
 
@@ -1470,12 +1470,12 @@ let piqi_empty_family conf base ifam =
   {
     Api_saisie_write_piqi.Family.digest = "";
     index = Int32.of_string (Gwdb.string_of_ifam ifam);
-    fevents = fevents;
+    fevents;
     fsources = None;
     comment = None;
     origin_file = None;
-    father = father;
-    mother = mother;
+    father;
+    mother;
     children = [];
     old_witnesses = [];
   }
