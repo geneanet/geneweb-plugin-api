@@ -460,72 +460,6 @@ let date_of_piqi_date conf date =
 (**/**) (* Convertion d'une personne pour la lecture. *)
 
 
-(* Copie de util.ml pour supprimer le html *)
-
-let child_of_parent conf base p =
-  (* Si le père a un nom de famille différent de la personne *)
-  (* alors on l'affiche, sinon on n'affiche que le prénom.   *)
-  let print_father fath =
-    if not (Gwdb.eq_istr (Gwdb.get_surname p) (Gwdb.get_surname fath)) then
-      Geneweb.NameDisplay.fullname_str_of_person conf base fath
-    else
-      Geneweb.NameDisplay.first_name_str_of_person conf base fath
-  in
-  let a = Geneweb.Util.pget conf base (Gwdb.get_iper p) in
-  let ifam =
-    match Gwdb.get_parents a with
-    | Some ifam ->
-        let cpl = Gwdb.foi base ifam in
-        let fath =
-          let fath = Geneweb.Util.pget conf base (Gwdb.get_father cpl) in
-          if Gwdb.p_first_name base fath = "?" then None else Some fath
-        in
-        let moth =
-          let moth = Geneweb.Util.pget conf base (Gwdb.get_mother cpl) in
-          if Gwdb.p_first_name base moth = "?" then None else Some moth
-        in
-        Some (fath, moth)
-    | None -> None
-  in
-  match ifam with
-  | Some (None, None) | None -> ""
-  | Some (fath, moth) ->
-      let s =
-        match (fath, moth) with
-        | (Some fath, None) -> print_father fath
-        | (None, Some moth) -> Geneweb.NameDisplay.fullname_str_of_person conf base moth
-        | (Some fath, Some moth) ->
-          print_father fath
-          ^ " " ^ Geneweb.Util.transl_nth conf "and" 0 ^ " "
-          ^ Geneweb.NameDisplay.fullname_str_of_person conf base moth
-        | _ -> ""
-      in
-      let is = Geneweb.Util.index_of_sex (Gwdb.get_sex p) in
-      Geneweb.Util.translate_eval
-        (Geneweb.Util.transl_a_of_gr_eq_gen_lev conf
-           (Geneweb.Util.transl_nth conf "son/daughter/child" is)
-           (s :> string)
-           (s :> string))
-
-let husband_wife conf base p =
-  let rec loop i =
-    if i < Array.length (Gwdb.get_family p) then
-      let fam = Gwdb.foi base (Gwdb.get_family p).(i) in
-      let conjoint = Gutil.spouse (Gwdb.get_iper p) fam in
-      let conjoint = Geneweb.Util.pget conf base conjoint in
-      if Gwdb.p_first_name base conjoint <> "?" || Gwdb.p_surname base conjoint <> "?"
-      then
-        let relation =
-          Printf.sprintf (Geneweb.Util.relation_txt conf (Gwdb.get_sex p) fam) (fun () -> "")
-        in
-        Geneweb.Util.translate_eval
-          (relation ^ " " ^ (Geneweb.NameDisplay.fullname_str_of_person conf base conjoint))
-      else loop (i + 1)
-    else ""
-  in
-  loop 0
-
-
 let pers_to_piqi_simple_person (conf : Geneweb.Config.config) (base : Gwdb.base) (p : Gwdb.person) : Api_saisie_write_piqi.simple_person =
   let index = Int32.of_string @@ Gwdb.string_of_iper (Gwdb.get_iper p) in
   let sex =
@@ -627,10 +561,48 @@ let pers_to_piqi_person_search ~conf ~base ~person ~first_name ~surname =
   in
   let dates = Api_saisie_read.short_dates_text conf base person in
   let image = Api_util.get_portrait conf base person in
-  let family =
-    let hw = husband_wife conf base person in
-    if hw <> "" then hw
-    else child_of_parent conf base person
+  let spouses =
+    let get_spouse family_id =
+      let family = Gwdb.foi base family_id in
+      family
+      |> Gutil.spouse (Gwdb.get_iper person)
+      |> Geneweb.Util.pget_opt conf base
+      |> Option.map (fun spouse -> (spouse, Gwdb.get_relation family))
+    in
+    person
+    |> Gwdb.get_family
+    |> Array.to_list
+    |> List.filter_map get_spouse
+  in
+  let (father, mother) =
+    let parents = person |> Gwdb.get_parents |> Option.map (Gwdb.foi base) in
+    let get_parent kind =
+      let get =
+        match kind with
+        | `Father -> Gwdb.get_father
+        | `Mother -> Gwdb.get_mother
+      in
+      Option.bind (Option.map get parents) (Geneweb.Util.pget_opt conf base)
+    in
+    (get_parent `Father, get_parent `Mother)
+  in
+  let to_simple_spouse (spouse, relation) =
+    let spouse = pers_to_piqi_simple_person conf base spouse in
+    let relation =
+      match relation with
+      | Def.Married -> `married
+      | Def.NotMarried -> `not_married
+      | Def.Engaged -> `engaged
+      | Def.NoSexesCheckNotMarried -> `no_sexes_check_not_married
+      | Def.NoMention -> `no_mention
+      | Def.NoSexesCheckMarried -> `no_sexes_check_married
+      | Def.MarriageBann -> `marriage_bann
+      | Def.MarriageContract -> `marriage_contract
+      | Def.MarriageLicense -> `marriage_license
+      | Def.Pacs -> `pacs
+      | Def.Residence -> `residence
+    in
+    {Api_saisie_write_piqi.Simple_spouse.spouse; relation}
   in
   {
     Api_saisie_write_piqi.Person_search.index;
@@ -640,10 +612,12 @@ let pers_to_piqi_person_search ~conf ~base ~person ~first_name ~surname =
     dates = if dates = "" then None else Some dates;
     image;
     sosa;
-    family;
+    spouses = List.map to_simple_spouse spouses;
     matching_first_name_aliases;
     matching_surname_aliases;
     reference = Api_util.person_reference base person;
+    father = Option.map (pers_to_piqi_simple_person conf base) father;
+    mother = Option.map (pers_to_piqi_simple_person conf base) mother;
   }
 
 
