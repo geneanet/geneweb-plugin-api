@@ -32,13 +32,66 @@ let print_auto_complete assets conf base =
   let data = Api_saisie_write_piqi_ext.gen_auto_complete_result result in
   Api_util.print_result conf data
 
+
+module PersonSearchMatches : sig
+  type t
+  val empty_matches : t
+  val sorted_persons_of_matches : Gwdb.base -> t -> Gwdb.person list
+  val add_matches_of_person : base:Gwdb.base -> first_name:string -> surname:string -> t -> Gwdb.person -> t
+end = struct
+  type t = {
+    (* the person matches on both their first name and surname *)
+    full_match : Gwdb.person list;
+    (* only the first name is an exact match *)
+    fn_match : Gwdb.person list;
+    (* only the surname is an exact match *)
+    sn_match : Gwdb.person list;
+    (* neither the first name nor the surname are exact matches *)
+    no_match : Gwdb.person list;
+  }
+
+  let empty_matches =  {
+    full_match = [];
+    fn_match = [];
+    sn_match = [];
+    no_match = [];
+  }
+
+  let add_matches_of_person ~base ~first_name ~surname matches person =
+    let f = Utf8.compare (Name.lower (Gwdb.p_first_name base person)) (Name.lower first_name) = 0 in
+    let s = Utf8.compare (Name.lower (Gwdb.p_surname base person)) (Name.lower surname) = 0 in
+    match f, s with
+    | true, true -> {matches with full_match = person :: matches.full_match}
+    | true, false -> {matches with fn_match = person :: matches.fn_match}
+    | false, true -> {matches with sn_match = person :: matches.sn_match}
+    | false, false -> {matches with no_match = person :: matches.no_match}
+
+  let cmp_per base p1 p2 =
+    let c1 = String.compare
+        (Gwdb.sou base (Gwdb.get_surname p1) |> Name.lower)
+        (Gwdb.sou base (Gwdb.get_surname p2) |> Name.lower)
+    in
+    if c1 = 0 then
+      String.compare
+        (Gwdb.sou base (Gwdb.get_first_name p1) |> Name.lower)
+        (Gwdb.sou base (Gwdb.get_first_name p2) |> Name.lower)
+    else c1
+
+  let sorted_persons_of_matches base matches =
+    let cmp = cmp_per base in
+    List.sort cmp matches.full_match
+    @ List.sort cmp matches.sn_match
+    @ List.sort cmp matches.fn_match
+    @ List.sort cmp matches.no_match
+end
+
+
 let print_person_search_list conf base =
   let params = Api_util.get_params conf Api_saisie_write_piqi_ext.parse_person_search_list_params in
   let surname = params.Api_saisie_write_piqi.Person_search_list_params.lastname in
   let surname = Option.value surname ~default:"" in
   let first_name = params.Api_saisie_write_piqi.Person_search_list_params.firstname in
   let first_name = Option.value first_name ~default:"" in
-
 
   let persons =
     let person = Geneweb.SearchName.search_by_sosa_in_env
@@ -64,18 +117,14 @@ let print_person_search_list conf base =
       in
       fst @@ Geneweb.AdvSearchOk.advanced_search conf base limit
   in
-  let cmp_per p1 p2 =
-    let c1 = String.compare
-        (Gwdb.sou base (Gwdb.get_surname p1))
-        (Gwdb.sou base (Gwdb.get_surname p2))
-    in
-    if c1 = 0 then
-      String.compare
-        (Gwdb.sou base (Gwdb.get_first_name p1))
-        (Gwdb.sou base (Gwdb.get_first_name p2))
-    else c1
+
+  let matches = List.fold_left
+      (PersonSearchMatches.add_matches_of_person ~base ~first_name ~surname)
+      PersonSearchMatches.empty_matches
+      persons
   in
-  let persons = List.sort cmp_per persons in
+  let persons = PersonSearchMatches.sorted_persons_of_matches base matches in
+
   let list = List.map (fun person ->
       Api_update_util.pers_to_piqi_person_search ~conf ~base ~person ~first_name ~surname
     ) persons in
