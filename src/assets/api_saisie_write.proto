@@ -84,10 +84,31 @@ message PersonSearch {
   optional string dates = 5;
   optional string image = 6;
   required Sosa sosa = 7;
-  required string family = 8;
+  repeated SimpleSpouse spouses = 8;
   repeated string matching_first_name_aliases = 9;
   repeated string matching_surname_aliases = 10;
   required PersonReference reference = 11;
+  optional SimplePerson father = 12;
+  optional SimplePerson mother = 13;
+}
+
+message SimpleSpouse {
+  required SimplePerson spouse = 1;
+  required CoupleKind relation = 2;
+}
+
+enum CoupleKind {
+  MARRIED = 0;
+  NOT_MARRIED = 1;
+  ENGAGED = 2;
+  NO_SEXES_CHECK_NOT_MARRIED = 3;
+  NO_MENTION = 4;
+  NO_SEXES_CHECK_MARRIED = 5;
+  MARRIAGE_BANN = 6;
+  MARRIAGE_CONTRACT = 7;
+  MARRIAGE_LICENSE = 8;
+  PACS = 9;
+  RESIDENCE = 10;
 }
 
 message SimplePerson {
