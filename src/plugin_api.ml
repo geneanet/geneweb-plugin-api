@@ -3,15 +3,6 @@ let friend fn conf base =
   then fn conf base
   else Gwd_lib.Request.incorrect_request conf
 
-let wiz' fn conf =
-  if conf.Geneweb.Config.wizard then
-    fn conf
-  else if conf.Geneweb.Config.just_friend_wizard then
-    Plugin_api_lib.Api_util.print_error conf `forbidden ""
-  else
-    (* FIXME: Needs auth headers *)
-    Plugin_api_lib.Api_util.print_error conf `unauthorized ""
-
 let wiz fn conf base =
   if conf.Geneweb.Config.wizard then
     fn conf base
