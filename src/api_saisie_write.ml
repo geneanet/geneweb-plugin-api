@@ -461,7 +461,7 @@ let print_config conf =
   let transl_hebrew_month = Api_saisie_write_piqi.Config_transl_hebrew_month.({msg = transl_hebrew_month;}) in
   let (gwf_place_format, gwf_place_format_placeholder) =
     match List.assoc_opt "places_format" conf.Geneweb.Config.base_env with
-    | Some s ->
+    | Some s when conf.Geneweb.Config.wizard ->
         let placeholder =
           (try
              List.fold_right
@@ -486,7 +486,7 @@ let print_config conf =
           | _ -> placeholder
         in
         (s, placeholder)
-    | None -> ("", "")
+    | Some _ | None -> ("", "")
   in
   let config =
     Api_saisie_write_piqi.Config.({
