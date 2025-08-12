@@ -47,6 +47,16 @@
   )
 )
 
+(rule
+  (deps api_v2.proto)
+  (targets api_v2_piqi.ml api_v2_piqi_ext.ml)
+  (action (progn
+            (run piqi of-proto --normalize api_v2.proto)
+            (run piqic-ocaml --ext api_v2.proto.piqi)
+          )
+  )
+)
+
 (library
   (name plugin_api_lib)
   (public_name geneweb_plugin_api.lib)
@@ -76,6 +86,13 @@
     api_update_util
     api_util
     api_warnings
+    api_v2
+    api_v2_piqi
+    api_v2_piqi_ext
+    common
+    person
+    request
+    response
   )
   (wrapped true)
   (optional)

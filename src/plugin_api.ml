@@ -207,4 +207,5 @@ let () =
       , aux @@ w_base @@ Plugin_api_lib.Api_graph.print_select_events);
     ( "API_GET_PAGINATED_DATA" , aux @@ w_base @@ get_paginated_data);
       ("API_HISTORY", aux @@ friend @@ w_base @@ Plugin_api_lib.Api.history)
+    ; ("API_PERSON", aux @@ w_base @@ Plugin_api_lib.Api_v2.handler)
     ]
