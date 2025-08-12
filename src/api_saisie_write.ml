@@ -100,12 +100,17 @@ let print_person_search_list conf base =
     | Some p -> [ p ]
     | None ->
       let limit = Int32.to_int params.Api_saisie_write_piqi.Person_search_list_params.limit in
-      let conf = {conf with Geneweb.Config.env =
-                              ("first_name", Adef.encoded first_name)
-                              :: ("surname", Adef.encoded surname)
-                              :: ("exact_first_name", Adef.encoded "pfx")
-                              :: ("exact_surname", Adef.encoded "pfx")
-                              :: conf.env} in
+      let conf =
+        let conf = {conf with Geneweb.Config.env =
+                                ("first_name", Adef.encoded first_name)
+                                :: ("surname", Adef.encoded surname)
+                                :: ("exact_first_name", Adef.encoded "pfx")
+                                :: ("exact_surname", Adef.encoded "pfx")
+                                :: conf.env} in
+        if Gwdb.nb_of_persons base < 100_000
+        then conf
+        else Geneweb.AdvSearchOk.force_exact_search_by_name conf
+      in
       let () =
         if Gwdb.search_indexes_can_be_initialized_on_the_fly base then
           let () =
