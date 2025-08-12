@@ -759,7 +759,7 @@ let fill_events
         if not conf.Geneweb.Config.no_note
         then
           let open Api_util in
-          !!(Geneweb.Notes.person_note conf base p (Gwdb.sou base note))
+          !!(Geneweb.Notes.person_note ~keep_newlines:true conf base p (Gwdb.sou base note))
         else ""
       in
       let src =
@@ -1245,7 +1245,7 @@ let fill_notes conf base p p_auth is_main_person gen_p =
   if p_auth && not conf.Geneweb.Config.no_note && is_main_person
   then
     let open Api_util in
-    !!(Geneweb.Notes.person_note conf base p gen_p.Def.notes)
+    !!(Geneweb.Notes.person_note ~keep_newlines:true conf base p gen_p.Def.notes)
   else ""
 
 let simple_relation_person_constructor r_type p =
