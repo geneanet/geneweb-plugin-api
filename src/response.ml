@@ -21,10 +21,10 @@ let to_piqi response =
 let response conf base request =
   Option.map (fun person ->
       {
-        index = Person.get_index person;
-        npocc = Person.get_npocc person;
+        index = Common.Person.get_index person;
+        npocc = Common.Person.get_npocc person;
       }
     )
-    (Person.get_person conf base
+    (Common.Person.get_person conf base
        (Request.get_select request)
        (Request.get_fields request))

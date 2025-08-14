@@ -90,7 +90,6 @@
     api_v2_piqi
     api_v2_piqi_ext
     common
-    person
     request
     response
   )
