@@ -1,4 +1,3 @@
-
 let not_found conf = Api_util.print_error conf `not_found ""
 
 let bad_request conf = Api_util.print_error conf `bad_request ""

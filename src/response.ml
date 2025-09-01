@@ -13,10 +13,10 @@ let npocc_to_piqi npocc : Api_v2_piqi.Npocc.t = {
 let to_piqi response =
   let index = response.index in
   let npocc = Option.map npocc_to_piqi response.npocc in
-  Api_v2_piqi.Person.({
-      index;
-      npocc;
-    })
+  {
+    Api_v2_piqi.Person.index;
+    npocc;
+  }
 
 let response conf base request =
   Option.map (fun person ->
