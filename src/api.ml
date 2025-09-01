@@ -319,7 +319,7 @@ let print_last_visited_persons conf base =
   let filters = Api_util.get_filters conf in
   let list =
     if user = "" then []
-    else try Hashtbl.find (Geneweb.Util.read_visited conf) user with Not_found -> []
+    else Option.value (Hashtbl.find_opt (Geneweb.Util.read_visited conf) user) ~default:[]
   in
   (* On ne supprime pas le fichier de cache, même après un envoi Gendcom, *)
   (* donc on vérifie que les personnes existent toujours dans la base.    *)

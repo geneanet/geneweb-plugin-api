@@ -166,8 +166,7 @@ let format_stats_m_f2 l1 l2 title series1 series2 =
   let () =
     List.iter
       (fun (k, ((nb_m, am), (nb_f, af))) ->
-        try
-          let pos = Hashtbl.find ht_labels k in
+        Option.iter (fun pos ->
           let data_male =
             Mstats.Data.({
               nb = Int32.of_int nb_m;
@@ -182,14 +181,13 @@ let format_stats_m_f2 l1 l2 title series1 series2 =
           in
           data.(0).(pos) <- data_male;
           data.(1).(pos) <- data_female;
-        with Not_found -> ())
+        ) (Hashtbl.find_opt ht_labels k))
       l1
   in
   let () =
     List.iter
       (fun (k, ((nb_m, am), (nb_f, af))) ->
-        try
-          let pos = Hashtbl.find ht_labels k in
+        Option.iter (fun pos ->
           let data_male =
             Mstats.Data.({
               nb = Int32.of_int nb_m;
@@ -204,7 +202,8 @@ let format_stats_m_f2 l1 l2 title series1 series2 =
           in
           data.(2).(pos) <- data_male;
           data.(3).(pos) <- data_female;
-        with Not_found -> ())
+        ) (Hashtbl.find_opt ht_labels k))
+
       l2
   in
   let datas =
@@ -835,10 +834,10 @@ let print_ind_stats conf base =
                   let k = Name.lower s in
                   if k = "?" || k = "" then ()
                   else
-                    try
-                      let (s, n) = Hashtbl.find ht k in
+                    match Hashtbl.find_opt ht k with
+                    | Some (s, n) ->
                       Hashtbl.replace ht k (s, (n + 1))
-                    with Not_found -> Hashtbl.add ht k (s, 1))
+                    | None -> Hashtbl.add ht k (s, 1))
                 sl
             else ())
           l)
@@ -902,10 +901,10 @@ let print_ind_stats conf base =
                     let k = Name.lower s in
                     if k = "?" || k = "" then ()
                     else
-                      try
-                        let (s, n) = Hashtbl.find ht k in
+                      match Hashtbl.find_opt ht k with
+                      | Some (s, n) ->
                         Hashtbl.replace ht k (s, (n + 1))
-                      with Not_found -> Hashtbl.add ht k (s, 1))
+                      | None -> Hashtbl.add ht k (s, 1))
                   sl;
                   List.iter
                     (fun e ->
@@ -913,10 +912,10 @@ let print_ind_stats conf base =
                       let k = Name.lower s in
                       if k = "" then ()
                       else
-                        try
-                          let (s, n) = Hashtbl.find ht k in
+                        match Hashtbl.find_opt ht k with
+                        | Some (s, n) ->
                           Hashtbl.replace ht k (s, (n + 1))
-                        with Not_found -> Hashtbl.add ht k (s, 1))
+                        | None -> Hashtbl.add ht k (s, 1))
                     (List.filter (fun e -> get_pevent_name e = Epers_Occupation) (get_pevents p));
               end
             else ())

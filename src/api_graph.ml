@@ -290,10 +290,10 @@ let build_graph_desc conf base p max_gen =
         (* la référence, suivi du père suivi, puis de la mère ...  *)
         (!nodes, List.rev !edges, !families)
     | (p, gen) :: l ->
-        try
-          let _ = Hashtbl.find ht (get_iper p) in
+        match Hashtbl.find_opt ht (get_iper p) with
+        | Some _ ->
           loop l nodes edges families
-        with Not_found ->
+        | None ->
           begin
             if gen >= max_gen then
               loop l nodes edges families
