@@ -6,6 +6,7 @@ type t = {
 let full_fields = {
   Common.index = true;
   npocc = true;
+  basic_infos = true;
 }
 
 let get_fields {person_select = _; requested_fields} = requested_fields
@@ -25,6 +26,7 @@ let optional = Option.value ~default:false
 let requested_fields person_request = {
   Common.index = optional person_request.Api_v2_piqi.Person_request.index;
   npocc = optional person_request.npocc;
+  basic_infos = optional person_request.basic_infos;
 }
 
 let request_of_piqi_request piqi_request : t option =

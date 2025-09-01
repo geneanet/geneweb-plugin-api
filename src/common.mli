@@ -6,9 +6,24 @@ type npocc = {
 
 type index = Int32.t
 
+type sex = Unknown | Male | Female
+
+type basic_infos = {
+  lastname : string option;
+  firstname : string option;
+  sex : sex option;
+  image : string option;
+  public_name : string option;
+  aliases : string list option;
+  qualifiers : string list option;
+  firstname_aliases : string list option;
+  surname_aliases : string list option;
+}
+
 type requested_fields = {
   index : bool;
   npocc : bool;
+  basic_infos : bool;
 }
 
 type person_select = Index of index | Npocc of npocc
@@ -21,6 +36,7 @@ module Person : sig
   val get_person : Geneweb.Config.config -> Gwdb.base -> person_select -> requested_fields -> t option
   val get_index : t -> index option
   val get_npocc : t -> npocc option
+  val get_basic_infos : t -> basic_infos option
 end
 
 module Family : sig
