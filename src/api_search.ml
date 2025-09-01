@@ -289,7 +289,7 @@ let print_search conf base =
       search_params.Api_piqi.Search_params.firstname)
   with
    | (Some n, Some fs) ->
-      let _ = Gwdb.load_strings_array base in
+      let () = Gwdb.load_strings_array base in
       let list =
         if Name.lower n = "" && Name.lower fs = "" then
           []
@@ -305,7 +305,7 @@ let print_search conf base =
       in
       print_list conf base filters list
   | (Some n, None) ->
-      let _ = Gwdb.load_strings_array base in
+      let () = Gwdb.load_strings_array base in
       let list =
         if Name.lower n = "" then
           []
@@ -317,7 +317,7 @@ let print_search conf base =
       in
       print_list conf base filters list
   | (None, Some fs) ->
-      let _ = Gwdb.load_strings_array base in
+      let () = Gwdb.load_strings_array base in
       let list =
         if Name.lower fs = "" then
           []
@@ -633,7 +633,7 @@ let search_auto_complete ~assets ~conf ~base ~mode ~place_mode ~max ~ini =
       assets conf n max (Some `profession) ini suggestions_from_db
 
 let search_person_list base surname first_name =
-  let _ = Gwdb.load_strings_array base in
+  let () = Gwdb.load_strings_array base in
   let (surname, first_name) =
     match (surname, first_name) with
     | (Some n, Some fn) ->
