@@ -1,4 +1,3 @@
-
 type npocc = {
   n : string;
   p : string;

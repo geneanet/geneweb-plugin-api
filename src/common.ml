@@ -1,4 +1,3 @@
-
 type npocc = {
   n : string;
   p : string;
@@ -44,7 +43,7 @@ end = struct
     {base; fields; confidentiality; person}
 
   let of_field field f p =
-    if field then Some (f p.person) else None
+    Ext_option.return_if field (fun () -> f p.person)
 
   let get_index person =
     of_field person.fields.index (fun person ->
@@ -75,9 +74,8 @@ end = struct
       Option.map (fun iper ->
           of_person conf base fields (Gwdb.poi base iper)
         ) (index_of_select base select)
-    with _ -> None
+    with Failure _ -> None
 end
-
 
 module Family : sig
   type t = family
