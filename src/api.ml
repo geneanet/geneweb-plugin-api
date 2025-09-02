@@ -686,8 +686,9 @@ module HistoryApi = struct
       in
       let pg = String.sub key 0 i in
       let s = String.sub key j (String.length key - j) in
-      try pg, Some (int_of_string s)
-      with Failure _ -> key, None
+      match int_of_string_opt s with
+      | Some i -> pg, Some i
+      | None -> key, None
     in
     let link_parameters = "m=NOTES" in
     let link_parameters =
