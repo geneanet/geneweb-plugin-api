@@ -36,10 +36,13 @@ message PersonRequest {
   optional bool index = 1;
   optional bool npocc = 2;
   optional bool basic_infos = 3;
+  optional bool parents = 4;
 }
 
 message Person {
   optional int32 index = 1;
   optional Npocc npocc = 2;
   optional BasicInfos basic_infos = 3;
+  optional Person father = 4;
+  optional Person mother = 5;
 }

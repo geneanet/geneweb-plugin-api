@@ -2,6 +2,8 @@ type t = {
   index : Common.index option;
   npocc : Common.npocc option;
   basic_infos : Common.basic_infos option;
+  father : t option;
+  mother : t option;
 }
 
 let npocc_to_piqi npocc : Api_v2_piqi.Npocc.t = {
@@ -27,24 +29,30 @@ let basic_infos_to_piqi basic_infos : Api_v2_piqi.Basic_infos.t = {
   surname_aliases = Option.value ~default:[] basic_infos.surname_aliases;
 }
 
-let to_piqi response =
+let rec to_piqi response =
   let index = response.index in
   let npocc = Option.map npocc_to_piqi response.npocc in
   let basic_infos = Option.map basic_infos_to_piqi response.basic_infos in
+  let father = Option.map to_piqi response.father in
+  let mother = Option.map to_piqi response.mother in
   {
     Api_v2_piqi.Person.index;
     npocc;
     basic_infos;
+    father;
+    mother;
   }
 
+let rec response_of_person person = {
+  index = Common.Person.get_index person;
+  npocc = Common.Person.get_npocc person;
+  basic_infos = Common.Person.get_basic_infos person;
+  father = Option.map response_of_person (Common.Person.get_father person);
+  mother = Option.map response_of_person (Common.Person.get_mother person);
+}
+
 let response conf base request =
-  Option.map (fun person ->
-      {
-        index = Common.Person.get_index person;
-        npocc = Common.Person.get_npocc person;
-        basic_infos = Common.Person.get_basic_infos person;
-      }
-    )
+  Option.map response_of_person
     (Common.Person.get_person conf base
        (Request.get_select request)
        (Request.get_fields request))

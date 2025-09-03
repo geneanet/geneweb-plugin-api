@@ -24,6 +24,7 @@ type requested_fields = {
   index : bool;
   npocc : bool;
   basic_infos : bool;
+  parents : bool
 }
 
 type person_select = Index of index | Npocc of npocc
@@ -34,6 +35,7 @@ type confidentiality = {
 }
 
 type person = {
+  conf : Geneweb.Config.config;
   base : Gwdb.base;
   confidentiality : confidentiality;
   fields : requested_fields;
@@ -64,6 +66,8 @@ module Person : sig
   val get_index : t -> index option
   val get_npocc : t -> npocc option
   val get_basic_infos : t -> basic_infos option
+  val get_father : t -> t option
+  val get_mother : t -> t option
 end = struct
 
   type t = person
@@ -72,7 +76,7 @@ end = struct
     let visible = Geneweb.Person.is_visible conf base person in
     let hidden_names = Geneweb.Util.is_hide_names conf person in
     let confidentiality = {visible; hidden_names} in
-    {base; fields; confidentiality; person}
+    {conf; base; fields; confidentiality; person}
 
   let of_field field f p =
     Ext_option.return_if field (fun () -> f p.person)
@@ -127,6 +131,21 @@ end = struct
           surname_aliases = as_some_strings Gwdb.get_surnames_aliases person;
         }
       ) person
+
+  let parent_fields = {index = true; npocc = true; basic_infos = true; parents = false}
+
+  let get_parent proj person =
+    let ( >>= ) = Option.bind in
+    if person.fields.parents then
+      Gwdb.get_parents person.person >>= fun parents ->
+      Option.some (Gwdb.foi person.base parents) >>= fun family ->
+      Option.some (proj family) >>= fun iparent ->
+      Option.some (of_person person.conf person.base parent_fields (Gwdb.poi person.base iparent))
+    else None
+
+  let get_father = get_parent Gwdb.get_father
+
+  let get_mother = get_parent Gwdb.get_mother
 
   let index_of_npocc base {n; p; occ} =
     Gwdb.person_of_key base p n (Int32.to_int occ)
