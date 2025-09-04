@@ -38,6 +38,7 @@ message PersonRequest {
   optional bool name_aliases = 8;
   optional PersonRequest father = 9;
   optional PersonRequest mother = 10;
+  optional bool sosa = 11;
 }
 
 message Person {
@@ -51,4 +52,5 @@ message Person {
   optional NameAliases name_aliases = 8;
   optional Person father = 9;
   optional Person mother = 10;
+  optional string sosa = 11;
 }

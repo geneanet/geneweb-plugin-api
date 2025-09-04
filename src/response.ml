@@ -9,6 +9,7 @@ type t = {
   name_aliases : Common.name_aliases option;
   father : t option;
   mother : t option;
+  sosa : string option;
 }
 
 let npocc_to_piqi npocc : Api_v2_piqi.Npocc.t = {
@@ -41,6 +42,7 @@ let rec to_piqi response =
     name_aliases = Option.map name_aliases_to_piqi response.name_aliases;
     father = Option.map to_piqi response.father;
     mother = Option.map to_piqi response.mother;
+    sosa = response.sosa;
   }
 
 let rec response_of_person person = {
@@ -54,6 +56,7 @@ let rec response_of_person person = {
   name_aliases = Common.Person.get_name_aliases person;
   father = Option.map response_of_person (Common.Person.get_father person);
   mother = Option.map response_of_person (Common.Person.get_mother person);
+  sosa = Common.Person.get_sosa person;
 }
 
 let response conf base request =
