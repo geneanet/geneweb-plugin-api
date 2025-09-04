@@ -143,9 +143,10 @@ end = struct
     | Def.Female -> Female
 
   let get_sex person =
-    of_field person.fields.sex (fun person' ->
-        get_sex person'
-      ) person
+    Ext_option.return_if (
+      not person.confidentiality.restricted &&
+      person.fields.sex)
+      (fun () -> get_sex person.person)
 
   let get_lastname person =
     Ext_option.return_if (has_visible_names person && person.fields.lastname) (fun () ->
