@@ -119,16 +119,12 @@ end = struct
       ) person
 
   let get_lastname person =
-    if has_visible_names person then
-      of_field person.fields.lastname (fun _person' ->
-          as_string Gwdb.get_surname person) person
-    else None
+    Ext_option.return_if (has_visible_names person && person.fields.lastname) (fun () ->
+        as_string Gwdb.get_surname person)
 
   let get_firstname person =
-    if has_visible_names person then
-      of_field person.fields.firstname (fun _person' ->
-          as_string Gwdb.get_first_name person) person
-    else None
+    Ext_option.return_if (has_visible_names person && person.fields.firstname) (fun () ->
+          as_string Gwdb.get_first_name person)
 
   let get_image person =
     if person.fields.image then
@@ -136,22 +132,17 @@ end = struct
     else None
 
   let get_public_name person =
-    if has_visible_names person then
-      of_field person.fields.public_name (fun _person' ->
-          as_string Gwdb.get_public_name person) person
-    else None
+    Ext_option.return_if (has_visible_names person && person.fields.public_name) (fun () ->
+        as_string Gwdb.get_public_name person)
 
   let get_name_aliases person =
-    if has_visible_names person then
-      of_field person.fields.name_aliases (fun _person' ->
-          {
-            aliases = as_some_strings Gwdb.get_aliases person;
-            qualifiers = as_some_strings Gwdb.get_qualifiers person;
-            firstname_aliases = as_some_strings Gwdb.get_first_names_aliases person;
-            surname_aliases = as_some_strings Gwdb.get_surnames_aliases person;
-          }
-        ) person
-    else None
+    Ext_option.return_if (has_visible_names person && person.fields.name_aliases) (fun () ->
+        {
+          aliases = as_some_strings Gwdb.get_aliases person;
+          qualifiers = as_some_strings Gwdb.get_qualifiers person;
+          firstname_aliases = as_some_strings Gwdb.get_first_names_aliases person;
+          surname_aliases = as_some_strings Gwdb.get_surnames_aliases person;
+        })
 
   let get_parent fields proj person =
     Option.bind fields (fun fields ->
@@ -176,15 +167,16 @@ end = struct
       ) person
 
   let get_occupation person =
-    if person.confidentiality.visible then
-    of_field person.fields.occupation (fun _person' ->
+    Ext_option.return_if
+      (person.confidentiality.visible
+       && person.fields.occupation
+      ) (fun () ->
           Adef.as_string @@
           Geneweb.Notes.source
             person.conf
             person.base
             (as_string Gwdb.get_occupation person)
-        ) person
-    else None
+        )
 
   let index_of_npocc base {n; p; occ} =
     Gwdb.person_of_key base p n (Int32.to_int occ)
@@ -199,6 +191,7 @@ end = struct
           of_person conf base fields (Gwdb.poi base iper)
         ) (index_of_select base select)
     with Failure _ -> None
+
 end
 
 module Family : sig
