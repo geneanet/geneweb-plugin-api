@@ -27,6 +27,7 @@ type requested_fields = {
   father : requested_fields option;
   mother : requested_fields option;
   sosa : bool;
+  occupation : bool;
 }
 
 type person_select = Index of index | Npocc of npocc
@@ -48,10 +49,10 @@ let has_visible_names person =
   person.confidentiality.visible || not person.confidentiality.hidden_names
 
 let as_string proj person =
-  Gwdb.sou person.base (proj person.person)
+  Utf8.normalize (Gwdb.sou person.base (proj person.person))
 
 let as_strings proj person =
-  List.map (Gwdb.sou person.base) (proj person.person)
+  List.map (fun istr -> Utf8.normalize (Gwdb.sou person.base istr)) (proj person.person)
 
 (*let as_some_string ?(none_if_empty = false) proj person =
   let s = as_string proj person in
@@ -76,6 +77,7 @@ module Person : sig
   val get_father : t -> t option
   val get_mother : t -> t option
   val get_sosa : t -> string option
+  val get_occupation : t -> string option
 end = struct
 
   type t = person
@@ -106,11 +108,15 @@ end = struct
           }
         ) person
 
-  let get_sex person = match Gwdb.get_sex person.person with
+  let get_sex person = match Gwdb.get_sex person with
     | Def.Neuter -> Unknown
     | Def.Male -> Male
     | Def.Female -> Female
-  let get_sex person = of_field person.fields.sex (fun _person' -> get_sex person) person
+
+  let get_sex person =
+    of_field person.fields.sex (fun person' ->
+        get_sex person'
+      ) person
 
   let get_lastname person =
     if has_visible_names person then
@@ -168,6 +174,17 @@ end = struct
         in
         Sosa.to_string sosa_nb_num
       ) person
+
+  let get_occupation person =
+    if person.confidentiality.visible then
+    of_field person.fields.occupation (fun _person' ->
+          Adef.as_string @@
+          Geneweb.Notes.source
+            person.conf
+            person.base
+            (as_string Gwdb.get_occupation person)
+        ) person
+    else None
 
   let index_of_npocc base {n; p; occ} =
     Gwdb.person_of_key base p n (Int32.to_int occ)
