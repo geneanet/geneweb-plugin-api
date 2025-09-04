@@ -42,6 +42,7 @@ type requested_fields = {
 type person_select = Index of index | Npocc of npocc
 
 type confidentiality = {
+  restricted : bool;
   visible : bool;
   hidden_names : bool;
 }
@@ -110,9 +111,10 @@ end = struct
   type t = person
 
   let of_person conf base fields person =
+    let restricted = Geneweb.Person.is_restricted conf base (Gwdb.get_iper person) in
     let visible = Geneweb.Person.is_visible conf base person in
     let hidden_names = Geneweb.Person.is_hide_names conf person in
-    let confidentiality = {visible; hidden_names} in
+    let confidentiality = {restricted; visible; hidden_names} in
     {conf; base; fields; confidentiality; person}
 
   let of_field field f p =
@@ -172,12 +174,14 @@ end = struct
         })
 
   let get_parent fields proj person =
-    Option.bind fields (fun fields ->
-        Option.bind (Gwdb.get_parents person.person) (fun parents ->
-        let iparent = proj (Gwdb.foi person.base parents) in
-        let parent = Gwdb.poi person.base iparent in
-        Option.some (of_person person.conf person.base fields parent))
-      )
+    if person.confidentiality.restricted then None
+    else
+      Option.bind fields (fun fields ->
+          Option.bind (Gwdb.get_parents person.person) (fun parents ->
+              let iparent = proj (Gwdb.foi person.base parents) in
+              let parent = Gwdb.poi person.base iparent in
+              Option.some (of_person person.conf person.base fields parent))
+        )
 
   let get_father person = get_parent person.fields.father Gwdb.get_father person
 
@@ -256,7 +260,9 @@ end = struct
       Option.is_some person.fields.events) (fun () ->
         let events_request = Option.get person.fields.events in
         let page = Api_util.Page.make ~number:events_request.page_number ~element_count:events_request.elements_per_page in
-        let events = Geneweb.Event.sorted_events person.conf person.base person.person in
+        let conf = Geneweb.Config.Trimmed.from_config person.conf in
+        let auth_person = Geneweb.Authorized.Person.make ~conf ~base:person.base (Gwdb.get_iper person.person) in
+        let events = Geneweb.Event.sorted_events conf person.base auth_person in
         let paginated_events = Api_util.Paginated_data.extract page events in
         let paginated_events = Api_util.Paginated_data.map (fun evt ->
             {
