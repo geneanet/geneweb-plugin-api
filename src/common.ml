@@ -26,6 +26,7 @@ type requested_fields = {
   name_aliases : bool;
   father : requested_fields option;
   mother : requested_fields option;
+  sosa : bool;
 }
 
 type person_select = Index of index | Npocc of npocc
@@ -74,6 +75,7 @@ module Person : sig
   val get_name_aliases : t -> name_aliases option
   val get_father : t -> t option
   val get_mother : t -> t option
+  val get_sosa : t -> string option
 end = struct
 
   type t = person
@@ -156,6 +158,16 @@ end = struct
   let get_father person = get_parent person.fields.father Gwdb.get_father person
 
   let get_mother person = get_parent person.fields.mother Gwdb.get_mother person
+
+  let get_sosa person =
+    of_field person.fields.sosa (fun person' ->
+        let sosa_nb_num = Geneweb.Sosa_cache.get_sosa_person
+            ~conf:person.conf
+            ~base:person.base
+            ~person:person'
+        in
+        Sosa.to_string sosa_nb_num
+      ) person
 
   let index_of_npocc base {n; p; occ} =
     Gwdb.person_of_key base p n (Int32.to_int occ)
