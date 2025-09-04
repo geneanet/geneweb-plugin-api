@@ -14,6 +14,7 @@ type t = {
   notes : string option;
   sources : string option;
   titles : string list option;
+  events : Common.paginated_events option;
 }
 
 let npocc_to_piqi npocc : Api_v2_piqi.Npocc.t = {
@@ -33,6 +34,22 @@ let name_aliases_to_piqi name_aliases : Api_v2_piqi.Name_aliases.t = {
   firstname_aliases = Option.value ~default:[] name_aliases.firstname_aliases;
   surname_aliases = Option.value ~default:[] name_aliases.surname_aliases;
 }
+let events_to_piqi event =
+  let event_type, name = match event.Common.event_type with
+    | Geneweb.Event.Pevent (Def.Epers_Name name) -> Some `epers_custom, Some name
+    | Geneweb.Event.Pevent pe -> Some (Api_piqi_util.piqi_pevent_name_of_pevent_name pe), None
+    | Geneweb.Event.Fevent (Def.Efam_Name name) -> Some `efam_custom, Some name
+    | Geneweb.Event.Fevent fe -> Some (Api_piqi_util.piqi_fevent_name_of_fevent_name fe), None
+  in
+  {
+  Api_v2_piqi.Event.event_type = event_type;
+  name;
+}
+let paginated_events_to_piqi events = {
+  Api_v2_piqi.Paginated_events.elements = List.map events_to_piqi events.Common.elements;
+  page_number = Int32.of_int events.page_number;
+  total_count = Int32.of_int events.total_count;
+}
 
 let rec to_piqi response =
   {
@@ -51,6 +68,7 @@ let rec to_piqi response =
     notes = response.notes;
     sources = response.sources;
     titles = Option.value ~default:[] response.titles;
+    events = Option.map paginated_events_to_piqi response.events;
   }
 
 let rec response_of_person person = {
@@ -69,6 +87,7 @@ let rec response_of_person person = {
   notes = Common.Person.get_notes person;
   sources = Common.Person.get_sources person;
   titles = Common.Person.get_titles person;
+  events = Common.Person.get_events person;
 }
 
 let response conf base request =

@@ -19,6 +19,7 @@ let full_fields = {
   notes = true;
   sources = true;
   titles = true;
+  events = Some {Common.page_number = 1; elements_per_page = Int.max_int};
 }
 
 let get_fields {person_select = _; requested_fields} = requested_fields
@@ -32,6 +33,11 @@ let person_select_of_piqi_request piqi_request =
   | Some index, _ -> Some (Common.Index index)
   | _, Some Api_v2_piqi.Npocc.{n = Some n; p = Some p; occ = Some occ} -> Some (Common.Npocc {n; p; occ})
   | _, _ -> None
+
+let event_request events = {
+  Common.page_number = Option.value ~default:1 (Option.map Int32.to_int events.Api_v2_piqi.Event_request.page_number);
+  elements_per_page = Option.value ~default:Int.max_int (Option.map Int32.to_int events.elements_per_page);
+}
 
 let optional = Option.value ~default:false
 
@@ -51,6 +57,7 @@ let rec requested_fields person_request = {
   notes = optional person_request.notes;
   sources = optional person_request.sources;
   titles = optional person_request.titles;
+  events = Option.map event_request person_request.events;
 }
 
 let request_of_piqi_request piqi_request : t option =

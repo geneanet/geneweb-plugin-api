@@ -15,16 +15,21 @@ message Npocc {
 }
 
 message NameAliases {
-  repeated string aliases = 2;
-  repeated string qualifiers = 3;
-  repeated string firstname_aliases = 4;
-  repeated string surname_aliases = 5;
+  repeated string aliases = 1;
+  repeated string qualifiers = 2;
+  repeated string firstname_aliases = 3;
+  repeated string surname_aliases = 4;
 }
 
 message Request {
   optional int32 index = 1;
   optional Npocc npocc = 2;
   optional PersonRequest person_request = 3;
+}
+
+message EventRequest {
+  optional int32 page_number = 1;
+  optional int32 elements_per_page = 2;
 }
 
 message PersonRequest {
@@ -43,6 +48,98 @@ message PersonRequest {
   optional bool notes = 13;
   optional bool sources = 14;
   optional bool titles = 15;
+  optional EventRequest events = 16;
+}
+
+enum EventType {
+  EPERS_BIRTH = 0;
+  EPERS_BAPTISM = 1;
+  EPERS_DEATH = 2;
+  EPERS_BURIAL = 3;
+  EPERS_CREMATION = 4;
+  EPERS_ACCOMPLISHMENT = 5;
+  EPERS_ACQUISITION = 6;
+  EPERS_ADHESION = 7;
+  EPERS_BAPTISMLDS = 8;
+  EPERS_BARMITZVAH = 9;
+  EPERS_BATMITZVAH = 10;
+  EPERS_BENEDICTION = 11;
+  EPERS_CHANGENAME = 12;
+  EPERS_CIRCUMCISION = 13;
+  EPERS_CONFIRMATION = 14;
+  EPERS_CONFIRMATIONLDS = 15;
+  EPERS_DECORATION = 16;
+  EPERS_DEMOBILISATIONMILITAIRE = 17;
+  EPERS_DIPLOMA = 18;
+  EPERS_DISTINCTION = 19;
+  EPERS_DOTATION = 20;
+  EPERS_DOTATIONLDS = 21;
+  EPERS_EDUCATION = 22;
+  EPERS_ELECTION = 23;
+  EPERS_EMIGRATION = 24;
+  EPERS_EXCOMMUNICATION = 25;
+  EPERS_FAMILYLINKLDS = 26;
+  EPERS_FIRSTCOMMUNION = 27;
+  EPERS_FUNERAL = 28;
+  EPERS_GRADUATE = 29;
+  EPERS_HOSPITALISATION = 30;
+  EPERS_ILLNESS = 31;
+  EPERS_IMMIGRATION = 32;
+  EPERS_LISTEPASSENGER = 33;
+  EPERS_MILITARYDISTINCTION = 34;
+  EPERS_MILITARYPROMOTION = 35;
+  EPERS_MILITARYSERVICE = 36;
+  EPERS_MOBILISATIONMILITAIRE = 37;
+  EPERS_NATURALISATION = 38;
+  EPERS_OCCUPATION = 39;
+  EPERS_ORDINATION = 40;
+  EPERS_PROPERTY = 41;
+  EPERS_RECENSEMENT = 42;
+  EPERS_RESIDENCE = 43;
+  EPERS_RETIRED = 44;
+  EPERS_SCELLENTCHILDLDS = 45;
+  EPERS_SCELLENTPARENTLDS = 46;
+  EPERS_SCELLENTSPOUSELDS = 47;
+  EPERS_VENTEBIEN = 48;
+  EPERS_WILL = 49;
+  EPERS_CUSTOM = 50;
+
+  EFAM_MARRIAGE = 100;
+  EFAM_NO_MARRIAGE = 101;
+  EFAM_NO_MENTION = 102;
+  EFAM_ENGAGE = 103;
+  EFAM_DIVORCE = 104;
+  EFAM_SEPARATED = 105;
+  EFAM_ANNULATION = 106;
+  EFAM_MARRIAGE_BANN = 107;
+  EFAM_MARRIAGE_CONTRACT = 108;
+  EFAM_MARRIAGE_LICENSE = 109;
+  EFAM_PACS = 110;
+  EFAM_RESIDENCE = 111;
+  EFAM_CUSTOM = 112;
+}
+
+message Event {
+  optional string name = 1;
+  optional EventType event_type = 2;
+  /*optional string date = 3;
+  optional string date_long = 4;
+  optional string date_raw = 13;
+  optional string date_conv = 5;
+  optional string date_conv_long = 14;
+  optional Calendar date_cal = 6;
+  optional string place = 7;
+  optional string reason = 8;
+  optional string note = 9;
+  optional string src = 10;
+  optional SimplePerson spouse = 11;
+  repeated WitnessEvent witnesses = 12;*/
+}
+
+message PaginatedEvents {
+  repeated Event elements = 1;
+  required int32 page_number = 2;
+  required int32 total_count = 3;
 }
 
 message Person {
@@ -61,4 +158,5 @@ message Person {
   optional string notes = 13;
   optional string sources = 14;
   repeated string titles = 15;
+  optional PaginatedEvents events = 16;
 }

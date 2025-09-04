@@ -15,6 +15,11 @@ type name_aliases = {
   surname_aliases : string list option;
 }
 
+type event_request = {
+  page_number : int;
+  elements_per_page : int;
+}
+
 type requested_fields = {
   index : bool;
   npocc : bool;
@@ -31,6 +36,7 @@ type requested_fields = {
   notes : bool;
   sources : bool;
   titles : bool;
+  events : event_request option;
 }
 
 type person_select = Index of index | Npocc of npocc
@@ -47,6 +53,20 @@ type person = {
   fields : requested_fields;
   person : Gwdb.person;
 }
+
+type 'a paginated = {
+  elements : 'a;
+  page_number : int;
+  total_count : int;
+}
+
+type event_type = string Geneweb.Event.event_name
+
+type event = {
+  event_type : event_type
+}
+
+type paginated_events = event list paginated
 
 let has_visible_names person =
   person.confidentiality.visible || not person.confidentiality.hidden_names
@@ -84,6 +104,7 @@ module Person : sig
   val get_notes : t -> string option
   val get_sources : t -> string option
   val get_titles : t -> string list option
+  val get_events : t -> paginated_events option
 end = struct
 
   type t = person
@@ -223,6 +244,32 @@ end = struct
                  (Adef.safe "") person.person title)
           ) (Geneweb.Perso.nobility_titles_list person.conf person.base person.person)
       )
+
+  let event_type base e = match e with
+    | Geneweb.Event.Pevent (Def.Epers_Name istr) -> Geneweb.Event.Pevent (Def.Epers_Name (Utf8.normalize (Gwdb.sou base istr)))
+    | Geneweb.Event.Fevent (Def.Efam_Name istr) -> Geneweb.Event.Fevent (Def.Efam_Name (Utf8.normalize (Gwdb.sou base istr)))
+    | _ as e -> (Obj.magic e)
+
+  let get_events person =
+    Ext_option.return_if (
+      person.confidentiality.visible &&
+      Option.is_some person.fields.events) (fun () ->
+        let events_request = Option.get person.fields.events in
+        let page = Api_util.Page.make ~number:events_request.page_number ~element_count:events_request.elements_per_page in
+        let events = Geneweb.Event.sorted_events person.conf person.base person.person in
+        let paginated_events = Api_util.Paginated_data.extract page events in
+        let paginated_events = Api_util.Paginated_data.map (fun evt ->
+            {
+              event_type = event_type person.base (Geneweb.Event.get_name evt);
+            }
+          ) paginated_events in
+        {
+          elements = paginated_events.Api_util.Paginated_data.elements;
+          page_number = paginated_events.page_number;
+          total_count = paginated_events.total_count;
+        }
+      )
+
 
   let index_of_npocc base {n; p; occ} =
     Gwdb.person_of_key base p n (Int32.to_int occ)

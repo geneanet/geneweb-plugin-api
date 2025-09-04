@@ -15,6 +15,11 @@ type name_aliases = {
   surname_aliases : string list option;
 }
 
+type event_request = {
+  page_number : int;
+  elements_per_page : int;
+}
+
 type requested_fields = {
   index : bool;
   npocc : bool;
@@ -31,12 +36,27 @@ type requested_fields = {
   notes : bool;
   sources : bool;
   titles : bool;
+  events : event_request option;
 }
 
 type person_select = Index of index | Npocc of npocc
 
 type person
 type family
+
+type 'a paginated = {
+  elements : 'a;
+  page_number : int;
+  total_count : int;
+}
+
+type event_type = string Geneweb.Event.event_name
+
+type event = {
+  event_type : event_type;
+}
+
+type paginated_events = event list paginated
 
 module Person : sig
   type t = person
@@ -56,6 +76,7 @@ module Person : sig
   val get_notes : t -> string option
   val get_sources : t -> string option
   val get_titles : t -> string list option
+  val get_events : t -> paginated_events option
 end
 
 module Family : sig
