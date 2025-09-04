@@ -42,6 +42,7 @@ type requested_fields = {
 type person_select = Index of index | Npocc of npocc
 
 type confidentiality = {
+  restricted : bool;
   visible : bool;
   hidden_names : bool;
 }
@@ -110,9 +111,10 @@ end = struct
   type t = person
 
   let of_person conf base fields person =
+    let restricted = Geneweb.Util.is_restricted conf base (Gwdb.get_iper person) in
     let visible = Geneweb.Person.is_visible conf base person in
     let hidden_names = Geneweb.Util.is_hide_names conf person in
-    let confidentiality = {visible; hidden_names} in
+    let confidentiality = {restricted; visible; hidden_names} in
     {conf; base; fields; confidentiality; person}
 
   let of_field field f p =
@@ -172,12 +174,14 @@ end = struct
         })
 
   let get_parent fields proj person =
-    Option.bind fields (fun fields ->
-        Option.bind (Gwdb.get_parents person.person) (fun parents ->
-        let iparent = proj (Gwdb.foi person.base parents) in
-        let parent = Gwdb.poi person.base iparent in
-        Option.some (of_person person.conf person.base fields parent))
-      )
+    if person.confidentiality.restricted then None
+    else
+      Option.bind fields (fun fields ->
+          Option.bind (Gwdb.get_parents person.person) (fun parents ->
+              let iparent = proj (Gwdb.foi person.base parents) in
+              let parent = Gwdb.poi person.base iparent in
+              Option.some (of_person person.conf person.base fields parent))
+        )
 
   let get_father person = get_parent person.fields.father Gwdb.get_father person
 
