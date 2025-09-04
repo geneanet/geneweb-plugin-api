@@ -30,6 +30,7 @@ type requested_fields = {
   occupation : bool;
   notes : bool;
   sources : bool;
+  titles : bool;
 }
 
 type person_select = Index of index | Npocc of npocc
@@ -82,6 +83,7 @@ module Person : sig
   val get_occupation : t -> string option
   val get_notes : t -> string option
   val get_sources : t -> string option
+  val get_titles : t -> string list option
 end = struct
 
   type t = person
@@ -208,6 +210,19 @@ end = struct
               person.base
               (as_string Gwdb.get_psources person)
           ))
+
+  let get_titles person =
+    Ext_option.return_if person.fields.titles (fun () ->
+        List.map (fun title ->
+            Adef.as_string
+              (Geneweb.Perso.string_of_title
+                 ~safe:true
+                 ~link:false
+                 person.conf
+                 person.base
+                 (Adef.safe "") person.person title)
+          ) (Geneweb.Perso.nobility_titles_list person.conf person.base person.person)
+      )
 
   let index_of_npocc base {n; p; occ} =
     Gwdb.person_of_key base p n (Int32.to_int occ)
