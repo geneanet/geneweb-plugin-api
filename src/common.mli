@@ -24,7 +24,8 @@ type requested_fields = {
   image : bool;
   public_name : bool;
   name_aliases : bool;
-  parents : bool;
+  father : requested_fields option;
+  mother : requested_fields option;
 }
 
 type person_select = Index of index | Npocc of npocc
