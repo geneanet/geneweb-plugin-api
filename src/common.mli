@@ -8,12 +8,7 @@ type index = Int32.t
 
 type sex = Unknown | Male | Female
 
-type basic_infos = {
-  lastname : string option;
-  firstname : string option;
-  sex : sex option;
-  image : string option;
-  public_name : string option;
+type name_aliases = {
   aliases : string list option;
   qualifiers : string list option;
   firstname_aliases : string list option;
@@ -23,7 +18,12 @@ type basic_infos = {
 type requested_fields = {
   index : bool;
   npocc : bool;
-  basic_infos : bool;
+  lastname : bool;
+  firstname : bool;
+  sex : bool;
+  image : bool;
+  public_name : bool;
+  name_aliases : bool;
   parents : bool;
 }
 
@@ -37,7 +37,12 @@ module Person : sig
   val get_person : Geneweb.Config.config -> Gwdb.base -> person_select -> requested_fields -> t option
   val get_index : t -> index option
   val get_npocc : t -> npocc option
-  val get_basic_infos : t -> basic_infos option
+  val get_sex : t -> sex option
+  val get_lastname : t -> string option
+  val get_firstname : t -> string option
+  val get_public_name: t -> string option
+  val get_image : t -> string option
+  val get_name_aliases : t -> name_aliases option
   val get_father : t -> person option
   val get_mother : t -> person option
 end

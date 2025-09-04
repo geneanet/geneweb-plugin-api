@@ -8,12 +8,7 @@ type index = Int32.t
 
 type sex = Unknown | Male | Female
 
-type basic_infos = {
-  lastname : string option;
-  firstname : string option;
-  sex : sex option;
-  image : string option;
-  public_name : string option;
+type name_aliases = {
   aliases : string list option;
   qualifiers : string list option;
   firstname_aliases : string list option;
@@ -23,7 +18,12 @@ type basic_infos = {
 type requested_fields = {
   index : bool;
   npocc : bool;
-  basic_infos : bool;
+  lastname : bool;
+  firstname : bool;
+  sex : bool;
+  image : bool;
+  public_name : bool;
+  name_aliases : bool;
   parents : bool
 }
 
@@ -51,9 +51,9 @@ let as_string proj person =
 let as_strings proj person =
   List.map (Gwdb.sou person.base) (proj person.person)
 
-let as_some_string ?(none_if_empty = false) proj person =
+(*let as_some_string ?(none_if_empty = false) proj person =
   let s = as_string proj person in
-  Ext_option.return_if (not none_if_empty || s <> "") (fun () -> s)
+  Ext_option.return_if (not none_if_empty || s <> "") (fun () -> s)*)
 
 let as_some_strings proj person =
   Some (as_strings proj person)
@@ -65,7 +65,12 @@ module Person : sig
   val get_person : Geneweb.Config.config -> Gwdb.base -> person_select -> requested_fields -> t option
   val get_index : t -> index option
   val get_npocc : t -> npocc option
-  val get_basic_infos : t -> basic_infos option
+  val get_sex : t -> sex option
+  val get_lastname : t -> string option
+  val get_firstname : t -> string option
+  val get_public_name: t -> string option
+  val get_image : t -> string option
+  val get_name_aliases : t -> name_aliases option
   val get_father : t -> t option
   val get_mother : t -> t option
 end = struct
@@ -102,37 +107,44 @@ end = struct
     | Def.Neuter -> Unknown
     | Def.Male -> Male
     | Def.Female -> Female
+  let get_sex person = of_field person.fields.sex (fun _person' -> get_sex person) person
 
-  let empty_basic_infos = {
-    lastname = None;
-    firstname = None;
-    sex = None;
-    image = None;
-    public_name = None;
-    aliases = None;
-    qualifiers = None;
-    firstname_aliases = None;
-    surname_aliases = None;
-  }
+  let get_lastname person =
+    if has_visible_names person then
+      of_field person.fields.lastname (fun _person' ->
+          as_string Gwdb.get_surname person) person
+    else None
 
-  let get_basic_infos person =
-    of_field person.fields.basic_infos (fun _person' ->
-        let sex = Some (get_sex person) in
-        if not (has_visible_names person) then {empty_basic_infos with sex}
-        else {
-          lastname = as_some_string Gwdb.get_surname person;
-          firstname = as_some_string Gwdb.get_first_name person;
-          sex;
-          image = as_some_string ~none_if_empty:true Gwdb.get_image person;
-          public_name = as_some_string ~none_if_empty:true Gwdb.get_public_name person;
-          aliases = as_some_strings Gwdb.get_aliases person;
-          qualifiers = as_some_strings Gwdb.get_qualifiers person;
-          firstname_aliases = as_some_strings Gwdb.get_first_names_aliases person;
-          surname_aliases = as_some_strings Gwdb.get_surnames_aliases person;
-        }
-      ) person
+  let get_firstname person =
+    if has_visible_names person then
+      of_field person.fields.firstname (fun _person' ->
+          as_string Gwdb.get_first_name person) person
+    else None
 
-  let parent_fields = {index = true; npocc = true; basic_infos = true; parents = false}
+  let get_image person =
+    if person.fields.image then
+      Api_util.get_portrait person.conf person.base person.person
+    else None
+
+  let get_public_name person =
+    if has_visible_names person then
+      of_field person.fields.public_name (fun _person' ->
+          as_string Gwdb.get_public_name person) person
+    else None
+
+  let get_name_aliases person =
+    if has_visible_names person then
+      of_field person.fields.name_aliases (fun _person' ->
+          {
+            aliases = as_some_strings Gwdb.get_aliases person;
+            qualifiers = as_some_strings Gwdb.get_qualifiers person;
+            firstname_aliases = as_some_strings Gwdb.get_first_names_aliases person;
+            surname_aliases = as_some_strings Gwdb.get_surnames_aliases person;
+          }
+        ) person
+    else None
+
+  let parent_fields = {index = true; npocc = true; lastname = true; firstname = true; public_name = true; sex = true; image = true; name_aliases = true; parents = false}
 
   let get_parent proj person =
     let ( >>= ) = Option.bind in
