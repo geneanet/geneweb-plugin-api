@@ -28,6 +28,8 @@ type requested_fields = {
   mother : requested_fields option;
   sosa : bool;
   occupation : bool;
+  notes : bool;
+  sources : bool;
 }
 
 type person_select = Index of index | Npocc of npocc
@@ -78,6 +80,8 @@ module Person : sig
   val get_mother : t -> t option
   val get_sosa : t -> string option
   val get_occupation : t -> string option
+  val get_notes : t -> string option
+  val get_sources : t -> string option
 end = struct
 
   type t = person
@@ -177,6 +181,33 @@ end = struct
             person.base
             (as_string Gwdb.get_occupation person)
         )
+
+  let get_notes person =
+    Ext_option.return_if (
+      person.confidentiality.visible &&
+      person.fields.notes &&
+      not person.conf.Geneweb.Config.no_note
+    ) (fun () ->
+        Adef.as_string (
+          Geneweb.Notes.person_note
+            ~keep_newlines:true
+            person.conf
+            person.base
+            person.person
+            (as_string Gwdb.get_notes person)
+        ))
+
+  let get_sources person =
+    Ext_option.return_if (
+      person.confidentiality.visible &&
+      person.fields.sources)
+      (fun () ->
+          Adef.as_string (
+            Geneweb.Notes.source
+              person.conf
+              person.base
+              (as_string Gwdb.get_psources person)
+          ))
 
   let index_of_npocc base {n; p; occ} =
     Gwdb.person_of_key base p n (Int32.to_int occ)

@@ -28,6 +28,8 @@ type requested_fields = {
   mother : requested_fields option;
   sosa : bool;
   occupation : bool;
+  notes : bool;
+  sources : bool;
 }
 
 type person_select = Index of index | Npocc of npocc
@@ -50,6 +52,8 @@ module Person : sig
   val get_mother : t -> person option
   val get_sosa : t -> string option
   val get_occupation : t -> string option
+  val get_notes : t -> string option
+  val get_sources : t -> string option
 end
 
 module Family : sig
