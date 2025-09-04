@@ -96,9 +96,9 @@ end = struct
     Ext_option.return_if field (fun () -> f p.person)
 
   let get_index person =
-    of_field person.fields.index (fun person ->
-        Int32.of_int (Gwdb.int_of_iper (Gwdb.get_iper person))
-      ) person
+    Ext_option.return_if (has_visible_names person && person.fields.index) (fun () ->
+        Int32.of_int (Gwdb.int_of_iper (Gwdb.get_iper person.person))
+      )
 
   let get_npocc person =
     if not (has_visible_names person) then None
