@@ -40,6 +40,8 @@ message PersonRequest {
   optional PersonRequest mother = 10;
   optional bool sosa = 11;
   optional bool occupation = 12;
+  optional bool notes = 13;
+  optional bool sources = 14;
 }
 
 message Person {
@@ -55,4 +57,6 @@ message Person {
   optional Person mother = 10;
   optional string sosa = 11;
   optional string occupation = 12;
+  optional string notes = 13;
+  optional string sources = 14;
 }

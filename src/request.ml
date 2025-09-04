@@ -16,6 +16,8 @@ let full_fields = {
   mother = None;
   sosa = true;
   occupation = true;
+  notes = true;
+  sources = true;
 }
 
 let get_fields {person_select = _; requested_fields} = requested_fields
@@ -45,6 +47,8 @@ let rec requested_fields person_request = {
   mother = Option.map requested_fields person_request.mother;
   sosa = optional person_request.sosa;
   occupation = optional person_request.occupation;
+  notes = optional person_request.notes;
+  sources = optional person_request.sources;
 }
 
 let request_of_piqi_request piqi_request : t option =
