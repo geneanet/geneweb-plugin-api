@@ -36,7 +36,8 @@ message PersonRequest {
   optional bool sex = 6;
   optional bool image = 7;
   optional bool name_aliases = 8;
-  optional bool parents = 9;
+  optional PersonRequest father = 9;
+  optional PersonRequest mother = 10;
 }
 
 message Person {

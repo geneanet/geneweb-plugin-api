@@ -12,7 +12,8 @@ let full_fields = {
   image = true;
   public_name = true;
   name_aliases = true;
-  parents = true;
+  father = None;
+  mother = None;
 }
 
 let get_fields {person_select = _; requested_fields} = requested_fields
@@ -29,7 +30,7 @@ let person_select_of_piqi_request piqi_request =
 
 let optional = Option.value ~default:false
 
-let requested_fields person_request = {
+let rec requested_fields person_request = {
   Common.index = optional person_request.Api_v2_piqi.Person_request.index;
   npocc = optional person_request.npocc;
   lastname = optional person_request.lastname;
@@ -38,7 +39,8 @@ let requested_fields person_request = {
   image = optional person_request.image;
   public_name = optional person_request.public_name;
   name_aliases = optional person_request.name_aliases;
-  parents = optional person_request.parents;
+  father = Option.map requested_fields person_request.father;
+  mother = Option.map requested_fields person_request.mother;
 }
 
 let request_of_piqi_request piqi_request : t option =

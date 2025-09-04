@@ -24,7 +24,8 @@ type requested_fields = {
   image : bool;
   public_name : bool;
   name_aliases : bool;
-  parents : bool
+  father : requested_fields option;
+  mother : requested_fields option;
 }
 
 type person_select = Index of index | Npocc of npocc
@@ -144,20 +145,17 @@ end = struct
         ) person
     else None
 
-  let parent_fields = {index = true; npocc = true; lastname = true; firstname = true; public_name = true; sex = true; image = true; name_aliases = true; parents = false}
+  let get_parent fields proj person =
+    Option.bind fields (fun fields ->
+        Option.bind (Gwdb.get_parents person.person) (fun parents ->
+        let iparent = proj (Gwdb.foi person.base parents) in
+        let parent = Gwdb.poi person.base iparent in
+        Option.some (of_person person.conf person.base fields parent))
+      )
 
-  let get_parent proj person =
-    let ( >>= ) = Option.bind in
-    if person.fields.parents then
-      Gwdb.get_parents person.person >>= fun parents ->
-      Option.some (Gwdb.foi person.base parents) >>= fun family ->
-      Option.some (proj family) >>= fun iparent ->
-      Option.some (of_person person.conf person.base parent_fields (Gwdb.poi person.base iparent))
-    else None
+  let get_father person = get_parent person.fields.father Gwdb.get_father person
 
-  let get_father = get_parent Gwdb.get_father
-
-  let get_mother = get_parent Gwdb.get_mother
+  let get_mother person = get_parent person.fields.mother Gwdb.get_mother person
 
   let index_of_npocc base {n; p; occ} =
     Gwdb.person_of_key base p n (Int32.to_int occ)
