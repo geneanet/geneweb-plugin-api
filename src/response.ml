@@ -1,7 +1,12 @@
 type t = {
   index : Common.index option;
   npocc : Common.npocc option;
-  basic_infos : Common.basic_infos option;
+  lastname : string option;
+  firstname : string option;
+  sex : Common.sex option;
+  image : string option;
+  public_name : string option;
+  name_aliases : Common.name_aliases option;
   father : t option;
   mother : t option;
 }
@@ -17,36 +22,36 @@ let sex_to_piqi = function
   | Male -> `male
   | Female -> `female
 
-let basic_infos_to_piqi basic_infos : Api_v2_piqi.Basic_infos.t = {
-  Api_v2_piqi.Basic_infos.lastname = basic_infos.Common.lastname;
-  firstname = basic_infos.firstname;
-  sex = Option.map sex_to_piqi basic_infos.sex;
-  image = basic_infos.image;
-  public_name = basic_infos.public_name;
-  aliases = Option.value ~default:[] basic_infos.aliases;
-  qualifiers = Option.value ~default:[] basic_infos.qualifiers;
-  firstname_aliases = Option.value ~default:[] basic_infos.firstname_aliases;
-  surname_aliases = Option.value ~default:[] basic_infos.surname_aliases;
+let name_aliases_to_piqi name_aliases : Api_v2_piqi.Name_aliases.t = {
+  aliases = Option.value ~default:[] name_aliases.Common.aliases;
+  qualifiers = Option.value ~default:[] name_aliases.qualifiers;
+  firstname_aliases = Option.value ~default:[] name_aliases.firstname_aliases;
+  surname_aliases = Option.value ~default:[] name_aliases.surname_aliases;
 }
 
 let rec to_piqi response =
-  let index = response.index in
-  let npocc = Option.map npocc_to_piqi response.npocc in
-  let basic_infos = Option.map basic_infos_to_piqi response.basic_infos in
-  let father = Option.map to_piqi response.father in
-  let mother = Option.map to_piqi response.mother in
   {
-    Api_v2_piqi.Person.index;
-    npocc;
-    basic_infos;
-    father;
-    mother;
+    Api_v2_piqi.Person.index = response.index;
+    npocc = Option.map npocc_to_piqi response.npocc;
+    lastname = response.lastname;
+    firstname = response.firstname;
+    sex = Option.map sex_to_piqi response.sex;
+    image = response.image;
+    public_name = response.public_name;
+    name_aliases = Option.map name_aliases_to_piqi response.name_aliases;
+    father = Option.map to_piqi response.father;
+    mother = Option.map to_piqi response.mother;
   }
 
 let rec response_of_person person = {
   index = Common.Person.get_index person;
   npocc = Common.Person.get_npocc person;
-  basic_infos = Common.Person.get_basic_infos person;
+  lastname = Common.Person.get_lastname person;
+  firstname = Common.Person.get_firstname person;
+  sex = Common.Person.get_sex person;
+  image = Common.Person.get_image person;
+  public_name = Common.Person.get_public_name person;
+  name_aliases = Common.Person.get_name_aliases person;
   father = Option.map response_of_person (Common.Person.get_father person);
   mother = Option.map response_of_person (Common.Person.get_mother person);
 }

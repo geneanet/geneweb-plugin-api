@@ -6,7 +6,12 @@ type t = {
 let full_fields = {
   Common.index = true;
   npocc = true;
-  basic_infos = true;
+  lastname = true;
+  firstname = true;
+  sex = true;
+  image = true;
+  public_name = true;
+  name_aliases = true;
   parents = true;
 }
 
@@ -27,7 +32,12 @@ let optional = Option.value ~default:false
 let requested_fields person_request = {
   Common.index = optional person_request.Api_v2_piqi.Person_request.index;
   npocc = optional person_request.npocc;
-  basic_infos = optional person_request.basic_infos;
+  lastname = optional person_request.lastname;
+  firstname = optional person_request.firstname;
+  sex = optional person_request.sex;
+  image = optional person_request.image;
+  public_name = optional person_request.public_name;
+  name_aliases = optional person_request.name_aliases;
   parents = optional person_request.parents;
 }
 

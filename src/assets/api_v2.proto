@@ -14,16 +14,11 @@ message Npocc {
   optional int32 occ = 3;
 }
 
-message BasicInfos {
-  optional string lastname = 1;
-  optional string firstname = 2;
-  optional Sex sex = 3;
-  optional string image = 4;
-  optional string public_name = 5;
-  repeated string aliases = 6;
-  repeated string qualifiers = 7;
-  repeated string firstname_aliases = 8;
-  repeated string surname_aliases = 9;
+message NameAliases {
+  repeated string aliases = 2;
+  repeated string qualifiers = 3;
+  repeated string firstname_aliases = 4;
+  repeated string surname_aliases = 5;
 }
 
 message Request {
@@ -35,14 +30,24 @@ message Request {
 message PersonRequest {
   optional bool index = 1;
   optional bool npocc = 2;
-  optional bool basic_infos = 3;
-  optional bool parents = 4;
+  optional bool lastname = 3;
+  optional bool firstname = 4;
+  optional bool public_name = 5;
+  optional bool sex = 6;
+  optional bool image = 7;
+  optional bool name_aliases = 8;
+  optional bool parents = 9;
 }
 
 message Person {
   optional int32 index = 1;
   optional Npocc npocc = 2;
-  optional BasicInfos basic_infos = 3;
-  optional Person father = 4;
-  optional Person mother = 5;
+  optional string lastname = 3;
+  optional string firstname = 4;
+  optional string public_name = 5;
+  optional Sex sex = 6;
+  optional string image = 7;
+  optional NameAliases name_aliases = 8;
+  optional Person father = 9;
+  optional Person mother = 10;
 }
