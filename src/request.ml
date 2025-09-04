@@ -18,6 +18,7 @@ let full_fields = {
   occupation = true;
   notes = true;
   sources = true;
+  titles = true;
 }
 
 let get_fields {person_select = _; requested_fields} = requested_fields
@@ -49,6 +50,7 @@ let rec requested_fields person_request = {
   occupation = optional person_request.occupation;
   notes = optional person_request.notes;
   sources = optional person_request.sources;
+  titles = optional person_request.titles;
 }
 
 let request_of_piqi_request piqi_request : t option =
