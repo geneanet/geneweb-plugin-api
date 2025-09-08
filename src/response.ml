@@ -34,6 +34,9 @@ let name_aliases_to_piqi name_aliases : Api_v2_piqi.Name_aliases.t = {
   firstname_aliases = Option.value ~default:[] name_aliases.firstname_aliases;
   surname_aliases = Option.value ~default:[] name_aliases.surname_aliases;
 }
+
+module DateConv = Api_util.Date_converter.Make (Api_v2_piqi)
+
 let events_to_piqi event =
   let event_type, name = match event.Common.event_type with
     | Geneweb.Event.Pevent (Def.Epers_Name name) -> Some `epers_custom, Some name
@@ -44,6 +47,7 @@ let events_to_piqi event =
   {
   Api_v2_piqi.Event.event_type = event_type;
   name;
+  date = Option.map DateConv.piqi_date_of_date event.date;
 }
 let paginated_events_to_piqi events = {
   Api_v2_piqi.Paginated_events.elements = List.map events_to_piqi events.Common.elements;
