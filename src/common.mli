@@ -55,6 +55,9 @@ type date = Date.date
 type event = {
   event_type : event_type;
   date : date option;
+  place : string option;
+  notes : string option;
+  sources : string option;
 }
 
 type paginated_events = event list paginated

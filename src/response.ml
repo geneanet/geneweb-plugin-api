@@ -48,6 +48,9 @@ let events_to_piqi event =
   Api_v2_piqi.Event.event_type = event_type;
   name;
   date = Option.map DateConv.piqi_date_of_date event.date;
+  place = event.place;
+  notes = event.notes;
+  sources = event.sources;
 }
 let paginated_events_to_piqi events = {
   Api_v2_piqi.Paginated_events.elements = List.map events_to_piqi events.Common.elements;
