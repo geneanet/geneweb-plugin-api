@@ -51,9 +51,10 @@ type 'a paginated = {
 }
 
 type event_type = string Geneweb.Event.event_name
-
+type date = Date.date
 type event = {
   event_type : event_type;
+  date : date option;
 }
 
 type paginated_events = event list paginated

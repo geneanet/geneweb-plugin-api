@@ -62,9 +62,11 @@ type 'a paginated = {
 }
 
 type event_type = string Geneweb.Event.event_name
+type date = Date.date
 
 type event = {
-  event_type : event_type
+  event_type : event_type;
+  date : date option;
 }
 
 type paginated_events = event list paginated
@@ -266,6 +268,7 @@ end = struct
         let paginated_events = Api_util.Paginated_data.map (fun evt ->
             {
               event_type = event_type person.base (Geneweb.Event.get_name evt);
+              date = Date.od_of_cdate (Geneweb.Event.get_date evt);
             }
           ) paginated_events in
         {

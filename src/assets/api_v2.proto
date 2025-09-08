@@ -2,6 +2,38 @@ syntax = "proto2" ;
 
 package Geneanet.Geneweb.Api2.Proto.Model;
 
+enum Calendar {
+  GREGORIAN = 0;
+  JULIAN = 1;
+  FRENCH = 2;
+  HEBREW = 3;
+}
+
+enum Precision {
+  SURE = 0;
+  ABOUT = 1;
+  MAYBE = 2;
+  BEFORE = 3;
+  AFTER = 4;
+  ORYEAR = 5;
+  YEARINT = 6;
+}
+
+message Dmy {
+  required int32 day = 1;
+  required int32 month = 2;
+  required int32 year = 3;
+  required int32 delta = 4;
+}
+
+message Date {
+  optional Calendar cal = 2;
+  optional Precision prec = 3;
+  optional Dmy dmy = 4;
+  optional Dmy dmy2 = 5;
+  optional string text = 6;
+}
+
 enum Sex {
   UNKNOWN = 2;
   MALE = 0;
@@ -122,6 +154,7 @@ enum EventType {
 message Event {
   optional string name = 1;
   optional EventType event_type = 2;
+  optional Date date = 3;
   /*optional string date = 3;
   optional string date_long = 4;
   optional string date_raw = 13;
