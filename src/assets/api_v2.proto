@@ -155,16 +155,16 @@ message Event {
   optional string name = 1;
   optional EventType event_type = 2;
   optional Date date = 3;
-  /*optional string date = 3;
+  optional string place = 4;
+  optional string notes = 5;
+  optional string sources = 6;
+/*optional string date = 3;
   optional string date_long = 4;
   optional string date_raw = 13;
   optional string date_conv = 5;
   optional string date_conv_long = 14;
   optional Calendar date_cal = 6;
-  optional string place = 7;
   optional string reason = 8;
-  optional string note = 9;
-  optional string src = 10;
   optional SimplePerson spouse = 11;
   repeated WitnessEvent witnesses = 12;*/
 }

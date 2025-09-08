@@ -67,6 +67,9 @@ type date = Date.date
 type event = {
   event_type : event_type;
   date : date option;
+  place : string option;
+  notes : string option;
+  sources : string option;
 }
 
 type paginated_events = event list paginated
@@ -257,6 +260,25 @@ end = struct
     | Geneweb.Event.Fevent (Def.Efam_Name istr) -> Geneweb.Event.Fevent (Def.Efam_Name (Utf8.normalize (Gwdb.sou base istr)))
     | _ as e -> (Obj.magic e)
 
+  let event_place base e =
+    let place = Utf8.normalize (Gwdb.sou base (Geneweb.Event.get_place e)) in
+    Ext_option.return_if (place <> "") (fun () -> place)
+
+  let event_notes conf base person evt =
+    let notes_istr = Geneweb.Event.get_note evt in
+    Ext_option.return_if (not conf.Geneweb.Config.no_note && not (Gwdb.is_empty_string notes_istr)) (fun () ->
+        let note_string = Geneweb.Notes.person_note
+            ~keep_newlines:true conf base person
+            (Gwdb.sou base (notes_istr))
+        in
+        Utf8.normalize (Adef.as_string note_string))
+
+  let event_sources conf base evt =
+    let src_istr = Geneweb.Event.get_src evt in
+    Ext_option.return_if (not @@ Gwdb.is_empty_string src_istr) (fun () ->
+        let source_string = Geneweb.Notes.source conf base (Gwdb.sou base src_istr) in
+        Utf8.normalize (Adef.as_string source_string))
+
   let get_events person =
     Ext_option.return_if (
       person.confidentiality.visible &&
@@ -269,6 +291,9 @@ end = struct
             {
               event_type = event_type person.base (Geneweb.Event.get_name evt);
               date = Date.od_of_cdate (Geneweb.Event.get_date evt);
+              place = event_place person.base evt;
+              notes = event_notes person.conf person.base person.person evt;
+              sources = event_sources person.conf person.base evt;
             }
           ) paginated_events in
         {
