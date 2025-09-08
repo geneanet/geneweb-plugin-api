@@ -180,3 +180,29 @@ module Paginated_data : sig
       Api_saisie_read_piqi.Paginated_witnessed_events.t
   end
 end
+
+module Date_converter : sig
+  module type S = sig
+    type piqi_date
+    val piqi_date_of_date : Date.date -> piqi_date
+  end
+  module Make (M : sig
+      module Dmy : sig
+        type t = {
+          mutable day : int32;
+          mutable month : int32;
+          mutable year : int32;
+          mutable delta : int32
+        }
+      end
+      module Date : sig
+        type t = {
+          mutable cal : [ `gregorian | `julian | `french | `hebrew ] option;
+          mutable prec : [ `sure | `about | `maybe | `before | `after | `oryear | `yearint ] option;
+          mutable dmy : Dmy.t option;
+          mutable dmy2 : Dmy.t option;
+          mutable text : string option;
+        }
+      end
+    end) : S with type piqi_date = M.Date.t
+end
