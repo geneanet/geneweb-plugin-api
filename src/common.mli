@@ -18,9 +18,10 @@ type name_aliases = {
 type event_request = {
   page_number : int;
   elements_per_page : int;
+  spouse : requested_fields option;
 }
 
-type requested_fields = {
+and requested_fields = {
   index : bool;
   npocc : bool;
   lastname : bool;
@@ -58,6 +59,7 @@ type event = {
   place : string option;
   notes : string option;
   sources : string option;
+  spouse : person option;
 }
 
 type paginated_events = event list paginated

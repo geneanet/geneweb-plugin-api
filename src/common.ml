@@ -18,9 +18,10 @@ type name_aliases = {
 type event_request = {
   page_number : int;
   elements_per_page : int;
+  spouse : requested_fields option;
 }
 
-type requested_fields = {
+and requested_fields = {
   index : bool;
   npocc : bool;
   lastname : bool;
@@ -70,6 +71,7 @@ type event = {
   place : string option;
   notes : string option;
   sources : string option;
+  spouse : person option;
 }
 
 type paginated_events = event list paginated
@@ -279,6 +281,13 @@ end = struct
         let source_string = Geneweb.Notes.source conf base (Gwdb.sou base src_istr) in
         Utf8.normalize (Adef.as_string source_string))
 
+  let event_spouse conf base spouse_fields evt =
+    Option.bind spouse_fields (fun fields ->
+        let spouse_iper = Geneweb.Event.get_spouse_iper evt in
+        let spouse = Option.map (Gwdb.poi base) spouse_iper in
+        Option.map (of_person conf base fields) spouse
+      )
+
   let get_events person =
     Ext_option.return_if (
       person.confidentiality.visible &&
@@ -294,6 +303,7 @@ end = struct
               place = event_place person.base evt;
               notes = event_notes person.conf person.base person.person evt;
               sources = event_sources person.conf person.base evt;
+              spouse = event_spouse person.conf person.base events_request.spouse evt;
             }
           ) paginated_events in
         {

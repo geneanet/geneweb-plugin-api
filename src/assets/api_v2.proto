@@ -62,6 +62,7 @@ message Request {
 message EventRequest {
   optional int32 page_number = 1;
   optional int32 elements_per_page = 2;
+  optional PersonRequest spouse = 3;
 }
 
 message PersonRequest {
@@ -158,6 +159,7 @@ message Event {
   optional string place = 4;
   optional string notes = 5;
   optional string sources = 6;
+  optional Person spouse = 7;
 /*optional string date = 3;
   optional string date_long = 4;
   optional string date_raw = 13;
