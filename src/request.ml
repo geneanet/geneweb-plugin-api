@@ -3,7 +3,7 @@ type t = {
   requested_fields : Common.requested_fields;
 }
 
-let full_fields = {
+let simple_fields = {
   Common.index = true;
   npocc = true;
   lastname = true;
@@ -16,10 +16,29 @@ let full_fields = {
   mother = None;
   sosa = true;
   occupation = true;
+  notes = false;
+  sources = false;
+  titles = false;
+  events = None;
+}
+
+let full_fields = {
+  Common.index = true;
+  npocc = true;
+  lastname = true;
+  firstname = true;
+  sex = true;
+  image = true;
+  public_name = true;
+  name_aliases = true;
+  father = Some simple_fields;
+  mother = Some simple_fields;
+  sosa = true;
+  occupation = true;
   notes = true;
   sources = true;
   titles = true;
-  events = Some {Common.page_number = 1; elements_per_page = Int.max_int};
+  events = Some {Common.page_number = 1; elements_per_page = Int.max_int; spouse = Some simple_fields};
 }
 
 let get_fields {person_select = _; requested_fields} = requested_fields
@@ -33,11 +52,6 @@ let person_select_of_piqi_request piqi_request =
   | Some index, _ -> Some (Common.Index index)
   | _, Some Api_v2_piqi.Npocc.{n = Some n; p = Some p; occ = Some occ} -> Some (Common.Npocc {n; p; occ})
   | _, _ -> None
-
-let event_request events = {
-  Common.page_number = Option.value ~default:1 (Option.map Int32.to_int events.Api_v2_piqi.Event_request.page_number);
-  elements_per_page = Option.value ~default:Int.max_int (Option.map Int32.to_int events.elements_per_page);
-}
 
 let optional = Option.value ~default:false
 
@@ -58,6 +72,12 @@ let rec requested_fields person_request = {
   sources = optional person_request.sources;
   titles = optional person_request.titles;
   events = Option.map event_request person_request.events;
+}
+
+and event_request events = {
+  Common.page_number = Option.value ~default:1 (Option.map Int32.to_int events.Api_v2_piqi.Event_request.page_number);
+  elements_per_page = Option.value ~default:Int.max_int (Option.map Int32.to_int events.elements_per_page);
+  spouse = Option.map requested_fields events.spouse;
 }
 
 let request_of_piqi_request piqi_request : t option =

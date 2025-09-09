@@ -17,6 +17,25 @@ type t = {
   events : Common.paginated_events option;
 }
 
+let rec response_of_person person = {
+  index = Common.Person.get_index person;
+  npocc = Common.Person.get_npocc person;
+  lastname = Common.Person.get_lastname person;
+  firstname = Common.Person.get_firstname person;
+  sex = Common.Person.get_sex person;
+  image = Common.Person.get_image person;
+  public_name = Common.Person.get_public_name person;
+  name_aliases = Common.Person.get_name_aliases person;
+  father = Option.map response_of_person (Common.Person.get_father person);
+  mother = Option.map response_of_person (Common.Person.get_mother person);
+  sosa = Common.Person.get_sosa person;
+  occupation = Common.Person.get_occupation person;
+  notes = Common.Person.get_notes person;
+  sources = Common.Person.get_sources person;
+  titles = Common.Person.get_titles person;
+  events = Common.Person.get_events person;
+}
+
 let npocc_to_piqi npocc : Api_v2_piqi.Npocc.t = {
   Api_v2_piqi.Npocc.n = Some npocc.Common.n;
   p = Some npocc.Common.p;
@@ -37,7 +56,7 @@ let name_aliases_to_piqi name_aliases : Api_v2_piqi.Name_aliases.t = {
 
 module DateConv = Api_util.Date_converter.Make (Api_v2_piqi)
 
-let events_to_piqi event =
+let rec events_to_piqi event =
   let event_type, name = match event.Common.event_type with
     | Geneweb.Event.Pevent (Def.Epers_Name name) -> Some `epers_custom, Some name
     | Geneweb.Event.Pevent pe -> Some (Api_piqi_util.piqi_pevent_name_of_pevent_name pe), None
@@ -45,20 +64,21 @@ let events_to_piqi event =
     | Geneweb.Event.Fevent fe -> Some (Api_piqi_util.piqi_fevent_name_of_fevent_name fe), None
   in
   {
-  Api_v2_piqi.Event.event_type = event_type;
-  name;
-  date = Option.map DateConv.piqi_date_of_date event.date;
-  place = event.place;
-  notes = event.notes;
-  sources = event.sources;
-}
-let paginated_events_to_piqi events = {
+    Api_v2_piqi.Event.event_type = event_type;
+    name;
+    date = Option.map DateConv.piqi_date_of_date event.date;
+    place = event.place;
+    notes = event.notes;
+    sources = event.sources;
+    spouse = Option.map (fun spouse_response -> to_piqi (response_of_person spouse_response)) event.spouse;
+  }
+and paginated_events_to_piqi events = {
   Api_v2_piqi.Paginated_events.elements = List.map events_to_piqi events.Common.elements;
   page_number = Int32.of_int events.page_number;
   total_count = Int32.of_int events.total_count;
 }
 
-let rec to_piqi response =
+and to_piqi response =
   {
     Api_v2_piqi.Person.index = response.index;
     npocc = Option.map npocc_to_piqi response.npocc;
@@ -77,25 +97,6 @@ let rec to_piqi response =
     titles = Option.value ~default:[] response.titles;
     events = Option.map paginated_events_to_piqi response.events;
   }
-
-let rec response_of_person person = {
-  index = Common.Person.get_index person;
-  npocc = Common.Person.get_npocc person;
-  lastname = Common.Person.get_lastname person;
-  firstname = Common.Person.get_firstname person;
-  sex = Common.Person.get_sex person;
-  image = Common.Person.get_image person;
-  public_name = Common.Person.get_public_name person;
-  name_aliases = Common.Person.get_name_aliases person;
-  father = Option.map response_of_person (Common.Person.get_father person);
-  mother = Option.map response_of_person (Common.Person.get_mother person);
-  sosa = Common.Person.get_sosa person;
-  occupation = Common.Person.get_occupation person;
-  notes = Common.Person.get_notes person;
-  sources = Common.Person.get_sources person;
-  titles = Common.Person.get_titles person;
-  events = Common.Person.get_events person;
-}
 
 let response conf base request =
   Option.map response_of_person
