@@ -38,6 +38,10 @@ and requested_fields = {
   sources : bool;
   titles : bool;
   events : event_request option;
+  birth : bool;
+  baptism : bool;
+  death : bool;
+  burial : bool;
 }
 
 type person_select = Index of index | Npocc of npocc
@@ -60,6 +64,8 @@ type event = {
   notes : string option;
   sources : string option;
   spouse : person option;
+  death_type : Def.death option;
+  burial_type : Def.burial option;
 }
 
 type paginated_events = event list paginated
@@ -83,6 +89,10 @@ module Person : sig
   val get_sources : t -> string option
   val get_titles : t -> string list option
   val get_events : t -> paginated_events option
+  val get_birth : t -> event option
+  val get_baptism : t -> event option
+  val get_death : t -> event option
+  val get_burial : t -> event option
 end
 
 module Family : sig
