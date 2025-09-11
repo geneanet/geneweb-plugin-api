@@ -38,6 +38,10 @@ and requested_fields = {
   sources : bool;
   titles : bool;
   events : event_request option;
+  birth : bool;
+  baptism : bool;
+  death : bool;
+  burial : bool;
 }
 
 type person_select = Index of index | Npocc of npocc
@@ -72,6 +76,8 @@ type event = {
   notes : string option;
   sources : string option;
   spouse : person option;
+  death_type : Def.death option;
+  burial_type : Def.burial option;
 }
 
 type paginated_events = event list paginated
@@ -113,6 +119,10 @@ module Person : sig
   val get_sources : t -> string option
   val get_titles : t -> string list option
   val get_events : t -> paginated_events option
+  val get_birth : t -> event option
+  val get_baptism : t -> event option
+  val get_death : t -> event option
+  val get_burial : t -> event option
 end = struct
 
   type t = person
@@ -264,7 +274,8 @@ end = struct
 
   let event_place base e =
     let place = Utf8.normalize (Gwdb.sou base (Geneweb.Event.get_place e)) in
-    Ext_option.return_if (place <> "") (fun () -> place)
+    Ext_option.return_if (place <> "") (fun () ->
+        Adef.as_string (Geneweb.Util.string_of_place place))
 
   let event_notes conf base person evt =
     let notes_istr = Geneweb.Event.get_note evt in
@@ -288,23 +299,28 @@ end = struct
         Option.map (of_person conf base fields) spouse
       )
 
+  let of_event person spouse_fields evt =
+    {
+      event_type = event_type person.base (Geneweb.Event.get_name evt);
+      date = Date.od_of_cdate (Geneweb.Event.get_date evt);
+      place = event_place person.base evt;
+      notes = event_notes person.conf person.base person.person evt;
+      sources = event_sources person.conf person.base evt;
+      spouse = event_spouse person.conf person.base spouse_fields evt;
+      death_type = None;
+      burial_type = None;
+    }
+
   let get_events person =
     Ext_option.return_if (
       person.confidentiality.visible &&
       Option.is_some person.fields.events) (fun () ->
-        let events_request = Option.get person.fields.events in
+        let events_request : event_request = Option.get person.fields.events in
         let page = Api_util.Page.make ~number:events_request.page_number ~element_count:events_request.elements_per_page in
         let events = Geneweb.Event.sorted_events person.conf person.base person.person in
         let paginated_events = Api_util.Paginated_data.extract page events in
         let paginated_events = Api_util.Paginated_data.map (fun evt ->
-            {
-              event_type = event_type person.base (Geneweb.Event.get_name evt);
-              date = Date.od_of_cdate (Geneweb.Event.get_date evt);
-              place = event_place person.base evt;
-              notes = event_notes person.conf person.base person.person evt;
-              sources = event_sources person.conf person.base evt;
-              spouse = event_spouse person.conf person.base events_request.spouse evt;
-            }
+            of_event person events_request.spouse evt
           ) paginated_events in
         {
           elements = paginated_events.Api_util.Paginated_data.elements;
@@ -313,6 +329,96 @@ end = struct
         }
       )
 
+  let pers_event ~name ~date ~place ~note ~source ~witnesses =
+    Geneweb.Event.event_item_of_gen_pevent
+      {
+        Def.epers_name = name;
+        epers_date = date;
+        epers_place = place;
+        epers_note = note;
+        epers_src = source;
+        epers_reason = Gwdb.empty_string;
+        epers_witnesses = witnesses;
+      }
+
+  let get_main_event ~person ~field ~name ~get_date ~get_place ~get_note ~get_source =
+    let evt = Ext_option.return_if (person.confidentiality.visible && field) (fun () ->
+        let date = get_date person.person in
+        let place = get_place person.person in
+        let note = get_note person.person in
+        let source = get_source person.person in
+        of_event person None (pers_event ~name ~date ~place ~note ~source ~witnesses:[||])
+      )
+    in
+    Option.bind evt (fun evt ->
+        Ext_option.return_if (
+          Option.is_some evt.date ||
+          Option.is_some evt.place ||
+          Option.is_some evt.notes ||
+          Option.is_some evt.sources)
+          (fun () -> evt)
+      )
+
+  let get_birth person =
+    get_main_event
+      ~person
+      ~field:person.fields.birth
+      ~name:Def.Epers_Birth
+      ~get_date:Gwdb.get_birth
+      ~get_place:Gwdb.get_birth_place
+      ~get_note:Gwdb.get_birth_note
+      ~get_source:Gwdb.get_birth_src
+
+  let get_baptism person =
+    get_main_event
+      ~person
+      ~field:person.fields.baptism
+      ~name:Def.Epers_Baptism
+      ~get_date:Gwdb.get_baptism
+      ~get_place:Gwdb.get_baptism_place
+      ~get_note:Gwdb.get_baptism_note
+      ~get_source:Gwdb.get_baptism_src
+
+  let get_death_date person = match Gwdb.get_death person with
+    | Def.Death (_, date) -> date
+    | NotDead
+    | DeadYoung
+    | DeadDontKnowWhen
+    | DontKnowIfDead
+    | OfCourseDead -> Date.cdate_None
+
+  let get_burial_date person = match Gwdb.get_burial person with
+    | Def.Buried date
+    | Cremated date -> date
+    | UnknownBurial -> Date.cdate_None
+
+  let get_death person =
+    let evt = get_main_event
+        ~person
+        ~field:person.fields.death
+        ~name:Def.Epers_Death
+        ~get_date:get_death_date
+        ~get_place:Gwdb.get_death_place
+        ~get_note:Gwdb.get_death_note
+        ~get_source:Gwdb.get_death_src
+    in
+    Option.map (fun evt ->
+        {evt with death_type = Some (Gwdb.get_death person.person)}
+      ) evt
+
+  let get_burial person =
+    let evt = get_main_event
+      ~person
+      ~field:person.fields.burial
+      ~name:Def.Epers_Burial
+      ~get_date:get_burial_date
+      ~get_place:Gwdb.get_burial_place
+      ~get_note:Gwdb.get_burial_note
+      ~get_source:Gwdb.get_burial_src
+    in
+    Option.map (fun evt ->
+        {evt with burial_type = Some (Gwdb.get_burial person.person)}
+      ) evt
 
   let index_of_npocc base {n; p; occ} =
     Gwdb.person_of_key base p n (Int32.to_int occ)

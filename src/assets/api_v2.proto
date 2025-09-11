@@ -40,6 +40,21 @@ enum Sex {
   FEMALE = 1;
 }
 
+enum DeathType {
+  NOT_DEAD = 0;
+  DEAD = 1;
+  DEAD_YOUNG = 2;
+  DEAD_DONT_KNOW_WHEN = 3;
+  DONT_KNOW_IF_DEAD = 4;
+  OF_COURSE_DEAD = 5;
+}
+
+enum BurialType {
+  DONT_KNOW = 0;
+  BURIED = 1;
+  CREMATED = 2;
+}
+
 message Npocc {
   optional string n = 1;
   optional string p = 2;
@@ -82,6 +97,10 @@ message PersonRequest {
   optional bool sources = 14;
   optional bool titles = 15;
   optional EventRequest events = 16;
+  optional bool birth = 17;
+  optional bool baptism = 18;
+  optional bool death = 19;
+  optional bool burial = 20;
 }
 
 enum EventType {
@@ -160,6 +179,8 @@ message Event {
   optional string notes = 5;
   optional string sources = 6;
   optional Person spouse = 7;
+  optional DeathType death_type = 8;
+  optional BurialType burial_type = 9;
 /*optional string date = 3;
   optional string date_long = 4;
   optional string date_raw = 13;
@@ -194,4 +215,8 @@ message Person {
   optional string sources = 14;
   repeated string titles = 15;
   optional PaginatedEvents events = 16;
+  optional Event birth = 17;
+  optional Event baptism = 18;
+  optional Event death = 19;
+  optional Event burial = 20;
 }

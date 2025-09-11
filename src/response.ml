@@ -15,6 +15,10 @@ type t = {
   sources : string option;
   titles : string list option;
   events : Common.paginated_events option;
+  birth : Common.event option;
+  baptism : Common.event option;
+  death : Common.event option;
+  burial : Common.event option;
 }
 
 let rec response_of_person person = {
@@ -34,6 +38,10 @@ let rec response_of_person person = {
   sources = Common.Person.get_sources person;
   titles = Common.Person.get_titles person;
   events = Common.Person.get_events person;
+  birth = Common.Person.get_birth person;
+  baptism = Common.Person.get_baptism person;
+  death = Common.Person.get_death person;
+  burial = Common.Person.get_burial person;
 }
 
 let npocc_to_piqi npocc : Api_v2_piqi.Npocc.t = {
@@ -54,6 +62,19 @@ let name_aliases_to_piqi name_aliases : Api_v2_piqi.Name_aliases.t = {
   surname_aliases = Option.value ~default:[] name_aliases.surname_aliases;
 }
 
+let death_type_to_piqi = function
+  | Def.NotDead -> `not_dead
+  | Death (_,_) -> `dead
+  | DeadYoung -> `dead_young
+  | DeadDontKnowWhen -> `dead_dont_know_when
+  | DontKnowIfDead -> `dont_know_if_dead
+  | OfCourseDead -> `of_course_dead
+
+let burial_type_to_piqi = function
+    Def.UnknownBurial -> `dont_know
+  | Buried _ -> `buried
+  | Cremated _ -> `cremated
+
 module DateConv = Api_util.Date_converter.Make (Api_v2_piqi)
 
 let rec events_to_piqi event =
@@ -71,7 +92,10 @@ let rec events_to_piqi event =
     notes = event.notes;
     sources = event.sources;
     spouse = Option.map (fun spouse_response -> to_piqi (response_of_person spouse_response)) event.spouse;
+    death_type = Option.map death_type_to_piqi event.death_type;
+    burial_type = Option.map burial_type_to_piqi event.burial_type;
   }
+
 and paginated_events_to_piqi events = {
   Api_v2_piqi.Paginated_events.elements = List.map events_to_piqi events.Common.elements;
   page_number = Int32.of_int events.page_number;
@@ -96,6 +120,10 @@ and to_piqi response =
     sources = response.sources;
     titles = Option.value ~default:[] response.titles;
     events = Option.map paginated_events_to_piqi response.events;
+    birth = Option.map events_to_piqi response.birth;
+    baptism = Option.map events_to_piqi response.baptism;
+    death = Option.map events_to_piqi response.death;
+    burial = Option.map events_to_piqi response.burial;
   }
 
 let response conf base request =

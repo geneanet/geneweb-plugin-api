@@ -20,6 +20,10 @@ let simple_fields = {
   sources = false;
   titles = false;
   events = None;
+  birth = false;
+  baptism = false;
+  death = false;
+  burial = false;
 }
 
 let full_fields = {
@@ -39,6 +43,10 @@ let full_fields = {
   sources = true;
   titles = true;
   events = Some {Common.page_number = 1; elements_per_page = Int.max_int; spouse = Some simple_fields};
+  birth = true;
+  baptism = true;
+  death = true;
+  burial = true;
 }
 
 let get_fields {person_select = _; requested_fields} = requested_fields
@@ -72,6 +80,10 @@ let rec requested_fields person_request = {
   sources = optional person_request.sources;
   titles = optional person_request.titles;
   events = Option.map event_request person_request.events;
+  birth = optional person_request.birth;
+  baptism = optional person_request.baptism;
+  death = optional person_request.death;
+  burial = optional person_request.burial;
 }
 
 and event_request events = {
