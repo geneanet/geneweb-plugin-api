@@ -17,7 +17,7 @@ type name_aliases = {
 
 type event_request = {
   page_number : int;
-  elements_per_page : int;
+  elements_per_page : [ `Int of int | `All ];
   spouse : requested_fields option;
 }
 

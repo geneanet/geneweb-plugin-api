@@ -17,7 +17,7 @@ type name_aliases = {
 
 type event_request = {
   page_number : int;
-  elements_per_page : int;
+  elements_per_page : [ `Int of int | `All ];
   spouse : requested_fields option;
 }
 
@@ -264,7 +264,34 @@ end = struct
       )
 
   let event_type base e =
-    Geneweb.Event.map_event_name (fun n -> Utf8.normalize (Gwdb.sou base n)) e
+    let map_name n = Utf8.normalize (Gwdb.sou base n) in
+    match e with
+    | Geneweb.Event.Pevent (Def.Epers_Name n) -> Geneweb.Event.Pevent (Def.Epers_Name (map_name n))
+    | Geneweb.Event.Fevent (Def.Efam_Name n) -> Geneweb.Event.Fevent (Def.Efam_Name (map_name n))
+    | Geneweb.Event.Pevent
+        (( Epers_Birth | Epers_Baptism | Epers_Death | Epers_Burial
+         | Epers_Cremation | Epers_Accomplishment | Epers_Acquisition
+         | Epers_Adhesion | Epers_BaptismLDS | Epers_BarMitzvah | Epers_BatMitzvah
+         | Epers_Benediction | Epers_ChangeName | Epers_Circumcision
+         | Epers_Confirmation | Epers_ConfirmationLDS | Epers_Decoration
+         | Epers_DemobilisationMilitaire | Epers_Diploma | Epers_Distinction
+         | Epers_Dotation | Epers_DotationLDS | Epers_Education | Epers_Election
+         | Epers_Emigration | Epers_Excommunication | Epers_FamilyLinkLDS
+         | Epers_FirstCommunion | Epers_Funeral | Epers_Graduate
+         | Epers_Hospitalisation | Epers_Illness | Epers_Immigration
+         | Epers_ListePassenger | Epers_MilitaryDistinction
+         | Epers_MilitaryPromotion | Epers_MilitaryService
+         | Epers_MobilisationMilitaire | Epers_Naturalisation | Epers_Occupation
+         | Epers_Ordination | Epers_Property | Epers_Recensement | Epers_Residence
+         | Epers_Retired | Epers_ScellentChildLDS | Epers_ScellentParentLDS
+         | Epers_ScellentSpouseLDS | Epers_VenteBien | Epers_Will | Epers_Adoption ) as pe) ->
+      Geneweb.Event.Pevent pe
+    | Geneweb.Event.Fevent
+        (( Efam_Marriage | Efam_NoMarriage | Efam_NoMention | Efam_Engage
+         | Efam_Divorce | Efam_Separated | Efam_Annulation | Efam_MarriageBann
+         | Efam_MarriageContract | Efam_MarriageLicense | Efam_PACS
+         | Efam_Residence ) as fe) ->
+      Geneweb.Event.Fevent fe
 
   let event_place base e =
     let place = Utf8.normalize (Gwdb.sou base (Geneweb.Event.get_place e)) in
@@ -310,14 +337,19 @@ end = struct
       person.confidentiality.visible &&
       Option.is_some person.fields.events) (fun () ->
         let events_request : event_request = Option.get person.fields.events in
-        let page = Api_util.Page.make ~number:events_request.page_number ~element_count:events_request.elements_per_page in
         let conf = Geneweb.Config.Trimmed.from_config person.conf in
         let auth_person = Geneweb.Authorized.Person.make ~conf ~base:person.base (Gwdb.get_iper person.person) in
         let events = Geneweb.Event.sorted_events conf person.base auth_person in
-        let paginated_events = Api_util.Paginated_data.extract page events in
+        let paginated_events = match events_request.elements_per_page with
+          | `All -> Api_util.Paginated_data.all events
+          | `Int element_count ->
+            let page = Api_util.Page.make ~number:events_request.page_number ~element_count in
+            Api_util.Paginated_data.extract page events
+        in
         let paginated_events = Api_util.Paginated_data.map (fun evt ->
             of_event person events_request.spouse evt
-          ) paginated_events in
+          ) paginated_events
+        in
         {
           elements = paginated_events.Api_util.Paginated_data.elements;
           page_number = paginated_events.page_number;

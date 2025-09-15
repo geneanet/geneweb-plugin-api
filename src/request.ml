@@ -42,7 +42,7 @@ let full_fields = {
   notes = true;
   sources = true;
   titles = true;
-  events = Some {Common.page_number = 1; elements_per_page = Int.max_int; spouse = Some simple_fields};
+  events = Some {Common.page_number = 1; elements_per_page = `All; spouse = Some simple_fields};
   birth = true;
   baptism = true;
   death = true;
@@ -88,7 +88,7 @@ let rec requested_fields person_request = {
 
 and event_request events = {
   Common.page_number = Option.value ~default:1 (Option.map Int32.to_int events.Api_v2_piqi.Event_request.page_number);
-  elements_per_page = Option.value ~default:Int.max_int (Option.map Int32.to_int events.elements_per_page);
+  elements_per_page = Option.value ~default:`All (Option.map (fun i -> `Int (Int32.to_int i)) events.elements_per_page);
   spouse = Option.map requested_fields events.spouse;
 }
 
