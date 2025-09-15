@@ -91,10 +91,6 @@ let as_string proj person =
 let as_strings proj person =
   List.map (fun istr -> Utf8.normalize (Gwdb.sou person.base istr)) (proj person.person)
 
-(*let as_some_string ?(none_if_empty = false) proj person =
-  let s = as_string proj person in
-  Ext_option.return_if (not none_if_empty || s <> "") (fun () -> s)*)
-
 let as_some_strings proj person =
   Some (as_strings proj person)
 
@@ -143,16 +139,16 @@ end = struct
       )
 
   let get_npocc person =
-    if not (has_visible_names person) then None
-    else
-      of_field person.fields.npocc (fun person' ->
-          let lowered_string proj person = Name.lower (as_string proj person) in
-          {
-            n = lowered_string Gwdb.get_first_name person;
-            p = lowered_string Gwdb.get_surname person;
-            occ = Int32.of_int (Gwdb.get_occ person');
-          }
-        ) person
+    Ext_option.return_if (has_visible_names person) (fun () ->
+        of_field person.fields.npocc (fun person' ->
+            let lowered_string proj person = Name.lower (as_string proj person) in
+            {
+              n = lowered_string Gwdb.get_first_name person;
+              p = lowered_string Gwdb.get_surname person;
+              occ = Int32.of_int (Gwdb.get_occ person');
+            }
+          ) person)
+    |> Option.join
 
   let get_sex person = match Gwdb.get_sex person with
     | Def.Neuter -> Unknown
@@ -174,9 +170,8 @@ end = struct
           as_string Gwdb.get_first_name person)
 
   let get_image person =
-    if person.fields.image then
-      Api_util.get_portrait person.conf person.base person.person
-    else None
+    Ext_option.return_if person.fields.image (fun () ->
+      Api_util.get_portrait person.conf person.base person.person)
 
   let get_public_name person =
     Ext_option.return_if (has_visible_names person && person.fields.public_name) (fun () ->
@@ -192,14 +187,14 @@ end = struct
         })
 
   let get_parent fields proj person =
-    if person.confidentiality.restricted then None
-    else
-      Option.bind fields (fun fields ->
-          Option.bind (Gwdb.get_parents person.person) (fun parents ->
-              let iparent = proj (Gwdb.foi person.base parents) in
-              let parent = Gwdb.poi person.base iparent in
-              Option.some (of_person person.conf person.base fields parent))
-        )
+    Ext_option.return_if (not person.confidentiality.restricted) (fun () ->
+        Option.bind fields (fun fields ->
+            Option.bind (Gwdb.get_parents person.person) (fun parents ->
+                let iparent = proj (Gwdb.foi person.base parents) in
+                let parent = Gwdb.poi person.base iparent in
+                Option.some (of_person person.conf person.base fields parent))
+          ))
+    |> Option.join
 
   let get_father person = get_parent person.fields.father Gwdb.get_father person
 
