@@ -17,7 +17,7 @@ type name_aliases = {
 
 type event_request = {
   page_number : int;
-  elements_per_page : int;
+  elements_per_page : [ `Int of int | `All ];
   spouse : requested_fields option;
 }
 
@@ -310,12 +310,17 @@ end = struct
       person.confidentiality.visible &&
       Option.is_some person.fields.events) (fun () ->
         let events_request : event_request = Option.get person.fields.events in
-        let page = Api_util.Page.make ~number:events_request.page_number ~element_count:events_request.elements_per_page in
         let events = Geneweb.Event.sorted_events person.conf person.base person.person in
-        let paginated_events = Api_util.Paginated_data.extract page events in
+        let paginated_events = match events_request.elements_per_page with
+          | `All -> Api_util.Paginated_data.all events
+          | `Int element_count ->
+            let page = Api_util.Page.make ~number:events_request.page_number ~element_count in
+            Api_util.Paginated_data.extract page events
+        in
         let paginated_events = Api_util.Paginated_data.map (fun evt ->
             of_event person events_request.spouse evt
-          ) paginated_events in
+          ) paginated_events
+        in
         {
           elements = paginated_events.Api_util.Paginated_data.elements;
           page_number = paginated_events.page_number;
