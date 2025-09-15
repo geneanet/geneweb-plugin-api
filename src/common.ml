@@ -172,6 +172,7 @@ end = struct
   let get_image person =
     Ext_option.return_if person.fields.image (fun () ->
       Api_util.get_portrait person.conf person.base person.person)
+  |> Option.join
 
   let get_public_name person =
     Ext_option.return_if (has_visible_names person && person.fields.public_name) (fun () ->
@@ -262,10 +263,8 @@ end = struct
           ) (Geneweb.Perso.nobility_titles_list person.conf person.base person.person)
       )
 
-  let event_type base e = match e with
-    | Geneweb.Event.Pevent (Def.Epers_Name istr) -> Geneweb.Event.Pevent (Def.Epers_Name (Utf8.normalize (Gwdb.sou base istr)))
-    | Geneweb.Event.Fevent (Def.Efam_Name istr) -> Geneweb.Event.Fevent (Def.Efam_Name (Utf8.normalize (Gwdb.sou base istr)))
-    | _ as e -> (Obj.magic e)
+  let event_type base e =
+    Geneweb.Event.map_event_name (fun n -> Utf8.normalize (Gwdb.sou base n)) e
 
   let event_place base e =
     let place = Utf8.normalize (Gwdb.sou base (Geneweb.Event.get_place e)) in
