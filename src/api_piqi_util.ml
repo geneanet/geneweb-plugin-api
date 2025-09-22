@@ -1,7 +1,6 @@
 let p_getenvbin env label =
   let decode_varenv = Mutil.gen_decode false in
-  try Some (decode_varenv (List.assoc label env))
-  with Not_found -> None
+  Option.map decode_varenv (List.assoc_opt label env)
 
 module Geneweb_date = Date
 

@@ -1976,11 +1976,12 @@ let create_node conf base max_gen ifam p gen more_info base_prefix factor =
   }
 
 let factor ht x =
-  try
-    let i = Hashtbl.find ht x + 1 in
+  match Hashtbl.find_opt ht x with
+  | Some i ->
+    let i = i + 1 in
     Hashtbl.replace ht x i;
     i
-  with Not_found ->
+  | None ->
     Hashtbl.add ht x 1;
     1
 
@@ -1996,7 +1997,7 @@ let build_graph_asc conf base p max_gen =
       if gen >= max_gen then loop l
       else match Gwdb.get_parents p with
         | Some ifam ->
-          let p_factor = try Hashtbl.find ht (Gwdb.get_iper p) with Not_found -> 1 in
+          let p_factor = Option.value (Hashtbl.find_opt ht (Gwdb.get_iper p)) ~default:1 in
           let cpl = Gwdb.foi base ifam in
           let fath = Gwdb.poi base (Gwdb.get_father cpl) in
           let moth = Gwdb.poi base (Gwdb.get_mother cpl) in
@@ -2020,7 +2021,7 @@ let build_graph_asc conf base p max_gen =
                 if gen >= max_gen then loop_parents l
                 else
                   let ip = Gwdb.get_iper p in
-                  let p_factor = try Hashtbl.find ht (base_prefix, Gwdb.get_iper p) with Not_found -> 1 in
+                  let p_factor = Option.value (Hashtbl.find_opt ht (base_prefix, Gwdb.get_iper p)) ~default:1 in
                   match !Geneweb.GWPARAM_ITL.get_father conf base base_prefix ip
                       , !Geneweb.GWPARAM_ITL.get_mother conf base base_prefix ip with
                   | (Some ((fath, _), bpf), Some ((moth, _), bpm)) ->
@@ -2057,7 +2058,7 @@ let build_graph_desc conf base p max_gen =
     | (p, gen) :: l ->
       if gen >= max_gen then loop l
       else
-        let p_factor = try Hashtbl.find ht (Gwdb.get_iper p) with Not_found -> 1 in
+        let p_factor = Option.value (Hashtbl.find_opt ht (Gwdb.get_iper p)) ~default:1 in
         let ifam = Gwdb.get_family p in
         let l =
           Array.fold_left (fun acc ifam  ->
@@ -2086,7 +2087,7 @@ let build_graph_desc conf base p max_gen =
                     | (base_prefix, p, gen) :: l ->
                       if gen >= max_gen then loop_child l
                       else
-                        let p_factor = try Hashtbl.find ht (base_prefix, Gwdb.get_iper p) with Not_found -> 1 in
+                        let p_factor = Option.value (Hashtbl.find_opt ht (base_prefix, Gwdb.get_iper p)) ~default:1 in
                         let l =
                           List.fold_left begin fun acc (fam_bp, (_, _, isp), children) ->
                             let sp_factor = factor ht (fam_bp, isp) in
@@ -2119,7 +2120,7 @@ let build_graph_desc conf base p max_gen =
             | (base_prefix, p, gen) :: l ->
               if gen >= max_gen then loop_desc l
               else
-                let p_factor = try Hashtbl.find ht (base_prefix, Gwdb.get_iper p) with Not_found -> 1 in
+                let p_factor = Option.value (Hashtbl.find_opt ht (base_prefix, Gwdb.get_iper p)) ~default:1 in
                 let l =
                   List.fold_left begin fun acc (ifam, fam, (_ifath, _imoth, sp), baseprefix, can_merge) ->
                     if can_merge then acc

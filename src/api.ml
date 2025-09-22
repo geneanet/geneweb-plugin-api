@@ -319,7 +319,7 @@ let print_last_visited_persons conf base =
   let filters = Api_util.get_filters conf in
   let list =
     if user = "" then []
-    else try Hashtbl.find (Geneweb.Util.read_visited conf) user with Not_found -> []
+    else Option.value (Hashtbl.find_opt (Geneweb.Util.read_visited conf) user) ~default:[]
   in
   (* On ne supprime pas le fichier de cache, même après un envoi Gendcom, *)
   (* donc on vérifie que les personnes existent toujours dans la base.    *)
@@ -686,8 +686,9 @@ module HistoryApi = struct
       in
       let pg = String.sub key 0 i in
       let s = String.sub key j (String.length key - j) in
-      try pg, Some (int_of_string s)
-      with Failure _ -> key, None
+      match int_of_string_opt s with
+      | Some i -> pg, Some i
+      | None -> key, None
     in
     let link_parameters = "m=NOTES" in
     let link_parameters =
