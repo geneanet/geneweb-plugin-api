@@ -26,6 +26,9 @@ let simple_fields = {
   burial = false;
 }
 
+let full_page elements_request =
+  {Common.page_number = 1; elements_per_page = `All; elements_request = elements_request}
+
 let full_fields = {
   Common.index = true;
   npocc = true;
@@ -42,7 +45,7 @@ let full_fields = {
   notes = true;
   sources = true;
   titles = true;
-  events = Some {Common.page_number = 1; elements_per_page = `All; spouse = Some simple_fields};
+  events = Some (full_page {Common.spouse = Some simple_fields; witnesses = Some (full_page {Common.witness = Some simple_fields; note = true})});
   birth = true;
   baptism = true;
   death = true;
@@ -79,17 +82,29 @@ let rec requested_fields person_request = {
   notes = optional person_request.notes;
   sources = optional person_request.sources;
   titles = optional person_request.titles;
-  events = Option.map event_request person_request.events;
+  events = Option.map paginated_event_request person_request.events;
   birth = optional person_request.birth;
   baptism = optional person_request.baptism;
   death = optional person_request.death;
   burial = optional person_request.burial;
 }
 
-and event_request events = {
+and paginated_event_request events = {
   Common.page_number = Option.value ~default:1 (Option.map Int32.to_int events.Api_v2_piqi.Event_request.page_number);
   elements_per_page = Option.value ~default:`All (Option.map (fun i -> `Int (Int32.to_int i)) events.elements_per_page);
-  spouse = Option.map requested_fields events.spouse;
+  elements_request = {
+    Common.spouse = Option.map requested_fields events.spouse;
+    witnesses = Option.map paginated_witness_request events.witnesses;
+  }
+}
+
+and paginated_witness_request witnesses = {
+  Common.page_number = Option.value ~default:1 (Option.map Int32.to_int witnesses.Api_v2_piqi.Witness_request.page_number);
+  elements_per_page = Option.value ~default:`All (Option.map (fun i -> `Int (Int32.to_int i)) witnesses.elements_per_page);
+  elements_request = {
+    witness = Option.map requested_fields witnesses.witness;
+    note = optional witnesses.note;
+  }
 }
 
 let request_of_piqi_request piqi_request : t option =

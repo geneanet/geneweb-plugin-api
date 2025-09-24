@@ -15,11 +15,25 @@ type name_aliases = {
   surname_aliases : string list option;
 }
 
-type event_request = {
+type 'a paginated_request = {
   page_number : int;
   elements_per_page : [ `Int of int | `All ];
-  spouse : requested_fields option;
+  elements_request : 'a;
 }
+
+type event_request = {
+  spouse : requested_fields option;
+  witnesses : paginated_witness_request option;
+}
+
+and witness_request = {
+  witness : requested_fields option;
+  note : bool;
+}
+
+and paginated_witness_request = witness_request paginated_request
+
+and paginated_event_request = event_request paginated_request
 
 and requested_fields = {
   index : bool;
@@ -37,7 +51,7 @@ and requested_fields = {
   notes : bool;
   sources : bool;
   titles : bool;
-  events : event_request option;
+  events : paginated_event_request option;
   birth : bool;
   baptism : bool;
   death : bool;
@@ -50,13 +64,22 @@ type person
 type family
 
 type 'a paginated = {
-  elements : 'a;
+  elements : 'a list;
   page_number : int;
   total_count : int;
 }
 
 type event_type = string Geneweb.Event.event_name
 type date = Date.date
+
+type witness = {
+  witness_type : Def.witness_kind;
+  witness : person;
+  note : string option;
+}
+
+type paginated_witnesses = witness paginated
+
 type event = {
   event_type : event_type;
   date : date option;
@@ -66,9 +89,10 @@ type event = {
   spouse : person option;
   death_type : Def.death option;
   burial_type : Def.burial option;
+  witnesses : paginated_witnesses option;
 }
 
-type paginated_events = event list paginated
+type paginated_events = event paginated
 
 module Person : sig
   type t = person

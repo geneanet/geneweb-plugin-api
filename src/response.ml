@@ -92,6 +92,7 @@ let rec events_to_piqi event =
     notes = event.notes;
     sources = event.sources;
     spouse = Option.map (fun spouse_response -> to_piqi (response_of_person spouse_response)) event.spouse;
+    witnesses = Option.map paginated_witnesses_to_piqi event.witnesses;
     death_type = Option.map death_type_to_piqi event.death_type;
     burial_type = Option.map burial_type_to_piqi event.burial_type;
   }
@@ -100,6 +101,18 @@ and paginated_events_to_piqi events = {
   Api_v2_piqi.Paginated_events.elements = List.map events_to_piqi events.Common.elements;
   page_number = Int32.of_int events.page_number;
   total_count = Int32.of_int events.total_count;
+}
+
+and paginated_witnesses_to_piqi (witnesses : Common.paginated_witnesses) = {
+  Api_v2_piqi.Paginated_witnesses.elements = List.map witness_to_piqi witnesses.Common.elements;
+  page_number = Int32.of_int witnesses.page_number;
+  total_count = Int32.of_int witnesses.total_count;
+}
+
+and witness_to_piqi witness = {
+  Api_v2_piqi.Witness.witness_type = Some (Api_util.piqi_of_witness_kind witness.witness_type);
+  person = Some (to_piqi (response_of_person witness.witness));
+  note = witness.note;
 }
 
 and to_piqi response =
