@@ -15,11 +15,25 @@ type name_aliases = {
   surname_aliases : string list option;
 }
 
-type event_request = {
+type 'a paginated_request = {
   page_number : int;
   elements_per_page : [ `Int of int | `All ];
-  spouse : requested_fields option;
+  elements_request : 'a;
 }
+
+type event_request = {
+  spouse : requested_fields option;
+  witnesses : paginated_witness_request option;
+}
+
+and witness_request = {
+  witness : requested_fields option;
+  note : bool;
+}
+
+and paginated_witness_request = witness_request paginated_request
+
+and paginated_event_request = event_request paginated_request
 
 and requested_fields = {
   index : bool;
@@ -37,7 +51,7 @@ and requested_fields = {
   notes : bool;
   sources : bool;
   titles : bool;
-  events : event_request option;
+  events : paginated_event_request option;
   birth : bool;
   baptism : bool;
   death : bool;
@@ -61,13 +75,22 @@ type person = {
 }
 
 type 'a paginated = {
-  elements : 'a;
+  elements : 'a list;
   page_number : int;
   total_count : int;
 }
 
 type event_type = string Geneweb.Event.event_name
 type date = Date.date
+
+
+type witness = {
+  witness_type : Def.witness_kind;
+  witness : person;
+  note : string option;
+}
+
+type paginated_witnesses = witness paginated
 
 type event = {
   event_type : event_type;
@@ -78,9 +101,10 @@ type event = {
   spouse : person option;
   death_type : Def.death option;
   burial_type : Def.burial option;
+  witnesses : paginated_witnesses option;
 }
 
-type paginated_events = event list paginated
+type paginated_events = event paginated
 
 let has_visible_names person =
   person.confidentiality.visible || not person.confidentiality.hidden_names
@@ -293,7 +317,35 @@ end = struct
         Option.map (of_person conf base fields) spouse
       )
 
-  let of_event person spouse_fields evt =
+  let event_witnesses person evt (paginated_witness_request : paginated_witness_request) =
+    let witnesses_data = Geneweb.Event.get_witnesses_and_notes evt in
+    let witness_fields = paginated_witness_request.elements_request.witness in
+    let witnesses = match witness_fields with
+      | Some witness_fields ->
+        Array.fold_left (fun acc (iper, witness_type, istr) ->
+            let wpers = Gwdb.poi person.base iper in
+            let witness = of_person person.conf person.base  witness_fields wpers in
+            if witness.confidentiality.visible then
+              let note =   Ext_option.return_if (not (Gwdb.is_empty_string istr)) (fun () -> Utf8.normalize (Gwdb.sou person.base istr)) in
+              {witness; witness_type; note} :: acc
+            else acc
+          ) [] witnesses_data
+        |> List.rev
+      | None ->[]
+    in
+    let paginated_witnesses = match paginated_witness_request.elements_per_page with
+      | `All -> Api_util.Paginated_data.all witnesses
+      | `Int element_count ->
+        let page = Api_util.Page.make ~number:paginated_witness_request.page_number ~element_count in
+        Api_util.Paginated_data.extract page witnesses
+    in
+    {
+      elements = paginated_witnesses.Api_util.Paginated_data.elements;
+      page_number = paginated_witnesses.page_number;
+      total_count = paginated_witnesses.total_count;
+    }
+
+  let of_event person spouse_fields (paginated_witness_request : paginated_witness_request option) evt =
     {
       event_type = event_type person.base (Geneweb.Event.get_name evt);
       date = Date.od_of_cdate (Geneweb.Event.get_date evt);
@@ -303,22 +355,23 @@ end = struct
       spouse = event_spouse person.conf person.base spouse_fields evt;
       death_type = None;
       burial_type = None;
+      witnesses = Option.map (event_witnesses person evt) paginated_witness_request;
     }
 
   let get_events person =
     Ext_option.return_if (
       person.confidentiality.visible &&
       Option.is_some person.fields.events) (fun () ->
-        let events_request : event_request = Option.get person.fields.events in
+        let paginated_events_request : paginated_event_request = Option.get person.fields.events in
         let events = Geneweb.Event.sorted_events person.conf person.base person.person in
-        let paginated_events = match events_request.elements_per_page with
+        let paginated_events = match paginated_events_request.elements_per_page with
           | `All -> Api_util.Paginated_data.all events
           | `Int element_count ->
-            let page = Api_util.Page.make ~number:events_request.page_number ~element_count in
+            let page = Api_util.Page.make ~number:paginated_events_request.page_number ~element_count in
             Api_util.Paginated_data.extract page events
         in
         let paginated_events = Api_util.Paginated_data.map (fun evt ->
-            of_event person events_request.spouse evt
+            of_event person paginated_events_request.elements_request.spouse paginated_events_request.elements_request.witnesses evt
           ) paginated_events
         in
         {
@@ -346,7 +399,7 @@ end = struct
         let place = get_place person.person in
         let note = get_note person.person in
         let source = get_source person.person in
-        of_event person None (pers_event ~name ~date ~place ~note ~source ~witnesses:[||])
+        of_event person None None (pers_event ~name ~date ~place ~note ~source ~witnesses:[||])
       )
     in
     Option.bind evt (fun evt ->
