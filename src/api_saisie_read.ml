@@ -1708,7 +1708,6 @@ let rec pers_to_piqi_fiche_person
         p = fill_fn conf base p p_auth;
         occ = fill_occ p;
 
-        aliases = if return_simple_attributes && not simple_graph_info then fill_aliases p_auth gen_p else [];
         baptism_src = transform_empty_string_to_None baptism_src;
         birth_place = transform_empty_string_to_None (fill_birth_place p_auth gen_p);
         birth_src = transform_empty_string_to_None birth_src;
@@ -1731,6 +1730,7 @@ let rec pers_to_piqi_fiche_person
 
         (* Fields only filled for the main person. *)
         baptism_place = if is_main_person then transform_empty_string_to_None (fill_baptism_place p_auth gen_p) else None;
+        aliases = if is_main_person && not simple_graph_info then fill_aliases p_auth gen_p else [];
         firstname_aliases = if is_main_person && not simple_graph_info then fill_firstname_aliases p_auth gen_p else [];
         has_sources = has_sources;
         notes = if is_main_person && not simple_graph_info then transform_empty_string_to_None (fill_notes conf base p p_auth is_main_person gen_p) else None;
