@@ -19,6 +19,7 @@ type t = {
   baptism : Common.event option;
   death : Common.event option;
   burial : Common.event option;
+  related : (Def.relation_type * t) list option;
 }
 
 let rec response_of_person person = {
@@ -42,6 +43,9 @@ let rec response_of_person person = {
   baptism = Common.Person.get_baptism person;
   death = Common.Person.get_death person;
   burial = Common.Person.get_burial person;
+  related = Option.map
+      (List.map (fun (relation_type, person) -> relation_type, response_of_person person))
+      (Common.Person.get_related person);
 }
 
 let npocc_to_piqi npocc : Api_v2_piqi.Npocc.t = {
@@ -115,6 +119,18 @@ and witness_to_piqi witness = {
   note = witness.note;
 }
 
+and relation_type_to_piqi = function
+  | Def.Adoption -> `rchild_adoption
+  | Recognition -> `rchild_recognition
+  | CandidateParent -> `rchild_candidate_parent
+  | GodParent -> `rchild_god_parent
+  | FosterParent -> `rchild_foster_parent
+
+and relation_to_piqi (relation_type, person) = {
+  Api_v2_piqi.Relation.relation_type = Some (relation_type_to_piqi relation_type);
+  person = Some (to_piqi person);
+}
+
 and to_piqi response =
   {
     Api_v2_piqi.Person.index = response.index;
@@ -137,6 +153,7 @@ and to_piqi response =
     baptism = Option.map events_to_piqi response.baptism;
     death = Option.map events_to_piqi response.death;
     burial = Option.map events_to_piqi response.burial;
+    related = Option.value ~default:[] (Option.map (List.map relation_to_piqi) response.related);
   }
 
 let response conf base request =
