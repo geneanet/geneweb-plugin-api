@@ -56,6 +56,7 @@ and requested_fields = {
   baptism : bool;
   death : bool;
   burial : bool;
+  related : requested_fields option;
 }
 
 type person_select = Index of index | Npocc of npocc
@@ -143,6 +144,7 @@ module Person : sig
   val get_baptism : t -> event option
   val get_death : t -> event option
   val get_burial : t -> event option
+  val get_related : t -> (Def.relation_type * person) list option
 end = struct
 
   type t = person
@@ -485,6 +487,14 @@ end = struct
           of_person conf base fields (Gwdb.poi base iper)
         ) (index_of_select base select)
     with Failure _ -> None
+
+  let get_related person =
+    Option.map (fun fields ->
+        List.map (fun (person', relation) ->
+            relation.Def.r_type,
+            of_person person.conf person.base fields person'
+          ) (Geneweb.Relation.get_others_related person.conf person.base person.person)
+      ) person.fields.related
 
 end
 

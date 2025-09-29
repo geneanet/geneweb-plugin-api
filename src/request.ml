@@ -24,6 +24,7 @@ let simple_fields = {
   baptism = false;
   death = false;
   burial = false;
+  related = None;
 }
 
 let full_page elements_request =
@@ -50,6 +51,7 @@ let full_fields = {
   baptism = true;
   death = true;
   burial = true;
+  related = Some simple_fields;
 }
 
 let get_fields {person_select = _; requested_fields} = requested_fields
@@ -87,6 +89,7 @@ let rec requested_fields person_request = {
   baptism = optional person_request.baptism;
   death = optional person_request.death;
   burial = optional person_request.burial;
+  related = Option.map requested_fields person_request.related;
 }
 
 and paginated_event_request events = {

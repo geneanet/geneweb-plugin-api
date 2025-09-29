@@ -109,6 +109,7 @@ message PersonRequest {
   optional bool baptism = 18;
   optional bool death = 19;
   optional bool burial = 20;
+  optional PersonRequest related = 21;
 }
 
 enum EventType {
@@ -213,21 +214,30 @@ message Event {
   optional DeathType death_type = 8;
   optional BurialType burial_type = 9;
   optional PaginatedWitnesses witnesses = 10;
-/*optional string date = 3;
-  optional string date_long = 4;
-  optional string date_raw = 13;
-  optional string date_conv = 5;
-  optional string date_conv_long = 14;
-  optional Calendar date_cal = 6;
-  optional string reason = 8;
-  optional SimplePerson spouse = 11;
-  repeated WitnessEvent witnesses = 12;*/
 }
 
 message PaginatedEvents {
   repeated Event elements = 1;
   required int32 page_number = 2;
   required int32 total_count = 3;
+}
+
+enum RelationType {
+  RPARENT_ADOPTION = 0;
+  RPARENT_RECOGNITION = 1;
+  RPARENT_CANDIDATE_PARENT = 2;
+  RPARENT_GOD_PARENT = 3;
+  RPARENT_FOSTER_PARENT = 4;
+  RCHILD_ADOPTION = 5;
+  RCHILD_RECOGNITION = 6;
+  RCHILD_CANDIDATE_PARENT = 7;
+  RCHILD_GOD_PARENT = 8;
+  RCHILD_FOSTER_PARENT = 9;
+}
+
+message Relation {
+  optional RelationType relation_type = 1;
+  optional Person person = 2;
 }
 
 message Person {
@@ -251,4 +261,5 @@ message Person {
   optional Event baptism = 18;
   optional Event death = 19;
   optional Event burial = 20;
+  repeated Relation related = 21;
 }
