@@ -696,9 +696,10 @@ module HistoryApi = struct
         Printf.sprintf {|%s;f=%s|} link_parameters pg
       else link_parameters in
     let link_parameters =
-      if Option.is_some part then
-        Printf.sprintf {|%s;v=%d|} link_parameters (Option.get part)
-      else link_parameters in
+      match part with
+      | Some part ->
+        Printf.sprintf {|%s;v=%d|} link_parameters (part)
+      | None -> link_parameters in
     let link_txt =
       if pg <> "" then
         Printf.sprintf {|[%s]|} pg
