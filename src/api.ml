@@ -679,10 +679,8 @@ module HistoryApi = struct
   let note_link conf key =
     let pg, part =
       let i, j =
-        try
-          let i = String.rindex key '/' in
-          (i, i + 1)
-        with Not_found -> (0, 0)
+        Option.fold
+          (String.rindex_opt key '/') ~some:(fun i -> (i, i + 1)) ~none:(0, 0)
       in
       let pg = String.sub key 0 i in
       let s = String.sub key j (String.length key - j) in
