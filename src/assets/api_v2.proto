@@ -110,6 +110,7 @@ message PersonRequest {
   optional bool death = 19;
   optional bool burial = 20;
   optional PersonRequest related = 21;
+  optional PersonRequest rparents = 22;
 }
 
 enum EventType {
@@ -262,4 +263,5 @@ message Person {
   optional Event death = 19;
   optional Event burial = 20;
   repeated Relation related = 21;
+  repeated Relation rparents = 22;
 }

@@ -25,6 +25,7 @@ let simple_fields = {
   death = false;
   burial = false;
   related = None;
+  rparents = None;
 }
 
 let full_page elements_request =
@@ -52,6 +53,7 @@ let full_fields = {
   death = true;
   burial = true;
   related = Some simple_fields;
+  rparents = Some simple_fields;
 }
 
 let get_fields {person_select = _; requested_fields} = requested_fields
@@ -90,6 +92,7 @@ let rec requested_fields person_request = {
   death = optional person_request.death;
   burial = optional person_request.burial;
   related = Option.map requested_fields person_request.related;
+  rparents = Option.map requested_fields person_request.rparents;
 }
 
 and paginated_event_request events = {

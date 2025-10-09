@@ -57,6 +57,7 @@ and requested_fields = {
   death : bool;
   burial : bool;
   related : requested_fields option;
+  rparents : requested_fields option;
 }
 
 type person_select = Index of index | Npocc of npocc
@@ -119,6 +120,7 @@ module Person : sig
   val get_death : t -> event option
   val get_burial : t -> event option
   val get_related : t -> (Def.relation_type * person) list option
+  val get_rparents : t -> (Def.relation_type * person) list option
 end
 
 module Family : sig

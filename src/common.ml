@@ -57,6 +57,7 @@ and requested_fields = {
   death : bool;
   burial : bool;
   related : requested_fields option;
+  rparents : requested_fields option;
 }
 
 type person_select = Index of index | Npocc of npocc
@@ -145,6 +146,7 @@ module Person : sig
   val get_death : t -> event option
   val get_burial : t -> event option
   val get_related : t -> (Def.relation_type * person) list option
+  val get_rparents : t -> (Def.relation_type * person) list option
 end = struct
 
   type t = person
@@ -496,6 +498,16 @@ end = struct
           ) (Geneweb.Relation.get_others_related person.conf person.base person.person)
       ) person.fields.related
 
+  let get_rparents person =
+    Option.map (fun fields ->
+        List.fold_left (fun rparents relation ->
+            let r_type = relation.Def.r_type in
+            let r_fath = Option.map (fun ip -> of_person person.conf person.base fields (Gwdb.poi person.base ip)) relation.Def.r_fath in
+            let r_moth = Option.map (fun ip -> of_person person.conf person.base fields (Gwdb.poi person.base ip)) relation.Def.r_moth in
+            let rparents = Option.fold ~none:rparents ~some:(fun r_fath -> (r_type, r_fath) :: rparents) r_fath in
+            Option.fold ~none:rparents ~some:(fun r_moth -> (r_type, r_moth) :: rparents) r_moth
+          ) [] (Gwdb.get_rparents person.person)
+      ) person.fields.rparents
 end
 
 module Family : sig
