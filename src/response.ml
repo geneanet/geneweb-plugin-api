@@ -20,6 +20,7 @@ type t = {
   death : Common.event option;
   burial : Common.event option;
   related : (Def.relation_type * t) list option;
+  rparents : (Def.relation_type * t) list option;
 }
 
 let rec response_of_person person = {
@@ -43,10 +44,14 @@ let rec response_of_person person = {
   baptism = Common.Person.get_baptism person;
   death = Common.Person.get_death person;
   burial = Common.Person.get_burial person;
-  related = Option.map
-      (List.map (fun (relation_type, person) -> relation_type, response_of_person person))
-      (Common.Person.get_related person);
+  related = Option.map relations_to_piqi (Common.Person.get_related person);
+  rparents = Option.map relations_to_piqi (Common.Person.get_rparents person);
 }
+
+and relations_to_piqi relations =
+  List.map (fun (relation_type, person) ->
+      relation_type, response_of_person person
+    ) relations
 
 let npocc_to_piqi npocc : Api_v2_piqi.Npocc.t = {
   Api_v2_piqi.Npocc.n = Some npocc.Common.n;
@@ -126,8 +131,20 @@ and relation_type_to_piqi = function
   | GodParent -> `rchild_god_parent
   | FosterParent -> `rchild_foster_parent
 
+and rparents_relation_type_to_piqi = function
+  | Def.Adoption -> `rparent_adoption
+  | Recognition -> `rparent_recognition
+  | CandidateParent -> `rparent_candidate_parent
+  | GodParent -> `rparent_god_parent
+  | FosterParent -> `rparent_foster_parent
+
 and relation_to_piqi (relation_type, person) = {
   Api_v2_piqi.Relation.relation_type = Some (relation_type_to_piqi relation_type);
+  person = Some (to_piqi person);
+}
+
+and rparent_to_piqi (relation_type, person) = {
+  Api_v2_piqi.Relation.relation_type = Some (rparents_relation_type_to_piqi relation_type);
   person = Some (to_piqi person);
 }
 
@@ -154,6 +171,7 @@ and to_piqi response =
     death = Option.map events_to_piqi response.death;
     burial = Option.map events_to_piqi response.burial;
     related = Option.value ~default:[] (Option.map (List.map relation_to_piqi) response.related);
+    rparents = Option.value ~default:[] (Option.map (List.map rparent_to_piqi) response.rparents);
   }
 
 let response conf base request =
