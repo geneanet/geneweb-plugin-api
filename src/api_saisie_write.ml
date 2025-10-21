@@ -105,9 +105,11 @@ let print_config conf =
               (cal, Geneweb.Util.transl_nth conf "gregorian/julian/french/hebrew" 2)
           | `hebrew ->
               (cal, Geneweb.Util.transl_nth conf "gregorian/julian/french/hebrew" 3)
+          | `islamic ->
+              (cal, Geneweb.Util.transl_nth conf "gregorian/julian/french/hebrew" 4)
         in
         Api_saisie_write_piqi.Transl_calendar.({pos = pos; sval = sval;}))
-      [ `gregorian; `julian; `french; `hebrew ]
+      [ `gregorian; `julian; `french; `hebrew; `islamic ]
   in
   let transl_cal = Api_saisie_write_piqi.Config_transl_calendar.({msg = transl_cal;}) in
   let transl_wit =
@@ -407,6 +409,36 @@ let print_config conf =
         `adar_2; `nissan; `iyar; `sivan; `tamouz; `av; `eloul ]
   in
   let transl_hebrew_month = Api_saisie_write_piqi.Config_transl_hebrew_month.({msg = transl_hebrew_month;}) in
+  let transl_islamic_month =
+    List.map
+      (fun month ->
+        let (pos, sval) =
+          match month with
+          | `muharram -> (month, Geneweb.Util.transl_nth conf "(islamic month)" 0)
+          | `safar -> (month, Geneweb.Util.transl_nth conf "(islamic month)" 1)
+          | `rabi_al_awwal -> (month, Geneweb.Util.transl_nth conf "(islamic month)" 2)
+          | `rabi_al_thani -> (month, Geneweb.Util.transl_nth conf "(islamic month)" 3)
+          | `jumada_al_awwal -> (month, Geneweb.Util.transl_nth conf "(islamic month)" 4)
+          | `jumada_al_thani -> (month, Geneweb.Util.transl_nth conf "(islamic month)" 5)
+          | `rajab -> (month, Geneweb.Util.transl_nth conf "(islamic month)" 6)
+          | `shaban -> (month, Geneweb.Util.transl_nth conf "(islamic month)" 7)
+          | `ramadan -> (month, Geneweb.Util.transl_nth conf "(islamic month)" 8)
+          | `shawwal -> (month, Geneweb.Util.transl_nth conf "(islamic month)" 9)
+          | `dhu_al_qadah -> (month, Geneweb.Util.transl_nth conf "(islamic month)" 10)
+          | `dhu_al_hijjah -> (month, Geneweb.Util.transl_nth conf "(islamic month)" 11)
+        in
+        Api_saisie_write_piqi.Transl_islamic_month.({
+          pos = pos;
+          sval = sval;
+        }))
+      [ `muharram; `safar; `rabi_al_awwal; `rabi_al_thani; `jumada_al_awwal;
+        `jumada_al_thani; `rajab; `shaban; `ramadan; `shawwal; `dhu_al_qadah;
+        `dhu_al_hijjah ]
+  in
+  let transl_islamic_month =
+    {Api_saisie_write_piqi.Config_transl_islamic_month.msg =
+       transl_islamic_month}
+  in
   let (gwf_place_format, gwf_place_format_placeholder) =
     match List.assoc_opt "places_format" conf.Geneweb.Config.base_env with
     | Some s ->
@@ -450,6 +482,7 @@ let print_config conf =
       transl_short_greg_month = transl_short_greg_month;
       transl_french_month = transl_french_month;
       transl_hebrew_month = transl_hebrew_month;
+      transl_islamic_month;
       gwf_place_format = gwf_place_format;
       gwf_place_format_placeholder = gwf_place_format_placeholder;
     })

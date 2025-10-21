@@ -117,6 +117,9 @@ let string_of_french_dmy conf d =
 let string_of_hebrew_dmy conf d =
   Geneweb.DateDisplay.code_hebrew_date conf d.Date.day d.month d.year
 
+let string_of_islamic_dmy conf d =
+  Geneweb.DateDisplay.code_islamic_date conf d.Date.day d.month d.year
+
 let string_of_date_and_conv conf d =
   match d with
   | Date.Dgreg (d, Dgregorian) ->
@@ -173,6 +176,22 @@ let string_of_date_and_conv conf d =
         !!(Geneweb.DateDisplay.string_of_dmy conf d)
       in
       (date, date_long, date_conv, date_conv_long, Some `hebrew)
+  | Date.Dgreg (d, Dislamic) ->
+      let d1 = Date.convert ~from:Dgregorian ~to_:Dislamic d in
+      let date = string_of_islamic_dmy conf d1 in
+      let date_long =
+        let open Api_util in
+        !!(Geneweb.DateDisplay.string_of_on_calendar_dmy ~with_gregorian_precisions:false ~calendar:`Islamic conf d1)
+      in
+      let date_conv =
+        Adef.as_string @@
+          Geneweb.DateDisplay.gregorian_precision conf d ~with_short_month:true
+      in
+      let date_conv_long =
+        let open Api_util in
+        !!(Geneweb.DateDisplay.string_of_dmy conf d)
+      in
+      (date, date_long, date_conv, date_conv_long, Some `islamic)
   | Date.Dtext t -> ("(" ^ Geneweb.Util.string_with_macros ~conf ~env:[] t ^ ")", "", "", "", None)
 
 (**/**) (* Affichage nom/prénom *)

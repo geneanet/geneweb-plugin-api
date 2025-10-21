@@ -13,7 +13,7 @@ module Date : functor
 
      module Date : sig
        type t = {
-         mutable cal : [ `gregorian | `julian | `french | `hebrew ] option;
+         mutable cal : [ `gregorian | `julian | `french | `hebrew | `islamic ] option;
          mutable prec :
            [ `sure | `about | `maybe | `before | `after | `oryear | `yearint ]
            option;

@@ -15,6 +15,7 @@ enum Calendar {
   JULIAN = 1;
   FRENCH = 2;
   HEBREW = 3;
+  ISLAMIC = 4;
 }
 
 enum Precision {
