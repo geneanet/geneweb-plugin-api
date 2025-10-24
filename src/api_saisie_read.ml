@@ -106,7 +106,7 @@ let string_of_dmy conf d is_long =
     | _ -> Adef.safe ""
   in
   let open Api_util in
-  !!(Geneweb.DateDisplay.string_of_prec_dmy conf sy sy2 d)
+  !!(Geneweb.DateDisplay.string_of_prec_dmy conf sy sy2 d.Date.prec)
 
 let string_of_dmy_raw (d : Date.dmy) : string =
   let prec =
@@ -184,7 +184,7 @@ let string_of_date_and_conv conf d =
       let date = string_of_french_dmy conf d1 in
       let date_long =
         let open Api_util in
-        !!(Geneweb.DateDisplay.string_of_on_french_dmy conf d1)
+        !!(Geneweb.DateDisplay.string_of_on_calendar_dmy ~with_gregorian_precisions:false ~calendar:`French conf d1)
       in
       let date_conv = gregorian_precision conf d false in
       let date_conv_long =
@@ -197,7 +197,7 @@ let string_of_date_and_conv conf d =
       let date = string_of_hebrew_dmy conf d1 in
       let date_long =
         let open Api_util in
-        !!(Geneweb.DateDisplay.string_of_on_hebrew_dmy conf d1)
+        !!(Geneweb.DateDisplay.string_of_on_calendar_dmy ~with_gregorian_precisions:false ~calendar:`Hebrew conf d1)
       in
       let date_conv = gregorian_precision conf d false in
       let date_conv_long =
