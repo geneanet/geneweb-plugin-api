@@ -1,0 +1,267 @@
+syntax = "proto2" ;
+
+package Geneanet.Geneweb.Api2.Proto.Model;
+
+enum Calendar {
+  GREGORIAN = 0;
+  JULIAN = 1;
+  FRENCH = 2;
+  HEBREW = 3;
+}
+
+enum Precision {
+  SURE = 0;
+  ABOUT = 1;
+  MAYBE = 2;
+  BEFORE = 3;
+  AFTER = 4;
+  ORYEAR = 5;
+  YEARINT = 6;
+}
+
+message Dmy {
+  required int32 day = 1;
+  required int32 month = 2;
+  required int32 year = 3;
+  required int32 delta = 4;
+}
+
+message Date {
+  optional Calendar cal = 2;
+  optional Precision prec = 3;
+  optional Dmy dmy = 4;
+  optional Dmy dmy2 = 5;
+  optional string text = 6;
+}
+
+enum Sex {
+  UNKNOWN = 2;
+  MALE = 0;
+  FEMALE = 1;
+}
+
+enum DeathType {
+  NOT_DEAD = 0;
+  DEAD = 1;
+  DEAD_YOUNG = 2;
+  DEAD_DONT_KNOW_WHEN = 3;
+  DONT_KNOW_IF_DEAD = 4;
+  OF_COURSE_DEAD = 5;
+}
+
+enum BurialType {
+  DONT_KNOW = 0;
+  BURIED = 1;
+  CREMATED = 2;
+}
+
+message Npocc {
+  optional string n = 1;
+  optional string p = 2;
+  optional int32 occ = 3;
+}
+
+message NameAliases {
+  repeated string aliases = 1;
+  repeated string qualifiers = 2;
+  repeated string firstname_aliases = 3;
+  repeated string surname_aliases = 4;
+}
+
+message Request {
+  optional int32 index = 1;
+  optional Npocc npocc = 2;
+  optional PersonRequest person_request = 3;
+}
+
+message WitnessRequest {
+  optional int32 page_number = 1;
+  optional int32 elements_per_page = 2;
+  optional PersonRequest witness = 3;
+  optional bool note = 4;
+}
+
+message EventRequest {
+  optional int32 page_number = 1;
+  optional int32 elements_per_page = 2;
+  optional PersonRequest spouse = 3;
+  optional WitnessRequest witnesses = 4;
+}
+
+message PersonRequest {
+  optional bool index = 1;
+  optional bool npocc = 2;
+  optional bool lastname = 3;
+  optional bool firstname = 4;
+  optional bool public_name = 5;
+  optional bool sex = 6;
+  optional bool image = 7;
+  optional bool name_aliases = 8;
+  optional PersonRequest father = 9;
+  optional PersonRequest mother = 10;
+  optional bool sosa = 11;
+  optional bool occupation = 12;
+  optional bool notes = 13;
+  optional bool sources = 14;
+  optional bool titles = 15;
+  optional EventRequest events = 16;
+  optional bool birth = 17;
+  optional bool baptism = 18;
+  optional bool death = 19;
+  optional bool burial = 20;
+  optional PersonRequest related = 21;
+  optional PersonRequest rparents = 22;
+}
+
+enum EventType {
+  EPERS_BIRTH = 0;
+  EPERS_BAPTISM = 1;
+  EPERS_DEATH = 2;
+  EPERS_BURIAL = 3;
+  EPERS_CREMATION = 4;
+  EPERS_ACCOMPLISHMENT = 5;
+  EPERS_ACQUISITION = 6;
+  EPERS_ADHESION = 7;
+  EPERS_BAPTISMLDS = 8;
+  EPERS_BARMITZVAH = 9;
+  EPERS_BATMITZVAH = 10;
+  EPERS_BENEDICTION = 11;
+  EPERS_CHANGENAME = 12;
+  EPERS_CIRCUMCISION = 13;
+  EPERS_CONFIRMATION = 14;
+  EPERS_CONFIRMATIONLDS = 15;
+  EPERS_DECORATION = 16;
+  EPERS_DEMOBILISATIONMILITAIRE = 17;
+  EPERS_DIPLOMA = 18;
+  EPERS_DISTINCTION = 19;
+  EPERS_DOTATION = 20;
+  EPERS_DOTATIONLDS = 21;
+  EPERS_EDUCATION = 22;
+  EPERS_ELECTION = 23;
+  EPERS_EMIGRATION = 24;
+  EPERS_EXCOMMUNICATION = 25;
+  EPERS_FAMILYLINKLDS = 26;
+  EPERS_FIRSTCOMMUNION = 27;
+  EPERS_FUNERAL = 28;
+  EPERS_GRADUATE = 29;
+  EPERS_HOSPITALISATION = 30;
+  EPERS_ILLNESS = 31;
+  EPERS_IMMIGRATION = 32;
+  EPERS_LISTEPASSENGER = 33;
+  EPERS_MILITARYDISTINCTION = 34;
+  EPERS_MILITARYPROMOTION = 35;
+  EPERS_MILITARYSERVICE = 36;
+  EPERS_MOBILISATIONMILITAIRE = 37;
+  EPERS_NATURALISATION = 38;
+  EPERS_OCCUPATION = 39;
+  EPERS_ORDINATION = 40;
+  EPERS_PROPERTY = 41;
+  EPERS_RECENSEMENT = 42;
+  EPERS_RESIDENCE = 43;
+  EPERS_RETIRED = 44;
+  EPERS_SCELLENTCHILDLDS = 45;
+  EPERS_SCELLENTPARENTLDS = 46;
+  EPERS_SCELLENTSPOUSELDS = 47;
+  EPERS_VENTEBIEN = 48;
+  EPERS_WILL = 49;
+  EPERS_CUSTOM = 50;
+
+  EFAM_MARRIAGE = 100;
+  EFAM_NO_MARRIAGE = 101;
+  EFAM_NO_MENTION = 102;
+  EFAM_ENGAGE = 103;
+  EFAM_DIVORCE = 104;
+  EFAM_SEPARATED = 105;
+  EFAM_ANNULATION = 106;
+  EFAM_MARRIAGE_BANN = 107;
+  EFAM_MARRIAGE_CONTRACT = 108;
+  EFAM_MARRIAGE_LICENSE = 109;
+  EFAM_PACS = 110;
+  EFAM_RESIDENCE = 111;
+  EFAM_CUSTOM = 112;
+}
+
+enum WitnessType {
+  WITNESS = 0;
+  WITNESS_GODPARENT = 1;
+  WITNESS_CIVILOFFICER = 2;
+  WITNESS_RELIGIOUSOFFICER = 3;
+  WITNESS_INFORMANT = 4;
+  WITNESS_ATTENDING = 5;
+  WITNESS_MENTIONED = 6;
+  WITNESS_OTHER = 7;
+}
+
+message Witness {
+  optional WitnessType witness_type = 1;
+  optional Person person = 2;
+  optional string note = 3;
+}
+
+message PaginatedWitnesses {
+  repeated Witness elements = 1;
+  required int32 page_number = 2;
+  required int32 total_count = 3;
+}
+
+message Event {
+  optional string name = 1;
+  optional EventType event_type = 2;
+  optional Date date = 3;
+  optional string place = 4;
+  optional string notes = 5;
+  optional string sources = 6;
+  optional Person spouse = 7;
+  optional DeathType death_type = 8;
+  optional BurialType burial_type = 9;
+  optional PaginatedWitnesses witnesses = 10;
+}
+
+message PaginatedEvents {
+  repeated Event elements = 1;
+  required int32 page_number = 2;
+  required int32 total_count = 3;
+}
+
+enum RelationType {
+  RPARENT_ADOPTION = 0;
+  RPARENT_RECOGNITION = 1;
+  RPARENT_CANDIDATE_PARENT = 2;
+  RPARENT_GOD_PARENT = 3;
+  RPARENT_FOSTER_PARENT = 4;
+  RCHILD_ADOPTION = 5;
+  RCHILD_RECOGNITION = 6;
+  RCHILD_CANDIDATE_PARENT = 7;
+  RCHILD_GOD_PARENT = 8;
+  RCHILD_FOSTER_PARENT = 9;
+}
+
+message Relation {
+  optional RelationType relation_type = 1;
+  optional Person person = 2;
+}
+
+message Person {
+  optional int32 index = 1;
+  optional Npocc npocc = 2;
+  optional string lastname = 3;
+  optional string firstname = 4;
+  optional string public_name = 5;
+  optional Sex sex = 6;
+  optional string image = 7;
+  optional NameAliases name_aliases = 8;
+  optional Person father = 9;
+  optional Person mother = 10;
+  optional string sosa = 11;
+  optional string occupation = 12;
+  optional string notes = 13;
+  optional string sources = 14;
+  repeated string titles = 15;
+  optional PaginatedEvents events = 16;
+  optional Event birth = 17;
+  optional Event baptism = 18;
+  optional Event death = 19;
+  optional Event burial = 20;
+  repeated Relation related = 21;
+  repeated Relation rparents = 22;
+}

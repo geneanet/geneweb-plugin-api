@@ -95,139 +95,146 @@ let title_to_piqi_title t =
 
 
 (**/**) (* Convertion d'une date. *)
+module Date_converter = struct
 
-module Date_converter
-    (M : sig
-       module Dmy : sig
-         type t = { mutable day : int32
-                  ; mutable month : int32
-                  ; mutable year : int32
-                  ; mutable delta : int32
-                  }
-       end
-       module Date : sig
-         type t = { mutable cal : [ `gregorian | `julian | `french | `hebrew ] option
-                  ; mutable prec : [ `sure | `about | `maybe | `before | `after | `oryear | `yearint ] option
-                  ; mutable dmy : Dmy.t option
-                  ; mutable dmy2 : Dmy.t option
-                  ; mutable text : string option
-                  }
-       end
-     end) =
-struct
-  let piqi_date_of_date = function
-    | Date.Dgreg (dmy, cal) ->
-      let cal =
-        match cal with
-        | Dgregorian -> `gregorian
-        | Djulian -> `julian
-        | Dfrench -> `french
-        | Dhebrew -> `hebrew
-      in
-      let (prec, dmy, dmy2) =
-        let (d, m, y, delta) =
-          (Int32.of_int dmy.day, Int32.of_int dmy.month,
-           Int32.of_int dmy.year, Int32.of_int dmy.delta)
+  module type S = sig
+    type piqi_date
+    val piqi_date_of_date : Date.date -> piqi_date
+  end
+  module Make
+      (M : sig
+         module Dmy : sig
+           type t = { mutable day : int32
+                    ; mutable month : int32
+                    ; mutable year : int32
+                    ; mutable delta : int32
+                    }
+         end
+         module Date : sig
+           type t = { mutable cal : [ `gregorian | `julian | `french | `hebrew ] option
+                    ; mutable prec : [ `sure | `about | `maybe | `before | `after | `oryear | `yearint ] option
+                    ; mutable dmy : Dmy.t option
+                    ; mutable dmy2 : Dmy.t option
+                    ; mutable text : string option
+                    }
+         end
+       end) =
+  struct
+    type piqi_date = M.Date.t
+    let piqi_date_of_date = function
+      | Date.Dgreg (dmy, cal) ->
+        let cal =
+          match cal with
+          | Dgregorian -> `gregorian
+          | Djulian -> `julian
+          | Dfrench -> `french
+          | Dhebrew -> `hebrew
         in
-        let dmy1 = {M.Dmy.day = d; month = m; year = y; delta = delta;} in
-        let (prec, dmy2) =
-          match dmy.prec with
-          | Sure -> (`sure, None)
-          | About -> (`about, None)
-          | Maybe -> (`maybe, None)
-          | Before -> (`before, None)
-          | After -> (`after, None)
-          | OrYear d2 ->
-            let dmy2 =
-              {
-                M.Dmy.day = Int32.of_int 0;
-                month = Int32.of_int 0;
-                year = Int32.of_int d2.year2;
-                delta = Int32.of_int 0;
-              }
-            in
-            (`oryear, Some dmy2)
-          | YearInt d2 ->
-            let dmy2 =
-              {
-                M.Dmy.day = Int32.of_int 0;
-                month = Int32.of_int 0;
-                year = Int32.of_int d2.year2;
-                delta = Int32.of_int 0;
-              }
-            in
-            (`yearint, Some dmy2)
+        let (prec, dmy, dmy2) =
+          let (d, m, y, delta) =
+            (Int32.of_int dmy.day, Int32.of_int dmy.month,
+             Int32.of_int dmy.year, Int32.of_int dmy.delta)
+          in
+          let dmy1 = {M.Dmy.day = d; month = m; year = y; delta = delta;} in
+          let (prec, dmy2) =
+            match dmy.prec with
+            | Sure -> (`sure, None)
+            | About -> (`about, None)
+            | Maybe -> (`maybe, None)
+            | Before -> (`before, None)
+            | After -> (`after, None)
+            | OrYear d2 ->
+              let dmy2 =
+                {
+                  M.Dmy.day = Int32.of_int 0;
+                  month = Int32.of_int 0;
+                  year = Int32.of_int d2.year2;
+                  delta = Int32.of_int 0;
+                }
+              in
+              (`oryear, Some dmy2)
+            | YearInt d2 ->
+              let dmy2 =
+                {
+                  M.Dmy.day = Int32.of_int 0;
+                  month = Int32.of_int 0;
+                  year = Int32.of_int d2.year2;
+                  delta = Int32.of_int 0;
+                }
+              in
+              (`yearint, Some dmy2)
+          in
+          (prec, dmy1, dmy2)
         in
-        (prec, dmy1, dmy2)
-      in
-      {
-        M.Date.cal = Some cal;
-        prec = Some prec;
-        dmy = Some dmy;
-        dmy2 = dmy2;
-        text = None;
-      }
-    | Dtext txt ->
-      {
-        M.Date.cal = None;
-        prec = None;
-        dmy = None;
-        dmy2 = None;
-        text = Some txt;
-      }
+        {
+          M.Date.cal = Some cal;
+          prec = Some prec;
+          dmy = Some dmy;
+          dmy2 = dmy2;
+          text = None;
+        }
+      | Dtext txt ->
+        {
+          M.Date.cal = None;
+          prec = None;
+          dmy = None;
+          dmy2 = None;
+          text = Some txt;
+        }
 
-  let calendar_of_piqi_calendar = function
-    | `julian -> Date.Djulian
-    | `french -> Dfrench
-    | `hebrew -> Dhebrew
-    | `gregorian  -> Dgregorian
+    let calendar_of_piqi_calendar = function
+      | `julian -> Date.Djulian
+      | `french -> Dfrench
+      | `hebrew -> Dhebrew
+      | `gregorian  -> Dgregorian
 
-  let date_of_piqi_date date =
-    match date.M.Date.text with
-    | Some txt -> Date.Dtext txt
-    | _ ->
-      let cal =
-        Option.fold
-          date.M.Date.cal ~some:calendar_of_piqi_calendar ~none:Date.Dgregorian
-      in
-      let prec =
-        match date.M.Date.prec with
-        | Some `about -> Date.About
-        | Some `maybe -> Maybe
-        | Some `before -> Before
-        | Some `after -> After
-        | Some `oryear ->
-          (match date.M.Date.dmy2 with
-           | Some dmy ->
-             let y = Int32.to_int dmy.M.Dmy.year in
-             let dmy2 = {Date.day2 = 0; month2 = 0; year2 = y; delta2 = 0} in
-             OrYear dmy2
-           | None -> OrYear {day2 = 0; month2 = 0; year2 = 0; delta2 = 0} (* erreur*))
-        | Some `yearint ->
-          (match date.M.Date.dmy2 with
-           | Some dmy ->
-             let y = Int32.to_int dmy.M.Dmy.year in
-             let dmy2 = {Date.day2 = 0; month2 = 0; year2 = y; delta2 = 0} in
-             YearInt dmy2
-           | None -> YearInt {day2 = 0; month2 = 0; year2 = 0; delta2 = 0} (* erreur*))
-        | _ -> Sure
-      in
-      let dmy =
-        match date.M.Date.dmy with
-        | Some dmy ->
-          let day = Int32.to_int dmy.M.Dmy.day in
-          let month = Int32.to_int dmy.M.Dmy.month in
-          let year = Int32.to_int dmy.M.Dmy.year in
-          let delta = Int32.to_int dmy.M.Dmy.delta in
-          {Date.day = day; month = month; year = year; prec = prec; delta = delta}
-        | None -> (* erreur*)
-          {day = 0; month = 0; year = 0; prec = Sure; delta = 0}
-      in
-      Dgreg (dmy, cal)
+    let date_of_piqi_date date =
+      match date.M.Date.text with
+      | Some txt -> Date.Dtext txt
+      | _ ->
+        let cal =
+          Option.fold
+            date.M.Date.cal ~some:calendar_of_piqi_calendar ~none:Date.Dgregorian
+        in
+        let prec =
+          match date.M.Date.prec with
+          | Some `about -> Date.About
+          | Some `maybe -> Maybe
+          | Some `before -> Before
+          | Some `after -> After
+          | Some `oryear ->
+            (match date.M.Date.dmy2 with
+             | Some dmy ->
+               let y = Int32.to_int dmy.M.Dmy.year in
+               let dmy2 = {Date.day2 = 0; month2 = 0; year2 = y; delta2 = 0} in
+               OrYear dmy2
+             | None -> OrYear {day2 = 0; month2 = 0; year2 = 0; delta2 = 0} (* erreur*))
+          | Some `yearint ->
+            (match date.M.Date.dmy2 with
+             | Some dmy ->
+               let y = Int32.to_int dmy.M.Dmy.year in
+               let dmy2 = {Date.day2 = 0; month2 = 0; year2 = y; delta2 = 0} in
+               YearInt dmy2
+             | None -> YearInt {day2 = 0; month2 = 0; year2 = 0; delta2 = 0} (* erreur*))
+          | _ -> Sure
+        in
+        let dmy =
+          match date.M.Date.dmy with
+          | Some dmy ->
+            let day = Int32.to_int dmy.M.Dmy.day in
+            let month = Int32.to_int dmy.M.Dmy.month in
+            let year = Int32.to_int dmy.M.Dmy.year in
+            let delta = Int32.to_int dmy.M.Dmy.delta in
+            {Date.day = day; month = month; year = year; prec = prec; delta = delta}
+          | None -> (* erreur*)
+            {day = 0; month = 0; year = 0; prec = Sure; delta = 0}
+        in
+        Dgreg (dmy, cal)
 
+  end
 end
-
-include Date_converter (Api_piqi)
+module Api_piqi_date_converter = Date_converter.Make (Api_piqi)
+include Api_piqi_date_converter
 
 
 (* ********************************************************************* *)
