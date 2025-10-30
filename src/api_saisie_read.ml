@@ -126,26 +126,21 @@ let string_of_date_and_conv conf d =
       let date_conv_long = date_long in
       (date, date_long, date_conv, date_conv_long, Some `gregorian)
   | Date.Dgreg (d, Djulian) ->
+      let d1 = Date.convert ~from:Dgregorian ~to_:Djulian d in
+      let date = Geneweb.DateDisplay.code_julian_date conf d1 in
+      let date_long =
+        let open Api_util in
+        !!(Geneweb.DateDisplay.string_of_on_calendar_dmy ~with_gregorian_precisions:false ~calendar:`Julian conf d1)
+      in
       let date_conv =
-        if d.year < 1582 then "" else Adef.as_string @@ Geneweb.DateDisplay.gregorian_precision conf d ~with_short_month:true
+        Adef.as_string @@
+          Geneweb.DateDisplay.gregorian_precision conf d ~with_short_month:true
       in
       let date_conv_long =
-        if d.year < 1582 then "" else Adef.as_string @@ Geneweb.DateDisplay.gregorian_precision conf d ~with_short_month:false
-      in
-      let d1 = Date.convert ~from:Dgregorian ~to_:Djulian d in
-      let year_prec =
-        if d1.month > 0 && d1.month < 3 ||
-           d1.month = 3 && d1.Date.day > 0 && d1.Date.day < 25 then
-          Printf.sprintf " (%d/%d)" (d1.year - 1) (d1.year mod 10)
-        else ""
-      in
-      let date =
         let open Api_util in
-        !!(Geneweb.DateDisplay.string_of_dmy conf d1)
-        ^ year_prec
-        ^ " " ^ Geneweb.Util.transl_nth conf "gregorian/julian/french/hebrew" 1
+        !!(Geneweb.DateDisplay.string_of_dmy conf d)
       in
-      (date, date, date_conv, date_conv_long, Some `julian)
+      (date, date_long, date_conv, date_conv_long, Some `julian)
   | Date.Dgreg (d, Dfrench) ->
       let d1 = Date.convert ~from:Dgregorian ~to_:Dfrench d in
       let date = string_of_french_dmy conf d1 in
