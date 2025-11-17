@@ -679,10 +679,8 @@ module HistoryApi = struct
   let note_link conf key =
     let pg, part =
       let i, j =
-        try
-          let i = String.rindex key '/' in
-          (i, i + 1)
-        with Not_found -> (0, 0)
+        Option.fold
+          (String.rindex_opt key '/') ~some:(fun i -> (i, i + 1)) ~none:(0, 0)
       in
       let pg = String.sub key 0 i in
       let s = String.sub key j (String.length key - j) in
@@ -696,9 +694,10 @@ module HistoryApi = struct
         Printf.sprintf {|%s;f=%s|} link_parameters pg
       else link_parameters in
     let link_parameters =
-      if Option.is_some part then
-        Printf.sprintf {|%s;v=%d|} link_parameters (Option.get part)
-      else link_parameters in
+      match part with
+      | Some part ->
+        Printf.sprintf {|%s;v=%d|} link_parameters (part)
+      | None -> link_parameters in
     let link_txt =
       if pg <> "" then
         Printf.sprintf {|[%s]|} pg
