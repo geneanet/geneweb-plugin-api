@@ -10,7 +10,7 @@ let complete_with_cache conf base assets mode place_mode max_res s =
     Api_search.complete_with_dico assets conf (List.length cache) max_res (Some `profession) ini cache
 
 let print_auto_complete assets conf base =
-  let params = Api_util.get_params conf Api_saisie_write_piqi_ext.parse_auto_complete in
+  let params = Api_util.get_params conf Decoders.Api_saisie_write.decode_auto_complete in
   let s = params.Api_saisie_write_piqi.Auto_complete.input in
   let max_res = Int32.to_int params.Api_saisie_write_piqi.Auto_complete.limit in
   let mode = params.Api_saisie_write_piqi.Auto_complete.field in
@@ -29,12 +29,12 @@ let print_auto_complete assets conf base =
       Api_search.search_auto_complete ~assets ~conf ~base ~mode ~place_mode ~max:max_res ~ini:s
   in
   let result = { Api_saisie_write_piqi.Auto_complete_result. result = list } in
-  let data = Api_saisie_write_piqi_ext.gen_auto_complete_result result in
+  let data = Encoders.Api_saisie_write.encode_auto_complete_result result in
   Api_util.print_result conf data
 
 
 let print_person_search_list conf base =
-  let params = Api_util.get_params conf Api_saisie_write_piqi_ext.parse_person_search_list_params in
+  let params = Api_util.get_params conf Decoders.Api_saisie_write.decode_person_search_list_params in
   let surname = params.Api_saisie_write_piqi.Person_search_list_params.lastname in
   let first_name = params.Api_saisie_write_piqi.Person_search_list_params.firstname in
   let max_res = Int32.to_int params.Api_saisie_write_piqi.Person_search_list_params.limit in
@@ -76,16 +76,16 @@ let print_person_search_list conf base =
       list
   in
   let result = Api_saisie_write_piqi.Person_search_list.({ persons = list; }) in
-  let data = Api_saisie_write_piqi_ext.gen_person_search_list result in
+  let data = Encoders.Api_saisie_write.encode_person_search_list result in
   Api_util.print_result conf data
 
 
 let print_person_search_info conf base =
-  let params = Api_util.get_params conf Api_saisie_write_piqi_ext.parse_index_person in
+  let params = Api_util.get_params conf Decoders.Api_saisie_write.decode_index_person in
   let ip = Gwdb.iper_of_string @@ Int32.to_string params.Api_saisie_write_piqi.Index_person.index in
   let p = Gwdb.poi base ip in
   let pers = Api_update_util.pers_to_piqi_person_search_info conf base p in
-  let data = Api_saisie_write_piqi_ext.gen_person_search_info pers in
+  let data = Encoders.Api_saisie_write.encode_person_search_info pers in
   Api_util.print_result conf data
 
 
@@ -454,7 +454,7 @@ let print_config conf =
       gwf_place_format_placeholder = gwf_place_format_placeholder;
     })
   in
-  let data = Api_saisie_write_piqi_ext.gen_config config in
+  let data = Encoders.Api_saisie_write.encode_config config in
   Api_util.print_result conf data
 
 
@@ -912,13 +912,13 @@ let compute_modification_status' conf base ip ifam resp =
 
 let compute_modification_status conf base ip fam resp =
   let response = compute_modification_status' conf base ip fam resp in
-  Api_saisie_write_piqi_ext.gen_modification_status response
+  Encoders.Api_saisie_write.encode_modification_status response
 
 (**/**) (* Fonctions d'ajout de la première personne. *)
 
 
 let print_add_ind_start_ok conf base =
-  let start_p = Api_util.get_params conf Api_piqi_ext.parse_person_start in
+  let start_p = Api_util.get_params conf Decoders.Api.decode_person_start in
   let mod_p =
     Api_update_util.piqi_mod_person_of_person_start conf base start_p
   in
@@ -932,7 +932,7 @@ let print_add_ind_start_ok conf base =
         let ip = Gwdb.iper_of_string @@ Int32.to_string mod_p.Api_saisie_write_piqi.Person.index in
         Api_util.person_to_reference_person base @@ Gwdb.poi base ip
   in
-  let data = Api_piqi_ext.gen_reference_person ref_p in
+  let data = Encoders.Api.encode_reference_person ref_p in
   Api_util.print_result conf data
 
 
@@ -940,16 +940,16 @@ let print_add_ind_start_ok conf base =
 
 
 let print_mod_ind conf base =
-  let params = Api_util.get_params conf Api_saisie_write_piqi_ext.parse_index_person in
+  let params = Api_util.get_params conf Decoders.Api_saisie_write.decode_index_person in
   let ip = Gwdb.iper_of_string @@ Int32.to_string params.Api_saisie_write_piqi.Index_person.index in
   let p = Gwdb.poi base ip in
   let mod_p = Api_update_util.pers_to_piqi_mod_person conf base p in
-  let data = Api_saisie_write_piqi_ext.gen_person mod_p in
+  let data = Encoders.Api_saisie_write.encode_person mod_p in
   Api_util.print_result conf data
 
 
 let print_mod_ind_ok conf base =
-  let mod_p = Api_util.get_params conf Api_saisie_write_piqi_ext.parse_person in
+  let mod_p = Api_util.get_params conf Decoders.Api_saisie_write.decode_person in
   let resp = Api_update_person.print_mod conf base mod_p in
   let ip = Gwdb.iper_of_string @@ Int32.to_string mod_p.Api_saisie_write_piqi.Person.index in
   let data = compute_modification_status conf base ip Gwdb.dummy_ifam resp in
@@ -957,7 +957,7 @@ let print_mod_ind_ok conf base =
 
 
 let print_add_ind_ok conf base =
-  let mod_p = Api_util.get_params conf Api_saisie_write_piqi_ext.parse_person in
+  let mod_p = Api_util.get_params conf Decoders.Api_saisie_write.decode_person in
   let resp = Api_update_person.print_add conf base mod_p in
   let ip = Gwdb.iper_of_string @@ Int32.to_string mod_p.Api_saisie_write_piqi.Person.index in
   let data = compute_modification_status conf base ip Gwdb.dummy_ifam resp in
@@ -1002,7 +1002,7 @@ let compute_redirect_person conf base p =
         | None -> Gwdb.dummy_iper
 
 let print_del_ind_ok conf base =
-  let params = Api_util.get_params conf Api_saisie_write_piqi_ext.parse_index_person in
+  let params = Api_util.get_params conf Decoders.Api_saisie_write.decode_index_person in
   let ip = Gwdb.iper_of_string @@ Int32.to_string params.Api_saisie_write_piqi.Index_person.index in
   let p = Gwdb.poi base ip in
   let wl, ml, hr = Geneweb.UpdateIndOk.effective_del conf base p ; [], [], [] in (* FIXME *)
@@ -1014,7 +1014,7 @@ let print_del_ind_ok conf base =
 (**/**) (* Fonctions de modification famille. *)
 
 let print_del_fam_ok conf base =
-  let params = Api_util.get_params conf Api_saisie_write_piqi_ext.parse_index_person_and_family in
+  let params = Api_util.get_params conf Decoders.Api_saisie_write.decode_index_person_and_family in
   let ip = Gwdb.iper_of_string @@ Int32.to_string params.Api_saisie_write_piqi.Index_person_and_family.index_person in
   let ifam = Gwdb.ifam_of_string @@ Int32.to_string params.Api_saisie_write_piqi.Index_person_and_family.index_family in
   let fam = Gwdb.foi base ifam in
@@ -1076,7 +1076,7 @@ let compute_add_family
   family
 
 let print_add_family conf base =
-  let params = Api_util.get_params conf Api_saisie_write_piqi_ext.parse_index_person in
+  let params = Api_util.get_params conf Decoders.Api_saisie_write.decode_index_person in
   let ip = Gwdb.iper_of_string @@ Int32.to_string params.Api_saisie_write_piqi.Index_person.index in
   let p = Gwdb.poi base ip in
   let surname = Gwdb.sou base (Gwdb.get_surname p) in
@@ -1089,7 +1089,7 @@ let print_add_family conf base =
       family = family;
     }
   in
-  let data = Api_saisie_write_piqi_ext.gen_add_family add_family in
+  let data = Encoders.Api_saisie_write.encode_add_family add_family in
   Api_util.print_result conf data
 
 
@@ -1281,7 +1281,7 @@ let compute_add_family_ok conf base family =
   snd @@ compute_add_family_ok' conf base family
 
 let print_add_family_ok conf base =
-  let add_family_ok = Api_util.get_params conf Api_saisie_write_piqi_ext.parse_add_family_ok in
+  let add_family_ok = Api_util.get_params conf Decoders.Api_saisie_write.decode_add_family_ok in
   let ip = Gwdb.iper_of_string @@ Int32.to_string add_family_ok.Api_saisie_write_piqi.Add_family_ok.index_person in
   let mod_family = add_family_ok.Api_saisie_write_piqi.Add_family_ok.family in
 
@@ -1354,12 +1354,12 @@ let print_add_family_ok conf base =
     }
   in
 
-  let data = Api_saisie_write_piqi_ext.gen_modification_status response in
+  let data = Encoders.Api_saisie_write.encode_modification_status response in
   Api_util.print_result conf data
 
 
 let print_mod_family_request conf base =
-  let params = Api_util.get_params conf Api_saisie_write_piqi_ext.parse_add_child_request in
+  let params = Api_util.get_params conf Decoders.Api_saisie_write.decode_add_child_request in
   let ip = Gwdb.iper_of_string @@ Int32.to_string params.Api_saisie_write_piqi.Add_child_request.index in
   let p = Gwdb.poi base ip in
   let spouses =
@@ -1422,12 +1422,12 @@ let print_mod_family_request conf base =
       Some { Api_saisie_write_piqi.Edit_family.person_lastname ; person_firstname ; family }
   in
   Api_util.print_result conf
-    (Api_saisie_write_piqi_ext.gen_edit_family_request
+    (Encoders.Api_saisie_write.encode_edit_family_request
        { Api_saisie_write_piqi.Edit_family_request.spouses ; first_family })
 
 
 let print_mod_family conf base =
-  let params = Api_util.get_params conf Api_saisie_write_piqi_ext.parse_index_person_and_family in
+  let params = Api_util.get_params conf Decoders.Api_saisie_write.decode_index_person_and_family in
   let ip = Gwdb.iper_of_string @@ Int32.to_string params.Api_saisie_write_piqi.Index_person_and_family.index_person in
   let ifam = Gwdb.ifam_of_string @@ Int32.to_string params.Api_saisie_write_piqi.Index_person_and_family.index_family in
   let p = Gwdb.poi base ip in
@@ -1453,12 +1453,12 @@ let print_mod_family conf base =
       family = family;
     }
   in
-  let data = Api_saisie_write_piqi_ext.gen_edit_family edit_family in
+  let data = Encoders.Api_saisie_write.encode_edit_family edit_family in
   Api_util.print_result conf data
 
 
 let print_mod_family_ok conf base =
-  let edit_family_ok = Api_util.get_params conf Api_saisie_write_piqi_ext.parse_edit_family_ok in
+  let edit_family_ok = Api_util.get_params conf Decoders.Api_saisie_write.decode_edit_family_ok in
   let ip = Gwdb.iper_of_string @@ Int32.to_string edit_family_ok.Api_saisie_write_piqi.Edit_family_ok.index_person in
   let mod_family = edit_family_ok.Api_saisie_write_piqi.Edit_family_ok.family in
   let mod_father = mod_family.Api_saisie_write_piqi.Family.father in
@@ -1527,7 +1527,7 @@ let print_mod_family_ok conf base =
 
 
 let print_add_parents conf base =
-  let params = Api_util.get_params conf Api_saisie_write_piqi_ext.parse_index_person in
+  let params = Api_util.get_params conf Decoders.Api_saisie_write.decode_index_person in
   let ip = Gwdb.iper_of_string @@ Int32.to_string params.Api_saisie_write_piqi.Index_person.index in
   let p = Gwdb.poi base ip in
   let surname = Gwdb.sou base (Gwdb.get_surname p) in
@@ -1572,7 +1572,7 @@ let print_add_parents conf base =
       family = family;
     }
   in
-  let data = Api_saisie_write_piqi_ext.gen_add_parents add_parents in
+  let data = Encoders.Api_saisie_write.encode_add_parents add_parents in
   Api_util.print_result conf data
 
 let do_mod_fam_add_child_aux conf base name ip mod_c mod_f fn =
@@ -1671,11 +1671,11 @@ let print_add_child_ok_aux conf base add_child_ok =
   end
 
 let print_add_child_ok conf base =
-  let add_child_ok = Api_util.get_params conf Api_saisie_write_piqi_ext.parse_add_child_ok in
+  let add_child_ok = Api_util.get_params conf Decoders.Api_saisie_write.decode_add_child_ok in
   print_add_child_ok_aux conf base add_child_ok
 
 let print_add_parents_ok conf base =
-  let add_parents_ok = Api_util.get_params conf Api_saisie_write_piqi_ext.parse_add_parents_ok in
+  let add_parents_ok = Api_util.get_params conf Decoders.Api_saisie_write.decode_add_parents_ok in
   let ip = Gwdb.iper_of_string @@ Int32.to_string add_parents_ok.Api_saisie_write_piqi.Add_parents_ok.index_person in
   let mod_family = add_parents_ok.Api_saisie_write_piqi.Add_parents_ok.family in
   let mod_father = mod_family.Api_saisie_write_piqi.Family.father in
@@ -1799,7 +1799,7 @@ let iper_of_i32 i = Gwdb.iper_of_string @@ Int32.to_string i
 let ifam_of_i32 i = Gwdb.ifam_of_string @@ Int32.to_string i
 
 let print_add_child conf base =
-  let params = Api_util.get_params conf Api_saisie_write_piqi_ext.parse_add_child_request in
+  let params = Api_util.get_params conf Decoders.Api_saisie_write.decode_add_child_request in
   let ip = iper_of_i32 params.Api_saisie_write_piqi.Add_child_request.index in
   let ifam_i32_opt = params.Api_saisie_write_piqi.Add_child_request.index_family in
   let ifam_opt = Option.map ifam_of_i32 ifam_i32_opt in
@@ -1891,11 +1891,11 @@ let print_add_child conf base =
       child = child;
     })
   in
-  let data = Api_saisie_write_piqi_ext.gen_add_child add_child in
+  let data = Encoders.Api_saisie_write.encode_add_child add_child in
   Api_util.print_result conf data
 
 let print_add_sibling conf base =
-  let params = Api_util.get_params conf Api_saisie_write_piqi_ext.parse_add_sibling_request in
+  let params = Api_util.get_params conf Decoders.Api_saisie_write.decode_add_sibling_request in
   let ip = iper_of_i32 params.Api_saisie_write_piqi.Add_sibling_request.index in
   let p = Gwdb.poi base ip in
   let surname = Gwdb.sou base (Gwdb.get_surname p) in
@@ -1939,12 +1939,12 @@ let print_add_sibling conf base =
       sibling = sibling;
     })
   in
-  let data = Api_saisie_write_piqi_ext.gen_add_sibling add_sibling in
+  let data = Encoders.Api_saisie_write.encode_add_sibling add_sibling in
   Api_util.print_result conf data
 
 
 let print_add_sibling_ok conf base =
-  let add_sibling_ok = Api_util.get_params conf Api_saisie_write_piqi_ext.parse_add_sibling_ok in
+  let add_sibling_ok = Api_util.get_params conf Decoders.Api_saisie_write.decode_add_sibling_ok in
   let ip = iper_of_i32 add_sibling_ok.Api_saisie_write_piqi.Add_sibling_ok.index_person in
   let mod_c = add_sibling_ok.Api_saisie_write_piqi.Add_sibling_ok.sibling in
   let p = Gwdb.poi base ip in
@@ -2164,7 +2164,7 @@ let check_input_person mod_p : 'unit_or_exn =
     raise_ModErr (Geneweb.Update.UERR_sex_undefined (f, s, o))
 
 let compute_add_first_fam conf =
-  let add_first_fam = Api_util.get_params conf Api_saisie_write_piqi_ext.parse_add_first_fam in
+  let add_first_fam = Api_util.get_params conf Decoders.Api_saisie_write.decode_add_first_fam in
 
   (* On ré-initialise un certain nombre de valeurs. *)
   add_first_fam.Api_saisie_write_piqi.Add_first_fam.sosa.Api_saisie_write_piqi.Person.digest <- "";
@@ -2324,7 +2324,7 @@ let print_add_first_fam conf =
     ; created_person = None
     }
   in
-  let data = Api_saisie_write_piqi_ext.gen_modification_status response in
+  let data = Encoders.Api_saisie_write.encode_modification_status response in
   Api_util.print_result conf data
 
 

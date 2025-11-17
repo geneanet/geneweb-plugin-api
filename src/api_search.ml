@@ -282,7 +282,7 @@ let print_list conf base filters list =
    fait l'union des deux ce qui est beaucoup plus efficace.
 *)
 let print_search conf base =
-  let search_params = Api_util.get_params conf (fun x f -> Api_piqi_ext.parse_search_params x f) in
+  let search_params = Api_util.get_params conf Decoders.Api.decode_search_params in
   let filters = Api_util.get_filters conf in
   match
      (search_params.Api_piqi.Search_params.lastname,

@@ -189,9 +189,8 @@ end
 let print_result conf data =
   let (content_type, output) =
     match p_getenvbin conf.Geneweb.Config.env "output" with
-    | Some "pb" -> ("application/octet-stream", `pb)
-    | Some "json" -> ("application/json", `json)
-    | Some "xml" -> ("application/xml", `xml)
+    | Some "pb" -> ("application/octet-stream", Protoc_fmt.protobuf)
+    | Some "json" -> ("application/json", Protoc_fmt.json)
     | _ -> exit (-2)
   in
   let data = data output in
@@ -212,16 +211,15 @@ let print_error conf code msg =
   let piqi_error = Api_piqi.default_error () in
   piqi_error.Api_piqi.Error.code <- code ;
   piqi_error.Api_piqi.Error.message <- (match msg with | "" -> None | s -> Some s);
-  let data = Api_piqi_ext.gen_error piqi_error in
+  let data = Encoders.Api.encode_error piqi_error in
   Geneweb.Output.status conf (from_piqi_status code) ;
   print_result conf data ;
   raise Exit
 
 let get_params conf parse =
   match (p_getenvbin conf.Geneweb.Config.env "data", p_getenvbin conf.Geneweb.Config.env "input") with
-  | (Some d, Some "pb") -> parse d `pb
-  | (Some d, Some "json") -> parse d `json
-  | (Some d, Some "xml") -> parse d `xml
+  | (Some d, Some "pb") -> parse d Protoc_fmt.protobuf
+  | (Some d, Some "json") -> parse d Protoc_fmt.json
   | _ -> assert false
 
 let get_params conf parse =

@@ -38,7 +38,7 @@ let w_base =
 let set_warning_timeout conf : unit =
   Wserver.set_on_timeout (fun _ ->
       let empty = Plugin_api_lib.Api_warnings.empty in
-      let data = Plugin_api_lib.Api_piqi_ext.gen_base_warnings empty in
+      let data = Plugin_api_lib.Encoders.Api.encode_base_warnings empty in
       Plugin_api_lib.Api_util.print_result conf data
     )
 
@@ -55,16 +55,16 @@ let get_paginated_data conf base =
     let params =
       Plugin_api_lib.Api_util.get_params
         conf
-        Plugin_api_lib.Api_saisie_read_piqi_ext.parse_paginated_data_parameters
+        Plugin_api_lib.Decoders.Api_saisie_read.decode_paginated_data_parameters
     in
     match
       Plugin_api_lib.Api_saisie_read.get_paginated_data ~conf ~base params
     with
     | `Personal_events events ->
-       Plugin_api_lib.Api_saisie_read_piqi_ext.gen_paginated_personal_events
+       Plugin_api_lib.Encoders.Api_saisie_read.encode_paginated_personal_events
          events
     | `Witnessed_events events ->
-       Plugin_api_lib.Api_saisie_read_piqi_ext.gen_paginated_witnessed_events
+       Plugin_api_lib.Encoders.Api_saisie_read.encode_paginated_witnessed_events
          events
   in
   Plugin_api_lib.Api_util.print_result conf data

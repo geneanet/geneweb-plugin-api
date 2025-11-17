@@ -8,7 +8,7 @@ val apply_filters_p :
 val ( !! ) : _ Adef.astring -> string
 
 val get_params :
-  Geneweb.Config.config -> (string -> [> `json | `pb | `xml ] -> 'a) -> 'a
+  Geneweb.Config.config -> (string -> Protoc_fmt.t -> 'a) -> 'a
 
 val person_to_warning_person :
   Gwdb.base -> Gwdb.person -> Api_piqi.warning_person
@@ -21,11 +21,11 @@ val conv_data_list_person :
   Gwdb.base ->
   Api_def.filters ->
   Gwdb.person list ->
-  Piqirun_ext.output_format ->
+  Protoc_fmt.t ->
   string
 
 val print_result :
-  Geneweb.Config.config -> ([> `json | `pb | `xml ] -> string) -> unit
+  Geneweb.Config.config -> (Protoc_fmt.t -> string) -> unit
 
 val get_portrait :
   Geneweb.Config.config -> Gwdb.base -> Gwdb.person -> string option
@@ -108,7 +108,7 @@ val fam_to_piqi_family :
 
 val data_person :
   (Api_piqi.person, Api_piqi.full_person) Api_def.pb_person ->
-  Piqirun_ext.output_format ->
+  Protoc_fmt.t ->
   string
 
 val witness_kinds : Def.witness_kind list
@@ -132,7 +132,7 @@ val data_list_person_option :
   Gwdb.base ->
   Api_def.filters ->
   (Api_piqi.reference_person, Gwdb.person) Api_def.pb_person list ->
-  Piqirun_ext.output_format ->
+  Protoc_fmt.t ->
   string
 
 val is_empty_or_quest_name : Gwdb.person -> bool

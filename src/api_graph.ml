@@ -1,5 +1,4 @@
 module M = Api_piqi
-module Mext = Api_piqi_ext
 
 open Geneweb
 open Config
@@ -45,7 +44,7 @@ let print_close_person_aux conf base filters cpp =
 
 let print_close_person_relations conf base =
   let filters = get_filters conf in
-  let params = get_params conf Mext.parse_close_persons_params in
+  let params = get_params conf Decoders.Api.decode_close_persons_params in
   let list = print_close_person_aux conf base filters params in
   print_result conf @@
   Api_util.conv_data_list_person conf base filters list
@@ -173,7 +172,7 @@ let print_close_person_events conf base params close_persons_params =
 
 let print_select_events conf base =
   load_image_ht conf ;
-  let params = get_params conf Mext.parse_events_query_params in
+  let params = get_params conf Decoders.Api.decode_events_query_params in
   let events =
     match params.M.Events_query_params.close_persons_params with
     | Some close_persons_params ->
@@ -190,7 +189,7 @@ let print_select_events conf base =
         (Gwdb.families base)
   in
   print_result conf @@
-  Mext.gen_event_query_result_list { M.Event_query_result_list.events }
+  Encoders.Api.encode_event_query_result_list { M.Event_query_result_list.events }
 
 (* Graphe d'ascendance *)
 
@@ -236,7 +235,7 @@ let build_graph_asc conf base p max_gen =
   loop [(p, 1)] nodes edges families
 
 let print_graph_asc conf base =
-  let params = get_params conf Mext.parse_graph_params in
+  let params = get_params conf Decoders.Api.decode_graph_params in
   let filters = get_filters conf in
   let ref_person = params.M.Graph_params.person in
   let (nodes, edges, families) =
@@ -253,8 +252,7 @@ let print_graph_asc conf base =
   in
   let data =
     if filters.nb_results then
-      let len = M.Internal_int32.({value = Int32.of_int (List.length nodes)}) in
-      Mext.gen_internal_int32 len
+      Encoders.encode_int32 (Int32.of_int (List.length nodes))
     else
       let nodes = person_node_map conf base nodes in
       match nodes with
@@ -262,10 +260,10 @@ let print_graph_asc conf base =
           let graph =
             M.Full_graph.({nodes = nodes; edges = edges; families = families})
           in
-          Mext.gen_full_graph graph
+          Encoders.Api.encode_full_graph graph
       | PLight nodes ->
           let graph = M.Graph.({nodes = nodes; edges = edges;}) in
-          Mext.gen_graph graph
+          Encoders.Api.encode_graph graph
   in
   print_result conf data
 
@@ -334,7 +332,7 @@ let build_graph_desc conf base p max_gen =
   loop [(p, 1)] nodes edges families
 
 let print_graph_desc conf base =
-  let params = get_params conf Mext.parse_graph_params in
+  let params = get_params conf Decoders.Api.decode_graph_params in
   let filters = get_filters conf in
   let ref_person = params.M.Graph_params.person in
   let (nodes, edges, families) =
@@ -351,8 +349,7 @@ let print_graph_desc conf base =
   in
   let data =
     if filters.nb_results then
-      let len = M.Internal_int32.({value = Int32.of_int (List.length nodes)}) in
-      Mext.gen_internal_int32 len
+      Encoders.encode_int32 (Int32.of_int (List.length nodes))
     else
       let nodes = person_node_map conf base nodes in
       match nodes with
@@ -360,10 +357,10 @@ let print_graph_desc conf base =
           let graph =
             M.Full_graph.({nodes = nodes; edges = edges; families = families})
           in
-          Mext.gen_full_graph graph
+          Encoders.Api.encode_full_graph graph
       | PLight nodes ->
           let graph = M.Graph.({nodes = nodes; edges = edges;}) in
-          Mext.gen_graph graph
+          Encoders.Api.encode_graph graph
   in
   print_result conf data
 
@@ -427,7 +424,7 @@ let build_rel_graph conf base p1 p2 (pp1, pp2, (l1, l2, list), _) =
   (!nodes, !edges, !families)
 
 let print_graph_rel conf base =
-  let params = get_params conf Mext.parse_graph_rel_params in
+  let params = get_params conf Decoders.Api.decode_graph_rel_params in
   let filters = get_filters conf in
   let ref_p1 = params.M.Graph_rel_params.person1 in
   let ref_p2 = params.M.Graph_rel_params.person2 in
@@ -454,8 +451,7 @@ let print_graph_rel conf base =
   in
   let data =
     if filters.nb_results then
-      let len = M.Internal_int32.({value = Int32.of_int (List.length nodes)}) in
-      Mext.gen_internal_int32 len
+      Encoders.encode_int32 (Int32.of_int (List.length nodes))
     else
       let nodes = person_node_map conf base nodes in
       match nodes with
@@ -463,15 +459,15 @@ let print_graph_rel conf base =
           let graph =
             M.Full_graph.({nodes = nodes; edges = edges; families = families})
           in
-          Mext.gen_full_graph graph
+          Encoders.Api.encode_full_graph graph
       | PLight nodes ->
           let graph = M.Graph.({nodes = nodes; edges = edges;}) in
-          Mext.gen_graph graph
+          Encoders.Api.encode_graph graph
   in
   print_result conf data
 
 let print_cpl_relation conf base =
-  let params = get_params conf Mext.parse_cpl_rel_params in
+  let params = get_params conf Decoders.Api.decode_cpl_rel_params in
   let filters = get_filters conf in
   let ref_p1 = params.M.Cpl_rel_params.person1 in
   let ref_p2 = params.M.Cpl_rel_params.person2 in

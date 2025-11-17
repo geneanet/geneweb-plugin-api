@@ -1,13 +1,13 @@
-syntax = "proto2" ;
+syntax = "proto3" ;
 
 package Geneanet.Geneweb.Api.Proto.SaisieRead.Model;
 
 import public "api.proto";
 
 enum Sosa {
-  NO_SOSA = 2;
   SOSA_REF = 0;
   SOSA = 1;
+  NO_SOSA = 2;
 }
 
 enum Calendar {
@@ -28,10 +28,10 @@ enum Precision {
 }
 
 message Dmy {
-  required int32 day = 1;
-  required int32 month = 2;
-  required int32 year = 3;
-  required int32 delta = 4;
+  int32 day = 1;
+  int32 month = 2;
+  int32 year = 3;
+  int32 delta = 4;
 }
 
 message Date {
@@ -43,17 +43,17 @@ message Date {
 }
 
 enum Sex {
-  UNKNOWN = 2;
   MALE = 0;
   FEMALE = 1;
+  UNKNOWN = 2;
 }
 
 enum DeathType {
-  DONT_KNOW_IF_DEAD = 4;
   NOT_DEAD = 0;
   DEAD = 1;
   DEAD_YOUNG = 2;
   DEAD_DONT_KNOW_WHEN = 3;
+  DONT_KNOW_IF_DEAD = 4;
   OF_COURSE_DEAD = 5;
 }
 
@@ -64,11 +64,11 @@ enum BurialType {
 }
 
 enum MarriageType {
-  NO_MENTION = 4;
   MARRIED = 0;
   NOT_MARRIED = 1;
   ENGAGED = 2;
   NO_SEXES_CHECK_NOT_MARRIED = 3;
+  NO_MENTION = 4;
   NO_SEXES_CHECK_MARRIED = 5;
   MARRIAGE_BANN = 6;
   MARRIAGE_CONTRACT = 7;
@@ -182,7 +182,7 @@ enum Visibility {
 }
 
 message FicheParameters {
-  required IdentifierPerson identifier_person = 1;
+  IdentifierPerson identifier_person = 1;
   optional int32 nb_asc_max = 2;
   optional int32 nb_desc_max = 3;
   optional bool simple_graph_info = 4;
@@ -190,36 +190,14 @@ message FicheParameters {
 }
 
 message WitnessEvent {
-  required WitnessType witness_type = 1;
-  required SimplePerson witness = 2;
-  required string witness_note = 3;
-}
-message WitnessFicheEvent {
-  required WitnessType witness_type = 1;
-  required Person witness = 2;
-  required string witness_note = 3;
+  WitnessType witness_type = 1;
+  Person witness = 2;
+  string witness_note = 3;
 }
 
 message Event {
-  required string name = 1;
-  required EventType type = 2;
-  optional string date = 3;
-  optional string date_long = 4;
-  optional string date_raw = 13;
-  optional string date_conv = 5;
-  optional string date_conv_long = 14;
-  optional Calendar date_cal = 6;
-  optional string place = 7;
-  optional string reason = 8;
-  optional string note = 9;
-  optional string src = 10;
-  optional SimplePerson spouse = 11;
-  repeated WitnessEvent witnesses = 12;
-}
-
-message FicheEvent {
-  required string name = 1;
-  required EventType type = 2;
+  string name = 1;
+  EventType type = 2;
   optional string date = 3;
   optional string date_long = 4;
   optional string date_raw = 13;
@@ -231,106 +209,67 @@ message FicheEvent {
   optional string note = 9;
   optional string src = 10;
   optional Person spouse = 11;
-  repeated WitnessFicheEvent witnesses = 12;
+  repeated WitnessEvent witnesses = 12;
 }
 
 message PersonTree {
-  required int32 index = 1;
-  required Sex sex = 2;
-  required string lastname = 3;
-  required string firstname = 4;
-  required string n = 5;
-  required string p = 6;
-  required int32 occ = 7;
+  int32 index = 1;
+  Sex sex = 2;
+  string lastname = 3;
+  string firstname = 4;
+  string n = 5;
+  string p = 6;
+  int32 occ = 7;
   optional string dates = 8;
   optional string image = 9;
-  required Sosa sosa = 10;
-  required bool has_more_infos = 11;
-  required string baseprefix = 12;
-  required bool name_is_hidden = 13;
-  required bool name_is_restricted = 14;
-}
-
-message SimplePerson {
-  required int32 index = 1;
-  required Sex sex = 2;
-  required string lastname = 3;
-  required string firstname = 4;
-  required string n = 5;
-  required string p = 6;
-  required int32 occ = 7;
-  optional string birth_short_date = 8;
-  optional string birth_date_raw = 15;
-  optional string birth_place = 9;
-  optional string death_short_date = 10;
-  optional string death_date_raw = 16;
-  optional string death_place = 11;
-  optional string image = 12;
-  required Sosa sosa = 13;
-  required string baseprefix = 14;
-  optional string sosa_nb = 17;
-  required Visibility visible_for_visitors = 18;
-  required bool has_parent = 19;
-  required bool has_spouse = 20;
-  required bool has_child = 21;
-  required bool is_contemporary = 22;
-  required bool name_is_hidden = 23;
-  required bool name_is_restricted = 24;
+  Sosa sosa = 10;
+  bool has_more_infos = 11;
+  string baseprefix = 12;
+  bool name_is_hidden = 13;
+  bool name_is_restricted = 14;
 }
 
 message RelationPerson {
-  required RelationType r_type = 1;
-  required SimplePerson person = 2;
-}
-message RelationFichePerson {
-  required RelationType r_type = 1;
-  required Person person = 2;
+  RelationType r_type = 1;
+  Person person = 2;
 }
 
 message EventWitness {
-  required string event_witness_type = 1;
-  required SimplePerson husband = 2;
-  optional SimplePerson wife = 3;
-  required string witness_note = 4;
-}
-
-message EventFicheWitness {
-  required string event_witness_type = 1;
-  required Person husband = 2;
+  string event_witness_type = 1;
+  Person husband = 2;
   optional Person wife = 3;
-  required string witness_note = 4;
+  string witness_note = 4;
 }
 
 message PaginatedPersonalEvents {
   repeated Event elements = 1;
-  required int32 page_number = 2;
-  required int32 total_count = 3;
+  int32 page_number = 2;
+  int32 total_count = 3;
 }
 
 message PaginatedWitnessedEvents {
   repeated EventWitness elements = 1;
-  required int32 page_number = 2;
-  required int32 total_count = 3;
+  int32 page_number = 2;
+  int32 total_count = 3;
 }
 
 message Person {
-  extensions 100 to 150;
 
   enum Type {
-    SIMPLE = 1;
-    FULL = 2;
-    FICHE = 3;
+    SIMPLE = 0;
+    FULL = 1;
+    FICHE = 2;
   }
 
-  required Type type = 1;
+  Type type = 1;
 
-  required int32 index = 2;
-  required Sex sex = 3;
-  required string lastname = 4;
-  required string firstname = 5;
-  required string n = 6;
-  required string p = 7;
-  required int32 occ = 8;
+  int32 index = 2;
+  Sex sex = 3;
+  string lastname = 4;
+  string firstname = 5;
+  string n = 6;
+  string p = 7;
+  int32 occ = 8;
   optional string public_name = 9;
   repeated string aliases = 10;
   repeated string qualifiers = 11;
@@ -352,7 +291,7 @@ message Person {
   optional Calendar death_date_cal = 27;
   optional string death_place = 28;
   optional string death_src = 29;
-  required DeathType death_type = 30;
+  DeathType death_type = 30;
   optional string burial_date = 31;
   optional string burial_date_conv = 32;
   optional Calendar burial_date_cal = 33;
@@ -361,62 +300,53 @@ message Person {
   optional string occupation = 36;
   optional string notes = 37;
   optional string psources = 38;
-  required bool has_sources = 39;
+  bool has_sources = 39;
   repeated string titles = 40;
   repeated RelationPerson related = 41;
   repeated RelationPerson rparents = 42;
-  optional SimplePerson father = 43;
-  optional SimplePerson mother = 44;
+  optional Person father = 43;
+  optional Person mother = 44;
   repeated Family families = 45;
-  required Sosa sosa = 46;
-  required PaginatedPersonalEvents events = 47;
-  required PaginatedWitnessedEvents events_witnesses = 48;
-  required string baseprefix = 49;
-  required bool is_contemporary = 50;
-  required bool name_is_hidden = 51;
-  required bool name_is_restricted = 52;
-}
+  Sosa sosa = 46;
+  PaginatedPersonalEvents events = 47;
+  PaginatedWitnessedEvents events_witnesses = 48;
+  string baseprefix = 49;
+  bool is_contemporary = 50;
+  bool name_is_hidden = 51;
+  bool name_is_restricted = 52;
 
-message FichePerson {
-  extend Person {
-    optional FichePerson person = 103;
-  }
+  optional string birth_date_raw = 53;
+  optional string birth_text = 54;
+  optional string baptism_date_raw = 55;
+  optional string baptism_text = 56;
+  optional string death_date_raw = 57;
+  optional string death_text = 58;
+  optional string burial_date_raw = 59;
+  optional string burial_text = 60;
+  optional string cremation_text = 61;
+  optional BurialType burial_type = 62;
+  repeated string titles_links = 63;
+  optional string sosa_nb = 64;
+  optional bool has_history = 65;
+  optional bool has_possible_duplications = 66;
+  optional string linked_page_biblio = 67;
+  optional string linked_page_bnote = 68;
+  optional string linked_page_death = 69;
+  optional string linked_page_head = 70;
+  optional string linked_page_occu = 71;
+  optional Visibility visible_for_visitors = 72;
 
-  optional string birth_date_raw = 1;
-  optional string birth_text = 2;
-  optional string baptism_date_raw = 3;
-  optional string baptism_text = 4;
-  optional string death_date_raw = 5;
-  optional string death_text = 6;
-  optional string burial_date_raw = 7;
-  optional string burial_text = 8;
-  optional string cremation_text = 9;
-  required BurialType burial_type = 10;
-  repeated string titles_links = 11;
-  optional string sosa_nb = 12;
-  required bool has_history = 13;
-  required bool has_possible_duplications = 14;
-  optional int32 ref_index = 15;
-  optional Person ref_person = 16;
-  required string linked_page_biblio = 17;
-  required string linked_page_bnote = 18;
-  required string linked_page_death = 19;
-  required string linked_page_head = 20;
-  required string linked_page_occu = 21;
-  required Visibility visible_for_visitors = 22;
-  optional Person father = 23;
-  optional Person mother = 24;
-  repeated FicheFamily families = 25;
-  repeated RelationFichePerson related = 26;
-  repeated RelationFichePerson rparents = 27;
-  repeated EventFicheWitness events_witnesses = 28;
-  repeated FicheEvent events = 29;
-  required bool is_contemporary = 30;
+  optional bool has_parent = 73;
+  optional bool has_spouse = 74;
+  optional bool has_child = 75;
+  optional string birth_short_date = 76;
+  optional string death_short_date = 77;
+
 }
 
 message Family {
-  required int32 index = 1;
-  required SimplePerson spouse = 2;
+  int32 index = 1;
+  Person spouse = 2;
   optional string marriage_date = 3;
   optional string marriage_date_long = 4;
   optional string marriage_date_raw = 19;
@@ -426,8 +356,8 @@ message Family {
   optional Calendar marriage_date_cal = 6;
   optional string marriage_place = 7;
   optional string marriage_src = 8;
-  required MarriageType marriage_type = 9;
-  required DivorceType divorce_type = 10;
+  MarriageType marriage_type = 9;
+  DivorceType divorce_type = 10;
   optional string divorce_date = 11;
   optional string divorce_date_long = 12;
   optional string divorce_date_raw = 20;
@@ -437,51 +367,25 @@ message Family {
   repeated WitnessEvent witnesses = 15;
   optional string notes = 16;
   optional string fsources = 17;
-  repeated SimplePerson children = 18;
-}
-
-message FicheFamily {
-  required int32 index = 1;
-  required Person spouse = 2;
-  optional string marriage_date = 3;
-  optional string marriage_date_long = 4;
-  optional string marriage_date_raw = 19;
-  optional string marriage_date_conv = 5;
-  optional string marriage_date_conv_long = 21;
-  optional string marriage_date_text = 23;
-  optional Calendar marriage_date_cal = 6;
-  optional string marriage_place = 7;
-  optional string marriage_src = 8;
-  required MarriageType marriage_type = 9;
-  required DivorceType divorce_type = 10;
-  optional string divorce_date = 11;
-  optional string divorce_date_long = 12;
-  optional string divorce_date_raw = 20;
-  optional string divorce_date_conv = 13;
-  optional string divorce_date_conv_long = 22;
-  optional Calendar divorce_date_cal = 14;
-  repeated WitnessFicheEvent witnesses = 15;
-  optional string notes = 16;
-  optional string fsources = 17;
   repeated Person children = 18;
 }
 
 message IndexPerson {
-  required int32 index = 1;
+  int32 index = 1;
   optional int32 indexz = 2;
   optional int32 events_limit = 3;
   optional int32 events_witnesses_limit = 4;
 }
 
 message Node {
-  required int64 id = 1;
-  required PersonTree person = 2;
+  int64 id = 1;
+  PersonTree person = 2;
   optional int64 ifam = 3;
 }
 
 message Edge {
-  required int64 from_node = 1;
-  required int64 to_node = 2;
+  int64 from_node = 1;
+  int64 to_node = 2;
 }
 
 message GraphTree {
@@ -495,7 +399,7 @@ message GraphTree {
 }
 
 message GraphTreeParams {
-  required IdentifierPerson identifier_person = 1;
+  IdentifierPerson identifier_person = 1;
   optional int32 nb_asc = 2;
   optional int32 nb_desc = 3;
   optional int32 indexz = 4;
@@ -510,7 +414,7 @@ message IdentifierPerson {
 }
 
 message NbAncestors {
-  required int32 nb = 1;
+  int32 nb = 1;
 }
 
 enum PaginatedDataType {
@@ -519,12 +423,12 @@ enum PaginatedDataType {
 }
 
 message Page {
-  required int32 number = 1;
-  required int32 element_count = 2;
+  int32 number = 1;
+  int32 element_count = 2;
 }
 
 message PaginatedDataParameters {
-  required int64 person_id = 1;
-  required PaginatedDataType type = 2;
-  required Page page = 3;
+  int64 person_id = 1;
+  PaginatedDataType type = 2;
+  Page page = 3;
 }

@@ -1,5 +1,4 @@
 module Mstats = Api_stats_piqi
-module Mext_stats = Api_stats_piqi_ext
 
 open Geneweb
 open Config
@@ -592,7 +591,7 @@ let format_stats_moon l title =
 
 let print_ind_stats conf base =
   let params =
-    get_params conf (fun a b -> Mext_stats.parse_stats_params a b)
+    get_params conf (fun a b -> Decoders.Api_stats.decode_stats_params a b)
   in
 
   (* nombre d'ascendants *)
@@ -1001,7 +1000,7 @@ let print_ind_stats conf base =
     })
   in
 
-  let data = Mext_stats.gen_stats stats in
+  let data = Encoders.Api_stats.encode_stats stats in
   print_result conf data
 
 
@@ -1484,12 +1483,12 @@ let print_all_stats conf base =
     })
   in
 
-  let data = Mext_stats.gen_stats stats in
+  let data = Encoders.Api_stats.encode_stats stats in
   print_result conf data
 
 
 let print_stats conf base =
-  let params = get_params conf Mext_stats.parse_stats_params in
+  let params = get_params conf Decoders.Api_stats.decode_stats_params in
   if params.Mstats.Stats_params.i <> None
   then print_ind_stats conf base
   else print_all_stats conf base
