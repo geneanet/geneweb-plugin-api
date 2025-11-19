@@ -17,6 +17,7 @@ enum Calendar {
   JULIAN = 1;
   FRENCH = 2;
   HEBREW = 3;
+  ISLAMIC = 4;
 }
 
 enum WitnessType {
@@ -727,6 +728,30 @@ message ConfigTranslHebrewMonth {
   repeated TranslHebrewMonth msg = 1;
 }
 
+enum IslamicMonth {
+  MUHARRAM = 0;
+  SAFAR = 1;
+  RABI_AL_AWWAL = 2;
+  RABI_AL_THANI = 3;
+  JUMADA_AL_AWWAL = 4;
+  JUMADA_AL_THANI = 5;
+  RAJAB = 6;
+  SHABAN = 7;
+  RAMADAN = 8;
+  SHAWWAL = 9;
+  DHU_AL_QADAH = 10;
+  DHU_AL_HIJJAH = 11;
+}
+
+message TranslIslamicMonth {
+  required IslamicMonth pos = 1;
+  required string sval = 2;
+}
+
+message ConfigTranslIslamicMonth {
+  repeated TranslIslamicMonth msg = 1;
+}
+
 message Config {
   required ConfigTranslCalendar transl_cal = 1;
   required ConfigTranslWitnessType transl_wit = 2;
@@ -742,4 +767,5 @@ message Config {
   required ConfigTranslHebrewMonth transl_hebrew_month = 12;
   required string gwf_place_format = 13;
   required string gwf_place_format_placeholder = 14;
+  required ConfigTranslIslamicMonth transl_islamic_month = 15;
 }

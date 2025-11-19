@@ -106,7 +106,7 @@ module Date_converter
                   }
        end
        module Date : sig
-         type t = { mutable cal : [ `gregorian | `julian | `french | `hebrew ] option
+         type t = { mutable cal : [ `gregorian | `julian | `french | `hebrew | `islamic ] option
                   ; mutable prec : [ `sure | `about | `maybe | `before | `after | `oryear | `yearint ] option
                   ; mutable dmy : Dmy.t option
                   ; mutable dmy2 : Dmy.t option
@@ -123,6 +123,7 @@ struct
         | Djulian -> `julian
         | Dfrench -> `french
         | Dhebrew -> `hebrew
+        | Dislamic -> `islamic
       in
       let (prec, dmy, dmy2) =
         let (d, m, y, delta) =
@@ -180,6 +181,7 @@ struct
     | `julian -> Date.Djulian
     | `french -> Dfrench
     | `hebrew -> Dhebrew
+    | `islamic -> Dislamic
     | `gregorian  -> Dgregorian
 
   let date_of_piqi_date date =

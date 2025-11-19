@@ -8,7 +8,7 @@ val string_of_date_and_conv :
   * string
   * string
   * string
-  * [> `french | `gregorian | `hebrew | `julian ] option
+  * [> `french | `gregorian | `hebrew | `islamic | `julian ] option
 (** [Description] : Renvoie la date, la date traduite et le calendrier au
                     format texte.
       *)

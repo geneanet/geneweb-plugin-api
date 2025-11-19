@@ -272,6 +272,7 @@ let piqi_date_of_date (date : Date.date) : Api_saisie_write_piqi.date =
         | Date.Djulian -> (Some `julian, d)
         | Date.Dfrench -> (Some `french, d)
         | Date.Dhebrew -> (Some `hebrew, d)
+        | Date.Dislamic -> (Some `islamic, d)
       in
       let (prec, dmy, dmy2) =
         let d = Some (Int32.of_int dmy.day) in
@@ -449,7 +450,7 @@ let date_of_piqi_date conf date =
                   begin match cal with
                   | Date.Dgregorian ->
                       Geneweb.Update.check_greg_day conf dmy
-                  | Date.Djulian | Date.Dfrench | Date.Dhebrew -> ()
+                  | Date.Djulian | Date.Dfrench | Date.Dhebrew | Date.Dislamic -> ()
                   end;
                   Date.convert ~from:cal ~to_:Date.Dgregorian dmy
                 in
