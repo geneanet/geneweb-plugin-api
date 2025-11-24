@@ -1296,7 +1296,7 @@ let fill_families conf base p =
   get_families_piqi base conf p base_prefix spouse_to_piqi witnesses_to_piqi child_to_piqi family_constructor
 
 let fill_fiche_families conf base p base_prefix nb_asc nb_asc_max nb_desc nb_desc_max pers_to_piqi_person simple_graph_info no_event =
-  let include_families = nb_desc_max > nb_desc && nb_asc < nb_asc_max in
+  let include_families = nb_desc_max > nb_desc && nb_asc <= nb_asc_max in
   if include_families
   then
     let spouse_to_piqi conf base p base_prefix =
