@@ -2168,7 +2168,15 @@ let raise_ModErr e = raise (Geneweb.Update.ModErr e)
 let check_input_person mod_p : 'unit_or_exn =
   let o =
     match mod_p.Api_saisie_write_piqi.Person.occ with
-    | Some i -> Int32.to_int i
+    | Some i ->
+      let i = Int32.to_int i in
+      Option.fold
+        ~none:i
+        ~some:raise_ModErr
+        (Geneweb.Update.check_occurrence_number
+           ~first_name:mod_p.Api_saisie_write_piqi.Person.firstname
+           ~last_name:mod_p.Api_saisie_write_piqi.Person.lastname
+           i)
     | None -> 0
   in
   let f = mod_p.Api_saisie_write_piqi.Person.firstname in
