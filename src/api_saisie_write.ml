@@ -18,11 +18,11 @@ let print_auto_complete assets conf base =
   let list =
     let nb_of_persons = Gwdb.nb_of_persons base in
     if nb_of_persons > 100_000 then
-      if Api_saisie_autocomplete.has_cache ~conf ~mode then
+      if Caches.has_cache ~conf ~mode then
         complete_with_cache conf base assets mode place_mode max_res s
       else []
     else if nb_of_persons > Caches.node_threshold &&
-            Api_saisie_autocomplete.has_cache ~conf ~mode
+            Caches.has_cache ~conf ~mode
     then
       complete_with_cache conf base assets mode place_mode max_res s
     else
