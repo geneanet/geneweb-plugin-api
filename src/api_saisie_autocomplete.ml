@@ -102,20 +102,21 @@ let complete_with_patch mode base filter data =
   let data = complete_with_persons_patch mode base filter data in
   complete_with_families_patch mode base filter data
 
-let get_list_from_cache ~conf ~base ~mode ~place_mode ~n ~ini =
+let get_data_from_cache ~conf ~mode =
   let bfile = Geneweb.GWPARAM.bpath (conf.Geneweb.Config.bname ^ ".gwb") in
   let cache_file = cache_file_of_cache_data bfile mode in
-  let cache =
-    let ic = Secure.open_in_bin cache_file in
-    try (Marshal.from_channel ic : string list)
-    with
-    | e ->
-      Geneweb.GWPARAM.syslog `LOG_ERR
-        (Printf.sprintf "Error while reading api autocomplete cache %s %s"
-           cache_file (Printexc.to_string e));
-      close_in ic;
-      []
-  in
+  let ic = Secure.open_in_bin cache_file in
+  try (Marshal.from_channel ic : string list)
+  with
+  | e ->
+    Geneweb.GWPARAM.syslog `LOG_ERR
+      (Printf.sprintf "Error while reading api autocomplete cache %s %s"
+         cache_file (Printexc.to_string e));
+    close_in ic;
+    []
+
+let get_list_from_cache ~conf ~base ~mode ~place_mode ~n ~ini =
+  let cache = get_data_from_cache ~conf ~mode in
   let ini = Name.lower @@ Ext_string.tr '_' ' ' ini in
   let is_valid = is_valid_suggestion ~mode ~place_mode in
   (* optim : on sait que la liste est triée. *)
