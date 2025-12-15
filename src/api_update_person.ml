@@ -295,12 +295,15 @@ let print_mod_aux conf base no_check_name mod_p callback =
       match match if no_check_name then None else Geneweb.Update.check_missing_name base p with
         | Some _ as err -> err
         | None ->
-          let missing_wit_names_o =
-            Geneweb.Update.check_missing_witnesses_names conf (fun e -> e.Def.epers_witnesses) p.pevents
-          in
-          if Option.is_none missing_wit_names_o then
-            Geneweb.Update.check_illegal_access_update base p
-          else missing_wit_names_o
+          match Geneweb.Update.check_person_occurrence_number p with
+          | Some _ as error -> error
+          | None ->
+            let missing_wit_names_o =
+              Geneweb.Update.check_missing_witnesses_names conf (fun e -> e.Def.epers_witnesses) p.pevents
+            in
+            if Option.is_none missing_wit_names_o then
+              Geneweb.Update.check_illegal_access_update base p
+            else missing_wit_names_o
       with
       | Some err -> Api_update_util.UpdateError err
       | None -> callback p
