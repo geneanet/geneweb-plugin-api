@@ -56,7 +56,7 @@ module Filter : functor
        }
      end
    end)
-  (Mext : sig
+  (_ : sig
      val parse_filters :
        ?opts:Piqirun_ext.options ->
        string ->
