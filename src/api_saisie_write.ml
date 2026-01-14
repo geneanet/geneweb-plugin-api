@@ -18,11 +18,11 @@ let print_auto_complete assets conf base =
   let list =
     let nb_of_persons = Gwdb.nb_of_persons base in
     if nb_of_persons > 100_000 then
-      if Geneweb.Caches.has_cache ~conf ~mode then
+      if Geneweb.Caches.has_cache ~conf ~mode () then
         complete_with_cache conf base assets mode place_mode max_res s
       else []
     else if nb_of_persons > Geneweb.Caches.node_threshold &&
-            Geneweb.Caches.has_cache ~conf ~mode
+            Geneweb.Caches.has_cache ~conf ~mode ()
     then
       complete_with_cache conf base assets mode place_mode max_res s
     else
