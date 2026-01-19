@@ -295,6 +295,7 @@ let piqi_pevent_name_of_pevent_name = function
   | Epers_ScellentSpouseLDS -> `epers_scellentspouselds
   | Epers_VenteBien -> `epers_ventebien
   | Epers_Will -> `epers_will
+  | Epers_Adoption -> `epers_adoption
   | Epers_Name _ -> failwith __LOC__
 
 let pevent_name_of_piqi_pevent_name = function
@@ -348,6 +349,7 @@ let pevent_name_of_piqi_pevent_name = function
   | `epers_scellentspouselds -> Epers_ScellentSpouseLDS
   | `epers_ventebien -> Epers_VenteBien
   | `epers_will -> Epers_Will
+  | `epers_adoption -> Epers_Adoption
 
 let fevent_name_of_piqi_fevent_name = function
   | `efam_marriage -> Def.Efam_Marriage

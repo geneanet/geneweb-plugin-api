@@ -1065,6 +1065,7 @@ let pers_to_piqi_mod_person conf base p =
            | Epers_ScellentSpouseLDS -> (Some `epers_scellentspouselds, None)
            | Epers_VenteBien -> (Some `epers_ventebien, None)
            | Epers_Will -> (Some `epers_will, None)
+           | Epers_Adoption -> (Some `epers_adoption, None)
            | Epers_Name n -> (None, Some (Utf8.normalize (Gwdb.sou base n)))
          in
          let date =

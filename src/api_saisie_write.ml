@@ -251,7 +251,7 @@ let print_config conf =
         Def.Epers_MilitaryDistinction; Def.Epers_MilitaryPromotion; Def.Epers_MilitaryService;
         Def.Epers_MobilisationMilitaire; Def.Epers_Naturalisation; Def.Epers_Occupation;
         Def.Epers_Ordination; Def.Epers_Property; Def.Epers_Recensement; Def.Epers_Residence;
-        Def.Epers_Retired; Def.Epers_VenteBien; Def.Epers_Will ]
+        Def.Epers_Retired; Def.Epers_VenteBien; Def.Epers_Will; Def.Epers_Adoption ]
   in
   let transl_pevent_sec =
     List.sort

@@ -298,6 +298,7 @@ enum PeventName {
   EPERS_SCELLENTSPOUSELDS = 47;
   EPERS_VENTEBIEN = 48;
   EPERS_WILL = 49;
+  EPERS_ADOPTION = 51;
 }
 
 message Pevent {

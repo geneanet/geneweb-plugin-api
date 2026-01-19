@@ -155,7 +155,8 @@ val piqi_pevent_name_of_pevent_name :
   | `epers_scellentparentlds
   | `epers_scellentspouselds
   | `epers_ventebien
-  | `epers_will ]
+  | `epers_will
+  | `epers_adoption ]
 
 val pevent_name_of_piqi_pevent_name :
   [< `epers_accomplishment
@@ -207,7 +208,8 @@ val pevent_name_of_piqi_pevent_name :
   | `epers_scellentparentlds
   | `epers_scellentspouselds
   | `epers_ventebien
-  | `epers_will ] ->
+  | `epers_will
+  | `epers_adoption ] ->
   _ Def.gen_pers_event_name
 
 val fevent_name_of_piqi_fevent_name :
