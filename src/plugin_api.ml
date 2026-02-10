@@ -3,15 +3,6 @@ let friend fn conf base =
   then fn conf base
   else Gwd_lib.Request.incorrect_request conf
 
-let wiz' fn conf =
-  if conf.Geneweb.Config.wizard then
-    fn conf
-  else if conf.Geneweb.Config.just_friend_wizard then
-    Plugin_api_lib.Api_util.print_error conf `forbidden ""
-  else
-    (* FIXME: Needs auth headers *)
-    Plugin_api_lib.Api_util.print_error conf `unauthorized ""
-
 let wiz fn conf base =
   if conf.Geneweb.Config.wizard then
     fn conf base
@@ -158,9 +149,9 @@ let () =
     ; ( "API_AUTO_COMPLETE"
       , fun a -> aux (wiz @@ w_base @@ Plugin_api_lib.Api_saisie_write.print_auto_complete a) a)
     ; ( "API_GET_CONFIG"
-      , aux @@ fun conf _ -> wiz' Plugin_api_lib.Api_saisie_write.print_config conf)
+      , aux @@ fun conf _ -> Plugin_api_lib.Api_saisie_write.print_config conf)
     ; ( "API_PERSON_SEARCH_LIST"
-      , aux @@ wiz @@ w_base @@ Plugin_api_lib.Api_saisie_write.print_person_search_list)
+      , aux @@ w_base @@ Plugin_api_lib.Api_saisie_write.print_person_search_list)
     ; ( "API_GET_PERSON_SEARCH_INFO"
       , aux @@ wiz @@ w_base @@ Plugin_api_lib.Api_saisie_write.print_person_search_info)
     ; ( "API_ADD_CHILD"

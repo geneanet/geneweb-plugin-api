@@ -33,52 +33,109 @@ let print_auto_complete assets conf base =
   Api_util.print_result conf data
 
 
+module PersonSearchMatches : sig
+  type t
+  val empty_matches : t
+  val sorted_persons_of_matches : Gwdb.base -> t -> Gwdb.person list
+  val add_matches_of_person : base:Gwdb.base -> first_name:string -> surname:string -> t -> Gwdb.person -> t
+end = struct
+  type t = {
+    (* the person matches on both their first name and surname *)
+    full_match : Gwdb.person list;
+    (* only the first name is an exact match *)
+    fn_match : Gwdb.person list;
+    (* only the surname is an exact match *)
+    sn_match : Gwdb.person list;
+    (* neither the first name nor the surname are exact matches *)
+    no_match : Gwdb.person list;
+  }
+
+  let empty_matches =  {
+    full_match = [];
+    fn_match = [];
+    sn_match = [];
+    no_match = [];
+  }
+
+  let add_matches_of_person ~base ~first_name ~surname matches person =
+    let f = Utf8.compare (Name.lower (Gwdb.p_first_name base person)) (Name.lower first_name) = 0 in
+    let s = Utf8.compare (Name.lower (Gwdb.p_surname base person)) (Name.lower surname) = 0 in
+    match f, s with
+    | true, true -> {matches with full_match = person :: matches.full_match}
+    | true, false -> {matches with fn_match = person :: matches.fn_match}
+    | false, true -> {matches with sn_match = person :: matches.sn_match}
+    | false, false -> {matches with no_match = person :: matches.no_match}
+
+  let cmp_per base p1 p2 =
+    let c1 = String.compare
+        (Gwdb.sou base (Gwdb.get_surname p1) |> Name.lower)
+        (Gwdb.sou base (Gwdb.get_surname p2) |> Name.lower)
+    in
+    if c1 = 0 then
+      String.compare
+        (Gwdb.sou base (Gwdb.get_first_name p1) |> Name.lower)
+        (Gwdb.sou base (Gwdb.get_first_name p2) |> Name.lower)
+    else c1
+
+  let sorted_persons_of_matches base matches =
+    let cmp = cmp_per base in
+    List.sort cmp matches.full_match
+    @ List.sort cmp matches.sn_match
+    @ List.sort cmp matches.fn_match
+    @ List.sort cmp matches.no_match
+end
+
+
 let print_person_search_list conf base =
   let params = Api_util.get_params conf Api_saisie_write_piqi_ext.parse_person_search_list_params in
   let surname = params.Api_saisie_write_piqi.Person_search_list_params.lastname in
+  let surname = Option.value surname ~default:"" in
   let first_name = params.Api_saisie_write_piqi.Person_search_list_params.firstname in
-  let max_res = Int32.to_int params.Api_saisie_write_piqi.Person_search_list_params.limit in
-  let list =
-    Api_search.search_person_list base surname first_name
+  let first_name = Option.value first_name ~default:"" in
+
+  let persons =
+    let person = Geneweb.SearchName.search_by_sosa_in_env
+        {conf with Geneweb.Config.env = ("surname", Adef.encoded surname) :: conf.env} base in
+    match person with
+    | Some p -> [ p ]
+    | None ->
+      let limit = Int32.to_int params.Api_saisie_write_piqi.Person_search_list_params.limit in
+      let conf =
+        let conf = {conf with Geneweb.Config.env =
+                                ("first_name", Adef.encoded first_name)
+                                :: ("surname", Adef.encoded surname)
+                                :: ("exact_first_name", Adef.encoded "pfx")
+                                :: ("exact_surname", Adef.encoded "pfx")
+                                :: conf.env} in
+        if Gwdb.nb_of_persons base < 100_000
+        then conf
+        else Geneweb.AdvSearchOk.force_exact_search_by_name conf
+      in
+      let () =
+        if Gwdb.search_indexes_can_be_initialized_on_the_fly base then
+          let () =
+            if first_name <> "" then
+              Gwdb.initialize_lowercase_name_index ~kind:`First_name base
+          in
+          if surname <> "" then
+            Gwdb.initialize_lowercase_name_index ~kind:`Surname base
+      in
+      fst @@ Geneweb.AdvSearchOk.advanced_search conf base limit
   in
-  let list =
-    List.sort
-      (fun ip1 ip2 ->
-        let p1 = Gwdb.poi base ip1 in
-        let p2 = Gwdb.poi base ip2 in
-        let fn1 = Gwdb.sou base (Gwdb.get_first_name p1) in
-        let sn1 = Gwdb.sou base (Gwdb.get_surname p1) in
-        let fn2 = Gwdb.sou base (Gwdb.get_first_name p2) in
-        let sn2 = Gwdb.sou base (Gwdb.get_surname p2) in
-        let cmp_sn = Utf8.alphabetic_order sn1 sn2 in
-        if cmp_sn = 0 then
-          let cmp_fn = Utf8.alphabetic_order fn1 fn2 in
-          if cmp_fn = 0 then
-            (match
-              (Date.od_of_cdate (Gwdb.get_birth p1),
-               Date.od_of_cdate (Gwdb.get_birth p2))
-             with
-             | (Some d1, Some d2) -> Date.compare_date d1 d2
-             | (Some _, _) -> -1
-             | (_, Some _) -> 1
-             | (_, _) -> 0)
-          else cmp_fn
-        else cmp_sn)
-      list
+
+  let matches = List.fold_left
+      (PersonSearchMatches.add_matches_of_person ~base ~first_name ~surname)
+      PersonSearchMatches.empty_matches
+      persons
   in
-  (* On préfère limiter la liste ici, même si on perd un peu en performance. *)
-  let list = Ext_list.take list max_res in
-  let list =
-    List.map
-      (fun ip ->
-        let p = Gwdb.poi base ip in
-        Api_update_util.pers_to_piqi_person_search conf base p)
-      list
-  in
+  let persons = PersonSearchMatches.sorted_persons_of_matches base matches in
+
+  let list = List.map (fun person ->
+      Api_update_util.pers_to_piqi_person_search ~conf ~base ~person ~first_name ~surname
+    ) persons in
   let result = Api_saisie_write_piqi.Person_search_list.({ persons = list; }) in
   let data = Api_saisie_write_piqi_ext.gen_person_search_list result in
   Api_util.print_result conf data
-
 
 let print_person_search_info conf base =
   let params = Api_util.get_params conf Api_saisie_write_piqi_ext.parse_index_person in
@@ -441,7 +498,7 @@ let print_config conf =
   in
   let (gwf_place_format, gwf_place_format_placeholder) =
     match List.assoc_opt "places_format" conf.Geneweb.Config.base_env with
-    | Some s ->
+    | Some s when conf.Geneweb.Config.wizard ->
         let placeholder =
           (try
              List.fold_right
@@ -466,7 +523,7 @@ let print_config conf =
           | _ -> placeholder
         in
         (s, placeholder)
-    | None -> ("", "")
+    | Some _ | None -> ("", "")
   in
   let config =
     Api_saisie_write_piqi.Config.({
@@ -934,7 +991,7 @@ let compute_modification_status' conf base ip ifam resp =
       firstname_str = Option.map Utf8.normalize first_name_str;
       n = Option.map Utf8.normalize sn;
       p = Option.map Utf8.normalize fn;
-      created_person = Option.map (fun cp -> Api_saisie_write_piqi.Created_person.{
+      created_person = Option.map (fun cp -> Api_saisie_write_piqi.Person_reference.{
         n = Utf8.normalize cp.Api_update_util.n;
         p = Utf8.normalize cp.p;
         oc = cp.oc;

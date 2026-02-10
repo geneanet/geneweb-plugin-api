@@ -14,8 +14,7 @@ val print_person_search_list : Geneweb.Config.config -> Gwdb.base -> unit
       - conf : configuration de la base
       - base : base de donnée
     [Retour] :
-      - result : la liste de la recherche.
-                                                                           *)
+    - result : la liste de la recherche.                                   *)
 
 val print_person_search_info : Geneweb.Config.config -> Gwdb.base -> unit
 (** [Description] : Affiche les informations telles que sur le panneau
