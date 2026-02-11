@@ -1817,12 +1817,20 @@ let search_index
       end
     | Surname::le ->
       if Geneweb.Search_name_display.sn_search_result_is_empty
-          (Geneweb.Search_name_display.search_surname conf base an)
+          (Geneweb.Search_name_display.search_surname
+             ~exact:false
+             conf
+             base
+             an)
       then loop le
       else None
     | FirstName::le ->
       if Geneweb.Search_name_display.fn_search_result_is_empty
-          (Geneweb.Search_name_display.search_first_name conf base an)
+          (Geneweb.Search_name_display.search_first_name
+             ~exact:false
+             conf
+             base
+             an)
       then loop le
       else None
     | ApproxKey::le ->
