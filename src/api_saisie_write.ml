@@ -107,7 +107,9 @@ let print_person_search_list conf base =
                                 :: ("exact_first_name", Adef.encoded "pfx")
                                 :: ("exact_surname", Adef.encoded "pfx")
                                 :: conf.env} in
-        if Gwdb.nb_of_real_persons base < 100_000
+        if
+          Gwdb.nb_of_real_persons base < 100_000
+          || not (Option.value ~default:true params.fast)
         then conf
         else Geneweb.AdvSearchOk.force_exact_search_by_name conf
       in
