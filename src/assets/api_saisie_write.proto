@@ -588,6 +588,7 @@ message PersonSearchListParams {
   optional string lastname = 1;
   optional string firstname = 2;
   required int32 limit = 3;
+  optional bool fast = 4;
 }
 
 message PersonSearchList {
