@@ -604,11 +604,11 @@ let spouse_to_piqi_spouse conf base p fam compute_sosa =
     | Neuter -> `unknown
   in
   let surname =
-    if not p_auth && (Geneweb.Util.is_hide_names conf p) then ""
+    if not p_auth && (Geneweb.Person.is_hide_names conf p) then ""
     else gen_p.surname
   in
   let first_name =
-    if not p_auth && (Geneweb.Util.is_hide_names conf p) then ""
+    if not p_auth && (Geneweb.Person.is_hide_names conf p) then ""
     else gen_p.first_name
   in
   let sn = Name.lower surname in
@@ -741,11 +741,11 @@ let pers_to_piqi_person_light conf base p compute_sosa =
     | Neuter -> `unknown
   in
   let surname =
-    if not p_auth && (Geneweb.Util.is_hide_names conf p) then ""
+    if not p_auth && (Geneweb.Person.is_hide_names conf p) then ""
     else gen_p.surname
   in
   let first_name =
-    if not p_auth && (Geneweb.Util.is_hide_names conf p) then ""
+    if not p_auth && (Geneweb.Person.is_hide_names conf p) then ""
     else gen_p.first_name
   in
   let sn = Name.lower surname in
@@ -855,8 +855,8 @@ let pers_to_piqi_person_light conf base p compute_sosa =
     visible_for_visitors = get_visibility conf base p;
     baseprefix = baseprefix;
     is_contemporary = Geneweb.Person.is_contemporary conf base p;
-    name_is_hidden = Geneweb.NameDisplay.is_hidden conf base p;
-    name_is_restricted = Geneweb.NameDisplay.is_restricted conf base p;
+    name_is_hidden = Geneweb.Person.is_hidden conf base p;
+    name_is_restricted = Geneweb.Person.has_restricted_name conf base p;
   }
 
 
@@ -889,11 +889,11 @@ let pers_to_piqi_person_full conf base p compute_sosa =
     | Neuter -> `unknown
   in
   let surname =
-    if not p_auth && (Geneweb.Util.is_hide_names conf p) then ""
+    if not p_auth && (Geneweb.Person.is_hide_names conf p) then ""
     else gen_p.surname
   in
   let first_name =
-    if not p_auth && (Geneweb.Util.is_hide_names conf p) then ""
+    if not p_auth && (Geneweb.Person.is_hide_names conf p) then ""
     else gen_p.first_name
   in
   let sn = Name.lower surname in
@@ -903,7 +903,7 @@ let pers_to_piqi_person_full conf base p compute_sosa =
   let publicname = if gen_p.public_name = "" then None else Some gen_p.public_name in
   let aliases = gen_p.aliases in
   let qualifiers =
-    if not p_auth && (Geneweb.Util.is_hide_names conf p) then []
+    if not p_auth && (Geneweb.Person.is_hide_names conf p) then []
     else gen_p.qualifiers
   in
   let firstname_aliases = gen_p.first_names_aliases in
@@ -1066,8 +1066,8 @@ let pers_to_piqi_person_full conf base p compute_sosa =
     families = families;
     baseprefix = baseprefix;
     is_contemporary = Geneweb.Person.is_contemporary conf base p;
-    name_is_hidden = Geneweb.NameDisplay.is_hidden conf base p;
-    name_is_restricted = Geneweb.NameDisplay.is_restricted conf base p;
+    name_is_hidden = Geneweb.Person.is_hidden conf base p;
+    name_is_restricted = Geneweb.Person.has_restricted_name conf base p;
   }
 
 
