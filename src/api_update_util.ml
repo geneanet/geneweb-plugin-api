@@ -569,7 +569,7 @@ let pers_to_piqi_person_search ~conf ~base ~person ~first_name ~surname =
       |> Gutil.spouse (Gwdb.get_iper person)
       |> Geneweb.Util.pget_opt conf base
       |> (fun sp_opt -> Option.bind sp_opt (fun sp ->
-          Ext_option.return_if (Geneweb.Person.is_visible conf base sp)
+          Ext_option.return_if (Geneweb.Person.has_visible_name conf base sp)
             (fun () -> sp)
         ))
       |> Option.map (fun spouse -> (spouse, Gwdb.get_relation family))
@@ -589,7 +589,7 @@ let pers_to_piqi_person_search ~conf ~base ~person ~first_name ~surname =
       in
       Option.bind (Option.map get parents) (Geneweb.Util.pget_opt conf base)
       |> (fun p_opt -> Option.bind p_opt (fun p ->
-          Ext_option.return_if (Geneweb.Person.is_visible conf base p)
+          Ext_option.return_if (Geneweb.Person.has_visible_name conf base p)
             (fun () -> p)
         ))
     in
