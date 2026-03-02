@@ -253,7 +253,7 @@ let pers_to_piqi_person_tree
       (max_gen : int)
       (base_prefix : string)
     : Api_saisie_read_piqi.person_tree =
-  if Geneweb.Util.is_restricted conf base (Gwdb.get_iper p) then
+  if Geneweb.Person.is_restricted conf base (Gwdb.get_iper p) then
     {
       Api_saisie_read_piqi.Person_tree.index = Int32.of_string @@ Gwdb.string_of_iper Gwdb.dummy_iper;
       sex = `unknown;
@@ -267,8 +267,8 @@ let pers_to_piqi_person_tree
       sosa = `no_sosa;
       has_more_infos = false;
       baseprefix = "";
-      name_is_hidden = Geneweb.NameDisplay.is_hidden conf base p;
-      name_is_restricted = Geneweb.NameDisplay.is_restricted conf base p;
+      name_is_hidden = Geneweb.Person.is_hidden conf base p;
+      name_is_restricted = Geneweb.Person.has_restricted_name conf base p;
     }
   else
     let p_auth = Geneweb.Person.is_visible conf base p in
@@ -288,16 +288,16 @@ let pers_to_piqi_person_tree
         else `sosa
     in
     let sn =
-      if (Geneweb.Util.is_hide_names conf p) && not p_auth then ""
+      if (Geneweb.Person.is_hide_names conf p) && not p_auth then ""
       else Name.lower (Gwdb.sou base (Gwdb.get_surname p))
     in
     let fn =
-      if (Geneweb.Util.is_hide_names conf p) && not p_auth then ""
+      if (Geneweb.Person.is_hide_names conf p) && not p_auth then ""
       else Name.lower (Gwdb.sou base (Gwdb.get_first_name p))
     in
     let occ = Int32.of_int (Gwdb.get_occ p) in
     let (first_name, surname) =
-      if not p_auth && (Geneweb.Util.is_hide_names conf p) then ("x", "x")
+      if not p_auth && (Geneweb.Person.is_hide_names conf p) then ("x", "x")
       else person_firstname_surname_txt base p
     in
     let dates = short_dates_text conf base p in
@@ -335,8 +335,8 @@ let pers_to_piqi_person_tree
       sosa = sosa;
       has_more_infos = has_more_infos;
       baseprefix = base_prefix;
-      name_is_hidden = Geneweb.NameDisplay.is_hidden conf base p;
-      name_is_restricted = Geneweb.NameDisplay.is_restricted conf base p;
+      name_is_hidden = Geneweb.Person.is_hidden conf base p;
+      name_is_restricted = Geneweb.Person.has_restricted_name conf base p;
     }
 
 (* Common functions to build a SimplePerson or a FichePerson. *)
@@ -368,21 +368,21 @@ let fill_sosa conf base p =
   else `sosa
 
 let fill_sn conf base p p_auth =
-  if (Geneweb.Util.is_hide_names conf p) && not p_auth then ""
+  if (Geneweb.Person.is_hide_names conf p) && not p_auth then ""
   else Name.lower (Gwdb.sou base (Gwdb.get_surname p))
 
 let fill_fn conf base p p_auth =
-  if (Geneweb.Util.is_hide_names conf p) && not p_auth then ""
+  if (Geneweb.Person.is_hide_names conf p) && not p_auth then ""
   else Name.lower (Gwdb.sou base (Gwdb.get_first_name p))
 
 let fill_occ p =
   Int32.of_int (Gwdb.get_occ p)
 
 let fill_surname conf p p_auth gen_p =
-  if not p_auth && (Geneweb.Util.is_hide_names conf p) then "x" else gen_p.Def.surname
+  if not p_auth && (Geneweb.Person.is_hide_names conf p) then "x" else gen_p.Def.surname
 
 let fill_firstname conf p p_auth gen_p =
-  if not p_auth && (Geneweb.Util.is_hide_names conf p) then "x" else gen_p.Def.first_name
+  if not p_auth && (Geneweb.Person.is_hide_names conf p) then "x" else gen_p.Def.first_name
 
 let fill_publicname p_auth gen_p =
   let publicname = if not p_auth then "" else gen_p.Def.public_name in
@@ -406,7 +406,7 @@ let pers_to_piqi_simple_person
       (p : Gwdb.person)
       (base_prefix : string)
     : Api_saisie_read_piqi.simple_person =
-  if Geneweb.Util.is_restricted conf base (Gwdb.get_iper p) then
+  if Geneweb.Person.is_restricted conf base (Gwdb.get_iper p) then
     let restricted_person = Api_saisie_read_piqi.default_simple_person() in
     restricted_person.Api_saisie_read_piqi.Simple_person.index <- Int32.of_string @@ Gwdb.string_of_iper Gwdb.dummy_iper;
     restricted_person.Api_saisie_read_piqi.Simple_person.lastname <- "x";
@@ -434,11 +434,11 @@ let pers_to_piqi_simple_person
         else Some (Sosa.to_string sosa_nb_num)
     in
     let sn =
-      if (Geneweb.Util.is_hide_names conf p) && not p_auth then ""
+      if (Geneweb.Person.is_hide_names conf p) && not p_auth then ""
       else Name.lower (Gwdb.sou base (Gwdb.get_surname p))
     in
     let fn =
-      if (Geneweb.Util.is_hide_names conf p) && not p_auth then ""
+      if (Geneweb.Person.is_hide_names conf p) && not p_auth then ""
       else Name.lower (Gwdb.sou base (Gwdb.get_first_name p))
     in
     let occ = Int32.of_int (Gwdb.get_occ p) in
@@ -524,8 +524,8 @@ let pers_to_piqi_simple_person
       has_spouse = has_spouse;
       has_child = has_child;
       is_contemporary = Geneweb.Person.is_contemporary conf base p;
-      name_is_hidden = Geneweb.NameDisplay.is_hidden conf base p;
-      name_is_restricted = Geneweb.NameDisplay.is_restricted conf base p;
+      name_is_hidden = Geneweb.Person.is_hidden conf base p;
+      name_is_restricted = Geneweb.Person.has_restricted_name conf base p;
     }
 
 
@@ -769,7 +769,7 @@ let fill_events
       in
       event_constructor name type_ date date_long date_raw date_conv date_conv_long date_cal place note src spouse witnesses
     in
-    let events = Geneweb.Event.sorted_events conf base p in
+    let events = Geneweb.Event.sorted_events conf base (Geneweb.Authorized.Person.make ~conf ~base (Gwdb.get_iper p)) in
     Api_util.Paginated_data.map make_event (extract_page events)
   else Api_util.Paginated_data.all []
 
@@ -1085,7 +1085,7 @@ let fill_occupation conf base p_auth gen_p =
   else ""
 
 let fill_index conf p p_auth =
-  if not p_auth && (Geneweb.Util.is_hide_names conf p)
+  if not p_auth && (Geneweb.Person.is_hide_names conf p)
   then
     Int32.of_string @@ Gwdb.string_of_iper Gwdb.dummy_iper
   else
@@ -1466,7 +1466,7 @@ let pers_to_piqi_person
       (base_prefix : string)
       (is_main_person : bool)
     : Api_saisie_read_piqi.person =
-  if Geneweb.Util.is_restricted conf base (Gwdb.get_iper p) then
+  if Geneweb.Person.is_restricted conf base (Gwdb.get_iper p) then
     get_restricted_person ()
   else
     let p_auth = Geneweb.Person.is_visible conf base p in
@@ -1568,8 +1568,8 @@ let pers_to_piqi_person
       baseprefix = base_prefix;
       fiche_person_person = None;
       is_contemporary = Geneweb.Person.is_contemporary conf base p;
-      name_is_hidden = Geneweb.NameDisplay.is_hidden conf base p;
-      name_is_restricted = Geneweb.NameDisplay.is_restricted conf base p;
+      name_is_hidden = Geneweb.Person.is_hidden conf base p;
+      name_is_restricted = Geneweb.Person.has_restricted_name conf base p;
     }
 
 let fill_ref_if_is_main_person conf base is_main_person =
@@ -1598,7 +1598,7 @@ let rec pers_to_piqi_fiche_person
   (* Generates a fiche person by default. *)
   let piqi_fiche_person = Api_saisie_read_piqi.default_fiche_person() in
   (* If the access is restricted, returns the person with default fields. *)
-  if Geneweb.Util.is_restricted conf base (Gwdb.get_iper p) then
+  if Geneweb.Person.is_restricted conf base (Gwdb.get_iper p) then
     get_restricted_fiche_person ()
   else
     begin
@@ -1746,8 +1746,8 @@ let rec pers_to_piqi_fiche_person
         rparents = if return_simple_attributes then get_rparents_piqi base conf base_prefix gen_p pers_to_piqi_simple_person simple_relation_person_constructor else [];
         baseprefix = base_prefix;
         is_contemporary = Geneweb.Person.is_contemporary conf base p;
-        name_is_hidden = Geneweb.NameDisplay.is_hidden conf base p;
-        name_is_restricted = Geneweb.NameDisplay.is_restricted conf base p;
+        name_is_hidden = Geneweb.Person.is_hidden conf base p;
+        name_is_restricted = Geneweb.Person.has_restricted_name conf base p;
       }
     end
 
@@ -1888,7 +1888,7 @@ let print_from_identifier_person
             match Gwdb.person_of_key base fn sn (Int32.to_int oc) with
             | Some ip ->
               let p = Gwdb.poi base ip in
-              if Geneweb.Person.is_empty p || ((Geneweb.Util.is_hide_names conf p) && not(Geneweb.Person.is_visible conf base p)) then
+              if Geneweb.Person.is_empty p || ((Geneweb.Person.is_hide_names conf p) && not(Geneweb.Person.is_visible conf base p)) then
                 Api_util.print_error conf `not_found ""
               else
                 (if identifier_person.Api_saisie_read_piqi.Identifier_person.track_visit

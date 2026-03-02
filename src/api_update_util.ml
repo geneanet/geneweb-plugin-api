@@ -569,7 +569,7 @@ let pers_to_piqi_person_search ~conf ~base ~person ~first_name ~surname =
       |> Gutil.spouse (Gwdb.get_iper person)
       |> Geneweb.Util.pget_opt conf base
       |> (fun sp_opt -> Option.bind sp_opt (fun sp ->
-          Ext_option.return_if (Geneweb.Person.is_visible conf base sp)
+          Ext_option.return_if (Geneweb.Person.has_visible_name conf base sp)
             (fun () -> sp)
         ))
       |> Option.map (fun spouse -> (spouse, Gwdb.get_relation family))
@@ -589,7 +589,7 @@ let pers_to_piqi_person_search ~conf ~base ~person ~first_name ~surname =
       in
       Option.bind (Option.map get parents) (Geneweb.Util.pget_opt conf base)
       |> (fun p_opt -> Option.bind p_opt (fun p ->
-          Ext_option.return_if (Geneweb.Person.is_visible conf base p)
+          Ext_option.return_if (Geneweb.Person.has_visible_name conf base p)
             (fun () -> p)
         ))
     in
@@ -714,7 +714,7 @@ let pers_to_piqi_person_search_info conf base p =
           spouse;
           witnesses;
         })
-      (Geneweb.Event.sorted_events conf base p)
+      (Geneweb.Event.sorted_events conf base (Geneweb.Authorized.Person.make ~conf ~base (Gwdb.get_iper p)))
   in
   let notes =
     let open Api_util in
@@ -870,12 +870,12 @@ let pers_to_piqi_person_search_info conf base p =
          let mother = Gwdb.poi base imoth in
          let father_auth = Geneweb.Person.is_visible conf base father in
          let husband =
-           if not father_auth && (Geneweb.Util.is_hide_names conf father) then "x x"
+           if not father_auth && (Geneweb.Person.is_hide_names conf father) then "x x"
            else Gwdb.p_first_name base father ^ " " ^ Gwdb.p_surname base father
          in
          let mother_auth = Geneweb.Person.is_visible conf base mother in
          let wife =
-           if not mother_auth && (Geneweb.Util.is_hide_names conf mother) then "x x"
+           if not mother_auth && (Geneweb.Person.is_hide_names conf mother) then "x x"
            else Gwdb.p_first_name base mother ^ " " ^ Gwdb.p_surname base mother
          in
          Api_saisie_write_piqi.Was_witness.({
@@ -1270,8 +1270,8 @@ let pers_to_piqi_mod_person conf base p =
     families;
     create_link;
     is_contemporary;
-    name_is_hidden = Geneweb.NameDisplay.is_hidden conf base p;
-    name_is_restricted = Geneweb.NameDisplay.is_restricted conf base p;
+    name_is_hidden = Geneweb.Person.is_hidden conf base p;
+    name_is_restricted = Geneweb.Person.has_restricted_name conf base p;
   }
 
 let fam_to_piqi_mod_family conf base ifam fam =

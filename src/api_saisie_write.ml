@@ -97,7 +97,7 @@ let print_person_search_list conf base =
     let person = Geneweb.SearchName.search_by_sosa_in_env
         {conf with Geneweb.Config.env = ("surname", Adef.encoded surname) :: conf.env} base in
     match person with
-    | Some p when Geneweb.Person.is_visible conf base p -> [ p ]
+    | Some p when Geneweb.Person.has_visible_name conf base p -> [ p ]
     | Some _ | None ->
       let limit = Int32.to_int params.Api_saisie_write_piqi.Person_search_list_params.limit in
       let conf =

@@ -106,7 +106,7 @@ let get_list_of_select_start_with (conf : Geneweb.Config.config) (base : Gwdb.ba
                     if conf.Geneweb.Config.use_restrict then
                       List.fold_left
                         (fun l ip ->
-                          if Geneweb.Util.is_restricted conf base ip then l
+                          if Geneweb.Person.is_restricted conf base ip then l
                            else (ip :: l) )
                         [] my_list
                     else my_list
