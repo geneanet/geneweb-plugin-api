@@ -138,10 +138,10 @@ let print_person_search_list conf base =
   in
   let persons = PersonSearchMatches.sorted_persons_of_matches base matches in
 
-  let list = List.map (fun person ->
+  let persons = List.map (fun person ->
       Api_update_util.pers_to_piqi_person_search ~conf ~base ~person ~first_name ~surname
     ) persons in
-  let result = Api_saisie_write_piqi.Person_search_list.({ persons = list; }) in
+  let result = Api_saisie_write_piqi.Person_search_list.({ persons }) in
   let data = Api_saisie_write_piqi_ext.gen_person_search_list result in
   Api_util.print_result conf data
 
