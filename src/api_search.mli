@@ -32,6 +32,3 @@ val search_auto_complete :
   max:int ->
   ini:string ->
   string list
-
-val search_person_list :
-  Geneweb.Config.config -> Gwdb.base -> string option -> string option -> int option -> Gwdb.iper list

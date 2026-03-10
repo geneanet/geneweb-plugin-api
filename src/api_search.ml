@@ -361,43 +361,6 @@ let string_incl_start_with x y =
   in
   loop 0
 
-let select_both_start_with_person conf base ini_n ini_p max =
-  let find n x = string_start_with x n in
-  let ini_n = aux_ini (Name.lower ini_n) in
-  let ini_p = aux_ini (Name.lower ini_p) in
-  let continue (n, _acc) = n < max in
-  Gwdb.Collection.fold_until continue begin fun (n, list) p ->
-      let surnames = aux_ini (Name.lower (Gwdb.sou base (Gwdb.get_surname p))) in
-      let first_names = aux_ini (Name.lower (Gwdb.sou base (Gwdb.get_first_name p))) in
-      let start_surname =
-        List.for_all
-          (fun ini -> List.exists (fun name -> find name ini) surnames)
-          ini_n
-      in
-      let start_firstname =
-        List.for_all
-          (fun ini -> List.exists (fun name -> find name ini) first_names)
-          ini_p
-      in
-      if start_surname && start_firstname && Geneweb.Person.is_visible conf base p then (n + 1, Gwdb.get_iper p :: list)
-      else (n, list)
-  end (0, []) (Gwdb.persons base)
-
-let select_start_with_person conf base get_field ini max =
-  let find n x = string_start_with x n in
-  let ini = aux_ini (Name.lower ini) in
-  let continue (n, _acc) = n < max in
-  Gwdb.Collection.fold_until continue begin fun (n, list) p ->
-      let names = aux_ini (Name.lower (Gwdb.sou base (get_field p))) in
-      let start_name =
-        List.for_all
-          (fun ini -> List.exists (fun name -> find name ini) names)
-          ini
-      in
-      if start_name && Geneweb.Person.is_visible conf base p then (n + 1, Gwdb.get_iper p :: list)
-      else n, list
-  end (0, []) (Gwdb.persons base)
-
 let matching_nameset base stop max_res istr name_f name first_letter =
   let rec aux n istr set =
     let s = Gwdb.sou base istr in
@@ -633,24 +596,3 @@ let search_auto_complete ~assets ~conf ~base ~mode ~place_mode ~max ~ini =
     in
     complete_with_dico
       assets conf n max (Some `profession) ini suggestions_from_db
-
-let search_person_list conf base surname first_name max_o =
-  let () = Gwdb.load_strings_array base in
-  let max = Option.value ~default:max_int max_o in
-  let (surname, first_name) =
-    match (surname, first_name) with
-    | (Some n, Some fn) ->
-        ((if Name.lower n = "" then None else Some n),
-         (if Name.lower fn = "" then None else Some fn))
-    | (Some n, None) -> ((if n = "" then None else Some n), None)
-    | (None, Some fn) -> (None, (if fn = "" then None else Some fn))
-    | (None, None) -> (None, None)
-  in
-  match (surname, first_name) with
-  | (Some n, Some fn) ->
-    snd @@ select_both_start_with_person conf base n fn max
-  | (Some n, None) ->
-    snd @@ select_start_with_person conf base Gwdb.get_surname n max
-  | (None, Some fn) ->
-    snd @@ select_start_with_person conf base Gwdb.get_first_name fn max
-  | (None, None) -> []
