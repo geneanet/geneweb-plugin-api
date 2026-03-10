@@ -291,7 +291,7 @@ let date_included d d1 d2 =
     - [`visibility_private] if [p] is fully hidden to a visitor
 *)
 let get_visibility conf base p =
-  if Geneweb.Util.is_fully_visible_to_visitors conf base p then `visibility_public
+  if Geneweb.Person.is_fully_visible_to_visitors conf base p then `visibility_public
   else if conf.hide_private_names || Gwdb.get_access p = Private then `visibility_private
   else `visibility_semi_public
 

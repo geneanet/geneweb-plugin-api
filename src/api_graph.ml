@@ -184,7 +184,7 @@ let print_select_events conf base =
         (fevents_aux conf base filter_f)
         (Gwdb.Collection.fold
            (fun acc p ->
-              if Util.is_empty_name p then acc
+              if Person.is_empty_name p then acc
               else pevents_aux conf base filter_p acc p)
            [] (Gwdb.persons base))
         (Gwdb.families base)
