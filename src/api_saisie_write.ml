@@ -93,11 +93,11 @@ let print_person_search_list conf base =
   let first_name = params.Api_saisie_write_piqi.Person_search_list_params.firstname in
   let first_name = Option.value first_name ~default:"" in
 
-  let persons =
+  let base, persons =
     let person = Geneweb.SearchName.search_by_sosa_in_env
         {conf with Geneweb.Config.env = ("surname", Adef.encoded surname) :: conf.env} base in
     match person with
-    | Some p when Geneweb.Person.has_visible_name conf base p -> [ p ]
+    | Some p when Geneweb.Person.has_visible_name conf base p -> base, [ p ]
     | Some _ | None ->
       let limit = Int32.to_int params.Api_saisie_write_piqi.Person_search_list_params.limit in
       let conf =
@@ -113,16 +113,19 @@ let print_person_search_list conf base =
         then conf
         else Geneweb.AdvSearchOk.force_exact_search_by_name conf
       in
-      let () =
+      let base =
         if Gwdb.search_indexes_can_be_initialized_on_the_fly base then
-          let () =
+          let base =
             if first_name <> "" then
               Gwdb.initialize_lowercase_name_index ~kind:`First_name base
+            else base
           in
           if surname <> "" then
             Gwdb.initialize_lowercase_name_index ~kind:`Surname base
+          else base
+        else base
       in
-      fst @@ Geneweb.AdvSearchOk.advanced_search conf base limit
+      base, fst @@ Geneweb.AdvSearchOk.advanced_search conf base limit
   in
 
   let matches = List.fold_left
