@@ -72,9 +72,12 @@ end = struct
         (Gwdb.sou base (Gwdb.get_surname p2) |> Name.lower)
     in
     if c1 = 0 then
-      String.compare
-        (Gwdb.sou base (Gwdb.get_first_name p1) |> Name.lower)
-        (Gwdb.sou base (Gwdb.get_first_name p2) |> Name.lower)
+      let c2 =
+        String.compare
+          (Gwdb.sou base (Gwdb.get_first_name p1) |> Name.lower)
+          (Gwdb.sou base (Gwdb.get_first_name p2) |> Name.lower)
+      in
+      if c2 = 0 then Geneweb.Person.compare_by_dates p1 p2 else c2
     else c1
 
   let sorted_persons_of_matches base matches =
