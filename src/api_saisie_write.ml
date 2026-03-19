@@ -96,14 +96,14 @@ let print_person_search_list conf base =
   let first_name = params.Api_saisie_write_piqi.Person_search_list_params.firstname in
   let first_name = Option.value first_name ~default:"" in
 
-  let base, persons =
+  let base, persons, is_exact_search =
     let person = Geneweb.SearchName.search_by_sosa_in_env
         {conf with Geneweb.Config.env = ("surname", Adef.encoded surname) :: conf.env} base in
     match person with
-    | Some p when Geneweb.Person.has_visible_name conf base p -> base, [ p ]
+    | Some p when Geneweb.Person.has_visible_name conf base p -> base, [ p ], false
     | Some _ | None ->
       let limit = Int32.to_int params.Api_saisie_write_piqi.Person_search_list_params.limit in
-      let conf =
+      let conf, is_exact_search =
         let conf = {conf with Geneweb.Config.env =
                                 ("first_name", Adef.encoded first_name)
                                 :: ("surname", Adef.encoded surname)
@@ -113,8 +113,8 @@ let print_person_search_list conf base =
         if
           Gwdb.nb_of_real_persons base < 200_000
           || not (Option.value ~default:true params.fast)
-        then conf
-        else Geneweb.AdvSearchOk.force_exact_search_by_name conf
+        then (conf, false)
+        else (Geneweb.AdvSearchOk.force_exact_search_by_name conf, true)
       in
       let base =
         if Gwdb.search_indexes_can_be_initialized_on_the_fly base then
@@ -128,7 +128,9 @@ let print_person_search_list conf base =
           else base
         else base
       in
-      base, fst @@ Geneweb.AdvSearchOk.advanced_search conf base limit
+      base,
+      fst @@ Geneweb.AdvSearchOk.advanced_search conf base limit,
+      is_exact_search
   in
 
   let matches = List.fold_left
@@ -138,10 +140,14 @@ let print_person_search_list conf base =
   in
   let persons = PersonSearchMatches.sorted_persons_of_matches base matches in
 
-  let list = List.map (fun person ->
+  let persons = List.map (fun person ->
       Api_update_util.pers_to_piqi_person_search ~conf ~base ~person ~first_name ~surname
     ) persons in
-  let result = Api_saisie_write_piqi.Person_search_list.({ persons = list; }) in
+  let result =
+    Api_saisie_write_piqi.Person_search_list.(
+      { persons; is_exact_search = Some is_exact_search }
+    )
+  in
   let data = Api_saisie_write_piqi_ext.gen_person_search_list result in
   Api_util.print_result conf data
 
