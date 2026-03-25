@@ -1084,12 +1084,11 @@ let fill_occupation conf base p_auth gen_p =
     !!(Geneweb.Notes.source conf base gen_p.Def.occupation)
   else ""
 
-let fill_index conf p p_auth =
-  if not p_auth && (Geneweb.Person.is_hide_names conf p)
-  then
-    Int32.of_string @@ Gwdb.string_of_iper Gwdb.dummy_iper
-  else
-    Int32.of_string @@ Gwdb.string_of_iper (Gwdb.get_iper p)
+let fill_index conf base p =
+  let p = Geneweb.Authorized.Person.make ~conf ~base (Gwdb.get_iper p) in
+  Int32.of_string @@
+  Gwdb.string_of_iper @@
+  Option.value ~default:Gwdb.dummy_iper (Geneweb.Authorized.Person.get_iper p)
 
 let fill_sources conf base p_auth gen_p is_main_person =
   if p_auth && is_main_person
@@ -1517,7 +1516,7 @@ let pers_to_piqi_person
 
     {
       Api_saisie_read_piqi.Person.type_ = `simple;
-      index = fill_index conf p p_auth;
+      index = fill_index conf base p;
       sex = fill_sex p;
       lastname = fill_surname conf p p_auth gen_p;
       firstname = fill_firstname conf p p_auth gen_p;
@@ -1706,7 +1705,7 @@ let rec pers_to_piqi_fiche_person
         death_place = transform_empty_string_to_None (fill_death_place p_auth gen_p);
         death_src = transform_empty_string_to_None death_src;
         death_type = death_type;
-        index = fill_index conf p p_auth;
+        index = fill_index conf base p;
         image = Api_util.get_portrait conf base p;
         firstname = fill_firstname conf p p_auth gen_p;
         lastname = fill_surname conf p p_auth gen_p;
