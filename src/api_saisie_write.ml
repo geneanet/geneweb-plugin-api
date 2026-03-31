@@ -109,6 +109,7 @@ let print_person_search_list conf base =
                                 :: ("surname", Adef.encoded surname)
                                 :: ("exact_first_name", Adef.encoded "pfx")
                                 :: ("exact_surname", Adef.encoded "pfx")
+                                :: ("max", Adef.encoded @@ Int.to_string limit)
                                 :: conf.env} in
         if
           Gwdb.nb_of_real_persons base < 200_000
@@ -128,8 +129,13 @@ let print_person_search_list conf base =
           else base
         else base
       in
+      let query_params =
+        Geneweb.Page.Advanced_search.Query_params.from_env conf.env
+      in
       base,
-      fst @@ Geneweb.AdvSearchOk.advanced_search conf base limit,
+      Option.fold query_params ~none:[] ~some:(fun query_params ->
+        fst @@
+        Geneweb.AdvSearchOk.advanced_search ~query_params conf base),
       is_exact_search
   in
 
