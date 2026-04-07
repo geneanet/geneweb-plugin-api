@@ -93,7 +93,7 @@ let string_of_dmy_raw (d : Date.dmy) : string =
     | Maybe -> "?"
     | Before -> "<"
     | After -> ">"
-    | _ -> ""
+    | Sure | OrYear _ | YearInt _ -> ""
   in
   let date =
     Printf.sprintf "%d/%d/%d" d.year d.month d.Date.day
@@ -102,7 +102,7 @@ let string_of_dmy_raw (d : Date.dmy) : string =
     match d.Date.prec with
     | OrYear d2 -> Printf.sprintf "|/%d/%d/%d" d2.year2 d2.month2 d2.Date.day2
     | YearInt d2 -> Printf.sprintf "../%d/%d/%d" d2.year2 d2.month2 d2.Date.day2
-    | _ -> ""
+    | Sure | About | Maybe | Before | After -> ""
   in
   prec ^ "/" ^ date ^ "#" ^ delta
 
