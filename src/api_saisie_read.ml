@@ -137,7 +137,8 @@ let string_of_date_and_conv conf d =
       in
       let date_conv =
         Adef.as_string @@
-          Geneweb.DateDisplay.gregorian_precision conf d ~with_short_month:true
+          Geneweb.DateDisplay.gregorian_precision
+            ~calendar:Djulian conf d1 ~with_short_month:true
       in
       let date_conv_long =
         let open Api_util in
@@ -153,7 +154,8 @@ let string_of_date_and_conv conf d =
       in
       let date_conv =
         Adef.as_string @@
-          Geneweb.DateDisplay.gregorian_precision conf d ~with_short_month:true
+          Geneweb.DateDisplay.gregorian_precision
+            ~calendar:Dfrench conf d1 ~with_short_month:true
       in
       let date_conv_long =
         let open Api_util in
@@ -169,7 +171,8 @@ let string_of_date_and_conv conf d =
       in
       let date_conv =
         Adef.as_string @@
-          Geneweb.DateDisplay.gregorian_precision conf d ~with_short_month:true
+          Geneweb.DateDisplay.gregorian_precision
+            ~calendar:Dhebrew conf d1 ~with_short_month:true
       in
       let date_conv_long =
         let open Api_util in
@@ -185,7 +188,8 @@ let string_of_date_and_conv conf d =
       in
       let date_conv =
         Adef.as_string @@
-          Geneweb.DateDisplay.gregorian_precision conf d ~with_short_month:true
+          Geneweb.DateDisplay.gregorian_precision
+            ~calendar:Dislamic conf d1 ~with_short_month:true
       in
       let date_conv_long =
         let open Api_util in
