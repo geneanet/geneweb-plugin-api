@@ -86,7 +86,11 @@ let string_of_dmy conf d is_long =
   !!(Geneweb.DateDisplay.string_of_prec_dmy
        conf (Adef.safe sy) (Adef.safe sy2) d.Date.prec)
 
-let string_of_dmy_raw (d : Date.dmy) : string =
+let string_of_dmy_raw ~calendar (d : Date.dmy) : string =
+  let d =
+    Date.mangle_for_display ~calendar:Dgregorian
+      (Date.convert ~light:true ~from:calendar ~to_:Dgregorian d)
+  in
   let prec =
     match d.Date.prec with
     | About -> "~"
@@ -108,7 +112,7 @@ let string_of_dmy_raw (d : Date.dmy) : string =
 
 let string_of_date_raw (conf : Geneweb.Config.config) (d : Date.date) : string =
   match d with
-  | Date.Dgreg (d, _) -> string_of_dmy_raw d
+  | Date.Dgreg (d, calendar) -> string_of_dmy_raw ~calendar (Date.convert ~from:Dgregorian ~to_:calendar d)
   | Date.Dtext t -> Geneweb.Util.string_with_macros ~conf ~env:[] t
 
 let string_of_french_dmy conf d =
