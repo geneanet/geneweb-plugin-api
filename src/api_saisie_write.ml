@@ -743,30 +743,48 @@ let compute_warnings conf base resp =
                 (* On ignore les messages de changement d'ordre. *)
             | ChildrenNotInOrder _ -> wl
                 (* On ignore les messages de changement d'ordre. *)
-            | CloseChildren (ifam, c1, c2) ->
-                let cpl = Gwdb.foi base ifam in
+            | CloseChildren ((ifam1, c1), (ifam2, c2)) ->
                 let w =
-                (Printf.sprintf
-                   (Geneweb.Util.fcapitale
-                      (Geneweb.Util.ftransl conf
-                         "the following children of %t and %t are born very close"))
-                   (fun _ -> print_someone (Gwdb.poi base (Gwdb.get_father cpl)))
-                   (fun _ -> print_someone (Gwdb.poi base (Gwdb.get_mother cpl))))
-                ^ ": " ^
-                print_someone_dates c1 ^ " " ^ print_someone_dates c2
+                  let cpl = Gwdb.foi base ifam1 in
+                  if Gwdb.eq_ifam ifam1 ifam2 then
+                    (Printf.sprintf
+                       (Geneweb.Util.fcapitale
+                          (Geneweb.Util.ftransl conf
+                             "the following children of %t and %t are born very close"))
+                       (fun _ -> print_someone (Gwdb.poi base (Gwdb.get_father cpl)))
+                       (fun _ -> print_someone (Gwdb.poi base (Gwdb.get_mother cpl))))
+                    ^ ": " ^
+                    print_someone_dates c1 ^ " " ^ print_someone_dates c2
+                  else
+                    (Printf.sprintf
+                       (Geneweb.Util.fcapitale
+                          (Geneweb.Util.ftransl conf
+                             "the following children of %t are born very close"))
+                       (fun () -> print_someone (Gwdb.poi base (Gwdb.get_mother cpl))))
+                    ^ ": " ^
+                    print_someone_dates c1 ^ " " ^ print_someone_dates c2
                 in
                 w :: wl
-            | DistantChildren (ifam, p1, p2) ->
-                let cpl = Gwdb.foi base ifam in
+            | DistantChildren ((ifam1, p1), (ifam2, p2)) ->
                 let w =
-                (Printf.sprintf
-                   (Geneweb.Util.fcapitale
-                      (Geneweb.Util.ftransl conf
-                         "the following children of %t and %t are born very distant"))
-                   (fun _ -> print_someone (Gwdb.poi base (Gwdb.get_father cpl)))
-                   (fun _ -> print_someone (Gwdb.poi base (Gwdb.get_mother cpl))))
-                ^ ": " ^
-                print_someone_dates p1 ^ " " ^ print_someone_dates p2
+                  let cpl = Gwdb.foi base ifam1 in
+                  if Gwdb.eq_ifam ifam1 ifam2 then
+                    (Printf.sprintf
+                       (Geneweb.Util.fcapitale
+                          (Geneweb.Util.ftransl conf
+                             "the following children of %t and %t are born very distant"))
+                       (fun _ -> print_someone (Gwdb.poi base (Gwdb.get_father cpl)))
+                       (fun _ -> print_someone (Gwdb.poi base (Gwdb.get_mother cpl))))
+                    ^ ": " ^
+                    print_someone_dates p1 ^ " " ^ print_someone_dates p2
+                  else
+                    (Printf.sprintf
+                       (Geneweb.Util.fcapitale
+                          (Geneweb.Util.ftransl conf
+                             "the following children of %t are born very distant"))
+                       (fun () -> print_someone (Gwdb.poi base (Gwdb.get_mother cpl))))
+                    ^ ": " ^
+                    print_someone_dates p1 ^ " " ^ print_someone_dates p2
                 in
                 w :: wl
             | DeadOld (p, a) ->

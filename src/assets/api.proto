@@ -527,14 +527,14 @@ message WarningParentTooOld {
 }
 
 message WarningCloseChildren {
-  required WarningPerson father = 1;
+  optional WarningPerson father = 1;
   required WarningPerson mother = 2;
   required WarningPerson child1 = 3;
   required WarningPerson child2 = 4;
 }
 
 message WarningDistantChildren {
-  required WarningPerson father = 1;
+  optional WarningPerson father = 1;
   required WarningPerson mother = 2;
   required WarningPerson child1 = 3;
   required WarningPerson child2 = 4;

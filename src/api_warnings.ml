@@ -101,11 +101,13 @@ let add_warning_to_piqi_warning_list base =
                    father = p2wp base @@ Gwdb.poi base @@ Gwdb.get_father cpl
                  ; mother = p2wp base @@ Gwdb.poi base @@ Gwdb.get_mother cpl
                  } :: w.warning_children_not_in_order }
-    | CloseChildren (ifam, c1, c2) ->
-      let cpl = Gwdb.foi base ifam in
+    | CloseChildren ((ifam1, c1), (ifam2, c2)) ->
+      let cpl = Gwdb.foi base ifam1 in
       { w with warning_close_children =
                  Api_piqi.Warning_close_children.{
-                   father = p2wp base @@ Gwdb.poi base @@ Gwdb.get_father cpl
+                   father = Ext_option.return_if (Gwdb.eq_ifam ifam1 ifam2)
+                     (fun () ->
+                       p2wp base @@ Gwdb.poi base @@ Gwdb.get_father cpl)
                  ; mother = p2wp base @@ Gwdb.poi base @@ Gwdb.get_mother cpl
                  ; child1 = p2wp base c1
                  ; child2 = p2wp base c2
@@ -122,11 +124,13 @@ let add_warning_to_piqi_warning_list base =
                    father = p2wp base f
                  ; son = p2wp base s;
                  } :: w.warning_dead_too_early_to_be_father }
-    | DistantChildren (ifam, c1, c2) ->
-      let cpl = Gwdb.foi base ifam in
+    | DistantChildren ((ifam1, c1), (ifam2, c2)) ->
+      let cpl = Gwdb.foi base ifam1 in
       { w with warning_distant_children =
                  Api_piqi.Warning_distant_children.{
-                   father = p2wp base @@ Gwdb.poi base @@ Gwdb.get_father cpl
+                   father = Ext_option.return_if (Gwdb.eq_ifam ifam1 ifam2)
+                     (fun () ->
+                       p2wp base @@ Gwdb.poi base @@ Gwdb.get_father cpl)
                  ; mother = p2wp base @@ Gwdb.poi base @@ Gwdb.get_mother cpl
                  ; child1 = p2wp base c1
                  ; child2 = p2wp base c2
