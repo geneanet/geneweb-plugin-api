@@ -10,7 +10,17 @@ let limit_list l =
 (* Copie de date.ml sans les balises HTML => on devrait créer *)
 (* un date_api.ml qu'on utiliserait à la place de date.ml     *)
 
-let short_prec_year_text conf d =
+let short_prec_year_text ~calendar conf d =
+  let d =
+    let lighten date =
+      Date.convert
+        ~light:true
+        ~from:calendar
+        ~to_:Dgregorian
+        (Date.convert ~from:Dgregorian ~to_:calendar date)
+    in
+    Date.mangle_for_display ~calendar:Dgregorian (lighten d)
+  in
   let prec =
     match d.Date.prec with
     | About | OrYear _ | YearInt _ ->
@@ -28,13 +38,13 @@ let short_prec_year_text conf d =
 
 let partial_short_dates_text conf birth_date death_date p =
   match (birth_date, death_date) with
-  | (Some (Date.Dgreg (b, _)), Some (Date.Dtext _)) -> short_prec_year_text conf b ^ "-"
-  | (Some (Date.Dgreg (b, _)), None) ->
+  | (Some (Date.Dgreg (b, calendar)), Some (Date.Dtext _)) -> short_prec_year_text ~calendar conf b ^ "-"
+  | (Some (Date.Dgreg (b, calendar)), None) ->
       (* La personne peut être décédée mais ne pas avoir de date. *)
       (match Gwdb.get_death p with
       | Death (_, _) | DeadDontKnowWhen | DeadYoung ->
-          short_prec_year_text conf b ^ "-"
-      | _ -> short_prec_year_text conf b )
+          short_prec_year_text ~calendar conf b ^ "-"
+      | _ -> short_prec_year_text ~calendar conf b )
   | (None, Some (Date.Dtext _)) ->
       (match Gwdb.get_death p with
       | Death (_, _) | DeadDontKnowWhen | DeadYoung -> Geneweb.DateDisplay.death_symbol conf
@@ -50,16 +60,16 @@ let short_dates_text conf base p =
   if Geneweb.Person.is_visible conf base p then
     let (birth_date, death_date, _) = Gutil.get_birth_death_date p in
     match (birth_date, death_date) with
-    | (Some (Date.Dgreg (b, _)), Some (Date.Dgreg (d, _))) ->
-      short_prec_year_text conf b ^ "-" ^ short_prec_year_text conf d
-    | (Some (Date.Dgreg (b, _)), None) ->
+    | (Some (Date.Dgreg (b, b_calendar)), Some (Date.Dgreg (d, d_calendar))) ->
+      short_prec_year_text ~calendar:b_calendar conf b ^ "-" ^ short_prec_year_text ~calendar:d_calendar conf d
+    | (Some (Date.Dgreg (b, calendar)), None) ->
       (* La personne peut être décédée mais ne pas avoir de date. *)
       (match Gwdb.get_death p with
        | Death (_, _) | DeadDontKnowWhen | DeadYoung ->
-         short_prec_year_text conf b ^ "-"
-       | _ -> short_prec_year_text conf b )
-    | (None, Some (Date.Dgreg (d, _))) ->
-      Geneweb.DateDisplay.death_symbol conf ^ short_prec_year_text conf d
+         short_prec_year_text ~calendar conf b ^ "-"
+       | _ -> short_prec_year_text ~calendar conf b )
+    | (None, Some (Date.Dgreg (d, calendar))) ->
+      Geneweb.DateDisplay.death_symbol conf ^ short_prec_year_text ~calendar conf d
     | (None, None) ->
       (* La personne peut être décédée mais ne pas avoir de date. *)
       (match Gwdb.get_death p with
