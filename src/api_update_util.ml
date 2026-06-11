@@ -630,7 +630,8 @@ let pers_to_piqi_person_search ~conf ~base ~person ~first_name ~surname =
   }
 
 
-let pers_to_piqi_person_search_info conf base p =
+let pers_to_piqi_person_search_info conf' base p =
+  let conf = Geneweb.Config.Trimmed.from_config conf' in
   let index = Int32.of_string @@ Gwdb.string_of_iper (Gwdb.get_iper p) in
   let sex =
     match Gwdb.get_sex p with
@@ -639,7 +640,7 @@ let pers_to_piqi_person_search_info conf base p =
     | Def.Neuter -> `unknown
   in
   let sosa =
-    let sosa_nb = Geneweb.Sosa_cache.get_sosa_person ~conf ~base ~person:p in
+    let sosa_nb = Geneweb.Sosa_cache.get_sosa_person ~conf:conf' ~base ~person:p in
     if Sosa.eq sosa_nb Sosa.zero then `no_sosa
     else if Sosa.eq sosa_nb Sosa.one then `sosa_ref
     else `sosa
@@ -653,9 +654,9 @@ let pers_to_piqi_person_search_info conf base p =
   let surname_aliases = List.map (Gwdb.sou base) (Gwdb.get_surnames_aliases p) in
   let occupation =
     let open Api_util in
-    !!(Geneweb.Notes.source conf base (Gwdb.sou base (Gwdb.get_occupation p)))
+    !!(Geneweb.Notes.source conf' base (Gwdb.sou base (Gwdb.get_occupation p)))
   in
-  let image = Api_util.get_portrait conf base p in
+  let image = Api_util.get_portrait conf' base p in
   let events =
     List.map
       (fun evt ->
@@ -663,14 +664,14 @@ let pers_to_piqi_person_search_info conf base p =
           match Geneweb.Event.get_name evt with
           | Geneweb.Event.Pevent name ->
              let open Api_util in
-             !!(Geneweb.Util.string_of_pevent_name conf base name)
+             !!(Geneweb.Util.string_of_pevent_name conf' base name)
           | Geneweb.Event.Fevent name ->
              let open Api_util in
-             !!(Geneweb.Util.string_of_fevent_name conf base name)
+             !!(Geneweb.Util.string_of_fevent_name conf' base name)
         in
         let (date, _, date_conv, _, date_cal) =
           match Date.od_of_cdate (Geneweb.Event.get_date evt) with
-          | Some d -> Api_saisie_read.string_of_date_and_conv conf d
+          | Some d -> Api_saisie_read.string_of_date_and_conv conf' d
           | None -> ("", "", "", "", None)
         in
         let place =
@@ -679,24 +680,24 @@ let pers_to_piqi_person_search_info conf base p =
         in
         let note =
           let open Api_util in
-          !!(Geneweb.Notes.person_note conf base p (Gwdb.sou base (Geneweb.Event.get_note evt)))
+          !!(Geneweb.Notes.person_note conf' base p (Gwdb.sou base (Geneweb.Event.get_note evt)))
         in
         let src =
           let open Api_util in
-          !!(Geneweb.Notes.source conf base (Gwdb.sou base (Geneweb.Event.get_src evt)))
+          !!(Geneweb.Notes.source conf' base (Gwdb.sou base (Geneweb.Event.get_src evt)))
         in
         let spouse =
           match Geneweb.Event.get_spouse_iper evt with
           | Some ip ->
               let sp = Gwdb.poi base ip in
-              Some (pers_to_piqi_simple_person conf base sp)
+              Some (pers_to_piqi_simple_person conf' base sp)
           | None -> None
         in
         let witnesses =
           Ext_array.to_list_map
             (fun (ip, wk, wnote) ->
               let witness_type = Api_util.piqi_of_witness_kind wk in
-               let witness = pers_to_piqi_simple_person conf base @@ Gwdb.poi base ip in
+               let witness = pers_to_piqi_simple_person conf' base @@ Gwdb.poi base ip in
               let witness_note = Gwdb.sou base wnote in
               let witness_note = if witness_note = "" then None else Some witness_note in
               Api_saisie_write_piqi.Witness_event.{ witness_type ; witness ; witness_note})
@@ -718,18 +719,18 @@ let pers_to_piqi_person_search_info conf base p =
   in
   let notes =
     let open Api_util in
-    !!(Geneweb.Notes.person_note conf base p (Gwdb.sou base (Gwdb.get_notes p)))
+    !!(Geneweb.Notes.person_note conf' base p (Gwdb.sou base (Gwdb.get_notes p)))
   in
   let psources =
     let open Api_util in
-    !!(Geneweb.Notes.source conf base (Gwdb.sou base (Gwdb.get_psources p)))
+    !!(Geneweb.Notes.source conf' base (Gwdb.sou base (Gwdb.get_psources p)))
   in
   let has_sources = psources <> "" in
-  let titles = Geneweb.Perso.nobility_titles_list conf base p in
+  let titles = Geneweb.Perso.nobility_titles_list conf' base p in
   let titles =
     List.map (fun x ->
         let open Api_util in
-        !!(Geneweb.Perso.string_of_title ~safe:true ~link:false conf base (Adef.safe "") p x)
+        !!(Geneweb.Perso.string_of_title ~safe:true ~link:false conf' base (Adef.safe "") p x)
       ) titles
   in
   let related =
@@ -737,7 +738,7 @@ let pers_to_piqi_person_search_info conf base p =
       let list = List.sort_uniq compare (Gwdb.get_related p) in
       List.fold_left
         (fun list ic ->
-           let c = Geneweb.Util.pget conf base ic in
+           let c = Geneweb.Util.pget conf' base ic in
            let rec loop list =
              function
              | r :: rl ->
@@ -773,7 +774,7 @@ let pers_to_piqi_person_search_info conf base p =
     in
     List.map
       (fun (p, rp) ->
-        let person = pers_to_piqi_simple_person conf base p in
+        let person = pers_to_piqi_simple_person conf' base p in
         let r_type =
           match rp.Def.r_type with
           | Adoption -> `rchild_adoption
@@ -803,7 +804,7 @@ let pers_to_piqi_person_search_info conf base p =
           match rp.Def.r_fath with
           | Some ip ->
               let p = Gwdb.poi base ip in
-              let person = pers_to_piqi_simple_person conf base p in
+              let person = pers_to_piqi_simple_person conf' base p in
               let p =
                 {
                   Api_saisie_write_piqi.Relation_person.r_type;
@@ -816,7 +817,7 @@ let pers_to_piqi_person_search_info conf base p =
         match rp.Def.r_moth with
         | Some ip ->
           let p = Gwdb.poi base ip in
-          let person = pers_to_piqi_simple_person conf base p in
+          let person = pers_to_piqi_simple_person conf' base p in
           let p =
             {
               Api_saisie_write_piqi.Relation_person.r_type;
@@ -834,7 +835,7 @@ let pers_to_piqi_person_search_info conf base p =
       let rec make_list =
         function
         | ic :: icl ->
-            let c = Geneweb.Util.pget conf base ic in
+            let c = Geneweb.Util.pget conf' base ic in
             if Gwdb.get_sex c = Def.Male then
               Array.iter
                 (fun ifam ->
@@ -843,7 +844,7 @@ let pers_to_piqi_person_search_info conf base p =
                    then
                      list := (ifam, fam) :: !list
                    else ())
-                (Gwdb.get_family (Geneweb.Util.pget conf base ic))
+                (Gwdb.get_family (Geneweb.Util.pget conf' base ic))
             else ();
             make_list icl
         | [] -> ()
@@ -868,14 +869,14 @@ let pers_to_piqi_person_search_info conf base p =
          let imoth = Gwdb.get_mother fam in
          let father = Gwdb.poi base ifath in
          let mother = Gwdb.poi base imoth in
-         let father_auth = Geneweb.Person.is_visible conf base father in
+         let father_auth = Geneweb.Person.is_visible conf' base father in
          let husband =
-           if not father_auth && (Geneweb.Person.is_hide_names conf father) then "x x"
+           if not father_auth && (Geneweb.Person.is_hide_names conf' father) then "x x"
            else Gwdb.p_first_name base father ^ " " ^ Gwdb.p_surname base father
          in
-         let mother_auth = Geneweb.Person.is_visible conf base mother in
+         let mother_auth = Geneweb.Person.is_visible conf' base mother in
          let wife =
-           if not mother_auth && (Geneweb.Person.is_hide_names conf mother) then "x x"
+           if not mother_auth && (Geneweb.Person.is_hide_names conf' mother) then "x x"
            else Gwdb.p_first_name base mother ^ " " ^ Gwdb.p_surname base mother
          in
          Api_saisie_write_piqi.Was_witness.({
