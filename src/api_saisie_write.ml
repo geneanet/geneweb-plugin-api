@@ -721,8 +721,8 @@ let compute_warnings conf base resp =
                      (Geneweb.Util.fcapitale
                         (Geneweb.Util.ftransl conf
                            "the difference of age between %t and %t is quite important"))
-                     (fun _ -> print_someone p1)
-                     (fun _ -> print_someone p2))
+                     (fun () -> print_someone p1)
+                     (fun () -> print_someone p2))
                   ^ ": " ^ !!(Geneweb.DateDisplay.string_of_age conf a)
                 in
                 w :: wl
@@ -730,7 +730,7 @@ let compute_warnings conf base resp =
                 let w =
                 Printf.sprintf
                   (Geneweb.Util.ftransl conf "%t died before his/her birth")
-                  (fun _ -> print_someone_dates p)
+                  (fun () -> print_someone_dates p)
                 in
                 w :: wl
             | ChangedOrderOfChildren _ -> wl
@@ -743,30 +743,48 @@ let compute_warnings conf base resp =
                 (* On ignore les messages de changement d'ordre. *)
             | ChildrenNotInOrder _ -> wl
                 (* On ignore les messages de changement d'ordre. *)
-            | CloseChildren (ifam, c1, c2) ->
-                let cpl = Gwdb.foi base ifam in
+            | CloseChildren ((ifam1, c1), (ifam2, c2)) ->
                 let w =
-                (Printf.sprintf
-                   (Geneweb.Util.fcapitale
-                      (Geneweb.Util.ftransl conf
-                         "the following children of %t and %t are born very close"))
-                   (fun _ -> print_someone (Gwdb.poi base (Gwdb.get_father cpl)))
-                   (fun _ -> print_someone (Gwdb.poi base (Gwdb.get_mother cpl))))
-                ^ ": " ^
-                print_someone_dates c1 ^ " " ^ print_someone_dates c2
+                  let cpl = Gwdb.foi base ifam1 in
+                  if Gwdb.eq_ifam ifam1 ifam2 then
+                    (Printf.sprintf
+                       (Geneweb.Util.fcapitale
+                          (Geneweb.Util.ftransl conf
+                             "the following children of %t and %t are born very close"))
+                       (fun () -> print_someone (Gwdb.poi base (Gwdb.get_father cpl)))
+                       (fun () -> print_someone (Gwdb.poi base (Gwdb.get_mother cpl))))
+                    ^ ": " ^
+                    print_someone_dates c1 ^ " " ^ print_someone_dates c2
+                  else
+                    (Printf.sprintf
+                       (Geneweb.Util.fcapitale
+                          (Geneweb.Util.ftransl conf
+                             "the following children of %t are born very close"))
+                       (fun () -> print_someone (Gwdb.poi base (Gwdb.get_mother cpl))))
+                    ^ ": " ^
+                    print_someone_dates c1 ^ " " ^ print_someone_dates c2
                 in
                 w :: wl
-            | DistantChildren (ifam, p1, p2) ->
-                let cpl = Gwdb.foi base ifam in
+            | DistantChildren ((ifam1, p1), (ifam2, p2)) ->
                 let w =
-                (Printf.sprintf
-                   (Geneweb.Util.fcapitale
-                      (Geneweb.Util.ftransl conf
-                         "the following children of %t and %t are born very distant"))
-                   (fun _ -> print_someone (Gwdb.poi base (Gwdb.get_father cpl)))
-                   (fun _ -> print_someone (Gwdb.poi base (Gwdb.get_mother cpl))))
-                ^ ": " ^
-                print_someone_dates p1 ^ " " ^ print_someone_dates p2
+                  let cpl = Gwdb.foi base ifam1 in
+                  if Gwdb.eq_ifam ifam1 ifam2 then
+                    (Printf.sprintf
+                       (Geneweb.Util.fcapitale
+                          (Geneweb.Util.ftransl conf
+                             "the following children of %t and %t are born very distant"))
+                       (fun () -> print_someone (Gwdb.poi base (Gwdb.get_father cpl)))
+                       (fun () -> print_someone (Gwdb.poi base (Gwdb.get_mother cpl))))
+                    ^ ": " ^
+                    print_someone_dates p1 ^ " " ^ print_someone_dates p2
+                  else
+                    (Printf.sprintf
+                       (Geneweb.Util.fcapitale
+                          (Geneweb.Util.ftransl conf
+                             "the following children of %t are born very distant"))
+                       (fun () -> print_someone (Gwdb.poi base (Gwdb.get_mother cpl))))
+                    ^ ": " ^
+                    print_someone_dates p1 ^ " " ^ print_someone_dates p2
                 in
                 w :: wl
             | DeadOld (p, a) ->
@@ -785,8 +803,8 @@ let compute_warnings conf base resp =
                 Printf.sprintf
                   (Geneweb.Util.ftransl conf "\
           %t is born more than 2 years after the death of his/her father %t")
-                  (fun _ -> print_someone_dates child)
-                  (fun _ -> print_someone_dates father)
+                  (fun () -> print_someone_dates child)
+                  (fun () -> print_someone_dates father)
                 in
                 w :: wl
             | FEventOrder (p, e1, e2) ->
@@ -794,7 +812,7 @@ let compute_warnings conf base resp =
                   let open Api_util in
                   Printf.sprintf
                     (Geneweb.Util.ftransl conf "%t's %s before his/her %s")
-                    (fun _ -> print_someone_dates p)
+                    (fun () -> print_someone_dates p)
                     !!(Geneweb.Util.string_of_fevent_name conf base (get_fevent_name e1))
                     !!(Geneweb.Util.string_of_fevent_name conf base (get_fevent_name e2))
                 in
@@ -804,7 +822,7 @@ let compute_warnings conf base resp =
                   let open Api_util in
                   Printf.sprintf
                     (Geneweb.Util.ftransl conf "%t witnessed the %s after his/her death")
-                    (fun _ -> print_someone_dates p)
+                    (fun () -> print_someone_dates p)
                     !!(Geneweb.Util.string_of_fevent_name conf base (get_fevent_name e))
                 in
                 w :: wl
@@ -813,7 +831,7 @@ let compute_warnings conf base resp =
                   let open Api_util in
                   Printf.sprintf
                     (Geneweb.Util.ftransl conf "%t witnessed the %s before his/her birth")
-                    (fun _ -> print_someone_dates p)
+                    (fun () -> print_someone_dates p)
                     !!(Geneweb.Util.string_of_fevent_name conf base (get_fevent_name e))
                 in
                 w :: wl
@@ -822,7 +840,7 @@ let compute_warnings conf base resp =
                 Printf.sprintf
                   (Geneweb.Util.fcapitale
                      (Geneweb.Util.ftransl conf "%t's sex is not coherent with his/her relations"))
-                  (fun _ -> print_someone p)
+                  (fun () -> print_someone p)
                 in
                 w :: wl
             | IncoherentAncestorDate (anc, p) ->
@@ -836,22 +854,22 @@ let compute_warnings conf base resp =
                 let w =
                 Printf.sprintf
                   (Geneweb.Util.fcapitale (Geneweb.Util.ftransl conf "marriage had occurred after the death of %t"))
-                  (fun _ -> print_someone_dates p)
+                  (fun () -> print_someone_dates p)
                 in
                 w :: wl
             | MarriageDateBeforeBirth p ->
                 let w =
                 Printf.sprintf
                   (Geneweb.Util.fcapitale (Geneweb.Util.ftransl conf "marriage had occurred before the birth of %t"))
-                  (fun _ -> print_someone_dates p)
+                  (fun () -> print_someone_dates p)
                 in
                 w :: wl
             | MotherDeadBeforeChildBirth (mother, child) ->
                 let w =
                 Printf.sprintf
                   (Geneweb.Util.ftransl conf "%t is born after the death of his/her mother %t")
-                  (fun _ -> print_someone_dates child)
-                  (fun _ -> print_someone_dates mother)
+                  (fun () -> print_someone_dates child)
+                  (fun () -> print_someone_dates mother)
                 in
                 w :: wl
             | ParentBornAfterChild (p, c) ->
@@ -888,7 +906,7 @@ let compute_warnings conf base resp =
                   let open Api_util in
                   Printf.sprintf
                     (Geneweb.Util.ftransl conf "%t's %s before his/her %s")
-                    (fun _ -> print_someone_dates p)
+                    (fun () -> print_someone_dates p)
                     !!(Geneweb.Util.string_of_pevent_name conf base (get_pevent_name e1))
                     !!(Geneweb.Util.string_of_pevent_name conf base (get_pevent_name e2))
                 in
@@ -898,7 +916,7 @@ let compute_warnings conf base resp =
                   let open Api_util in
                   Printf.sprintf
                     (Geneweb.Util.ftransl conf "%t witnessed the %s after his/her death")
-                    (fun _ -> print_someone_dates p)
+                    (fun () -> print_someone_dates p)
                     !!(Geneweb.Util.string_of_pevent_name conf base (get_pevent_name e))
                 in
                 w :: wl
@@ -907,7 +925,7 @@ let compute_warnings conf base resp =
                   let open Api_util in
                   Printf.sprintf
                     (Geneweb.Util.ftransl conf "%t witnessed the %s before his/her birth")
-                    (fun _ -> print_someone_dates p)
+                    (fun () -> print_someone_dates p)
                     !!(Geneweb.Util.string_of_pevent_name conf base (get_pevent_name e))
                 in
                 w :: wl
@@ -915,8 +933,8 @@ let compute_warnings conf base resp =
                 let w =
                 Printf.sprintf
                   (Geneweb.Util.fcapitale (Geneweb.Util.ftransl conf "%t has incorrect title dates: %t"))
-                  (fun _ -> print_someone_dates p)
-                  (fun _ ->
+                  (fun () -> print_someone_dates p)
+                  (fun () ->
                      Printf.sprintf "%s %s %s-%s"
                        (Gwdb.sou base t.Def.t_ident) (Gwdb.sou base t.t_place)
                        (match Date.od_of_cdate t.t_date_start with
@@ -935,7 +953,7 @@ let compute_warnings conf base resp =
                 let w =
                 Printf.sprintf
                   (Geneweb.Util.fcapitale (Geneweb.Util.ftransl conf "undefined sex for %t"))
-                  (fun _ -> print_someone p)
+                  (fun () -> print_someone p)
                 in
                 w :: wl
             | YoungForMarriage (p, a, _)
@@ -945,7 +963,7 @@ let compute_warnings conf base resp =
                 print_someone p ^ " " ^
                   (Printf.sprintf
                      (Geneweb.Util.ftransl conf "married at age %t")
-                     (fun _ -> !!(Geneweb.DateDisplay.string_of_age conf a)))
+                    (fun () -> !!(Geneweb.DateDisplay.string_of_age conf a)))
                 in
                 w :: wl)
           wl []
