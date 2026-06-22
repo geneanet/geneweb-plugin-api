@@ -661,7 +661,7 @@ let merge_dup_link conf iper txt =
               "ip", Adef.encoded iper_s;
               "m", Adef.encoded "MRG_DUP";]
   in
-  "<a href=" ^ (Ext_uri.to_string @@ Geneweb.Util.commd {conf with henv})  ^ ">"
+  "<a href=" ^ (Geneweb.Localized_url.to_string @@ Geneweb.Util.commd {conf with henv})  ^ ">"
   ^ txt
   ^ "</a>"
 
