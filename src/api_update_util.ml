@@ -1272,6 +1272,7 @@ let pers_to_piqi_mod_person conf base p =
     is_contemporary;
     name_is_hidden = Geneweb.Person.is_hidden conf base p;
     name_is_restricted = Geneweb.Person.has_restricted_name conf base p;
+    reference = Api_util.person_reference base p;
   }
 
 let fam_to_piqi_mod_family conf base ifam fam =
