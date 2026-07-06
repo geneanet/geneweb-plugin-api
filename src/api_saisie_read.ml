@@ -2372,3 +2372,56 @@ let get_paginated_data ~conf ~base params =
          simple_event_witness_constructor
      in
      `Witnessed_events (Api_util.Paginated_data.Piqi.to_witnessed_events events)
+
+let get_profile ~(conf : Geneweb.Config.config) ~base person :
+  Api_saisie_read_piqi.Profile.t =
+  let buffer = Buffer.create 1024 in
+  let get_section section =
+    let () =
+      let template =
+        let get_template_name section =
+          let name =
+            match section with
+            | `Parents -> "parent"
+            | `Unions -> "union"
+            | `Siblings -> "freresoeur"
+            | `Family -> "famille"
+            | `Relations -> "relations"
+            | `Notes -> "notes"
+            | `Sources -> "sources"
+            | `Tree -> "arbre"
+          in
+          Option.map (Printf.sprintf "perso_module/%s_%s" name)
+            (List.assoc_opt (Printf.sprintf "module_%s" name) conf.base_env)
+        in
+        match section with
+        | `Civil_status -> Some "perso_module/etatcivil_1"
+        | `Parents | `Unions | `Siblings | `Family | `Relations | `Notes |
+          `Sources | `Tree as section ->
+          get_template_name section
+      in
+      Option.iter
+        (fun template ->
+          Geneweb.Perso.interp_templ
+            template
+            ~output:(Buffer.add_string buffer)
+            ~no_headers:true
+            conf
+            base
+            person)
+        template
+    in
+    let section = Buffer.contents buffer in
+    let () = Buffer.clear buffer in
+    Ext_option.return_if
+      (not @@ String.equal section String.empty) (fun () -> section)
+  in
+  {civil_status = get_section `Civil_status;
+   parents = get_section `Parents;
+   unions = get_section `Unions;
+   siblings = get_section `Siblings;
+   family = get_section `Family;
+   relations = get_section `Relations;
+   notes = get_section `Notes;
+   sources = get_section `Sources;
+   tree = get_section `Tree}
