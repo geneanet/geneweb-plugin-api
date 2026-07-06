@@ -530,3 +530,15 @@ message PaginatedDataParameters {
   required PaginatedDataType type = 2;
   required Page page = 3;
 }
+
+message Profile {
+  optional string civil_status = 1;
+  optional string parents = 2;
+  optional string unions = 3;
+  optional string siblings = 4;
+  optional string family = 5;
+  optional string relations = 6;
+  optional string notes = 7;
+  optional string sources = 8;
+  optional string tree = 9;
+}
