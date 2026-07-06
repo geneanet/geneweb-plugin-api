@@ -531,6 +531,10 @@ message PaginatedDataParameters {
   required Page page = 3;
 }
 
+message ProfileParameters {
+  optional IdentifierPerson person = 1;
+}
+
 message Profile {
   optional string civil_status = 1;
   optional string parents = 2;

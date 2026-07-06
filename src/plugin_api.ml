@@ -60,6 +60,46 @@ let get_paginated_data conf base =
   in
   Plugin_api_lib.Api_util.print_result conf data
 
+let get_profile conf' base =
+  let conf = Geneweb.Config.Trimmed.from_config conf' in
+  let data =
+    let person =
+      let person_id =
+        let open Ext_option.Infix in
+        let params =
+          Plugin_api_lib.Api_util.get_params
+            conf'
+            Plugin_api_lib.Api_saisie_read_piqi_ext.parse_profile_parameters
+        in
+        params.person >>= fun person ->
+          match person.index with
+          | Some person_id ->
+            Some (person_id |> Int32.to_string |> Gwdb.iper_of_string)
+          | None ->
+            person.p >>= fun first_name ->
+            person.n >>= fun surname ->
+            Gwdb.person_of_key
+              base
+              first_name
+              surname
+              (Option.fold ~none:0 ~some:Int32.to_int person.oc)
+      in
+      match person_id with
+      | None -> Plugin_api_lib.Api_piqi_util.print_error conf' `bad_request ""
+      | Some person_id ->
+        match
+        Geneweb.Authorized.Person.get_iper @@
+          Geneweb.Authorized.Person.make ~conf ~base person_id
+        with
+        | None -> Plugin_api_lib.Api_piqi_util.print_error conf' `forbidden ""
+        | Some person_id ->
+          Gwdb.poi base person_id
+    in
+    Plugin_api_lib.Api_saisie_read_piqi_ext.gen_profile
+      (Plugin_api_lib.Api_saisie_read.get_profile ~conf:conf' ~base person)
+  in
+  Plugin_api_lib.Api_piqi_util.print_result conf' data
+
 let () =
   let assets = !Gwd_lib.GwdPlugin.assets in
   let aux dico_type s lang =
@@ -197,5 +237,6 @@ let () =
     ; ( "API_SELECT_EVENTS"
       , aux @@ w_base @@ Plugin_api_lib.Api_graph.print_select_events);
     ( "API_GET_PAGINATED_DATA" , aux @@ w_base @@ get_paginated_data);
+    ( "API_GET_PROFILE" , aux @@ w_base get_profile);
       ("API_HISTORY", aux @@ friend @@ w_base @@ Plugin_api_lib.Api.history)
     ]
