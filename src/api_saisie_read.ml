@@ -691,7 +691,7 @@ let fam_to_piqi_family_link
 
 let fill_events
       ?(page : Api_util.Page.t option)
-      (conf : Geneweb.Config.config)
+      (conf' : Geneweb.Config.config)
       (base : Gwdb.base)
       (p : Gwdb.person)
       (base_prefix : string)
@@ -723,6 +723,7 @@ let fill_events
          'witness list ->
          'event)
     : 'event Api_util.Paginated_data.t =
+  let conf = Geneweb.Config.Trimmed.from_config conf' in
   let extract_page =
     Option.fold
       ~none:Api_util.Paginated_data.all
@@ -742,18 +743,18 @@ let fill_events
         match name with
         | Geneweb.Event.Pevent name ->
            let open Api_util in
-           ( !!(Geneweb.Util.string_of_pevent_name conf base name)
+           ( !!(Geneweb.Util.string_of_pevent_name conf' base name)
            , event_to_piqi_event (Some name) None)
         | Geneweb.Event.Fevent name ->
            let open Api_util in
-           ( !!(Geneweb.Util.string_of_fevent_name conf base name)
+           ( !!(Geneweb.Util.string_of_fevent_name conf' base name)
            , event_to_piqi_event None (Some name) )
       in
       let (date, date_long, date_conv, date_conv_long, date_cal, date_raw) =
         match Date.od_of_cdate date with
         | Some d ->
-           let (date, date_long, date_conv, date_conv_long, date_cal) = string_of_date_and_conv conf d in
-           (date, date_long, date_conv, date_conv_long, date_cal, string_of_date_raw conf d)
+           let (date, date_long, date_conv, date_conv_long, date_cal) = string_of_date_and_conv conf' d in
+           (date, date_long, date_conv, date_conv_long, date_cal, string_of_date_raw conf' d)
         | _ -> ("", "", "", "", None, "")
       in
       let place =
@@ -761,25 +762,25 @@ let fill_events
         !!(Geneweb.Util.string_of_place (Gwdb.sou base place))
       in
       let note =
-        if not conf.Geneweb.Config.no_note
+        if not conf.no_note
         then
           let open Api_util in
-          !!(Geneweb.Notes.person_note ~keep_newlines:true conf base p (Gwdb.sou base note))
+          !!(Geneweb.Notes.person_note ~keep_newlines:true conf' base p (Gwdb.sou base note))
         else ""
       in
       let src =
         let open Api_util in
-        !!(Geneweb.Notes.source conf base (Gwdb.sou base src))
+        !!(Geneweb.Notes.source conf' base (Gwdb.sou base src))
       in
       let spouse =
-        Option.map (fun ip -> pers_to_piqi conf base (Gwdb.poi base ip) base_prefix) isp
+        Option.map (fun ip -> pers_to_piqi conf' base (Gwdb.poi base ip) base_prefix) isp
       in
       let witnesses =
         Ext_array.to_list_map
           (fun (ip, wk, wnote) ->
             let witness_type = Api_util.piqi_of_witness_kind wk in
             let witness = Gwdb.poi base ip in
-            let witness = pers_to_piqi conf base witness base_prefix in
+            let witness = pers_to_piqi conf' base witness base_prefix in
             let wnote = Utf8.normalize @@ Gwdb.sou base wnote in
             witness_constructor witness_type witness wnote
           )
@@ -1102,7 +1103,8 @@ let fill_occupation conf base p_auth gen_p =
     !!(Geneweb.Notes.source conf base gen_p.Def.occupation)
   else ""
 
-let fill_index conf base p =
+let fill_index conf' base p =
+  let conf = Geneweb.Config.Trimmed.from_config conf' in
   let p = Geneweb.Authorized.Person.make ~conf ~base (Gwdb.get_iper p) in
   Int32.of_string @@
   Gwdb.string_of_iper @@
