@@ -461,3 +461,55 @@ let print_mod conf base ip mod_f =
     end
   in
   print_mod_aux conf base mod_f callback
+
+let set_parents_fields conf base p linked created =
+  linked.Api_saisie_write_piqi.Person.create_link <- `link;
+  created.Api_saisie_write_piqi.Person.index <- Int32.of_string @@ Gwdb.string_of_iper Gwdb.dummy_iper;
+  created.Api_saisie_write_piqi.Person.access <- `access_iftitles;
+  created.Api_saisie_write_piqi.Person.create_link <- `create_default_occ;
+  created.Api_saisie_write_piqi.Person.digest <- "";
+  let death_status = Api_util.infer_death conf base p in
+  created.Api_saisie_write_piqi.Person.death_type <- death_status;
+  if death_status = `of_course_dead then
+    created.Api_saisie_write_piqi.Person.pevents <- created.Api_saisie_write_piqi.Person.pevents @ [ Api_util.empty_death_pevent () ]
+
+(** [Description] : Permet la factorisation du code pour ajouter une famille
+                    et ajouter un enfant à une nouvelle famille.
+    [Args] :
+      - conf : configuration de la base
+      - base : base de donnée
+      - p    : la personne à qui on ajoute la famille
+    [Retour] :
+      - Family : la famille piqi
+                                                                           *)
+let compute_add_family
+      (conf : Geneweb.Config.config) (base : Gwdb.base) (p : Gwdb.person) :
+      Api_saisie_write_piqi.family  =
+  let adding_to_father = Gwdb.get_sex p = Def.Male in
+  let family =
+    Api_update_util.piqi_empty_family conf base Gwdb.dummy_ifam
+  in
+  let p_father =
+    if adding_to_father then p else Gwdb.empty_person base Gwdb.dummy_iper
+  in
+  let p_mother =
+    if adding_to_father then Gwdb.empty_person base Gwdb.dummy_iper
+    else p
+  in
+  let father = Api_update_util.pers_to_piqi_mod_person conf base p_father in
+  let mother = Api_update_util.pers_to_piqi_mod_person conf base p_mother in
+  (* Les index négatifs ne marchent pas ! *)
+  (* Par défaut, les access sont en Private, on passe en Iftitles. *)
+  family.Api_saisie_write_piqi.Family.index <- Int32.of_string @@ Gwdb.string_of_ifam Gwdb.dummy_ifam;
+  if adding_to_father
+  then begin
+    mother.Api_saisie_write_piqi.Person.sex <- `female ;
+    set_parents_fields conf base p father mother
+  end
+  else begin
+    father.Api_saisie_write_piqi.Person.sex <- `male;
+    set_parents_fields conf base p mother father
+  end ;
+  family.Api_saisie_write_piqi.Family.father <- father;
+  family.Api_saisie_write_piqi.Family.mother <- mother;
+  family
