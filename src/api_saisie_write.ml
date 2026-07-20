@@ -1066,7 +1066,7 @@ let print_mod_ind conf base =
 
 let print_mod_ind_ok conf base =
   let mod_p = Api_util.get_params conf Api_saisie_write_piqi_ext.parse_person in
-  let resp = Api_update_person.print_mod conf base mod_p in
+  let resp = Api_update_person.print_mod ~with_update_parents_links:true conf base mod_p in
   let ip = Gwdb.iper_of_string @@ Int32.to_string mod_p.Api_saisie_write_piqi.Person.index in
   let data = compute_modification_status conf base ip Gwdb.dummy_ifam resp in
   Api_util.print_result conf data
