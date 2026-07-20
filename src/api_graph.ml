@@ -438,7 +438,7 @@ let print_graph_rel conf base =
         let by_marr = true in
         let rel =
           match
-            try Left (Relation.compute_relationship conf base by_marr p1 p2)
+            try Either.Left (Relation.compute_relationship conf base by_marr p1 p2)
             with Consang.TopologicalSortError p -> Right p
           with
           | Left rel -> rel
@@ -482,7 +482,7 @@ let print_cpl_relation conf base =
         let by_marr = true in
         let rel =
           match
-            try Left (Relation.compute_relationship conf base by_marr p1 p2)
+            try Either.Left (Relation.compute_relationship conf base by_marr p1 p2)
             with Consang.TopologicalSortError p -> Right p
           with
           | Left rel -> rel
