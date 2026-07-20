@@ -1384,3 +1384,18 @@ let person_reference base person =
   {Api_saisie_write_piqi.Person_reference.n;
    p;
    oc = Int32.of_int occurrence_number}
+
+let infer_death conf base p =
+  piqi_death_type_of_death (Geneweb.Update.infer_death conf base p)
+
+let empty_death_pevent () =
+  {
+    Api_saisie_write_piqi.Pevent.pevent_type = Some `epers_death;
+    date = None;
+    place = None;
+    reason = None;
+    note = None;
+    src = None;
+    witnesses = [];
+    event_perso = None;
+  }

@@ -181,3 +181,7 @@ end
 
 val person_reference :
   Gwdb.base -> Gwdb.person -> Api_saisie_write_piqi.Person_reference.t
+
+val infer_death : Geneweb.Config.config -> Gwdb.base -> Gwdb.person ->  [> `dead | `dead_young | `dont_know_if_dead | `not_dead | `of_course_dead ]
+
+val empty_death_pevent : unit -> Api_saisie_write_piqi.Pevent.t
