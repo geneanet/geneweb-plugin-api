@@ -1568,3 +1568,9 @@ let to_update_key person_update =
    person_update.occurrence_number,
    person_update.kind,
    "")
+
+let append_update_status ubs ubs' = match ubs, ubs' with
+  | UpdateSuccess (ws, ms, hs, _cp), UpdateSuccess (ws', ms', hs', cp') ->
+    UpdateSuccess (ws @ ws', ms @ ms', hs @ hs', cp')
+  | UpdateError err, _ | _, UpdateError err -> UpdateError err
+  | UpdateErrorConflict conflict, _ | _, UpdateErrorConflict conflict -> UpdateErrorConflict conflict

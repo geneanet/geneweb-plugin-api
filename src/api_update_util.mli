@@ -134,3 +134,5 @@ val reconstitute_somebody :
   person_update
 
 val to_update_key : person_update -> Geneweb.Update.key
+
+val append_update_status : update_base_status -> update_base_status -> update_base_status
