@@ -123,6 +123,8 @@ message SimplePerson {
   optional string death_place = 8;
   optional string image = 9;
   required Sosa sosa = 10;
+  required PersonReference reference = 11;
+  required Access access = 12;
 }
 
 message WitnessEvent {

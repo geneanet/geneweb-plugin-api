@@ -259,6 +259,11 @@ let check_family_conflict base sfam scpl sdes =
     | false, created -> created
   end created sdes.Def.children
 
+let piqi_access_of_access = function
+  | Def.IfTitles -> `access_iftitles
+  | Public -> `access_public
+  | Private -> `access_private
+
 (**/**) (* Convertion d'une date. *)
 
 
@@ -519,6 +524,8 @@ let pers_to_piqi_simple_person (conf : Geneweb.Config.config) (base : Gwdb.base)
     (birth, birth_place, death, death_place)
   in
   let image = Api_util.get_portrait conf base p in
+  let reference = Api_util.person_reference base p in
+  let access = piqi_access_of_access (Gwdb.get_access p) in
   {
     Api_saisie_write_piqi.Simple_person.index;
     sex;
@@ -530,6 +537,8 @@ let pers_to_piqi_simple_person (conf : Geneweb.Config.config) (base : Gwdb.base)
     death_place = if death_place = "" then None else Some death_place;
     image;
     sosa;
+    reference;
+    access;
   }
 
 
@@ -1230,12 +1239,7 @@ let pers_to_piqi_mod_person conf base p =
         | None -> accu)
       (Gwdb.get_rparents p) []
   in
-  let access =
-    match Gwdb.get_access p with
-    | IfTitles -> `access_iftitles
-    | Public -> `access_public
-    | Private -> `access_private
-  in
+  let access = piqi_access_of_access (Gwdb.get_access p) in
   let parents_ifam = Gwdb.get_parents p in
   let parents =
     match parents_ifam with
