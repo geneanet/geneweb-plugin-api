@@ -63,28 +63,38 @@ let find_free_occ ~base ~first_name ~surname =
       directement traduite du côté GeneWeb.
 *)
 
-type created_person = {
+type person_infos = {
   n : string;
   p : string;
-  oc : int32
+  oc : int32;
+  index : int32;
 }
 
-let created_person_of_person base pers =
+type update_type = Created | Modified
+
+let person_infos_of_person base pers =
   let n = Gwdb.sou base pers.Def.surname in
   let p = Gwdb.sou base pers.Def.first_name in
   let oc = Int32.of_int pers.Def.occ in
-  {n; p; oc}
+  let index = Int32.of_int (Gwdb.int_of_iper pers.Def.key_index) in
+  {n; p; oc; index}
 
-let created_person ~n ~p ~oc = {n; p; oc}
+let person_infos ~n ~p ~oc ~index = {n; p; oc; index}
 
-let created_person_is_unnamed cp =
+let person_infos_is_unnamed cp =
   cp.n = "?" && cp.p = "?"
 
+type updated_persons_infos = {
+  person : person_infos * update_type;
+  spouse : (person_infos * update_type) option;
+}
+
 type update_base_status =
-  | UpdateSuccess of Geneweb.Warning.base_warning list * Geneweb.Warning.base_misc list * (unit -> unit) list * created_person option
+  | UpdateSuccess of Geneweb.Warning.base_warning list * Geneweb.Warning.base_misc list * (unit -> unit) list * updated_persons_infos option
   | UpdateError of Geneweb.Update.update_error
   | UpdateErrorConflict of Api_saisie_write_piqi.Create_conflict.t
 
+let updated_persons_infos ~person ~spouse = {person; spouse}
 
 (* Exception qui gère les conflits de création de personnes. *)
 exception ModErrApiConflict of Api_saisie_write_piqi.Create_conflict.t
@@ -1578,3 +1588,14 @@ let append_update_status ubs ubs' = match ubs, ubs' with
     UpdateSuccess (ws @ ws', ms @ ms', hs @ hs', cp')
   | UpdateError err, _ | _, UpdateError err -> UpdateError err
   | UpdateErrorConflict conflict, _ | _, UpdateErrorConflict conflict -> UpdateErrorConflict conflict
+
+let piqi_update_type = function
+  | Created -> `created
+  | Modified -> `modified
+
+let piqi_person_update conf base person_infos update_type =
+  Api_saisie_write_piqi.Person_update.{
+    person = Some (pers_to_piqi_simple_person conf base (Gwdb.poi base (Gwdb.iper_of_string @@ Int32.to_string person_infos.index)));
+    update_type = Some (piqi_update_type update_type);
+  }
+

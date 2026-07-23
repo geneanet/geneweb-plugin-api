@@ -989,7 +989,7 @@ let compute_modification_status' conf base ip ifam resp =
   let sn = if surname = "" then None else Some (Name.lower surname) in
   let fn = if first_name = "" then None else Some (Name.lower first_name) in
   let index_family = if ifam = Gwdb.dummy_ifam then None else Some (Int32.of_string @@ Gwdb.string_of_ifam ifam) in
-  let (is_base_updated, warnings, miscs, conflict, history_records, created_person) =
+  let (is_base_updated, warnings, miscs, conflict, history_records, updated_persons_infos) =
     compute_warnings conf base resp
   in
   (* Maintenant que l'on sait si tout s'est bien passé, *)
@@ -1001,6 +1001,17 @@ let compute_modification_status' conf base ip ifam resp =
         Geneweb.Util.commit_patches conf base;
       end
     else ()
+  in
+  let person_update = Option.map (fun pi ->
+      let person_infos, update_type = pi.Api_update_util.person in
+      Api_update_util.piqi_person_update conf base person_infos update_type
+    ) updated_persons_infos
+  in
+  let spouse_update = Option.bind updated_persons_infos (fun pi ->
+      Option.map (fun (infos, update_type) ->
+          Api_update_util.piqi_person_update conf base infos update_type
+        ) pi.Api_update_util.spouse
+    )
   in
   let response =
     {
@@ -1017,11 +1028,8 @@ let compute_modification_status' conf base ip ifam resp =
       firstname_str = Option.map Utf8.normalize first_name_str;
       n = Option.map Utf8.normalize sn;
       p = Option.map Utf8.normalize fn;
-      created_person = Option.map (fun cp -> Api_saisie_write_piqi.Person_reference.{
-        n = Utf8.normalize cp.Api_update_util.n;
-        p = Utf8.normalize cp.p;
-        oc = cp.oc;
-      }) created_person;
+      person_update;
+      spouse_update;
     }
   in
   response
@@ -1664,7 +1672,7 @@ let do_mod_fam_add_child_aux conf base name ip mod_c mod_f fn =
       then
         Api_update_util.UpdateSuccess (all_wl, all_ml, all_hr, cp)
       else
-        let (all_wl, all_ml, all_hr, _cp) =
+        let (all_wl, all_ml, all_hr, _cp, update_type, index) =
           let occ = Option.fold ~none:0 ~some:Int32.to_int child.Api_saisie_write_piqi.Person_link.occ in
           match Gwdb.person_of_key base mod_c.Api_saisie_write_piqi.Person.firstname mod_c.Api_saisie_write_piqi.Person.lastname occ with
           | Some ip_child ->
@@ -1681,6 +1689,7 @@ let do_mod_fam_add_child_aux conf base name ip mod_c mod_f fn =
                 Api_util.piqi_death_type_of_death (Geneweb.Update.infer_death_from_parents conf base @@ Gwdb.foi base ifam)
             end ;
             let child_is_created = original_create_link <> `link in
+            let index = Int32.of_string (Gwdb.string_of_iper ip_child) in
             begin match Api_update_person.print_mod ~with_history:(not child_is_created) conf base mod_c with
               | Api_update_util.UpdateSuccess (wl, ml, hr, cp) ->
                 if child_is_created then
@@ -1690,17 +1699,18 @@ let do_mod_fam_add_child_aux conf base name ip mod_c mod_f fn =
                   let child_hr = fun () ->
                     Geneweb.History.record conf base changed action
                   in
-                  (all_wl @ wl, all_ml @ ml, child_hr :: all_hr @  hr, cp)
+                  (all_wl @ wl, all_ml @ ml, child_hr :: all_hr @  hr, cp, Api_update_util.Created, index)
                 else
-                  (all_wl @ wl, all_ml @ ml, all_hr @  hr, cp)
+                  (all_wl @ wl, all_ml @ ml, all_hr @  hr, cp, Modified, index)
               | Api_update_util.UpdateError s -> raise (Geneweb.Update.ModErr s)
               | Api_update_util.UpdateErrorConflict c -> raise (Api_update_util.ModErrApiConflict c)
             end
           | None -> failwith name
         in
         let occ = Option.fold ~none:Int32.zero ~some:Fun.id child.Api_saisie_write_piqi.Person_link.occ in
-        let cp = Some (Api_update_util.created_person ~n:child.lastname ~p:child.firstname ~oc:occ) in
-        Api_update_util.UpdateSuccess (all_wl, all_ml, all_hr, cp)
+        let person_infos = Api_update_util.person_infos ~n:child.lastname ~p:child.firstname ~oc:occ ~index in
+        let updated_persons_infos =  Api_update_util.updated_persons_infos ~person:(person_infos, update_type) ~spouse:None in
+        Api_update_util.UpdateSuccess (all_wl, all_ml, all_hr, Some updated_persons_infos)
     with
     | Geneweb.Update.ModErr s -> Api_update_util.UpdateError s
     | Gwdb.Not_plain_text s ->
@@ -1806,11 +1816,12 @@ let print_add_parents_ok conf base =
        - modification du père => MOD_IND
        - modification de la mère => MOD_IND
   *)
-    let resp =
+    let resp, new_ifam =
       try
-        let (all_wl, all_ml, all_hr, _cp) =
-          match snd @@ Api_update_family.print_add conf base mod_family mod_father mod_mother with
-          | Api_update_util.UpdateSuccess (wl, ml, hr, cp) -> (wl, ml, hr, cp)
+        let (all_wl, all_ml, all_hr, _cp, new_ifam) =
+          let new_ifam, update_status = Api_update_family.print_add conf base mod_family mod_father mod_mother in
+          match update_status  with
+          | Api_update_util.UpdateSuccess (wl, ml, hr, cp) -> (wl, ml, hr, cp, new_ifam)
           | Api_update_util.UpdateError s -> raise (Geneweb.Update.ModErr s)
           | Api_update_util.UpdateErrorConflict c -> raise (Api_update_util.ModErrApiConflict c)
         in
@@ -1832,14 +1843,13 @@ let print_add_parents_ok conf base =
         in
         let (all_wl, all_ml, all_hr, cp_fath) = aux mod_father `person_form1 (all_wl, all_ml, all_hr) in
         let (all_wl, all_ml, all_hr, cp_moth) = aux mod_mother `person_form2 (all_wl, all_ml, all_hr) in
-        let cp = match cp_fath, cp_moth with
-          | Some cp, _ when
-              mod_father.Api_saisie_write_piqi.Person.create_link <> `link
-              && not (Api_update_util.created_person_is_unnamed cp) -> cp_fath
-          | _, Some cp when
-              mod_mother.Api_saisie_write_piqi.Person.create_link <> `link
-            && not (Api_update_util.created_person_is_unnamed cp) -> cp_moth
-          | _ -> None
+        let updated_persons_infos =
+          match cp_fath, cp_moth with
+          | None, None -> None
+          | Some father_infos, Some mother_infos ->
+            Some (Api_update_util.updated_persons_infos ~person:father_infos.person ~spouse:(Some mother_infos.person))
+          | Some update_infos, None | None, Some update_infos ->
+            Some (Api_update_util.updated_persons_infos ~person:update_infos.person ~spouse:None)
         in
         let all_wl = match existing_fam with
           | Some ifam ->
@@ -1847,14 +1857,15 @@ let print_add_parents_ok conf base =
             Geneweb.Warning.PossibleDuplicateFam (ifam, ifam') :: all_wl
           | _ -> all_wl
         in
-        Api_update_util.UpdateSuccess (all_wl, all_ml, all_hr, cp)
+        Api_update_util.UpdateSuccess (all_wl, all_ml, all_hr, updated_persons_infos), new_ifam
       with
-      | Geneweb.Update.ModErr s -> Api_update_util.UpdateError s
+      | Geneweb.Update.ModErr s -> Api_update_util.UpdateError s, None
       | Gwdb.Not_plain_text s ->
-         Api_update_util.UpdateError (Geneweb.Update.not_plain_text_error s)
-      | Api_update_util.ModErrApiConflict c -> Api_update_util.UpdateErrorConflict c
+         Api_update_util.UpdateError (Geneweb.Update.not_plain_text_error s), None
+      | Api_update_util.ModErrApiConflict c -> Api_update_util.UpdateErrorConflict c, None
     in
-    let data = compute_modification_status conf base ip Gwdb.dummy_ifam resp in
+    let new_ifam = Option.value ~default:Gwdb.dummy_ifam new_ifam in
+    let data = compute_modification_status conf base ip new_ifam resp in
     Api_util.print_result conf data
 
 let i32_of_ifam i = Int32.of_string @@ Gwdb.string_of_ifam i
@@ -2393,7 +2404,8 @@ let print_add_first_fam conf =
     ; firstname_str
     ; n
     ; p
-    ; created_person = None
+    ; person_update = None
+    ; spouse_update = None
     }
   in
   let data = Api_saisie_write_piqi_ext.gen_modification_status response in

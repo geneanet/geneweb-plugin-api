@@ -427,6 +427,16 @@ message PersonReference {
   required int32 oc = 3;
 }
 
+enum UpdateType {
+  CREATED = 0;
+  MODIFIED = 1;
+}
+
+message PersonUpdate {
+  optional SimplePerson person = 1;
+  optional UpdateType update_type = 2;
+}
+
 message ModificationStatus {
   required bool is_base_updated = 1;
   repeated string base_warnings = 2;
@@ -441,7 +451,8 @@ message ModificationStatus {
   optional string firstname_str = 10;
   optional string n = 11;
   optional string p = 12;
-  optional PersonReference created_person = 14;
+  optional PersonUpdate person_update = 14;
+  optional PersonUpdate spouse_update = 15;
 }
 
 
