@@ -2,6 +2,8 @@ syntax = "proto2" ;
 
 package Geneanet.Geneweb.Api.Proto.SaisieWrite.Model;
 
+import "api.proto";
+
 // ***************************************************************************
 // Définitions globales.
 // ***************************************************************************
@@ -125,6 +127,7 @@ message SimplePerson {
   required Sosa sosa = 10;
   required PersonReference reference = 11;
   required Access access = 12;
+  required Geneanet.Geneweb.Api.Proto.Standard.Model.Visibility visible_for_visitors = 13;
 }
 
 message WitnessEvent {

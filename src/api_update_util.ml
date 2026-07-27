@@ -536,6 +536,7 @@ let pers_to_piqi_simple_person (conf : Geneweb.Config.config) (base : Gwdb.base)
   let image = Api_util.get_portrait conf base p in
   let reference = Api_util.person_reference base p in
   let access = piqi_access_of_access (Gwdb.get_access p) in
+  let visible_for_visitors = Api_util.get_visibility conf base p in
   {
     Api_saisie_write_piqi.Simple_person.index;
     sex;
@@ -549,6 +550,7 @@ let pers_to_piqi_simple_person (conf : Geneweb.Config.config) (base : Gwdb.base)
     sosa;
     reference;
     access;
+    visible_for_visitors;
   }
 
 
