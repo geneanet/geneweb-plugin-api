@@ -37,7 +37,7 @@ module PersonSearchMatches : sig
   type t
   val empty_matches : t
   val sorted_persons_of_matches : Gwdb.base -> t -> Gwdb.person list
-  val add_matches_of_person : base:Gwdb.base -> first_name:string -> surname:string -> t -> Gwdb.person -> t
+  val add_matches_of_person : conf:Geneweb.Config.config -> base:Gwdb.base -> first_name:string -> surname:string -> t -> Geneweb.Authorized.Person.t -> t
 end = struct
   type t = {
     (* the person matches on both their first name and surname *)
@@ -57,14 +57,17 @@ end = struct
     no_match = [];
   }
 
-  let add_matches_of_person ~base ~first_name ~surname matches person =
-    let f = Utf8.compare (Name.lower (Gwdb.p_first_name base person)) (Name.lower first_name) = 0 in
-    let s = Utf8.compare (Name.lower (Gwdb.p_surname base person)) (Name.lower surname) = 0 in
-    match f, s with
-    | true, true -> {matches with full_match = person :: matches.full_match}
-    | true, false -> {matches with fn_match = person :: matches.fn_match}
-    | false, true -> {matches with sn_match = person :: matches.sn_match}
-    | false, false -> {matches with no_match = person :: matches.no_match}
+  let add_matches_of_person ~conf ~base ~first_name ~surname matches person =
+    Option.fold (Geneweb.Authorized.Person.get_iper person) ~none:matches
+      ~some:(fun person_id ->
+        let person = Geneweb.Util.pget conf base person_id in
+        let f = Utf8.compare (Name.lower (Gwdb.p_first_name base person)) (Name.lower first_name) = 0 in
+        let s = Utf8.compare (Name.lower (Gwdb.p_surname base person)) (Name.lower surname) = 0 in
+        match f, s with
+        | true, true -> {matches with full_match = person :: matches.full_match}
+        | true, false -> {matches with fn_match = person :: matches.fn_match}
+        | false, true -> {matches with sn_match = person :: matches.sn_match}
+        | false, false -> {matches with no_match = person :: matches.no_match})
 
   let cmp_per base p1 p2 =
     let c1 = String.compare
@@ -100,7 +103,7 @@ let print_person_search_list conf base =
     let person = Geneweb.SearchName.search_by_sosa_in_env
         {conf with Geneweb.Config.env = ("surname", Adef.encoded surname) :: conf.env} base in
     match person with
-    | Some p when Geneweb.Person.has_visible_name conf base p -> base, [ p ], false
+    | Some p when Geneweb.Authorized.Person.has_visible_name p -> base, [ p ], false
     | Some _ | None ->
       let limit = Int32.to_int params.Api_saisie_write_piqi.Person_search_list_params.limit in
       let conf, is_exact_search =
@@ -140,7 +143,7 @@ let print_person_search_list conf base =
   in
 
   let matches = List.fold_left
-      (PersonSearchMatches.add_matches_of_person ~base ~first_name ~surname)
+      (PersonSearchMatches.add_matches_of_person ~conf ~base ~first_name ~surname)
       PersonSearchMatches.empty_matches
       persons
   in
