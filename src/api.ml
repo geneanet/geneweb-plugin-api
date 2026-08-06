@@ -688,16 +688,21 @@ module HistoryApi = struct
       | Some i -> pg, Some i
       | None -> key, None
     in
-    let link_parameters = "m=NOTES" in
+    let link_parameters = [("m", "NOTES")] in
     let link_parameters =
       if pg <> "" then
-        Printf.sprintf {|%s;f=%s|} link_parameters pg
+        link_parameters @ [("f", pg)]
       else link_parameters in
     let link_parameters =
       match part with
       | Some part ->
-        Printf.sprintf {|%s;v=%d|} link_parameters (part)
+        link_parameters @ [("v", Int.to_string part)]
       | None -> link_parameters in
+    let link_parameters =
+      link_parameters
+      |> List.map (fun (k, v) -> (k, [v]))
+      |> Ext_uri.encoded_of_query
+    in
     let link_txt =
       if pg <> "" then
         Printf.sprintf {|[%s]|} pg
