@@ -80,7 +80,7 @@ let get_list_of_select_start_with (conf : Geneweb.Config.config) (base : Gwdb.ba
                                   if "" <> ini_p
                                   then
                                       let isp = Gwdb.sou base (Gwdb.get_first_name p) in
-                                      if Gwdb.eq_istr isn istr && string_start_with (Name.lower ini_p) (Name.lower isp)
+                                      if string_start_with (Name.lower ini_p) (Name.lower isp)
                                       then
                                           (* Prénom===Prénom && Nom===Nom *)
                                           (ip :: l)
