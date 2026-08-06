@@ -71,34 +71,36 @@ let get_list_of_select_start_with (conf : Geneweb.Config.config) (base : Gwdb.ba
                     List.fold_left
                      (fun l ip ->
                         let p = Gwdb.poi base ip in
-                        let isn = Gwdb.get_surname p in
-                        if "" <> ini_n
-                        then
-                            if Gwdb.eq_istr isn istr then
-                                if "" <> ini_p
-                                then
-                                    let isp = Gwdb.sou base (Gwdb.get_first_name p) in
-                                    if Gwdb.eq_istr isn istr && string_start_with (Name.lower ini_p) (Name.lower isp)
-                                    then
-                                        (* Prénom===Prénom && Nom===Nom *)
-                                        (ip :: l)
-                                    else l
-                                else
-                                    (* Prénom===* && Nom===Nom *)
-                                    (ip :: l)
-                            else l
+                        if Geneweb.SearchName.search_reject_p conf base p then l
                         else
-                            if "" <> ini_p
-                            then
-                                let isp = Gwdb.sou base (Gwdb.get_first_name p) in
-                                if string_start_with (Name.lower ini_p) (Name.lower isp)
-                                then
-                                    (* Prénom===Prénom && Nom===* *)
-                                    (ip :: l)
-                                else l
-                            else
-                                (* Prénom===* && Nom===* *)
-                                (ip :: l)
+                          let isn = Gwdb.get_surname p in
+                          if "" <> ini_n
+                          then
+                              if Gwdb.eq_istr isn istr then
+                                  if "" <> ini_p
+                                  then
+                                      let isp = Gwdb.sou base (Gwdb.get_first_name p) in
+                                      if Gwdb.eq_istr isn istr && string_start_with (Name.lower ini_p) (Name.lower isp)
+                                      then
+                                          (* Prénom===Prénom && Nom===Nom *)
+                                          (ip :: l)
+                                      else l
+                                  else
+                                      (* Prénom===* && Nom===Nom *)
+                                      (ip :: l)
+                              else l
+                          else
+                              if "" <> ini_p
+                              then
+                                  let isp = Gwdb.sou base (Gwdb.get_first_name p) in
+                                  if string_start_with (Name.lower ini_p) (Name.lower isp)
+                                  then
+                                      (* Prénom===Prénom && Nom===* *)
+                                      (ip :: l)
+                                  else l
+                              else
+                                  (* Prénom===* && Nom===* *)
+                                  (ip :: l)
                         )
                      [] my_list
                   in
@@ -169,7 +171,7 @@ let aux_ini (s : string) : string list =
   in
   loop (Mutil.encode s) []
 
-let select_both_all base ini_n ini_p maiden_name =
+let select_both_all conf base ini_n ini_p maiden_name =
   let find_sn p x = kmp x (Gwdb.sou base (Gwdb.get_surname p)) in
   let find_fn p x = kmp x (Gwdb.sou base (Gwdb.get_first_name p)) in
   let find_str s x = kmp x s in
@@ -186,7 +188,10 @@ let select_both_all base ini_n ini_p maiden_name =
              let fam = Gwdb.foi base ifam in
              let ip = Gutil.spouse (Gwdb.get_iper p) fam in
              let sp = Gwdb.poi base ip in
-             if List.for_all (fun s -> find_fn sp s) ini_p then ip :: acc else acc)
+             if
+               not (Geneweb.SearchName.search_reject_p conf base sp)
+               && List.for_all (fun s -> find_fn sp s) ini_p
+             then ip :: acc else acc)
           !l (Gwdb.get_family p)
   in
   let add_maiden2 p ini_n ini_p l =
@@ -212,20 +217,22 @@ let select_both_all base ini_n ini_p maiden_name =
   in
   let list = ref [] in
   Gwdb.Collection.iter begin fun p ->
-    let ip = Gwdb.get_iper p in
-    if List.for_all (fun s -> find_sn p s) ini_n then
-      begin
-        if List.for_all (fun s -> find_fn p s) ini_p then
-          list := ip :: !list
-        else if maiden_name then add_maiden p ini_p list
-      end
-    else
-      (* On cherche une partie du nom de jeune fille dans les noms donnés. *)
-      if maiden_name then add_maiden2 p ini_n ini_p list
+    if not (Geneweb.SearchName.search_reject_p conf base p) then
+      let ip = Gwdb.get_iper p in
+      if List.for_all (fun s -> find_sn p s) ini_n then
+        begin
+          if List.for_all (fun s -> find_fn p s) ini_p
+          then
+            list := ip :: !list
+          else if maiden_name then add_maiden p ini_p list
+        end
+      else
+        (* On cherche une partie du nom de jeune fille dans les noms donnés. *)
+        if maiden_name then add_maiden2 p ini_n ini_p list
   end (Gwdb.persons base) ;
   !list
 
-let select_all base is_surnames ini =
+let select_all conf base is_surnames ini =
   let find p x =
     if is_surnames then kmp x (Gwdb.sou base (Gwdb.get_surname p))
     else kmp x (Gwdb.sou base (Gwdb.get_first_name p))
@@ -237,7 +244,9 @@ let select_all base is_surnames ini =
   let ini = aux_ini ini in
   let list = ref [] in
   Gwdb.Collection.iter begin fun p ->
-    if List.for_all (fun s -> find p s) ini
+    if
+      not (Geneweb.SearchName.search_reject_p conf base p)
+      && List.for_all (fun s -> find p s) ini
     then list := Gwdb.get_iper p :: !list
   end (Gwdb.persons base) ;
   !list
@@ -297,10 +306,10 @@ let print_search conf base =
           let maiden_name = search_params.Api_piqi.Search_params.maiden_name in
           match search_params.Api_piqi.Search_params.search_type with
           | `starting_with -> select_start_with conf base n fs
-          | `approximative -> select_both_all base n fs maiden_name
+          | `approximative -> select_both_all conf base n fs maiden_name
           | `lastname_or_firstname ->
-               let list_n = select_all base true n in
-               let list_p = select_all base false fs in
+               let list_n = select_all conf base true n in
+               let list_p = select_all conf base false fs in
                List.rev_append list_n list_p
       in
       print_list conf base filters list
@@ -312,8 +321,8 @@ let print_search conf base =
         else
           match search_params.Api_piqi.Search_params.search_type with
           | `starting_with -> select_start_with conf base n ""
-          | `approximative -> select_all base true n
-          | `lastname_or_firstname -> select_all base true n
+          | `approximative -> select_all conf base true n
+          | `lastname_or_firstname -> select_all conf base true n
       in
       print_list conf base filters list
   | (None, Some fs) ->
@@ -324,8 +333,8 @@ let print_search conf base =
         else
           match search_params.Api_piqi.Search_params.search_type with
           | `starting_with -> select_start_with conf base "" fs
-          | `approximative -> select_all base false fs
-          | `lastname_or_firstname -> select_all base false fs
+          | `approximative -> select_all conf base false fs
+          | `lastname_or_firstname -> select_all conf base false fs
       in
       print_list conf base filters list
   | (None, None) -> ()
