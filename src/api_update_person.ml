@@ -327,20 +327,6 @@ let unlink_from_family conf base ifam parents_fam iper =
   let mod_f = {mod_f with children} in
   Api_update_family.print_mod conf base iper mod_f
 
-let create_empty_family_with_child conf base p =
-  let family = Api_update_util.piqi_empty_family conf base Gwdb.dummy_ifam in
-  let child = Api_update_util.pers_to_piqi_mod_person conf base p in
-  let father = Api_update_util.pers_to_piqi_mod_person conf base @@ Gwdb.empty_person base Gwdb.dummy_iper in
-  let mother = Api_update_util.pers_to_piqi_mod_person conf base @@ Gwdb.empty_person base Gwdb.dummy_iper in
-  father.Api_saisie_write_piqi.Person.sex <- `male;
-  Api_update_family.set_parents_fields conf base p child father;
-  mother.Api_saisie_write_piqi.Person.sex <- `female;
-  Api_update_family.set_parents_fields conf base p child mother;
-  family.Api_saisie_write_piqi.Family.father <- father;
-  family.Api_saisie_write_piqi.Family.mother <- mother;
-  family.children <- [Api_update_util.pers_to_piqi_person_link conf base p];
-  family
-
 let create_new_family conf base parent child =
   let family = Api_update_family.compute_add_family conf base parent in
   let child = Api_update_util.pers_to_piqi_person_link conf base child in
@@ -353,10 +339,7 @@ let create_new_family conf base parent child =
 let update_parents_links_aux conf base ifam parents_fam father mother mod_p iper =
   match mod_p.Api_saisie_write_piqi.Person.father, mod_p.mother with
   | None, None ->
-    let update_status = unlink_from_family conf base ifam parents_fam iper in
-    let family = create_empty_family_with_child conf base (Gwdb.poi base iper) in
-    let _, update_status' = Api_update_family.print_add conf base family (family.father) (family.mother) in
-    Some (Api_update_util.append_update_status update_status update_status')
+    Some (unlink_from_family conf base ifam parents_fam iper)
   | Some _mod_father, None ->
     let update_status = unlink_from_family conf base ifam parents_fam iper in
     let update_status' = create_new_family conf base (Gwdb.poi base father) (Gwdb.poi base iper) in
