@@ -1825,14 +1825,22 @@ let search_index
       | Some sosa ->
         begin match Geneweb.SearchName.search_by_sosa ~conf ~base ~sosa with
           | None ->  loop le
-          | Some p -> Some (Gwdb.get_iper p)
+          | Some p -> (
+            match Geneweb.Authorized.Person.get_iper p with
+            | None -> loop le
+            | Some _ as person_id -> person_id
+          )
         end
       | None -> loop le
       end
     | Key::le ->
       begin match Geneweb.SearchName.search_by_key conf base an with
         | None ->  loop le
-        | Some p -> Some (Gwdb.get_iper p)
+        | Some p -> (
+          match Geneweb.Authorized.Person.get_iper p with
+          | None -> loop le
+          | Some _ as person_id -> person_id
+        )
       end
     | Surname::le ->
       if Geneweb.Search_name_display.sn_search_result_is_empty
@@ -1855,13 +1863,21 @@ let search_index
     | ApproxKey::le ->
       begin match Geneweb.SearchName.search_approx_key conf base an with
         | [] ->  loop le
-        | [p] -> Some (Gwdb.get_iper p)
+        | [p] -> (
+          match Geneweb.Authorized.Person.get_iper p with
+          | None -> loop le
+          | Some _ as person_id -> person_id
+        )
         | _ -> None
       end
     | PartialKey::le ->
       begin match Geneweb.SearchName.search_partial_key conf base an with
         | [] ->  loop le
-        | [p] -> Some (Gwdb.get_iper p)
+        | [p] -> (
+          match Geneweb.Authorized.Person.get_iper p with
+          | None -> loop le
+          | Some _ as person_id -> person_id
+        )
         | _ -> None
       end
     | _ -> None
