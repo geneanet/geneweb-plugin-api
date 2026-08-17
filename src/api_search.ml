@@ -46,7 +46,8 @@ let kmp p s =
     [Retour] :
       - ListPersons : Retourne une liste de personnes.
                                                                               *)
-let get_list_of_select_start_with (conf : Geneweb.Config.config) (base : Gwdb.base) (ini_n : string) (ini_p : string) (letter : string) =
+let get_list_of_select_start_with (conf' : Geneweb.Config.config) (base : Gwdb.base) (ini_n : string) (ini_p : string) (letter : string) =
+    let conf = Geneweb.Config.Trimmed.from_config conf' in
     let name =
     (* Si le nom est défini, on parcourt un tableau de noms *)
     if "" <> ini_n
@@ -71,7 +72,7 @@ let get_list_of_select_start_with (conf : Geneweb.Config.config) (base : Gwdb.ba
                     List.fold_left
                      (fun l ip ->
                         let p = Gwdb.poi base ip in
-                        if Geneweb.SearchName.search_reject_p conf base p then l
+                        if Geneweb.SearchName.search_reject_p base (Geneweb.Authorized.Person.make ~conf ~base ip) then l
                         else
                           let isn = Gwdb.get_surname p in
                           if "" <> ini_n
@@ -105,10 +106,10 @@ let get_list_of_select_start_with (conf : Geneweb.Config.config) (base : Gwdb.ba
                      [] my_list
                   in
                   let my_list =
-                    if conf.Geneweb.Config.use_restrict then
+                    if conf'.Geneweb.Config.use_restrict then
                       List.fold_left
                         (fun l ip ->
-                          if Geneweb.Person.is_restricted conf base ip then l
+                          if Geneweb.Person.is_restricted conf' base ip then l
                            else (ip :: l) )
                         [] my_list
                     else my_list
@@ -172,6 +173,7 @@ let aux_ini (s : string) : string list =
   loop (Mutil.encode s) []
 
 let select_both_all conf base ini_n ini_p maiden_name =
+  let conf = Geneweb.Config.Trimmed.from_config conf in
   let find_sn p x = kmp x (Gwdb.sou base (Gwdb.get_surname p)) in
   let find_fn p x = kmp x (Gwdb.sou base (Gwdb.get_first_name p)) in
   let find_str s x = kmp x s in
@@ -189,7 +191,7 @@ let select_both_all conf base ini_n ini_p maiden_name =
              let ip = Gutil.spouse (Gwdb.get_iper p) fam in
              let sp = Gwdb.poi base ip in
              if
-               not (Geneweb.SearchName.search_reject_p conf base sp)
+               not (Geneweb.SearchName.search_reject_p base (Geneweb.Authorized.Person.make ~conf ~base ip))
                && List.for_all (fun s -> find_fn sp s) ini_p
              then ip :: acc else acc)
           !l (Gwdb.get_family p)
@@ -217,8 +219,8 @@ let select_both_all conf base ini_n ini_p maiden_name =
   in
   let list = ref [] in
   Gwdb.Collection.iter begin fun p ->
-    if not (Geneweb.SearchName.search_reject_p conf base p) then
-      let ip = Gwdb.get_iper p in
+    let ip = Gwdb.get_iper p in
+    if not (Geneweb.SearchName.search_reject_p base (Geneweb.Authorized.Person.make ~conf ~base ip)) then
       if List.for_all (fun s -> find_sn p s) ini_n then
         begin
           if List.for_all (fun s -> find_fn p s) ini_p
@@ -233,6 +235,7 @@ let select_both_all conf base ini_n ini_p maiden_name =
   !list
 
 let select_all conf base is_surnames ini =
+  let conf = Geneweb.Config.Trimmed.from_config conf in
   let find p x =
     if is_surnames then kmp x (Gwdb.sou base (Gwdb.get_surname p))
     else kmp x (Gwdb.sou base (Gwdb.get_first_name p))
@@ -244,10 +247,11 @@ let select_all conf base is_surnames ini =
   let ini = aux_ini ini in
   let list = ref [] in
   Gwdb.Collection.iter begin fun p ->
+    let person_id = Gwdb.get_iper p in
     if
-      not (Geneweb.SearchName.search_reject_p conf base p)
+      not (Geneweb.SearchName.search_reject_p base (Geneweb.Authorized.Person.make ~conf ~base person_id))
       && List.for_all (fun s -> find p s) ini
-    then list := Gwdb.get_iper p :: !list
+    then list := person_id :: !list
   end (Gwdb.persons base) ;
   !list
 
