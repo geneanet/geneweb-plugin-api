@@ -91,6 +91,7 @@ message PersonSearch {
   required PersonReference reference = 11;
   optional SimplePerson father = 12;
   optional SimplePerson mother = 13;
+  optional string relative_profile_url = 14;
 }
 
 message SimpleSpouse {
@@ -586,11 +587,33 @@ message AutoCompleteResult {
   repeated string result = 1;
 }
 
+enum TextSearchMode {
+  EXACT = 0;
+  NOT_EXACT = 1;
+  NOT_EXACT_PREFIX = 2;
+}
+
+enum ExcludedPersonRelation {
+  SELF = 0;
+  ANCESTOR = 1;
+  DESCENDANT = 2;
+}
+
+message ExcludedPersonGroup {
+  optional int64 reference_id = 1;
+  optional ExcludedPersonRelation relation = 2;
+}
+
 message PersonSearchListParams {
   optional string lastname = 1;
   optional string firstname = 2;
   required int32 limit = 3;
   optional bool fast = 4;
+  optional TextSearchMode first_name_search_mode = 5;
+  optional TextSearchMode surname_search_mode = 6;
+  optional bool include_marital_names = 7;
+  optional Sex sex = 8;
+  repeated ExcludedPersonGroup excluded_persons = 9;
 }
 
 message PersonSearchList {
