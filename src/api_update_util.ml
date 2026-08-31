@@ -1598,6 +1598,5 @@ let piqi_update_type = function
 let piqi_person_update conf base person_infos update_type =
   Api_saisie_write_piqi.Person_update.{
     person = Some (pers_to_piqi_simple_person conf base (Gwdb.poi base (Gwdb.iper_of_string @@ Int32.to_string person_infos.index)));
-    update_type = Some (piqi_update_type update_type);
+    update_type = Option.map piqi_update_type update_type;
   }
-

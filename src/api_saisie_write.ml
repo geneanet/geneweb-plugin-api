@@ -967,6 +967,59 @@ let compute_warnings conf base resp =
       in
       (true, warning, misc, None, hr, cp)
 
+let person_updates conf base updated_persons_infos ifam =
+  let (let*) = Option.bind in
+
+  let get_update_type index_person person_update person_update' =
+    let get_update_type index_person person_update =
+      let index_person = Int32.of_int @@ Gwdb.int_of_iper index_person in
+      let* pu = person_update in
+      let* p = pu.Api_saisie_write_piqi.Person_update.person in
+      if p.Api_saisie_write_piqi.Simple_person.index = index_person then
+        pu.Api_saisie_write_piqi.Person_update.update_type
+      else None
+    in
+    match get_update_type index_person person_update with
+    | Some _ as u -> u
+    | None -> get_update_type index_person person_update'
+  in
+
+  let person_update =
+    let* pi = updated_persons_infos in
+    let person_infos, update_type = pi.Api_update_util.person in
+    Some (Api_update_util.piqi_person_update conf base person_infos (Some update_type))
+  in
+  let spouse_update =
+    let* pi = updated_persons_infos in
+    let* infos, update_type = pi.Api_update_util.spouse in
+    Some (Api_update_util.piqi_person_update conf base infos (Some update_type))
+  in
+
+  if Gwdb.eq_ifam Gwdb.dummy_ifam ifam then
+    person_update, None, None
+  else
+    let fam = Gwdb.foi base ifam in
+    let ifather = Gwdb.get_father fam in
+    let imother = Gwdb.get_mother fam in
+    let father = Gwdb.get_father fam |> Gwdb.poi base |> Gwdb.gen_person_of_person in
+    let mother = Gwdb.get_mother fam |> Gwdb.poi base |> Gwdb.gen_person_of_person in
+    let father_infos = Api_update_util.person_infos_of_person base father in
+    let mother_infos = Api_update_util.person_infos_of_person base mother in
+    let father_update_type = get_update_type ifather person_update spouse_update in
+    let mother_update_type = get_update_type imother person_update spouse_update in
+    let person_update = match updated_persons_infos with
+      | Some persons_infos ->
+        let person_index = (fst persons_infos.person).index in
+        if person_index = Int32.of_int (Gwdb.int_of_iper ifather)
+        || person_index = Int32.of_int (Gwdb.int_of_iper imother)
+        then None
+        else person_update
+      | None -> person_update
+    in
+    person_update,
+    Some {(Api_update_util.piqi_person_update conf base father_infos None) with update_type = father_update_type},
+    Some {(Api_update_util.piqi_person_update conf base mother_infos None) with update_type = mother_update_type}
+
 let compute_modification_status' conf base ip ifam resp =
   let (surname, first_name, occ, index_person, surname_str, first_name_str) =
     if ip = Gwdb.dummy_iper then ("", "", None, None, None, None)
@@ -974,7 +1027,7 @@ let compute_modification_status' conf base ip ifam resp =
       let p = Gwdb.poi base ip in
       let surname = Gwdb.sou base (Gwdb.get_surname p) in
       let first_name = Gwdb.sou base (Gwdb.get_first_name p) in
-      let index_person = Some (Int32.of_string @@ Gwdb.string_of_iper ip) in
+      let index_person = Some (Int32.of_int @@ Gwdb.int_of_iper ip) in
       let occ = Gwdb.get_occ p in
       let occ = if occ = 0 then None else Some (Int32.of_int occ) in
       let surname_str = Some (Gwdb.sou base (Gwdb.get_surname p)) in
@@ -1002,17 +1055,8 @@ let compute_modification_status' conf base ip ifam resp =
       end
     else ()
   in
-  let person_update = Option.map (fun pi ->
-      let person_infos, update_type = pi.Api_update_util.person in
-      Api_update_util.piqi_person_update conf base person_infos update_type
-    ) updated_persons_infos
-  in
-  let spouse_update = Option.bind updated_persons_infos (fun pi ->
-      Option.map (fun (infos, update_type) ->
-          Api_update_util.piqi_person_update conf base infos update_type
-        ) pi.Api_update_util.spouse
-    )
-  in
+
+  let person_update, father, mother = person_updates conf base updated_persons_infos ifam in
   let response =
     {
       Api_saisie_write_piqi.Modification_status.is_base_updated = is_base_updated;
@@ -1029,7 +1073,8 @@ let compute_modification_status' conf base ip ifam resp =
       n = Option.map Utf8.normalize sn;
       p = Option.map Utf8.normalize fn;
       person_update;
-      spouse_update;
+      father;
+      mother;
     }
   in
   response
@@ -2405,7 +2450,8 @@ let print_add_first_fam conf =
     ; n
     ; p
     ; person_update = None
-    ; spouse_update = None
+    ; father = None
+    ; mother = None
     }
   in
   let data = Api_saisie_write_piqi_ext.gen_modification_status response in

@@ -153,5 +153,4 @@ val to_update_key : person_update -> Geneweb.Update.key
 
 val append_update_status : update_base_status -> update_base_status -> update_base_status
 
-val piqi_person_update : Geneweb.Config.config -> Gwdb.base -> person_infos -> update_type -> Api_saisie_write_piqi.Person_update.t
-
+val piqi_person_update : Geneweb.Config.config -> Gwdb.base -> person_infos -> update_type option -> Api_saisie_write_piqi.Person_update.t
