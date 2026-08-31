@@ -315,7 +315,54 @@ let print_mod_aux conf base no_check_name mod_p callback =
      Api_update_util.UpdateError (Geneweb.Update.not_plain_text_error s)
   | Api_update_util.ModErrApiConflict c -> Api_update_util.UpdateErrorConflict c
 
-let print_mod ?(no_check_name = false) ?(fexclude = []) ?(with_history = true) conf base mod_p =
+let unlink_from_family conf base ifam parents_fam iper =
+  let mod_f =
+    Api_update_util.fam_to_piqi_mod_family conf base ifam parents_fam
+  in
+  let children =
+    List.filter (fun child_plink ->
+        not @@ Gwdb.eq_iper (Gwdb.iper_of_int (Int32.to_int child_plink.Api_saisie_write_piqi.Person_link.index)) iper
+      ) mod_f.children
+  in
+  let mod_f = {mod_f with children} in
+  Api_update_family.print_mod conf base iper mod_f
+
+let create_new_family conf base parent child =
+  let family = Api_update_family.compute_add_family conf base parent in
+  let child = Api_update_util.pers_to_piqi_person_link conf base child in
+  let family = {family with children = [child]} in
+  let father = family.father in
+  let mother = family.mother in
+  let _ifam, status = Api_update_family.print_add conf base family father mother in
+  status
+
+let update_parents_links_aux conf base ifam parents_fam father mother mod_p iper =
+  match mod_p.Api_saisie_write_piqi.Person.father, mod_p.mother with
+  | None, None ->
+    Some (unlink_from_family conf base ifam parents_fam iper)
+  | Some _mod_father, None ->
+    let update_status = unlink_from_family conf base ifam parents_fam iper in
+    let update_status' = create_new_family conf base (Gwdb.poi base father) (Gwdb.poi base iper) in
+    Some (Api_update_util.append_update_status update_status update_status')
+  | None, Some _mod_mother ->
+    let update_status = unlink_from_family conf base ifam parents_fam iper in
+    let update_status' = create_new_family conf base (Gwdb.poi base mother) (Gwdb.poi base iper) in
+    Some (Api_update_util.append_update_status update_status update_status')
+  | Some _mod_father, Some _mod_mother ->
+    None
+
+let update_parents_links conf base mod_p =
+  let iper = Gwdb.iper_of_int @@ Int32.to_int mod_p.Api_saisie_write_piqi.Person.index in
+  let p = Gwdb.poi base iper in
+  let parents = Gwdb.get_parents p in
+  Option.bind parents (fun ifam ->
+      let parents_fam = Gwdb.foi base ifam in
+      let father = Gwdb.get_father parents_fam in
+      let mother = Gwdb.get_mother parents_fam in
+      update_parents_links_aux conf base ifam parents_fam father mother mod_p iper
+    )
+
+let print_mod ?(with_update_parents_links = false) ?(no_check_name = false) ?(fexclude = []) ?(with_history = true) conf base mod_p =
   let ip = Gwdb.iper_of_string @@ Int32.to_string mod_p.Api_saisie_write_piqi.Person.index in
   let o_p = Gwdb.gen_person_of_person (Gwdb.poi base ip) in
   let callback p =
@@ -377,7 +424,12 @@ let print_mod ?(no_check_name = false) ?(fexclude = []) ?(with_history = true) c
            else ())]
       in
       let created_person = Api_update_util.created_person_of_person base p in
-      Api_update_util.UpdateSuccess (wl, [], hr, Some created_person)
+      let update_status = if with_update_parents_links then
+          update_parents_links conf base mod_p
+        else None
+      in
+      let status = Api_update_util.UpdateSuccess (wl, [], hr, Some created_person) in
+      Option.fold ~none:status ~some:(Api_update_util.append_update_status status) update_status
     end
   in
   print_mod_aux conf base no_check_name mod_p callback

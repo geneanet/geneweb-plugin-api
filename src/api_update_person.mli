@@ -5,6 +5,7 @@ val print_add :
   Api_update_util.update_base_status
 
 val print_mod :
+  ?with_update_parents_links:bool ->
   ?no_check_name:bool ->
   ?fexclude:Gwdb.ifam list ->
   ?with_history:bool ->

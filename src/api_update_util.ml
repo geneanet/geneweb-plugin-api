@@ -1236,11 +1236,15 @@ let pers_to_piqi_mod_person conf base p =
     | Public -> `access_public
     | Private -> `access_private
   in
+  let parents_ifam = Gwdb.get_parents p in
   let parents =
-    match Gwdb.get_parents p with
+    match parents_ifam with
     | Some ifam -> Some (Int32.of_string (Gwdb.string_of_ifam ifam))
     | None -> None
   in
+  let parents_fam = Option.map (Gwdb.foi base) parents_ifam in
+  let father = Option.map Gwdb.get_father parents_fam |> Option.map (Gwdb.poi base) in
+  let mother = Option.map Gwdb.get_mother parents_fam |> Option.map (Gwdb.poi base) in
   let families =
     Ext_array.to_list_map (fun x -> Int32.of_string @@ Gwdb.string_of_ifam x) (Gwdb.get_family p)
   in
@@ -1273,6 +1277,8 @@ let pers_to_piqi_mod_person conf base p =
     is_contemporary;
     name_is_hidden = Geneweb.Person.is_hidden conf base p;
     name_is_restricted = Geneweb.Person.has_restricted_name conf base p;
+    father = Option.map (pers_to_piqi_simple_person conf base) father;
+    mother = Option.map (pers_to_piqi_simple_person conf base) mother;
   }
 
 let fam_to_piqi_mod_family conf base ifam fam =
@@ -1562,3 +1568,9 @@ let to_update_key person_update =
    person_update.occurrence_number,
    person_update.kind,
    "")
+
+let append_update_status ubs ubs' = match ubs, ubs' with
+  | UpdateSuccess (ws, ms, hs, _cp), UpdateSuccess (ws', ms', hs', cp') ->
+    UpdateSuccess (ws @ ws', ms @ ms', hs @ hs', cp')
+  | UpdateError err, _ | _, UpdateError err -> UpdateError err
+  | UpdateErrorConflict conflict, _ | _, UpdateErrorConflict conflict -> UpdateErrorConflict conflict
