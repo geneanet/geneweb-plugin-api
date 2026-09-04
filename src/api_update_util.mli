@@ -6,10 +6,18 @@ type person_update = {
     force : bool;
   }
 
-type created_person = {
+type person_infos = {
   n : string;
   p : string;
-  oc : int32
+  oc : int32;
+  index : int32;
+}
+
+type update_type = Created | Modified
+
+type updated_persons_infos = {
+  person : person_infos * update_type;
+  spouse : (person_infos * update_type) option;
 }
 
 type update_base_status =
@@ -17,20 +25,22 @@ type update_base_status =
       Geneweb.Warning.base_warning list
       * Geneweb.Warning.base_misc list
       * (unit -> unit) list
-      * created_person option
+      * updated_persons_infos option
   | UpdateError of Geneweb.Update.update_error
   | UpdateErrorConflict of Api_saisie_write_piqi.Create_conflict.t
 
 exception ModErrApiConflict of Api_saisie_write_piqi.Create_conflict.t
 
-val created_person_of_person :
+val person_infos_of_person :
   Gwdb.base ->
   (Gwdb.iper, Gwdb.iper, Gwdb.istr) Def.gen_person ->
-  created_person
+  person_infos
 
-val created_person : n:string -> p:string -> oc:Int32.t -> created_person
+val person_infos : n:string -> p:string -> oc:Int32.t -> index:Int32.t -> person_infos
 
-val created_person_is_unnamed : created_person -> bool
+val person_infos_is_unnamed : person_infos -> bool
+
+val updated_persons_infos : person:person_infos * update_type -> spouse:(person_infos * update_type) option -> updated_persons_infos
 
 val reserve_occurrence_number :
   first_name:string ->
@@ -102,6 +112,12 @@ val pers_to_piqi_mod_person :
   Gwdb.person ->
   Api_saisie_write_piqi.person
 
+val pers_to_piqi_simple_person :
+  Geneweb.Config.config ->
+  Gwdb.base ->
+  Gwdb.person ->
+  Api_saisie_write_piqi.simple_person
+
 val fam_to_piqi_mod_family :
   Geneweb.Config.config ->
   Gwdb.base ->
@@ -136,3 +152,5 @@ val reconstitute_somebody :
 val to_update_key : person_update -> Geneweb.Update.key
 
 val append_update_status : update_base_status -> update_base_status -> update_base_status
+
+val piqi_person_update : Geneweb.Config.config -> Gwdb.base -> person_infos -> update_type option -> Api_saisie_write_piqi.Person_update.t

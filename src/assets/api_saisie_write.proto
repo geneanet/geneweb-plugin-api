@@ -2,6 +2,8 @@ syntax = "proto2" ;
 
 package Geneanet.Geneweb.Api.Proto.SaisieWrite.Model;
 
+import "api.proto";
+
 // ***************************************************************************
 // Définitions globales.
 // ***************************************************************************
@@ -123,6 +125,9 @@ message SimplePerson {
   optional string death_place = 8;
   optional string image = 9;
   required Sosa sosa = 10;
+  required PersonReference reference = 11;
+  required Access access = 12;
+  required Geneanet.Geneweb.Api.Proto.Standard.Model.Visibility visible_for_visitors = 13;
 }
 
 message WitnessEvent {
@@ -425,6 +430,16 @@ message PersonReference {
   required int32 oc = 3;
 }
 
+enum UpdateType {
+  CREATED = 0;
+  MODIFIED = 1;
+}
+
+message PersonUpdate {
+  optional SimplePerson person = 1;
+  optional UpdateType update_type = 2;
+}
+
 message ModificationStatus {
   required bool is_base_updated = 1;
   repeated string base_warnings = 2;
@@ -439,7 +454,9 @@ message ModificationStatus {
   optional string firstname_str = 10;
   optional string n = 11;
   optional string p = 12;
-  optional PersonReference created_person = 14;
+  optional PersonUpdate person_update = 14;
+  optional PersonUpdate father = 15;
+  optional PersonUpdate mother = 16;
 }
 
 

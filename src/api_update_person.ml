@@ -275,8 +275,9 @@ let print_add conf base mod_p =
         let wl = Geneweb.UpdateIndOk.all_checks_person base p a u in
         let changed = Def.U_Add_person p in
         let hr = [(fun () -> Geneweb.History.record conf base changed "ap")] in
-        let created_person = Api_update_util.created_person_of_person base p in
-        Api_update_util.UpdateSuccess (wl, [], hr, Some created_person)
+        let person_infos = Api_update_util.person_infos_of_person base p in
+        let updated_persons_infos = Api_update_util.updated_persons_infos ~person:(person_infos, Created) ~spouse:None in
+        Api_update_util.UpdateSuccess (wl, [], hr, Some updated_persons_infos)
   with
   | Geneweb.Update.ModErr s -> Api_update_util.UpdateError s
   | Gwdb.Not_plain_text s ->
@@ -404,12 +405,12 @@ let print_mod ?(with_update_parents_links = false) ?(no_check_name = false) ?(fe
         let u = { Def.family } in
         Geneweb.UpdateIndOk.all_checks_person base p a u
       in
-      let changed, action = match mod_p.Api_saisie_write_piqi.Person.create_link with
+      let changed, action, update_type = match mod_p.Api_saisie_write_piqi.Person.create_link with
         | `link ->
-          Def.U_Modify_person (o_p, p), "mp"
+          Def.U_Modify_person (o_p, p), "mp", Api_update_util.Modified
         | `create
         | `create_default_occ ->
-          Def.U_Add_person p, "ap"
+          Def.U_Add_person p, "ap", Created
       in
       let hr =
         [(fun () ->
@@ -423,12 +424,13 @@ let print_mod ?(with_update_parents_links = false) ?(no_check_name = false) ?(fe
              Geneweb.Update.delete_topological_sort_v conf base
            else ())]
       in
-      let created_person = Api_update_util.created_person_of_person base p in
       let update_status = if with_update_parents_links then
           update_parents_links conf base mod_p
         else None
       in
-      let status = Api_update_util.UpdateSuccess (wl, [], hr, Some created_person) in
+      let person_infos = Api_update_util.person_infos_of_person base p in
+      let updated_persons_infos = Api_update_util.updated_persons_infos ~person:(person_infos, update_type) ~spouse:None in
+      let status = Api_update_util.UpdateSuccess (wl, [], hr, Some updated_persons_infos) in
       Option.fold ~none:status ~some:(Api_update_util.append_update_status status) update_status
     end
   in
