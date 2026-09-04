@@ -1045,6 +1045,7 @@ let compute_modification_status' conf base ip ifam resp =
   let (is_base_updated, warnings, miscs, conflict, history_records, updated_persons_infos) =
     compute_warnings conf base resp
   in
+
   (* Maintenant que l'on sait si tout s'est bien passé, *)
   (* on peut enfin commiter le fichier patch.           *)
   let () =
@@ -1055,7 +1056,7 @@ let compute_modification_status' conf base ip ifam resp =
       end
     else ()
   in
-
+  Geneweb.Sosa_cache.reset_cache ();
   let person_update, father, mother = person_updates conf base updated_persons_infos ifam in
   let response =
     {
