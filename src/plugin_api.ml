@@ -60,6 +60,18 @@ let get_paginated_data conf base =
   in
   Plugin_api_lib.Api_util.print_result conf data
 
+let get_profile conf base =
+  let data =
+    let params =
+      Plugin_api_lib.Api_util.get_params
+        conf
+        Plugin_api_lib.Api_saisie_read_piqi_ext.parse_profile_parameters
+    in
+    Plugin_api_lib.Api_saisie_read_piqi_ext.gen_profile
+      (Plugin_api_lib.Api_saisie_read.get_profile ~conf ~base params)
+  in
+  Plugin_api_lib.Api_piqi_util.print_result conf data
+
 let () =
   let assets = !Gwd_lib.GwdPlugin.assets in
   let aux dico_type s lang =
@@ -197,5 +209,6 @@ let () =
     ; ( "API_SELECT_EVENTS"
       , aux @@ w_base @@ Plugin_api_lib.Api_graph.print_select_events);
     ( "API_GET_PAGINATED_DATA" , aux @@ w_base @@ get_paginated_data);
+    ( "API_GET_PROFILE" , aux @@ w_base get_profile);
       ("API_HISTORY", aux @@ friend @@ w_base @@ Plugin_api_lib.Api.history)
     ]
