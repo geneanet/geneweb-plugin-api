@@ -1605,3 +1605,15 @@ let piqi_person_update conf base person_infos update_type =
     person = Some (pers_to_piqi_simple_person conf base (Gwdb.poi base (Gwdb.iper_of_string @@ Int32.to_string person_infos.index)));
     update_type = Option.map piqi_update_type update_type;
   }
+
+type piqi_person_updates = {
+  person_update : Api_saisie_write_piqi.Person_update.t option;
+  father_update : Api_saisie_write_piqi.Person_update.t option;
+  mother_update : Api_saisie_write_piqi.Person_update.t option;
+}
+
+let piqi_person_updates ~person_update ~father_update ~mother_update = {
+  person_update;
+  father_update;
+  mother_update;
+}

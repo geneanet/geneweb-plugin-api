@@ -1049,7 +1049,7 @@ let person_updates conf base updated_persons_infos ifam =
   in
 
   if Gwdb.eq_ifam Gwdb.dummy_ifam ifam then
-    person_update, None, None
+    Api_update_util.{person_update; father_update = None; mother_update = None}
   else
     let fam = Gwdb.foi base ifam in
     let ifather = Gwdb.get_father fam in
@@ -1069,9 +1069,11 @@ let person_updates conf base updated_persons_infos ifam =
         else person_update
       | None -> person_update
     in
-    person_update,
-    Some {(Api_update_util.piqi_person_update conf base father_infos None) with update_type = father_update_type},
-    Some {(Api_update_util.piqi_person_update conf base mother_infos None) with update_type = mother_update_type}
+    {
+      person_update;
+      father_update = Some {(Api_update_util.piqi_person_update conf base father_infos None) with update_type = father_update_type};
+      mother_update = Some {(Api_update_util.piqi_person_update conf base mother_infos None) with update_type = mother_update_type};
+    }
 
 let compute_modification_status' conf base ip ifam resp =
   let (surname, first_name, occ, index_person, surname_str, first_name_str) =
@@ -1110,7 +1112,7 @@ let compute_modification_status' conf base ip ifam resp =
     else ()
   in
   Geneweb.Sosa_cache.reset_cache ();
-  let person_update, father, mother = person_updates conf base updated_persons_infos ifam in
+  let Api_update_util.{person_update; father_update; mother_update} = person_updates conf base updated_persons_infos ifam in
   let response =
     {
       Api_saisie_write_piqi.Modification_status.is_base_updated = is_base_updated;
@@ -1127,8 +1129,8 @@ let compute_modification_status' conf base ip ifam resp =
       n = Option.map Utf8.normalize sn;
       p = Option.map Utf8.normalize fn;
       person_update;
-      father;
-      mother;
+      father_update;
+      mother_update;
     }
   in
   response
@@ -2504,8 +2506,8 @@ let print_add_first_fam conf =
     ; n
     ; p
     ; person_update = None
-    ; father = None
-    ; mother = None
+    ; father_update = None
+    ; mother_update = None
     }
   in
   let data = Api_saisie_write_piqi_ext.gen_modification_status response in
