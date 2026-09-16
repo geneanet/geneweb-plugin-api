@@ -613,6 +613,9 @@ let pers_to_piqi_person_search ~conf ~base ~person ~first_name ~surname =
     in
     {Api_saisie_write_piqi.Simple_spouse.spouse; relation}
   in
+  let relative_profile_url =
+    Geneweb.Util.commd' conf ~query:(Geneweb.Util.acces conf base person)
+  in
   {
     Api_saisie_write_piqi.Person_search.index;
     sex;
@@ -627,6 +630,8 @@ let pers_to_piqi_person_search ~conf ~base ~person ~first_name ~surname =
     reference = Api_util.person_reference base person;
     father = Option.map (pers_to_piqi_simple_person conf base) father;
     mother = Option.map (pers_to_piqi_simple_person conf base) mother;
+    relative_profile_url =
+      Some (Geneweb.Localized_url.to_string relative_profile_url)
   }
 
 

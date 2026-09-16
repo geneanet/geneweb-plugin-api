@@ -107,12 +107,46 @@ let print_person_search_list conf base =
     | Some _ | None ->
       let limit = Int32.to_int params.Api_saisie_write_piqi.Person_search_list_params.limit in
       let conf, is_exact_search =
+        let text_search_mode_to_query_param = function
+          | `exact -> "on"
+          | `not_exact -> "off"
+          | `not_exact_prefix -> "pfx"
+        in
+        let first_name_search_mode =
+          Option.fold
+            ~none:"pfx"
+            ~some:text_search_mode_to_query_param
+            params.first_name_search_mode
+        in
+        let surname_search_mode =
+          Option.fold
+            ~none:"pfx"
+            ~some:text_search_mode_to_query_param
+            params.surname_search_mode
+        in
+        let sex =
+          let sex_to_query_param = function
+            | `male -> "M"
+            | `female -> "F"
+            | `unknown -> ""
+          in
+          Option.fold ~none:"" ~some:sex_to_query_param params.sex
+        in
+        let include_marital_names =
+          Option.value ~default:true params.include_marital_names
+        in
         let conf = {conf with Geneweb.Config.env =
                                 ("first_name", Adef.encoded first_name)
                                 :: ("surname", Adef.encoded surname)
-                                :: ("exact_first_name", Adef.encoded "pfx")
-                                :: ("exact_surname", Adef.encoded "pfx")
+                                :: ("exact_first_name",
+                                    Adef.encoded first_name_search_mode)
+                                :: ("exact_surname",
+                                    Adef.encoded surname_search_mode)
                                 :: ("max", Adef.encoded @@ Int.to_string limit)
+                                :: ("sex", Adef.encoded sex)
+                                :: ("include_marital_names",
+                                    Adef.encoded @@
+                                    Bool.to_string include_marital_names)
                                 :: conf.env} in
         if
           Gwdb.nb_of_real_persons base < 200_000
@@ -132,13 +166,32 @@ let print_person_search_list conf base =
           else base
         else base
       in
+      let excluded_persons =
+        List.filter_map
+          (fun (excluded_person : Api_saisie_write_piqi.Excluded_person_group.t) ->
+            let ( >>= ) = Option.bind in
+            excluded_person.reference_id >>= fun reference_id ->
+            excluded_person.relation >>= fun relation ->
+              let reference_id =
+                Gwdb.iper_of_string (Int64.to_string reference_id)
+              in
+              let relation =
+                match relation with
+                | `self -> `Self
+                | `ancestor -> `Ancestor
+                | `descendant -> `Descendant
+              in
+              Some {Geneweb.AdvSearchOk.Excluded_person_group.reference_id; relation})
+          params.excluded_persons
+      in
       let query_params =
         Geneweb.Page.Advanced_search.Query_params.from_env conf.env
       in
       base,
       Option.fold query_params ~none:[] ~some:(fun query_params ->
         fst @@
-        Geneweb.AdvSearchOk.advanced_search ~query_params conf base),
+        Geneweb.AdvSearchOk.advanced_search
+          ~excluded_persons ~query_params conf base),
       is_exact_search
   in
 
