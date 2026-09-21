@@ -501,6 +501,11 @@ message WarningPossibleDuplicateFamHomonymous {
   required WarningPerson homonymous = 5;
 }
 
+message WarningPossibleDuplicateFamQuestString {
+  required WarningPerson person = 1;
+  required WarningPerson named_spouse = 2;
+}
+
 message WarningTitleDatesError {
   required WarningPerson person = 1;
   required Title title = 2;
@@ -600,6 +605,7 @@ message BaseWarnings {
   repeated WarningDistantChildren warning_distant_children = 28;
   repeated WarningEventOrder warning_event_order = 29;
   repeated WarningPossibleDuplicateFamHomonymous warning_possible_duplicate_fam_homonymous = 30;
+  repeated WarningPossibleDuplicateFamQuestString warning_possible_duplicate_fam_quest_string = 31;
 }
 
 message FilterDate {
