@@ -28,6 +28,7 @@ let empty : Api_piqi.Base_warnings.t =
   ; warning_distant_children = []
   ; warning_event_order = []
   ; warning_possible_duplicate_fam_homonymous = []
+  ; warning_possible_duplicate_fam_quest_string = []
   }
 
 (** [add_error_to_piqi_warning_list base error]
@@ -222,6 +223,17 @@ let add_warning_to_piqi_warning_list base =
                     mother2;
                     homonymous = p2wp base p;
                   } :: w.warning_possible_duplicate_fam_homonymous }
+    | PossibleDuplicateFamQuestString (f1, _f2, p) ->
+      let fam1 = Gwdb.foi base f1 in
+      let iper = Gwdb.get_iper p in
+      let named_spouse_iper = Gutil.spouse iper fam1 in
+      let person = p2wp base p in
+      let named_spouse = p2wp base @@ Gwdb.poi base named_spouse_iper in
+       { w with warning_possible_duplicate_fam_quest_string =
+                  Api_piqi.Warning_possible_duplicate_fam_quest_string.{
+                    person;
+                    named_spouse;
+                  } :: w.warning_possible_duplicate_fam_quest_string }
     | PWitnessEventAfterDeath (p, e, origin) ->
       { w with warning_witness_date_after_death =
                  Api_piqi.Warning_witness_date_after_death.{
