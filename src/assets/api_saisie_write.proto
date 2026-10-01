@@ -2,8 +2,6 @@ syntax = "proto2" ;
 
 package Geneanet.Geneweb.Api.Proto.SaisieWrite.Model;
 
-import "api.proto";
-
 // ***************************************************************************
 // Définitions globales.
 // ***************************************************************************
@@ -115,6 +113,12 @@ enum CoupleKind {
   RESIDENCE = 10;
 }
 
+enum Visibility {
+  VISIBILITY_PUBLIC = 0;
+  VISIBILITY_SEMI_PUBLIC = 1;
+  VISIBILITY_PRIVATE = 2;
+}
+
 message SimplePerson {
   required int32 index = 1;
   required Sex sex = 2;
@@ -128,7 +132,7 @@ message SimplePerson {
   required Sosa sosa = 10;
   required PersonReference reference = 11;
   required Access access = 12;
-  required Geneanet.Geneweb.Api.Proto.Standard.Model.Visibility visible_for_visitors = 13;
+  required Visibility visible_for_visitors = 13;
 }
 
 message WitnessEvent {
