@@ -1107,7 +1107,7 @@ let pers_to_piqi_mod_person conf base p =
                 let person_link = pers_to_piqi_person_link conf base p in
                 let witness_note = Utf8.normalize (Gwdb.sou base wnote) in
                 let witness_note = if witness_note = "" then None else Some witness_note in
-                Api_saisie_write_piqi.Witness.{ witness_type ; person = Some person_link; witness_note })
+                {Api_saisie_write_piqi.Witness.witness_type ; person = Some person_link; witness_note})
              (Gwdb.get_pevent_witnesses_and_notes evt)
          in
          {
@@ -1224,11 +1224,10 @@ let pers_to_piqi_mod_person conf base p =
                 | FosterParent -> `rpt_foster_parent_father
               in
               let r =
-                Api_saisie_write_piqi.Relation_parent.({
-                  rpt_type;
+                {Api_saisie_write_piqi.Relation_parent.rpt_type;
                   person = Some father;
                   source = if source = "" then None else Some (Utf8.normalize source);
-                })
+                }
               in
               r :: accu
           | None -> accu
@@ -1246,11 +1245,10 @@ let pers_to_piqi_mod_person conf base p =
             | FosterParent -> `rpt_foster_parent_mother
           in
           let r =
-            Api_saisie_write_piqi.Relation_parent.({
-                rpt_type;
+            {Api_saisie_write_piqi.Relation_parent.rpt_type;
                 person = Some mother;
                 source = if source = "" then None else Some (Utf8.normalize source);
-              })
+              }
           in
           r :: accu
         | None -> accu)
@@ -1341,7 +1339,7 @@ let fam_to_piqi_mod_family conf base ifam fam =
                 let person_link = pers_to_piqi_person_link conf base p in
                 let witness_note = Utf8.normalize @@ Gwdb.sou base wnote in
                 let witness_note = if witness_note = "" then None else Some witness_note in
-                Api_saisie_write_piqi.Witness.{ witness_type; person = Some person_link ; witness_note})
+                {Api_saisie_write_piqi.Witness.witness_type; person = Some person_link ; witness_note})
              (Gwdb.get_fevent_witnesses_and_notes evt)
          in
          {
@@ -1601,8 +1599,7 @@ let piqi_update_type = function
   | Modified -> `modified
 
 let piqi_person_update conf base person_infos update_type =
-  Api_saisie_write_piqi.Person_update.{
-    person = Some (pers_to_piqi_simple_person conf base (Gwdb.poi base (Gwdb.iper_of_string @@ Int32.to_string person_infos.index)));
+  {Api_saisie_write_piqi.Person_update.person = Some (pers_to_piqi_simple_person conf base (Gwdb.poi base (Gwdb.iper_of_string @@ Int32.to_string person_infos.index)));
     update_type = Option.map piqi_update_type update_type;
   }
 
