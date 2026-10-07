@@ -530,3 +530,12 @@ message PaginatedDataParameters {
   required PaginatedDataType type = 2;
   required Page page = 3;
 }
+
+message ProfileParameters {
+  optional IdentifierPerson person = 1;
+}
+
+message Profile {
+  optional Geneanet.Geneweb.Api.Proto.Standard.Model.BaseWarnings anomalies = 1;
+  optional string page_content = 2;
+}

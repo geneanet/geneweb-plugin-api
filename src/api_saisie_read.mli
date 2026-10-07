@@ -35,3 +35,9 @@ val get_paginated_data :
   Api_saisie_read_piqi.Paginated_data_parameters.t ->
   [> `Personal_events of Api_saisie_read_piqi.Paginated_personal_events.t
   | `Witnessed_events of Api_saisie_read_piqi.Paginated_witnessed_events.t]
+
+val get_profile :
+  conf:Geneweb.Config.config ->
+  base:Gwdb.base ->
+  Api_saisie_read_piqi.Profile_parameters.t ->
+  Api_saisie_read_piqi.Profile.t

@@ -2388,3 +2388,41 @@ let get_paginated_data ~conf ~base params =
          simple_event_witness_constructor
      in
      `Witnessed_events (Api_util.Paginated_data.Piqi.to_witnessed_events events)
+
+let get_profile
+  ~conf:conf' ~base (params : Api_saisie_read_piqi.Profile_parameters.t) =
+  let conf = Geneweb.Config.Trimmed.from_config conf' in
+  let person_id =
+    let open Ext_option.Infix in
+    params.person >>= fun person ->
+    match person.index with
+    | Some person_id ->
+      Some (person_id |> Int32.to_string |> Gwdb.iper_of_string)
+    | None ->
+      person.p >>= fun first_name ->
+      person.n >>= fun surname ->
+      Gwdb.person_of_key
+        base
+        first_name
+        surname
+        (Option.fold ~none:0 ~some:Int32.to_int person.oc)
+  in
+  match person_id with
+  | None -> Api_piqi_util.print_error conf' `bad_request ""
+  | Some person_id ->
+    let buffer = Buffer.create 1024 in (
+      match
+        Geneweb.Authorized.Person.get_iper @@
+          Geneweb.Authorized.Person.make ~conf ~base person_id
+      with
+      | None -> Api_piqi_util.print_error conf' `forbidden ""
+      | Some person_id ->
+        let person = Gwdb.poi base person_id in
+        let () =
+          Geneweb.Perso.print
+            ~output:(Buffer.add_string buffer) ~no_headers:true conf' base person
+        in
+        {Api_saisie_read_piqi.Profile.anomalies =
+           Some (Api.person_warnings conf' base person);
+         page_content = Some (Buffer.contents buffer)}
+    )
