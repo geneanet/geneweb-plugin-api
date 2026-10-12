@@ -740,20 +740,20 @@ let possible_family_dup_homonmous conf base fam p =
   let link = merge_dup_link conf curr txt in
   w ^ ". " ^ link
 
-let possible_family_dup_quest_string conf base fam p =
-  let f = Gwdb.foi base fam in
-  let iper = Gwdb.get_iper p in
-  let named_person = Gutil.spouse iper f in
+let possible_family_dup_quest_string conf base f1 f2 p =
+  let named_person =
+    Geneweb.Warning.named_spouse_of_quest_string_warning base p f1 f2
+  in
   let w =
     Printf.sprintf
       (Geneweb.Util.fcapitale (Geneweb.Util.ftransl conf "%s has a union with a person named %s and a person named ? ?"))
       (print_someone base p)
-      (print_someone base @@ Gwdb.poi base named_person)
+      (print_someone base named_person)
   in
   let txt = Geneweb.Util.transl conf "click here to merge these persons and their unions"
             |> Utf8.capitalize_fst
   in
-  let link = merge_dup_link conf iper txt in
+  let link = merge_dup_link conf (Gwdb.get_iper p) txt in
   w ^ ". " ^ link
 
 let compute_warnings conf base resp =
@@ -950,8 +950,8 @@ let compute_warnings conf base resp =
             | PossibleDuplicateFamHomonymous (f1, _, p) ->
                let w = possible_family_dup_homonmous conf base f1 p in
                w :: wl
-            | PossibleDuplicateFamQuestString (f1, _, p) ->
-              let w = possible_family_dup_quest_string conf base f1 p in
+            | PossibleDuplicateFamQuestString (f1, f2, p) ->
+              let w = possible_family_dup_quest_string conf base f1 f2 p in
               w :: wl
             | ParentTooOld (p, a, _) ->
                 let w =
