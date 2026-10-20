@@ -74,6 +74,19 @@ val calendar_of_piqi_calendar : Api_piqi.calendar -> Date.calendar
 
 val date_of_piqi_date : Api_piqi.date -> Date.date
 
+val string_of_date_raw : Geneweb.Config.config -> Date.date -> string
+
+val string_of_date_and_conv :
+  Geneweb.Config.config ->
+  Date.date ->
+  string
+  * string
+  * string
+  * string
+  * [> `french | `gregorian | `hebrew | `islamic | `julian ] option
+(** [string_of_date_and_conv conf date]
+    Returns (date, date_long, date_conv, date_conv_long, calendar_opt) *)
+
 val pers_to_piqi_person :
   Geneweb.Config.config ->
   Gwdb.base ->
