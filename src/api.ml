@@ -762,3 +762,51 @@ let history conf base =
   let filter_user = params.Api_piqi.History_request.filter_user in
   let data = HistoryApi.history_list conf base page elements_per_page filter_user in
   Api_util.print_result conf data
+
+module ConvertDateApi : sig
+  val convert_date :
+    Geneweb.Config.config ->
+    Api_piqi.Convert_date_request.t ->
+    Piqirun_ext.output_format ->
+    string
+end = struct
+  let convert_to_calendar conf input_date target_cal =
+    let target_adef_cal = Api_util.calendar_of_piqi_calendar target_cal in
+    match input_date with
+    | Date.Dtext txt ->
+        {
+          Api_piqi.Converted_date.converted_date = Api_util.piqi_date_of_date input_date;
+          date_str = txt;
+          date_long_str = txt;
+        }
+    | Date.Dgreg (dmy, source_cal) ->
+        let converted_dmy =
+          Date.convert ~from:source_cal ~to_:target_adef_cal dmy
+        in
+        let converted_date = Date.Dgreg (converted_dmy, target_adef_cal) in
+        let converted_piqi_date = Api_util.piqi_date_of_date converted_date in
+        let greg_dmy = Date.convert ~from:source_cal ~to_:Date.Dgregorian dmy in
+        let (date_str, date_long_str, _, _, _) =
+          Api_util.string_of_date_and_conv conf (Date.Dgreg (greg_dmy, target_adef_cal))
+        in
+        {
+          Api_piqi.Converted_date.converted_date = converted_piqi_date;
+          date_str = Utf8.normalize date_str;
+          date_long_str = Utf8.normalize date_long_str;
+        }
+
+  let convert_date conf (req : Api_piqi.Convert_date_request.t) =
+    let input_date = Api_util.date_of_piqi_date req.Api_piqi.Convert_date_request.date in
+    let targets =
+      match req.Api_piqi.Convert_date_request.target_calendars with
+      | [] -> [ `gregorian; `julian; `french; `hebrew; `islamic ]
+      | l -> l
+    in
+    let converted_dates = List.map (convert_to_calendar conf input_date) targets in
+    Api_piqi_ext.gen_convert_date_response { Api_piqi.Convert_date_response.converted_dates }
+end
+
+let print_convert_date conf =
+  let req = Api_util.get_params conf Api_piqi_ext.parse_convert_date_request in
+  let data = ConvertDateApi.convert_date conf req in
+  Api_util.print_result conf data
