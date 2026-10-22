@@ -289,7 +289,7 @@ let pers_to_piqi_person_tree
       name_is_restricted = Geneweb.Person.has_restricted_name conf base p;
     }
   else
-    let p_auth = Geneweb.Person.is_visible conf base p in
+    let privacy = Api_privacy_filter.evaluate conf base p in
     let index = Int32.of_string @@ Gwdb.string_of_iper (Gwdb.get_iper p) in
     let sex =
       match Gwdb.get_sex p with
@@ -305,17 +305,11 @@ let pers_to_piqi_person_tree
         else if Sosa.eq sosa_nb Sosa.one then `sosa_ref
         else `sosa
     in
-    let sn =
-      if (Geneweb.Person.is_hide_names conf p) && not p_auth then ""
-      else Name.lower (Gwdb.sou base (Gwdb.get_surname p))
-    in
-    let fn =
-      if (Geneweb.Person.is_hide_names conf p) && not p_auth then ""
-      else Name.lower (Gwdb.sou base (Gwdb.get_first_name p))
-    in
+    let sn = Api_privacy_filter.surname_lower privacy base p in
+    let fn = Api_privacy_filter.first_name_lower privacy base p in
     let occ = Int32.of_int (Gwdb.get_occ p) in
     let (first_name, surname) =
-      if not p_auth && (Geneweb.Person.is_hide_names conf p) then ("x", "x")
+      if Api_privacy_filter.is_hidden privacy then ("x", "x")
       else person_firstname_surname_txt base p
     in
     let dates = short_dates_text conf base p in
@@ -353,7 +347,7 @@ let pers_to_piqi_person_tree
       sosa = sosa;
       has_more_infos = has_more_infos;
       baseprefix = base_prefix;
-      name_is_hidden = Geneweb.Person.is_hidden conf base p;
+      name_is_hidden = Api_privacy_filter.is_hidden privacy;
       name_is_restricted = Geneweb.Person.has_restricted_name conf base p;
     }
 
@@ -385,38 +379,9 @@ let fill_sosa conf base p =
   else if Sosa.eq sosa_nb Sosa.one then `sosa_ref
   else `sosa
 
-let fill_sn conf base p p_auth =
-  if (Geneweb.Person.is_hide_names conf p) && not p_auth then ""
-  else Name.lower (Gwdb.sou base (Gwdb.get_surname p))
-
-let fill_fn conf base p p_auth =
-  if (Geneweb.Person.is_hide_names conf p) && not p_auth then ""
-  else Name.lower (Gwdb.sou base (Gwdb.get_first_name p))
 
 let fill_occ p =
   Int32.of_int (Gwdb.get_occ p)
-
-let fill_surname conf p p_auth gen_p =
-  if not p_auth && (Geneweb.Person.is_hide_names conf p) then "x" else gen_p.Def.surname
-
-let fill_firstname conf p p_auth gen_p =
-  if not p_auth && (Geneweb.Person.is_hide_names conf p) then "x" else gen_p.Def.first_name
-
-let fill_publicname p_auth gen_p =
-  let publicname = if not p_auth then "" else gen_p.Def.public_name in
-  if publicname = "" then None else Some publicname
-
-let fill_aliases p_auth gen_p =
-  if not p_auth then [] else gen_p.Def.aliases
-
-let fill_qualifiers p_auth gen_p =
-  if not p_auth then [] else gen_p.Def.qualifiers
-
-let fill_firstname_aliases p_auth gen_p =
-  if not p_auth then [] else gen_p.Def.first_names_aliases
-
-let fill_surname_aliases p_auth gen_p =
-  if not p_auth then [] else gen_p.Def.surnames_aliases
 
 let pers_to_piqi_simple_person
       (conf : Geneweb.Config.config)
@@ -433,6 +398,7 @@ let pers_to_piqi_simple_person
     restricted_person
   else
     let p_auth = Geneweb.Person.is_visible conf base p in
+    let privacy = Api_privacy_filter.evaluate conf base p in
     let index = Int32.of_string @@ Gwdb.string_of_iper (Gwdb.get_iper p) in
     let sex =
       match Gwdb.get_sex p with
@@ -451,14 +417,8 @@ let pers_to_piqi_simple_person
         then None
         else Some (Sosa.to_string sosa_nb_num)
     in
-    let sn =
-      if (Geneweb.Person.is_hide_names conf p) && not p_auth then ""
-      else Name.lower (Gwdb.sou base (Gwdb.get_surname p))
-    in
-    let fn =
-      if (Geneweb.Person.is_hide_names conf p) && not p_auth then ""
-      else Name.lower (Gwdb.sou base (Gwdb.get_first_name p))
-    in
+    let sn = Api_privacy_filter.surname_lower privacy base p in
+    let fn = Api_privacy_filter.first_name_lower privacy base p in
     let occ = Int32.of_int (Gwdb.get_occ p) in
     let (birth_short, birth_raw, birth_place, death_short, death_raw, death_place) =
       if p_auth then
@@ -522,8 +482,8 @@ let pers_to_piqi_simple_person
     {
       Api_saisie_read_piqi.Simple_person.index = index;
       sex = sex;
-      lastname = fill_surname conf p p_auth gen_p;
-      firstname = fill_firstname conf p p_auth gen_p;
+      lastname = Api_privacy_filter.surname privacy gen_p;
+      firstname = Api_privacy_filter.first_name privacy gen_p;
       n = Utf8.normalize sn;
       p = Utf8.normalize fn;
       occ = occ;
@@ -542,7 +502,7 @@ let pers_to_piqi_simple_person
       has_spouse = has_spouse;
       has_child = has_child;
       is_contemporary = Geneweb.Person.is_contemporary conf base p;
-      name_is_hidden = Geneweb.Person.is_hidden conf base p;
+      name_is_hidden = Api_privacy_filter.is_hidden privacy;
       name_is_restricted = Geneweb.Person.has_restricted_name conf base p;
     }
 
@@ -1379,13 +1339,6 @@ let has_sources p_auth psources birth_src baptism_src death_src burial_src =
     then true
   else false
 
-let fill_titles conf base p =
-  List.map
-    (fun x ->
-      let open Api_util in
-      !!(Geneweb.Perso.string_of_title ~safe:true ~link:false conf base (Adef.safe "") p x))
-    (Geneweb.Perso.nobility_titles_list conf base p)
-
 let transform_empty_string_to_None string =
   if string = "" then None else Some string
 
@@ -1445,13 +1398,6 @@ let fill_burial_type p_auth gen_p =
     | _ -> `dont_know
   else `dont_know
 
-let fill_titles_with_links conf base p =
-  List.map
-    (fun x ->
-      let open Api_util in
-      !!(Geneweb.Perso.string_of_title ~link:true conf base (Adef.safe "") p x))
-    (Geneweb.Perso.nobility_titles_list conf base p)
-
 let has_history_if_is_main_person conf base p p_auth is_main_person =
   if is_main_person then
     Geneweb.Perso.has_history conf base p p_auth
@@ -1489,6 +1435,7 @@ let pers_to_piqi_person
     get_restricted_person ()
   else
     let p_auth = Geneweb.Person.is_visible conf base p in
+    let privacy = Api_privacy_filter.evaluate conf base p in
     let gen_p = Geneweb.Util.string_gen_person base (Gwdb.gen_person_of_person p) in
     let gen_p = Futil.map_person_ps Fun.id (fun ?format:_ -> Utf8.normalize) gen_p in
     let (baptism_date, _, baptism_date_conv, _, baptism_cal) = fill_baptism conf p_auth gen_p in
@@ -1538,16 +1485,16 @@ let pers_to_piqi_person
       Api_saisie_read_piqi.Person.type_ = `simple;
       index = fill_index conf base p;
       sex = fill_sex p;
-      lastname = fill_surname conf p p_auth gen_p;
-      firstname = fill_firstname conf p p_auth gen_p;
-      n = fill_sn conf base p p_auth;
-      p = fill_fn conf base p p_auth;
+      lastname = Api_privacy_filter.surname privacy gen_p;
+      firstname = Api_privacy_filter.first_name privacy gen_p;
+      n = Api_privacy_filter.surname_lower privacy base p;
+      p = Api_privacy_filter.first_name_lower privacy base p;
       occ = fill_occ p;
-      public_name = fill_publicname p_auth gen_p;
-      aliases = fill_aliases p_auth gen_p;
-      qualifiers = fill_qualifiers p_auth gen_p;
-      firstname_aliases = fill_firstname_aliases p_auth gen_p;
-      surname_aliases = fill_surname_aliases p_auth gen_p;
+      public_name = Api_privacy_filter.public_name privacy gen_p;
+      aliases = Api_privacy_filter.aliases privacy gen_p;
+      qualifiers = Api_privacy_filter.qualifiers privacy gen_p;
+      firstname_aliases = Api_privacy_filter.first_names_aliases privacy gen_p;
+      surname_aliases = Api_privacy_filter.surnames_aliases privacy gen_p;
       image = Api_util.get_portrait conf base p;
       birth_date = transform_empty_string_to_None birth_date;
       birth_date_conv = transform_empty_string_to_None birth_date_conv;
@@ -1574,7 +1521,7 @@ let pers_to_piqi_person
       notes = transform_empty_string_to_None (fill_notes conf base p p_auth is_main_person gen_p);
       psources = transform_empty_string_to_None psources;
       has_sources = has_sources;
-      titles = fill_titles conf base p;
+      titles = Api_privacy_filter.titles privacy conf base p;
       related = get_related_piqi conf base p base_prefix pers_to_piqi_simple_person simple_relation_person_constructor;
       rparents = get_rparents_piqi base conf base_prefix gen_p pers_to_piqi_simple_person simple_relation_person_constructor;
       father = father;
@@ -1587,7 +1534,7 @@ let pers_to_piqi_person
       baseprefix = base_prefix;
       fiche_person_person = None;
       is_contemporary = Geneweb.Person.is_contemporary conf base p;
-      name_is_hidden = Geneweb.Person.is_hidden conf base p;
+      name_is_hidden = Api_privacy_filter.is_hidden privacy;
       name_is_restricted = Geneweb.Person.has_restricted_name conf base p;
     }
 
@@ -1622,6 +1569,7 @@ let rec pers_to_piqi_fiche_person
   else
     begin
       let p_auth = Geneweb.Person.is_visible conf base p in
+      let privacy = Api_privacy_filter.evaluate conf base p in
       let gen_p = Geneweb.Util.string_gen_person base (Gwdb.gen_person_of_person p) in
       let gen_p = Futil.map_person_ps Fun.id (fun ?format:_ -> Utf8.normalize) gen_p in
       (* Sources only returned for the main person. *)
@@ -1653,7 +1601,7 @@ let rec pers_to_piqi_fiche_person
         piqi_fiche_person.Api_saisie_read_piqi.Fiche_person.cremation_text <- transform_empty_string_to_None (fill_cremation_text conf p p_auth);
         piqi_fiche_person.Api_saisie_read_piqi.Fiche_person.death_date_raw <- transform_empty_string_to_None (fill_death_date_raw conf p_auth gen_p);
         piqi_fiche_person.Api_saisie_read_piqi.Fiche_person.death_text <- transform_empty_string_to_None (fill_death_text conf p p_auth);
-        piqi_fiche_person.Api_saisie_read_piqi.Fiche_person.titles_links <- if not simple_graph_info then fill_titles_with_links conf base p else [];
+        piqi_fiche_person.Api_saisie_read_piqi.Fiche_person.titles_links <- if not simple_graph_info then Api_privacy_filter.titles_with_links privacy conf base p else [];
         piqi_fiche_person.Api_saisie_read_piqi.Fiche_person.sosa_nb <- if sosa_nb = Sosa.zero then None else Some (Sosa.to_string sosa_nb);
         piqi_fiche_person.Api_saisie_read_piqi.Fiche_person.father <- fiche_father;
         piqi_fiche_person.Api_saisie_read_piqi.Fiche_person.mother <- fiche_mother;
@@ -1710,8 +1658,8 @@ let rec pers_to_piqi_fiche_person
       {
         Api_saisie_read_piqi.Person.type_ = `fiche;
         fiche_person_person = Some piqi_fiche_person;
-        n = fill_sn conf base p p_auth;
-        p = fill_fn conf base p p_auth;
+        n = Api_privacy_filter.surname_lower privacy base p;
+        p = Api_privacy_filter.first_name_lower privacy base p;
         occ = fill_occ p;
 
         baptism_src = transform_empty_string_to_None baptism_src;
@@ -1727,22 +1675,22 @@ let rec pers_to_piqi_fiche_person
         death_type = death_type;
         index = fill_index conf base p;
         image = Api_util.get_portrait conf base p;
-        firstname = fill_firstname conf p p_auth gen_p;
-        lastname = fill_surname conf p p_auth gen_p;
-        qualifiers = if (not simple_graph_info) || is_main_person then fill_qualifiers p_auth gen_p else [];
+        firstname = Api_privacy_filter.first_name privacy gen_p;
+        lastname = Api_privacy_filter.surname privacy gen_p;
+        qualifiers = if (not simple_graph_info) || is_main_person then Api_privacy_filter.qualifiers privacy gen_p else [];
         occupation = transform_empty_string_to_None (fill_occupation conf base p_auth gen_p);
         sex = fill_sex p;
-        public_name = fill_publicname p_auth gen_p;
+        public_name = Api_privacy_filter.public_name privacy gen_p;
 
         (* Fields only filled for the main person. *)
         baptism_place = if is_main_person then transform_empty_string_to_None (fill_baptism_place p_auth gen_p) else None;
-        aliases = if is_main_person && not simple_graph_info then fill_aliases p_auth gen_p else [];
-        firstname_aliases = if is_main_person && not simple_graph_info then fill_firstname_aliases p_auth gen_p else [];
+        aliases = if is_main_person && not simple_graph_info then Api_privacy_filter.aliases privacy gen_p else [];
+        firstname_aliases = if is_main_person && not simple_graph_info then Api_privacy_filter.first_names_aliases privacy gen_p else [];
         has_sources = has_sources;
         notes = if is_main_person && not simple_graph_info then transform_empty_string_to_None (fill_notes conf base p p_auth is_main_person gen_p) else None;
         psources = if is_main_person && not simple_graph_info then transform_empty_string_to_None psources else None;
         sosa = if is_main_person then fill_sosa conf base p else `no_sosa;
-        surname_aliases = if is_main_person && not simple_graph_info then fill_surname_aliases p_auth gen_p else [];
+        surname_aliases = if is_main_person && not simple_graph_info then Api_privacy_filter.surnames_aliases privacy gen_p else [];
 
         (* These fields should not be set because Fiche Person fields are better. *)
         baptism_date = None;
@@ -1760,12 +1708,12 @@ let rec pers_to_piqi_fiche_person
         families = if return_simple_attributes && not simple_graph_info then fill_families conf base p else [];
         father = if return_simple_attributes then father else None;
         mother = if return_simple_attributes then mother else None;
-        titles = if not simple_graph_info then fill_titles conf base p else [];
+        titles = if not simple_graph_info then Api_privacy_filter.titles privacy conf base p else [];
         related = if return_simple_attributes then get_related_piqi conf base p base_prefix pers_to_piqi_simple_person simple_relation_person_constructor else [];
         rparents = if return_simple_attributes then get_rparents_piqi base conf base_prefix gen_p pers_to_piqi_simple_person simple_relation_person_constructor else [];
         baseprefix = base_prefix;
         is_contemporary = Geneweb.Person.is_contemporary conf base p;
-        name_is_hidden = Geneweb.Person.is_hidden conf base p;
+        name_is_hidden = Api_privacy_filter.is_hidden privacy;
         name_is_restricted = Geneweb.Person.has_restricted_name conf base p;
       }
     end
@@ -1923,7 +1871,7 @@ let print_from_identifier_person
             match Gwdb.person_of_key base fn sn (Int32.to_int oc) with
             | Some ip ->
               let p = Gwdb.poi base ip in
-              if Geneweb.Person.is_empty p || ((Geneweb.Person.is_hide_names conf p) && not(Geneweb.Person.is_visible conf base p)) then
+              if Geneweb.Person.is_empty p || Geneweb.Person.is_hidden conf base p then
                 Api_util.print_error conf `not_found ""
               else
                 (if identifier_person.Api_saisie_read_piqi.Identifier_person.track_visit
