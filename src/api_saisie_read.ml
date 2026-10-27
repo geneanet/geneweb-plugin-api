@@ -2,9 +2,6 @@ let max_children = 100
 let limit_array arr =
   if Array.length arr > max_children then [||] else arr
 
-let limit_list l =
-  if List.length l > max_children then [] else l
-
 (**/**) (* Conversion de dates *)
 
 (* Copie de date.ml sans les balises HTML => on devrait créer *)
@@ -546,149 +543,6 @@ let pers_to_piqi_simple_person
       name_is_restricted = Geneweb.Person.has_restricted_name conf base p;
     }
 
-
-let fam_to_piqi_family_link
-      (conf : Geneweb.Config.config)
-      (base : Gwdb.base)
-      (ifath : Gwdb.iper)
-      (imoth : Gwdb.iper)
-      (sp : Gwdb.person)
-      (ifam : Gwdb.ifam)
-      (fam : Gwdb.family)
-      (base_prefix : string)
-      (spouse_to_piqi :
-         Geneweb.Config.config ->
-         Gwdb.base ->
-         Gwdb.person ->
-         string ->
-         'person)
-      (witness_to_piqi :
-         Geneweb.Config.config ->
-         Gwdb.base ->
-         Gwdb.person ->
-         Def.witness_kind ->
-         string ->
-         string ->
-         'witness)
-      (child_to_piqi :
-         Geneweb.Config.config ->
-         Gwdb.base ->
-         Gwdb.person ->
-         string ->
-         'person)
-      (family_link_constructor :
-         int32 ->
-         'person ->
-         string ->
-         string ->
-         string ->
-         string ->
-         string ->
-         Api_saisie_read_piqi.calendar option ->
-         string ->
-         string ->
-         string ->
-         Api_saisie_read_piqi.marriage_type ->
-         Api_saisie_read_piqi.divorce_type ->
-         string ->
-         string ->
-         string ->
-         string ->
-         string ->
-         Api_saisie_read_piqi.calendar option ->
-         'witness list ->
-         string ->
-         string ->
-         'person list ->
-         'family)
-    : 'family =
-  let spouse = spouse_to_piqi conf base sp base_prefix in
-  let p_auth = true in
-  let m_auth = true in
-  let gen_f = Geneweb.Util.string_gen_family base (Gwdb.gen_family_of_family fam) in
-  let gen_f = Futil.map_family_ps Fun.id Fun.id (fun ?format:_ -> Utf8.normalize) gen_f in
-  let index = Int32.of_string @@ Gwdb.string_of_ifam gen_f.fam_index in
-  let (marriage_date, marriage_date_long, marriage_date_conv, marriage_date_conv_long, marriage_cal, marriage_date_raw) =
-    match (m_auth, Date.od_of_cdate gen_f.marriage) with
-    | (true, Some d) ->
-      let (marriage_date, marriage_date_long, marriage_date_conv, marriage_date_conv_long, marriage_cal) = string_of_date_and_conv conf d in
-      (marriage_date, marriage_date_long, marriage_date_conv, marriage_date_conv_long, marriage_cal, string_of_date_raw conf d)
-    | _ -> ("", "", "", "", None, "")
-  in
-  let marriage_date_text =
-    let open Api_util in
-    !!(Geneweb.Perso.get_marriage_date_text conf fam p_auth)
-  in
-  let marriage_place =
-    if m_auth then
-      let open Api_util in
-      !!(Geneweb.Util.string_of_place gen_f.marriage_place)
-    else ""
-  in
-  let marriage_src =
-    if m_auth then
-      let open Api_util in
-      !!(Geneweb.Notes.source conf base gen_f.marriage_src)
-    else ""
-  in
-  let marriage_type =
-    match gen_f.relation with
-    | Married -> `married
-    | NotMarried -> `not_married
-    | Engaged -> `engaged
-    | NoSexesCheckNotMarried -> `no_sexes_check_not_married
-    | NoMention -> `no_mention
-    | NoSexesCheckMarried -> `no_sexes_check_married
-    | MarriageBann -> `marriage_bann
-    | MarriageContract -> `marriage_contract
-    | MarriageLicense -> `marriage_license
-    | Pacs -> `pacs
-    | Residence -> `residence
-  in
-  let (divorce_type, divorce_date, divorce_date_long, divorce_date_conv, divorce_date_conv_long, divorce_cal, divorce_date_raw) =
-    match gen_f.divorce with
-    | NotDivorced -> (`not_divorced, "", "", "", "", None, "")
-    | Divorced cod ->
-        (match Date.od_of_cdate cod with
-         | Some d when m_auth ->
-             let (divorce_date, divorce_date_long, divorce_date_conv, divorce_date_conv_long, divorce_cal) =
-               string_of_date_and_conv conf d
-             in
-             (`divorced, divorce_date, divorce_date_long, divorce_date_conv, divorce_date_conv_long, divorce_cal, string_of_date_raw conf d)
-         | _ -> (`divorced, "", "", "", "", None, ""))
-    | Separated -> (`separated, "", "", "", "", None, "")
-  in
-  let witnesses =
-    Ext_array.to_list_map
-      (fun (ip, wkind, wnote) ->
-         let p = Gwdb.poi base ip in
-         let wnote = Utf8.normalize @@ Gwdb.sou base wnote in
-         witness_to_piqi conf base p wkind wnote base_prefix
-      ) (Geneweb.Perso.get_marriage_witnesses_and_notes fam)
-  in
-  let notes =
-    if m_auth && not conf.Geneweb.Config.no_note
-    then
-      let open Api_util in
-      !!(Geneweb.Notes.note conf base [] gen_f.comment)
-    else ""
-  in
-  let fsources =
-    if m_auth
-    then
-      let open Api_util in
-      !!(Geneweb.Notes.source conf base gen_f.fsources)
-    else ""
-  in
-  let children =
-    List.map
-      (fun (p, base_prefix) -> child_to_piqi conf base p base_prefix)
-      (!Geneweb.GWPARAM_ITL.get_children_of_parents base base_prefix ifam ifath imoth |> limit_list)
-  in
-  family_link_constructor index spouse marriage_date marriage_date_long marriage_date_raw marriage_date_conv marriage_date_conv_long
-    marriage_cal marriage_date_text marriage_place marriage_src marriage_type divorce_type divorce_date divorce_date_long divorce_date_raw divorce_date_conv
-    divorce_date_conv_long divorce_cal witnesses notes fsources children
-
 let fill_events
       ?(page : Api_util.Page.t option)
       (conf' : Geneweb.Config.config)
@@ -907,37 +761,16 @@ let get_family_piqi base conf ifam p base_prefix spouse_to_piqi witnesses_to_piq
       (fun ip -> child_to_piqi conf base (Gwdb.poi base ip) base_prefix)
       children_array
   in
-  (* lien inter arbre *)
-  let children_link =
-    List.fold_right begin fun (_, _, children) acc ->
-      List.fold_right begin fun ((p, _), baseprefix, can_merge) acc ->
-        if can_merge then acc
-        else child_to_piqi conf base p baseprefix :: acc
-      end children acc
-    end (!Geneweb.GWPARAM_ITL.get_children' conf base (Gwdb.get_iper p) fam (Gwdb.get_iper sp)) []
-  in
-  let children = children @ children_link in
-    family_constructor index spouse marriage_date marriage_date_long marriage_date_raw marriage_date_conv marriage_date_conv_long
+  family_constructor index spouse marriage_date marriage_date_long marriage_date_raw marriage_date_conv marriage_date_conv_long
     marriage_cal marriage_date_text marriage_place marriage_src marriage_type divorce_type divorce_date divorce_date_long divorce_date_raw divorce_date_conv
     divorce_date_conv_long divorce_cal witnesses notes fsources children
 
 let get_families_piqi base conf p base_prefix spouse_to_piqi witnesses_to_piqi child_to_piqi family_constructor =
-  let families =
-    Ext_array.to_list_map
-      (fun ifam ->
-         get_family_piqi base conf ifam p base_prefix spouse_to_piqi witnesses_to_piqi child_to_piqi family_constructor
-      )
-      (Gwdb.get_family p)
-  in
-  (* lien inter arbre *)
-  let families_link =
-    List.fold_right begin fun (ifam, fam, (ifath, imoth, isp), baseprefix, can_merge ) acc ->
-      if can_merge then acc
-      else
-        fam_to_piqi_family_link conf base ifath imoth isp ifam fam baseprefix spouse_to_piqi witnesses_to_piqi child_to_piqi family_constructor :: acc
-    end (!Geneweb.GWPARAM_ITL.get_families conf base p) []
-  in
-    families @ families_link
+  Ext_array.to_list_map
+    (fun ifam ->
+       get_family_piqi base conf ifam p base_prefix spouse_to_piqi witnesses_to_piqi child_to_piqi family_constructor
+    )
+    (Gwdb.get_family p)
 
 let get_rparents_piqi base conf base_prefix gen_p pers_to_piqi relation_person_constructor =
     List.fold_left
@@ -1136,15 +969,7 @@ let fill_parents conf base p base_prefix =
         Some (pers_to_piqi_simple_person conf base mother base_prefix)
     in
     (father, mother)
-  | None ->
-    (* lien inter arbre *)
-    let ip = Gwdb.get_iper p in
-    let aux fn =
-      match fn conf base base_prefix ip with
-      | Some ((p, _), base_prefix) -> Some (pers_to_piqi_simple_person conf base p base_prefix)
-      | None -> None
-    in
-    (aux !Geneweb.GWPARAM_ITL.get_father, aux !Geneweb.GWPARAM_ITL.get_mother)
+  | None -> None, None
 
 let fill_fiche_parents conf base p base_prefix nb_asc nb_asc_max with_parent_families pers_to_piqi_person simple_graph_info no_event =
   if nb_asc_max > nb_asc
@@ -1173,18 +998,7 @@ let fill_fiche_parents conf base p base_prefix nb_asc nb_asc_max with_parent_fam
             Some (pers_to_piqi_person conf base mother base_prefix false (nb_asc+1) nb_asc_max 0 0 false simple_graph_info no_event)
       in
       (father, mother)
-    | None ->
-      (* lien inter arbre *)
-      let ip = Gwdb.get_iper p in
-      let aux fn =
-        match fn conf base base_prefix ip with
-        | Some ((p, _), baseprefix) ->
-          if with_parent_families
-          then Some (pers_to_piqi_person conf base p baseprefix false (nb_asc + 1) nb_asc_max 0 1 true simple_graph_info no_event)
-          else Some (pers_to_piqi_person conf base p baseprefix false (nb_asc + 1) nb_asc_max 0 0 false simple_graph_info no_event)
-        | None -> None
-      in
-      (aux !Geneweb.GWPARAM_ITL.get_father, aux !Geneweb.GWPARAM_ITL.get_mother)
+    | None -> None, None
   else
     (None, None)
 
@@ -1783,8 +1597,6 @@ let print_person_tree conf base =
     | None -> conf
   in
   let p = Gwdb.poi base ip in
-  (* cache lien inter arbre *)
-  let () = !Geneweb.GWPARAM_ITL.init_cache conf base ip 1 1 1 in
   let pers_piqi =
     let events_limit =
       Option.map
@@ -1887,8 +1699,6 @@ let search_index
 let print_result_fiche_person conf base ip nb_asc_max nb_desc_max simple_graph_info no_event =
   if Gwdb.iper_exists base ip then begin
     let p = Gwdb.poi base ip in
-    (* cache lien inter arbre *)
-    let () = !Geneweb.GWPARAM_ITL.init_cache conf base ip 1 1 1 in
     let pers_piqi = pers_to_piqi_fiche_person conf base p conf.Geneweb.Config.command true 0 nb_asc_max 0 nb_desc_max true simple_graph_info no_event in
     let data = Api_saisie_read_piqi_ext.gen_person pers_piqi in
     Api_util.print_result conf data
@@ -2038,36 +1848,7 @@ let build_graph_asc conf base p max_gen =
           edges := create_edge p_factor conf.Geneweb.Config.command p fath_factor conf.Geneweb.Config.command fath :: !edges;
           edges := create_edge p_factor conf.Geneweb.Config.command p moth_factor conf.Geneweb.Config.command moth :: !edges;
           loop ((fath, gen + 1) :: (moth, gen + 1) :: l)
-        | None ->
-          (* lien inter arbre *)
-          let ip = Gwdb.get_iper p in
-          let () = !Geneweb.GWPARAM_ITL.init_cache conf base ip (max_gen - gen) 0 0 in
-          let () =
-            let ht = Hashtbl.create 0 in
-            let rec loop_parents l =
-              match l with
-              | [] -> ()
-              | (base_prefix, p, gen) :: l ->
-                if gen >= max_gen then loop_parents l
-                else
-                  let ip = Gwdb.get_iper p in
-                  let p_factor = Option.value (Hashtbl.find_opt ht (base_prefix, Gwdb.get_iper p)) ~default:1 in
-                  match !Geneweb.GWPARAM_ITL.get_father conf base base_prefix ip
-                      , !Geneweb.GWPARAM_ITL.get_mother conf base base_prefix ip with
-                  | (Some ((fath, _), bpf), Some ((moth, _), bpm)) ->
-                    let fath_factor = factor ht (bpf, Gwdb.get_iper fath) in
-                    let moth_factor = factor ht (bpm, Gwdb.get_iper moth) in
-                    nodes := create_node fath gen Ancestor bpf fath_factor :: !nodes;
-                    nodes := create_node moth gen Ancestor bpm moth_factor :: !nodes;
-                    edges := create_edge p_factor base_prefix p fath_factor bpf fath :: !edges;
-                    edges := create_edge p_factor base_prefix p moth_factor bpm moth :: !edges;
-                    let l = (bpf, fath, gen + 1) :: (bpm, moth, gen + 1) :: l in
-                    loop_parents l
-                  | _ -> loop_parents l
-            in
-            loop_parents [ (conf.Geneweb.Config.command, p, gen) ]
-          in
-          loop l
+        | None -> loop l
   in
   nodes := create_node p 1 Root conf.Geneweb.Config.command 1 :: !nodes;
   loop [(p, 1)];
@@ -2105,74 +1886,10 @@ let build_graph_desc conf base p max_gen =
                   edges := create_edge p_factor conf.Geneweb.Config.command p c_factor conf.Geneweb.Config.command c :: !edges;
                   edges := create_edge sp_factor conf.Geneweb.Config.command sp c_factor conf.Geneweb.Config.command c :: !edges
                 end children;
-                let child_local =
-                  List.fold_left (fun acc c -> (c, gen + 1) :: acc) acc children
-                in
-                (* lien inter arbre *)
-                let () = !Geneweb.GWPARAM_ITL.init_cache conf base (Gwdb.get_iper p) 1 1 (max_gen - gen) in
-                let () =
-                  let ht = Hashtbl.create 0 in
-                  let rec loop_child = function
-                    | [] -> ()
-                    | (base_prefix, p, gen) :: l ->
-                      if gen >= max_gen then loop_child l
-                      else
-                        let p_factor = Option.value (Hashtbl.find_opt ht (base_prefix, Gwdb.get_iper p)) ~default:1 in
-                        let l =
-                          List.fold_left begin fun acc (fam_bp, (_, _, isp), children) ->
-                            let sp_factor = factor ht (fam_bp, isp) in
-                            List.fold_left begin fun acc ((c, _), baseprefix, can_merge) ->
-                              if can_merge then acc
-                              else
-                                let c_factor = factor ht (baseprefix, Gwdb.get_iper c) in
-                                nodes := create_node ifam c gen Children baseprefix c_factor :: !nodes;
-                                edges := create_edge p_factor base_prefix p c_factor baseprefix c :: !edges;
-                                edges := create_edge sp_factor baseprefix sp c_factor baseprefix c :: !edges;
-                                (baseprefix, c, gen + 1) :: acc
-                            end acc children
-                          end l (limit_list @@ !Geneweb.GWPARAM_ITL.get_children' conf base (Gwdb.get_iper p) fam (Gwdb.get_iper sp))
-                        in
-                        loop_child l
-                  in
-                  loop_child [(conf.Geneweb.Config.command, p, gen)]
-                in
-                child_local
+                List.fold_left (fun acc c -> (c, gen + 1) :: acc) acc children
               end else acc)
             l ifam
         in
-
-        (* lien inter arbre *)
-        let () = !Geneweb.GWPARAM_ITL.init_cache conf base (Gwdb.get_iper p) 1 1 (max_gen - gen) in
-        let () =
-          let ht = Hashtbl.create 0 in
-          let rec loop_desc = function
-            | [] -> ()
-            | (base_prefix, p, gen) :: l ->
-              if gen >= max_gen then loop_desc l
-              else
-                let p_factor = Option.value (Hashtbl.find_opt ht (base_prefix, Gwdb.get_iper p)) ~default:1 in
-                let l =
-                  List.fold_left begin fun acc (ifam, fam, (_ifath, _imoth, sp), baseprefix, can_merge) ->
-                    if can_merge then acc
-                    else
-                      let sp_factor = factor ht (baseprefix, Gwdb.get_iper sp) in
-                      nodes := create_node ifam sp gen Spouse baseprefix sp_factor :: !nodes;
-                      edges := create_edge p_factor base_prefix p sp_factor baseprefix sp :: !edges;
-                      List.fold_left begin fun acc (_baseprefix, _cpl, children) ->
-                        List.fold_left begin fun acc ((c, _), _, _) ->
-                          let c_factor = factor ht (baseprefix, Gwdb.get_iper c) in
-                          nodes := create_node ifam c gen Children baseprefix c_factor :: !nodes;
-                          edges := create_edge p_factor base_prefix p c_factor baseprefix c :: !edges;
-                          edges := create_edge sp_factor baseprefix sp c_factor baseprefix c :: !edges;
-                          (baseprefix, c, gen + 1) :: acc
-                        end acc children
-                      end acc (limit_list @@ !Geneweb.GWPARAM_ITL.get_children' conf base (Gwdb.get_iper p) fam (Gwdb.get_iper sp))
-                  end l (!Geneweb.GWPARAM_ITL.get_families conf base p)
-                in loop_desc l
-          in
-          loop_desc [(conf.Geneweb.Config.command, p, gen)]
-        in
-
         loop l
   in
   nodes := create_node Gwdb.dummy_ifam p 1 Root conf.Geneweb.Config.command 1 :: !nodes;
@@ -2202,8 +1919,6 @@ let print_result_graph_tree
     | Some n -> min max_asc (max (Int32.to_int n) 1)
     | None -> max_asc
   in
-  (* cache lien inter arbre *)
-  let () = !Geneweb.GWPARAM_ITL.init_cache conf base ip 1 1 1 in
   let (nodes_asc, edges_asc) = build_graph_asc conf base p nb_asc in
   let max_desc = 12 in
   let nb_desc =
