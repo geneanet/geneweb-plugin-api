@@ -35,3 +35,15 @@ val print_person_warnings : Geneweb.Config.config -> Gwdb.base -> unit
 val print_all_persons : Geneweb.Config.config -> Gwdb.base -> unit
 val print_all_families : Geneweb.Config.config -> Gwdb.base -> unit
 val history : Geneweb.Config.config -> Gwdb.base -> unit
+
+val print_convert_date : Geneweb.Config.config -> unit
+(** [print_convert_date conf]
+    Convert a date to the requested calendars. *)
+
+module ConvertDateApi : sig
+  val convert_date :
+    Geneweb.Config.config ->
+    Api_piqi.Convert_date_request.t ->
+    Piqirun_ext.output_format ->
+    string
+end

@@ -822,3 +822,18 @@ message History {
     required int32 page = 2;
     required int32 total_elements = 3;
 }
+
+message ConvertDateRequest {
+    required Date date = 1;
+    repeated Calendar target_calendars = 2;
+}
+
+message ConvertedDate {
+    required Date converted_date = 1;
+    required string date_str = 2;
+    required string date_long_str = 3;
+}
+
+message ConvertDateResponse {
+    repeated ConvertedDate converted_dates = 1;
+}

@@ -1,0 +1,4 @@
+(test
+ (name test)
+ (libraries alcotest geneweb geneweb_plugin_api.lib)
+ (modules test convert_date_test))
