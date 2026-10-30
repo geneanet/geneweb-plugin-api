@@ -1346,7 +1346,7 @@ let fam_to_piqi_mod_family conf base ifam fam =
            Api_saisie_write_piqi.Fevent.fevent_type;
            date;
            place = if place = "" then None else Some (Utf8.normalize place);
-           reason = reason;
+           reason;
            note = if note = "" then None else Some (Utf8.normalize note);
            src = if src = "" then None else Some (Utf8.normalize src);
            witnesses;
@@ -1375,7 +1375,7 @@ let fam_to_piqi_mod_family conf base ifam fam =
     Ext_array.to_list_map (fun x -> Int32.of_string @@ Gwdb.string_of_iper x) (Gwdb.get_witnesses fam)
   in
   {
-    Api_saisie_write_piqi.Family.digest = digest;
+    Api_saisie_write_piqi.Family.digest;
     index;
     fevents;
     fsources = if fsources = "" then None else Some (Utf8.normalize fsources);

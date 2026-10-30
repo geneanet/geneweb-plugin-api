@@ -260,11 +260,11 @@ let print_graph_asc conf base =
       match nodes with
       | PFull nodes ->
           let graph =
-            M.Full_graph.({nodes = nodes; edges = edges; families = families})
+            M.Full_graph.({nodes; edges; families})
           in
           Mext.gen_full_graph graph
       | PLight nodes ->
-          let graph = M.Graph.({nodes = nodes; edges = edges;}) in
+          let graph = M.Graph.({nodes; edges;}) in
           Mext.gen_graph graph
   in
   print_result conf data
@@ -358,11 +358,11 @@ let print_graph_desc conf base =
       match nodes with
       | PFull nodes ->
           let graph =
-            M.Full_graph.({nodes = nodes; edges = edges; families = families})
+            M.Full_graph.({nodes; edges; families})
           in
           Mext.gen_full_graph graph
       | PLight nodes ->
-          let graph = M.Graph.({nodes = nodes; edges = edges;}) in
+          let graph = M.Graph.({nodes; edges;}) in
           Mext.gen_graph graph
   in
   print_result conf data
@@ -461,11 +461,11 @@ let print_graph_rel conf base =
       match nodes with
       | PFull nodes ->
           let graph =
-            M.Full_graph.({nodes = nodes; edges = edges; families = families})
+            M.Full_graph.({nodes; edges; families})
           in
           Mext.gen_full_graph graph
       | PLight nodes ->
-          let graph = M.Graph.({nodes = nodes; edges = edges;}) in
+          let graph = M.Graph.({nodes; edges;}) in
           Mext.gen_graph graph
   in
   print_result conf data

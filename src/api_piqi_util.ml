@@ -41,7 +41,7 @@ module Date
           (Int32.of_int dmy.day, Int32.of_int dmy.month,
            Int32.of_int dmy.year, Int32.of_int dmy.delta)
         in
-        let dmy1 = {M.Dmy.day = d; month = m; year = y; delta = delta;} in
+        let dmy1 = {M.Dmy.day = d; month = m; year = y; delta;} in
         let (prec, dmy2) =
           match dmy.prec with
           | Sure -> (`sure, None)
@@ -76,7 +76,7 @@ module Date
         M.Date.cal = Some cal;
         prec = Some prec;
         dmy = Some dmy;
-        dmy2 = dmy2;
+        dmy2;
         text = None;
       }
     | Dtext txt ->
