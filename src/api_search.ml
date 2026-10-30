@@ -29,7 +29,7 @@ let kmp p s =
         if s.[!i] = p.[!j] then begin incr i; incr j end else
         if !j = 0 then incr i else j := next.(!j)
       done;
-      if !j >= m then true else false
+      !j >= m
     end
 
 (* FIXME: DUPLICATE OF ALLN.SELECT ??? *)
