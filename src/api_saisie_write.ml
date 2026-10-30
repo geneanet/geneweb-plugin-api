@@ -241,7 +241,7 @@ let print_config conf =
           | `islamic ->
               (cal, Geneweb.Util.transl_nth conf "gregorian/julian/french/hebrew" 4)
         in
-        Api_saisie_write_piqi.Transl_calendar.({pos = pos; sval = sval;}))
+        Api_saisie_write_piqi.Transl_calendar.({pos; sval;}))
       [ `gregorian; `julian; `french; `hebrew; `islamic ]
   in
   let transl_cal = Api_saisie_write_piqi.Config_transl_calendar.({msg = transl_cal;}) in
@@ -252,7 +252,7 @@ let print_config conf =
           let open Api_util in
           !! (Api_util.translate_witness conf wk)
         in
-        Api_saisie_write_piqi.Transl_witness_type.({pos = pos; sval = sval;}))
+        Api_saisie_write_piqi.Transl_witness_type.({pos; sval;}))
       Api_util.witness_kinds
   in
   let transl_wit = Api_saisie_write_piqi.Config_transl_witness_type.({msg = transl_wit;}) in
@@ -269,7 +269,7 @@ let print_config conf =
           | `oryear -> (prec, Geneweb.Util.transl conf "or")
           | `yearint -> (prec, Geneweb.Util.transl conf "between (date)")
         in
-        Api_saisie_write_piqi.Transl_precision.({pos = pos; sval = sval;}))
+        Api_saisie_write_piqi.Transl_precision.({pos; sval;}))
       [ `sure; `about; `maybe; `before; `after; `oryear; `yearint ]
   in
   let transl_prec = Api_saisie_write_piqi.Config_transl_precision.({msg = transl_prec;}) in
@@ -285,7 +285,7 @@ let print_config conf =
           | `of_course_dead -> (death, Geneweb.Util.transl conf "of course dead")
           | _ -> failwith "transl_death"
         in
-        Api_saisie_write_piqi.Transl_death_type.({pos = pos; sval = sval;}))
+        Api_saisie_write_piqi.Transl_death_type.({pos; sval;}))
       [ `not_dead; `dead; `dead_young; `dont_know_if_dead; `of_course_dead ]
   in
   let transl_death = Api_saisie_write_piqi.Config_transl_death_type.({msg = transl_death;}) in
@@ -315,7 +315,7 @@ let print_config conf =
           | `rpt_foster_parent_mother ->
               (rel, Geneweb.Util.transl_nth conf "foster father/foster mother/foster parents" 1)
         in
-        Api_saisie_write_piqi.Transl_relation_parent_type.({pos = pos; sval = sval;}))
+        Api_saisie_write_piqi.Transl_relation_parent_type.({pos; sval;}))
       [ `rpt_adoption_father; `rpt_adoption_mother;
         `rpt_recognition_father; `rpt_recognition_mother;
         `rpt_candidate_parent_father; `rpt_candidate_parent_mother;
@@ -334,7 +334,7 @@ let print_config conf =
         in
         let open Api_util in
         Api_saisie_write_piqi.Transl_fevent_name.({
-          pos = pos;
+          pos;
           sval = !!(sval);
         }))
       [ Def.Efam_Marriage; Def.Efam_NoMarriage; Def.Efam_NoMention; Def.Efam_Engage;
@@ -356,7 +356,7 @@ let print_config conf =
         in
         let open Api_util in
         Api_saisie_write_piqi.Transl_pevent_name.({
-          pos = pos;
+          pos;
           sval = !!(sval);
         }))
       [ Def.Epers_Birth; Def.Epers_Baptism; Def.Epers_Death; Def.Epers_Burial ]
@@ -370,7 +370,7 @@ let print_config conf =
         in
         let open Api_util in
         Api_saisie_write_piqi.Transl_pevent_name.({
-          pos = pos;
+          pos;
           sval = !!(sval);
         }))
       [ Def.Epers_Accomplishment; Def.Epers_Acquisition; Def.Epers_Adhesion;
@@ -403,7 +403,7 @@ let print_config conf =
         in
         let open Api_util in
         Api_saisie_write_piqi.Transl_pevent_name.({
-          pos = pos;
+          pos;
           sval = !!(sval);
         }))
       [ Def.Epers_BaptismLDS; Def.Epers_ConfirmationLDS; Def.Epers_DotationLDS;
@@ -432,8 +432,8 @@ let print_config conf =
           | Def.Private -> (`access_private, Geneweb.Util.transl_nth conf "iftitles/public/private" 2)
         in
         Api_saisie_write_piqi.Transl_access.({
-          pos = pos;
-          sval = sval;
+          pos;
+          sval;
         }))
       [ Def.IfTitles; Def.Public; Def.Private ]
   in
@@ -453,8 +453,8 @@ let print_config conf =
           | `death_date_before_event -> (warn, Geneweb.Util.transl conf "death date before event")
         in
         Api_saisie_write_piqi.Transl_update_warning_js.({
-          pos = pos;
-          sval = sval;
+          pos;
+          sval;
         }))
       [ `empty_index; `empty_surname; `empty_first_name;
         `empty_sex; `required_field; `birth_date_after_event;
@@ -480,8 +480,8 @@ let print_config conf =
           | `dec -> (month, Geneweb.Util.transl_nth conf "(short month)" 11)
         in
         Api_saisie_write_piqi.Transl_short_greg_month.({
-          pos = pos;
-          sval = sval;
+          pos;
+          sval;
         }))
       [ `janv; `fevr; `mars; `avr; `mai; `juin;
         `juil; `aout; `sept; `oct; `nov; `dec ]
@@ -507,8 +507,8 @@ let print_config conf =
           | `complementaire -> (month, Geneweb.Util.transl_nth conf "(french revolution month)" 12)
         in
         Api_saisie_write_piqi.Transl_french_month.({
-          pos = pos;
-          sval = sval;
+          pos;
+          sval;
         }))
       [ `vendemiaire; `brumaire; `frimaire; `nivose; `pluviose; `ventose;
         `germinal; `floreal; `prairial; `messidor; `thermidor; `fructidor;
@@ -535,8 +535,8 @@ let print_config conf =
           | `eloul -> (month, Geneweb.Util.transl_nth conf "(hebrew month)" 12)
         in
         Api_saisie_write_piqi.Transl_hebrew_month.({
-          pos = pos;
-          sval = sval;
+          pos;
+          sval;
         }))
       [ `tichri; `marhechvan; `kislev; `tevet; `chevat; `adar_1;
         `adar_2; `nissan; `iyar; `sivan; `tamouz; `av; `eloul ]
@@ -561,8 +561,8 @@ let print_config conf =
           | `dhu_al_hijjah -> (month, Geneweb.Util.transl_nth conf "(islamic month)" 11)
         in
         Api_saisie_write_piqi.Transl_islamic_month.({
-          pos = pos;
-          sval = sval;
+          pos;
+          sval;
         }))
       [ `muharram; `safar; `rabi_al_awwal; `rabi_al_thani; `jumada_al_awwal;
         `jumada_al_thani; `rajab; `shaban; `ramadan; `shawwal; `dhu_al_qadah;
@@ -603,21 +603,21 @@ let print_config conf =
   in
   let config =
     Api_saisie_write_piqi.Config.({
-      transl_cal = transl_cal;
-      transl_wit = transl_wit;
-      transl_prec = transl_prec;
-      transl_death = transl_death;
-      transl_rel = transl_rel;
+      transl_cal;
+      transl_wit;
+      transl_prec;
+      transl_death;
+      transl_rel;
       transl_fevents = transl_fevent;
       transl_pevents = transl_pevent;
-      transl_access = transl_access;
-      transl_warning = transl_warning;
-      transl_short_greg_month = transl_short_greg_month;
-      transl_french_month = transl_french_month;
-      transl_hebrew_month = transl_hebrew_month;
+      transl_access;
+      transl_warning;
+      transl_short_greg_month;
+      transl_french_month;
+      transl_hebrew_month;
       transl_islamic_month;
-      gwf_place_format = gwf_place_format;
-      gwf_place_format_placeholder = gwf_place_format_placeholder;
+      gwf_place_format;
+      gwf_place_format_placeholder;
     })
   in
   let data = Api_saisie_write_piqi_ext.gen_config config in
@@ -1115,15 +1115,15 @@ let compute_modification_status' conf base ip ifam resp =
   let Api_update_util.{person_update; father_update; mother_update} = person_updates conf base updated_persons_infos ifam in
   let response =
     {
-      Api_saisie_write_piqi.Modification_status.is_base_updated = is_base_updated;
+      Api_saisie_write_piqi.Modification_status.is_base_updated;
       base_warnings = warnings;
       base_miscs = miscs;
-      index_person = index_person;
+      index_person;
       lastname = Utf8.normalize surname;
       firstname = Utf8.normalize first_name;
-      occ = occ;
-      index_family = index_family;
-      conflict = conflict;
+      occ;
+      index_family;
+      conflict;
       lastname_str = Option.map Utf8.normalize surname_str;
       firstname_str = Option.map Utf8.normalize first_name_str;
       n = Option.map Utf8.normalize sn;
@@ -1259,7 +1259,7 @@ let print_add_family conf base =
     {
       Api_saisie_write_piqi.Add_family.person_lastname = Utf8.normalize surname;
       person_firstname = Utf8.normalize first_name;
-      family = family;
+      family;
     }
   in
   let data = Api_saisie_write_piqi_ext.gen_add_family add_family in
@@ -1623,7 +1623,7 @@ let print_mod_family conf base =
     {
       Api_saisie_write_piqi.Edit_family.person_lastname = surname;
       person_firstname = first_name;
-      family = family;
+      family;
     }
   in
   let data = Api_saisie_write_piqi_ext.gen_edit_family edit_family in
@@ -1742,7 +1742,7 @@ let print_add_parents conf base =
     {
       Api_saisie_write_piqi.Add_parents.person_lastname = Utf8.normalize surname;
       person_firstname = Utf8.normalize first_name;
-      family = family;
+      family;
     }
   in
   let data = Api_saisie_write_piqi_ext.gen_add_parents add_parents in
@@ -2007,14 +2007,14 @@ let print_add_child conf base =
          in
          let family_spouse =
            {
-             Api_saisie_write_piqi.Family_spouse.index_family = index_family;
-             index_person = index_person;
-             sex = sex;
+             Api_saisie_write_piqi.Family_spouse.index_family;
+             index_person;
+             sex;
              lastname = Utf8.normalize surname;
              firstname = Utf8.normalize first_name;
              dates = if dates = "" then None else Some (Utf8.normalize dates);
              image = Option.map Utf8.normalize image;
-             sosa = sosa;
+             sosa;
            }
          in
          family_spouse :: accu)
@@ -2063,8 +2063,8 @@ let print_add_child conf base =
     Api_saisie_write_piqi.Add_child.({
       person_lastname = Utf8.normalize surname;
       person_firstname = Utf8.normalize first_name;
-      family_spouse = family_spouse;
-      child = child;
+      family_spouse;
+      child;
     })
   in
   let data = Api_saisie_write_piqi_ext.gen_add_child add_child in
@@ -2112,7 +2112,7 @@ let print_add_sibling conf base =
     Api_saisie_write_piqi.Add_sibling.({
       person_lastname = Utf8.normalize surname;
       person_firstname = Utf8.normalize first_name;
-      sibling = sibling;
+      sibling;
     })
   in
   let data = Api_saisie_write_piqi_ext.gen_add_sibling add_sibling in
@@ -2135,7 +2135,7 @@ let print_add_sibling_ok conf base =
       sex = mod_c.Api_saisie_write_piqi.Person.sex;
       lastname = sn;
       firstname = fn;
-      occ = occ; (* Directement mis à jour dans update_family *)
+      occ; (* Directement mis à jour dans update_family *)
       dates = None;
     }
   in

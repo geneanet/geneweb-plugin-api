@@ -338,17 +338,17 @@ let pers_to_piqi_person_tree
           (Gwdb.get_parents p <> None) || Array.length (Gwdb.get_family p) > 1
     in
     {
-      Api_saisie_read_piqi.Person_tree.index = index;
-      sex = sex;
+      Api_saisie_read_piqi.Person_tree.index;
+      sex;
       lastname = Utf8.normalize surname;
       firstname = Utf8.normalize first_name;
       n = Utf8.normalize sn;
       p = Utf8.normalize fn;
-      occ = occ;
+      occ;
       dates = if dates = "" then None else Some (Utf8.normalize dates);
       image = Option.map Utf8.normalize image;
-      sosa = sosa;
-      has_more_infos = has_more_infos;
+      sosa;
+      has_more_infos;
       baseprefix = base_prefix;
       name_is_hidden = Geneweb.Person.is_hidden conf base p;
       name_is_restricted = Geneweb.Person.has_restricted_name conf base p;
@@ -517,13 +517,13 @@ let pers_to_piqi_simple_person
     in
     let gen_p = Futil.map_person_ps Fun.id (fun ?format:_ -> Utf8.normalize) gen_p in
     {
-      Api_saisie_read_piqi.Simple_person.index = index;
-      sex = sex;
+      Api_saisie_read_piqi.Simple_person.index;
+      sex;
       lastname = fill_surname conf p p_auth gen_p;
       firstname = fill_firstname conf p p_auth gen_p;
       n = Utf8.normalize sn;
       p = Utf8.normalize fn;
-      occ = occ;
+      occ;
       birth_short_date = if birth_short = "" then None else Some (Utf8.normalize birth_short);
       birth_date_raw = if birth_raw = "" then None else Some (Utf8.normalize birth_raw);
       birth_place = if birth_place = "" then None else Some (Utf8.normalize birth_place);
@@ -531,13 +531,13 @@ let pers_to_piqi_simple_person
       death_date_raw = if death_raw = "" then None else Some (Utf8.normalize death_raw);
       death_place = if death_place = "" then None else Some (Utf8.normalize death_place);
       image = Option.map Utf8.normalize image;
-      sosa = sosa;
-      sosa_nb = sosa_nb;
+      sosa;
+      sosa_nb;
       visible_for_visitors = Api_util.get_visibility conf base p;
       baseprefix = base_prefix;
-      has_parent = has_parent;
-      has_spouse = has_spouse;
-      has_child = has_child;
+      has_parent;
+      has_spouse;
+      has_child;
       is_contemporary = Geneweb.Person.is_contemporary conf base p;
       name_is_hidden = Geneweb.Person.is_hidden conf base p;
       name_is_restricted = Geneweb.Person.has_restricted_name conf base p;
@@ -1005,37 +1005,37 @@ let fill_fiche_parents conf base p base_prefix nb_asc nb_asc_max with_parent_fam
 let get_event_constructor name type_ date date_long date_raw date_conv date_conv_long date_cal place note src spouse witnesses =
       {
         Api_saisie_read_piqi.Event.name = Utf8.normalize name;
-        type_ = type_;
+        type_;
         date = if date = "" then None else Some (Utf8.normalize date);
         date_long = if date_long = "" then None else Some (Utf8.normalize date_long);
         date_raw = if date_raw = "" then None else Some (Utf8.normalize date_raw);
         date_conv = if date_conv = "" then None else Some (Utf8.normalize date_conv);
         date_conv_long = if date_conv_long = "" then None else Some (Utf8.normalize date_conv_long);
-        date_cal = date_cal;
+        date_cal;
         place = if place = "" then None else Some (Utf8.normalize place);
         reason = None;
         note = if note = "" then None else Some (Utf8.normalize note);
         src = if src= "" then None else Some (Utf8.normalize src);
-        spouse = spouse;
-        witnesses = witnesses;
+        spouse;
+        witnesses;
       }
 
 let fiche_event_constructor name type_ date date_long date_raw date_conv date_conv_long date_cal place note src spouse witnesses =
   {
       Api_saisie_read_piqi.Fiche_event.name = Utf8.normalize name;
-      type_ = type_;
+      type_;
       date = if date = "" then None else Some (Utf8.normalize date);
       date_long = if date_long = "" then None else Some (Utf8.normalize date_long);
       date_raw = if date_raw = "" then None else Some (Utf8.normalize date_raw);
       date_conv = if date_conv = "" then None else Some (Utf8.normalize date_conv);
       date_conv_long = if date_conv_long = "" then None else Some (Utf8.normalize date_conv_long);
-      date_cal = date_cal;
+      date_cal;
       place = if place = "" then None else Some (Utf8.normalize place);
       reason = None;
       note = if note = "" then None else Some (Utf8.normalize note);
       src = if src= "" then None else Some (Utf8.normalize src);
-      spouse = spouse;
-      witnesses = witnesses;
+      spouse;
+      witnesses;
   }
 
 let fiche_witness_constructor witness_type witness witness_note =
@@ -1047,17 +1047,17 @@ let fiche_witness_constructor witness_type witness witness_note =
 
 let simple_event_witness_constructor event_witness_type husband wife witness_note =
       Api_saisie_read_piqi.Event_witness.({
-        event_witness_type = event_witness_type;
-        husband = husband;
-        wife = wife;
+        event_witness_type;
+        husband;
+        wife;
         witness_note = Utf8.normalize witness_note
       })
 
 let fiche_event_witness_constructor event_witness_type husband wife witness_note =
   Api_saisie_read_piqi.Event_fiche_witness.({
-    event_witness_type = event_witness_type;
-    husband = husband;
-    wife = wife;
+    event_witness_type;
+    husband;
+    wife;
     witness_note = Utf8.normalize witness_note
   })
 
@@ -1070,13 +1070,13 @@ let fill_notes conf base p p_auth is_main_person gen_p =
 
 let simple_relation_person_constructor r_type p =
   {
-    Api_saisie_read_piqi.Relation_person.r_type = r_type;
+    Api_saisie_read_piqi.Relation_person.r_type;
     person = p;
   }
 
 let fiche_relation_person_constructor r_type p =
   {
-    Api_saisie_read_piqi.Relation_fiche_person.r_type = r_type;
+    Api_saisie_read_piqi.Relation_fiche_person.r_type;
     person = p;
   }
 
@@ -1097,8 +1097,8 @@ let fill_families conf base p =
        marriage_date_text marriage_place marriage_src marriage_type divorce_type divorce_date divorce_date_long divorce_date_raw divorce_date_conv
        divorce_date_conv_long divorce_cal witnesses notes fsources children =
     {
-      Api_saisie_read_piqi.Family.index = index;
-      spouse = spouse;
+      Api_saisie_read_piqi.Family.index;
+      spouse;
       marriage_date = if marriage_date = "" then None else Some (Utf8.normalize marriage_date);
       marriage_date_long = if marriage_date_long = "" then None else Some (Utf8.normalize marriage_date_long);
       marriage_date_raw = if marriage_date_raw = "" then None else Some (Utf8.normalize marriage_date_raw);
@@ -1110,8 +1110,8 @@ let fill_families conf base p =
       marriage_date_text = if marriage_date_text = "" then None else Some (Utf8.normalize marriage_date_text);
       marriage_place = if marriage_place = "" then None else Some (Utf8.normalize marriage_place);
       marriage_src = if marriage_src = "" then None else Some (Utf8.normalize marriage_src);
-      marriage_type = marriage_type;
-      divorce_type = divorce_type;
+      marriage_type;
+      divorce_type;
       divorce_date = if divorce_date = "" then None else Some (Utf8.normalize divorce_date);
       divorce_date_long = if divorce_date_long = "" then None else Some (Utf8.normalize divorce_date_long);
       divorce_date_raw = if divorce_date_raw = "" then None else Some (Utf8.normalize divorce_date_raw);
@@ -1120,10 +1120,10 @@ let fill_families conf base p =
       divorce_date_conv_long =
         if divorce_date_conv_long = "" then None else Some (Utf8.normalize divorce_date_conv_long);
       divorce_date_cal = divorce_cal;
-      witnesses = witnesses;
+      witnesses;
       notes = if notes = "" then None else Some (Utf8.normalize notes);
       fsources = if fsources = "" then None else Some (Utf8.normalize fsources);
-      children = children;
+      children;
     }
   in
   get_families_piqi base conf p base_prefix spouse_to_piqi witnesses_to_piqi child_to_piqi family_constructor
@@ -1151,8 +1151,8 @@ let fill_fiche_families conf base p base_prefix nb_asc nb_asc_max nb_desc nb_des
     divorce_date_conv_long divorce_cal witnesses notes fsources children
       =
       {
-        Api_saisie_read_piqi.Fiche_family.index = index;
-        spouse = spouse;
+        Api_saisie_read_piqi.Fiche_family.index;
+        spouse;
         marriage_date = if marriage_date = "" then None else Some (Utf8.normalize marriage_date);
         marriage_date_long = if marriage_date_long = "" then None else Some (Utf8.normalize marriage_date_long);
         marriage_date_raw = if marriage_date_raw = "" then None else Some (Utf8.normalize marriage_date_raw);
@@ -1164,8 +1164,8 @@ let fill_fiche_families conf base p base_prefix nb_asc nb_asc_max nb_desc nb_des
         marriage_date_text = if marriage_date_text = "" then None else Some (Utf8.normalize marriage_date_text);
         marriage_place = if marriage_place = "" then None else Some (Utf8.normalize marriage_place);
         marriage_src = if marriage_src = "" then None else Some (Utf8.normalize marriage_src);
-        marriage_type = marriage_type;
-        divorce_type = divorce_type;
+        marriage_type;
+        divorce_type;
         divorce_date = if divorce_date = "" then None else Some (Utf8.normalize divorce_date);
         divorce_date_long = if divorce_date_long = "" then None else Some (Utf8.normalize divorce_date_long);
         divorce_date_raw = if divorce_date_raw = "" then None else Some (Utf8.normalize divorce_date_raw);
@@ -1177,7 +1177,7 @@ let fill_fiche_families conf base p base_prefix nb_asc nb_asc_max nb_desc nb_des
         witnesses = if not simple_graph_info then witnesses else [];
         notes = if notes = "" || simple_graph_info then None else Some (Utf8.normalize notes);
         fsources = if fsources = "" || simple_graph_info then None else Some (Utf8.normalize fsources);
-        children = children;
+        children;
       }
     in
       get_families_piqi base conf p base_prefix spouse_to_piqi witnesses_to_piqi child_to_piqi family_constructor
@@ -1378,7 +1378,7 @@ let pers_to_piqi_person
       death_date_cal = death_cal;
       death_place = transform_empty_string_to_None (fill_death_place p_auth gen_p);
       death_src = transform_empty_string_to_None death_src;
-      death_type = death_type;
+      death_type;
       burial_date = transform_empty_string_to_None burial_date;
       burial_date_conv = transform_empty_string_to_None burial_date_conv;
       burial_date_cal = burial_cal;
@@ -1387,12 +1387,12 @@ let pers_to_piqi_person
       occupation = transform_empty_string_to_None (fill_occupation conf base p_auth gen_p);
       notes = transform_empty_string_to_None (fill_notes conf base p p_auth is_main_person gen_p);
       psources = transform_empty_string_to_None psources;
-      has_sources = has_sources;
+      has_sources;
       titles = fill_titles conf base p;
       related = get_related_piqi conf base p base_prefix pers_to_piqi_simple_person simple_relation_person_constructor;
       rparents = get_rparents_piqi base conf base_prefix gen_p pers_to_piqi_simple_person simple_relation_person_constructor;
-      father = father;
-      mother = mother;
+      father;
+      mother;
       families = fill_families conf base p;
       sosa = fill_sosa conf base p;
       events = Api_util.Paginated_data.Piqi.to_personal_events events;
@@ -1538,7 +1538,7 @@ let rec pers_to_piqi_fiche_person
         death_date_cal = death_cal;
         death_place = transform_empty_string_to_None (fill_death_place p_auth gen_p);
         death_src = transform_empty_string_to_None death_src;
-        death_type = death_type;
+        death_type;
         index = fill_index conf base p;
         image = Api_util.get_portrait conf base p;
         firstname = fill_firstname conf p p_auth gen_p;
@@ -1552,7 +1552,7 @@ let rec pers_to_piqi_fiche_person
         baptism_place = if is_main_person then transform_empty_string_to_None (fill_baptism_place p_auth gen_p) else None;
         aliases = if is_main_person && not simple_graph_info then fill_aliases p_auth gen_p else [];
         firstname_aliases = if is_main_person && not simple_graph_info then fill_firstname_aliases p_auth gen_p else [];
-        has_sources = has_sources;
+        has_sources;
         notes = if is_main_person && not simple_graph_info then transform_empty_string_to_None (fill_notes conf base p p_auth is_main_person gen_p) else None;
         psources = if is_main_person && not simple_graph_info then transform_empty_string_to_None psources else None;
         sosa = if is_main_person then fill_sosa conf base p else `no_sosa;
@@ -1810,7 +1810,7 @@ let create_edge factor_from baseprefix_from p_from factor_to baseprefix_to p_to 
 let create_node conf base max_gen ifam p gen more_info base_prefix factor =
   let id = hash_id (base_prefix, Gwdb.get_iper p, factor) in
   let p = pers_to_piqi_person_tree conf base p more_info gen max_gen base_prefix in
-  { Api_saisie_read_piqi.Node.id = id
+  { Api_saisie_read_piqi.Node.id
   ; person = p
   ; ifam
   }
@@ -1942,7 +1942,7 @@ let print_result_graph_tree
               let id = Int64.of_string @@ string_of_int uniq_id in
               let c = pers_to_piqi_person_tree conf base c Siblings 1 1 conf.Geneweb.Config.command in
               let node =
-                { Api_saisie_read_piqi.Node.id = id
+                { Api_saisie_read_piqi.Node.id
                 ; person = c
                 ; ifam = None
                 }
@@ -1970,7 +1970,7 @@ let print_result_graph_tree
                       let uniq_id = Hashtbl.hash (conf.Geneweb.Config.command, ic) in
                       let id = Int64.of_string @@ string_of_int uniq_id in
                       let c = pers_to_piqi_person_tree conf base c Siblings 1 1 conf.Geneweb.Config.command in
-                      { Api_saisie_read_piqi.Node.id = id
+                      { Api_saisie_read_piqi.Node.id
                       ; person = c
                       ; ifam = None
                       })
@@ -1985,7 +1985,7 @@ let print_result_graph_tree
                 let id = Int64.of_string @@ string_of_int uniq_id in
                 let c = pers_to_piqi_person_tree conf base c Siblings 1 1 conf.Geneweb.Config.command in
                 let node =
-                  { Api_saisie_read_piqi.Node.id = id
+                  { Api_saisie_read_piqi.Node.id
                   ; person = c
                   ; ifam = None
                   }
@@ -1997,13 +1997,13 @@ let print_result_graph_tree
   in
   let graph =
     Api_saisie_read_piqi.Graph_tree.({
-      nodes_asc = nodes_asc;
-      edges_asc = edges_asc;
-      nodes_desc = nodes_desc;
-      edges_desc = edges_desc;
-      nodes_siblings = nodes_siblings;
-      nodes_siblings_before = nodes_siblings_before;
-      nodes_siblings_after = nodes_siblings_after;
+      nodes_asc;
+      edges_asc;
+      nodes_desc;
+      edges_desc;
+      nodes_siblings;
+      nodes_siblings_before;
+      nodes_siblings_after;
     })
   in
   let data = Api_saisie_read_piqi_ext.gen_graph_tree graph in

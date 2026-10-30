@@ -130,7 +130,7 @@ struct
           (Int32.of_int dmy.day, Int32.of_int dmy.month,
            Int32.of_int dmy.year, Int32.of_int dmy.delta)
         in
-        let dmy1 = {M.Dmy.day = d; month = m; year = y; delta = delta;} in
+        let dmy1 = {M.Dmy.day = d; month = m; year = y; delta;} in
         let (prec, dmy2) =
           match dmy.prec with
           | Sure -> (`sure, None)
@@ -165,7 +165,7 @@ struct
         M.Date.cal = Some cal;
         prec = Some prec;
         dmy = Some dmy;
-        dmy2 = dmy2;
+        dmy2;
         text = None;
       }
     | Dtext txt ->
@@ -221,7 +221,7 @@ struct
           let month = Int32.to_int dmy.M.Dmy.month in
           let year = Int32.to_int dmy.M.Dmy.year in
           let delta = Int32.to_int dmy.M.Dmy.delta in
-          {Date.day = day; month = month; year = year; prec = prec; delta = delta}
+          {Date.day; month; year; prec; delta}
         | None -> (* erreur*)
           {day = 0; month = 0; year = 0; prec = Sure; delta = 0}
       in
@@ -691,23 +691,23 @@ let spouse_to_piqi_spouse conf base p fam compute_sosa =
     n = sn;
     p = fn;
     oc = occ;
-    sex = sex;
+    sex;
     lastname = surname;
     firstname = first_name;
     public_name = publicname;
-    image = image;
+    image;
     birth_date = birth;
-    birth_place = birth_place;
+    birth_place;
     baptism_date = baptism;
-    baptism_place = baptism_place;
+    baptism_place;
     death_date = death;
-    death_place = death_place;
-    death_type = death_type;
+    death_place;
+    death_type;
     burial_date = burial;
-    burial_place = burial_place;
-    marriage_date = marriage_date;
-    marriage_place = marriage_place;
-    divorce_type = divorce_type;
+    burial_place;
+    marriage_date;
+    marriage_place;
+    divorce_type;
     visible_for_visitors = get_visibility conf base p;
     index = Int32.of_string (Gwdb.string_of_iper gen_p.key_index);
   }
@@ -835,25 +835,25 @@ let pers_to_piqi_person_light conf base p compute_sosa =
     p = fn;
     oc = occ;
     index;
-    sex = sex;
+    sex;
     lastname = surname;
     firstname = first_name;
     public_name = publicname;
-    image = image;
+    image;
     birth_date = birth;
-    birth_place = birth_place;
+    birth_place;
     baptism_date = baptism;
-    baptism_place = baptism_place;
+    baptism_place;
     death_date = death;
-    death_place = death_place;
-    death_type = death_type;
+    death_place;
+    death_type;
     burial_date = burial;
-    burial_place = burial_place;
+    burial_place;
     spouses = sl;
-    ascend = ascend;
-    descend = descend;
+    ascend;
+    descend;
     visible_for_visitors = get_visibility conf base p;
-    baseprefix = baseprefix;
+    baseprefix;
     is_contemporary = Geneweb.Person.is_contemporary conf base p;
     name_is_hidden = Geneweb.Person.is_hidden conf base p;
     name_is_restricted = Geneweb.Person.has_restricted_name conf base p;
@@ -1011,10 +1011,10 @@ let pers_to_piqi_person_full conf base p compute_sosa =
           | FosterParent -> `rpt_foster_parent
         in
         Api_piqi.Relation_parent.({
-          father = father;
-          mother = mother;
+          father;
+          mother;
           source = if source = "" then None else Some source;
-          rpt_type = rpt_type;
+          rpt_type;
         }))
       gen_p.rparents
   in
@@ -1033,38 +1033,38 @@ let pers_to_piqi_person_full conf base p compute_sosa =
     n = sn;
     p = fn;
     oc = occ;
-    index = index;
-    sex = sex;
+    index;
+    sex;
     lastname = surname;
     firstname = first_name;
     public_name = publicname;
-    aliases = aliases;
-    qualifiers = qualifiers;
-    firstname_aliases = firstname_aliases;
-    surname_aliases = surname_aliases;
+    aliases;
+    qualifiers;
+    firstname_aliases;
+    surname_aliases;
     image = if image = "" then None else Some image;
     birth_date = birth;
-    birth_place = birth_place;
-    birth_src = birth_src;
+    birth_place;
+    birth_src;
     baptism_date = baptism;
-    baptism_place = baptism_place;
-    baptism_src = baptism_src;
+    baptism_place;
+    baptism_src;
     death_date = death;
-    death_place = death_place;
-    death_src = death_src;
-    death_type = death_type;
+    death_place;
+    death_src;
+    death_type;
     burial_date = burial;
-    burial_place = burial_place;
-    burial_src = burial_src;
-    occupation = occupation;
-    psources = psources;
-    titles = titles;
-    related = related;
-    rparents = rparents;
+    burial_place;
+    burial_src;
+    occupation;
+    psources;
+    titles;
+    related;
+    rparents;
     visible_for_visitors = get_visibility conf base p;
-    parents = parents;
-    families = families;
-    baseprefix = baseprefix;
+    parents;
+    families;
+    baseprefix;
     is_contemporary = Geneweb.Person.is_contemporary conf base p;
     name_is_hidden = Geneweb.Person.is_hidden conf base p;
     name_is_restricted = Geneweb.Person.has_restricted_name conf base p;
@@ -1148,18 +1148,18 @@ let fam_to_piqi_family conf base ifam =
     List.map (fun x -> Int32.of_string @@ Gwdb.string_of_iper x) (Array.to_list (Gwdb.get_children fam))
   in
   {
-    Api_piqi.Full_family.fsources = fsources;
+    Api_piqi.Full_family.fsources;
     marriage_date = marriage;
-    marriage_place = marriage_place;
-    marriage_src = marriage_src;
-    marriage_type = marriage_type;
-    divorce_type = divorce_type;
-    divorce_date = divorce_date;
-    witnesses = witnesses;
-    father = father;
-    mother = mother;
-    children = children;
-    index = index;
+    marriage_place;
+    marriage_src;
+    marriage_type;
+    divorce_type;
+    divorce_date;
+    witnesses;
+    father;
+    mother;
+    children;
+    index;
   }
 
 
@@ -1252,7 +1252,7 @@ let person_node_map conf base l =
              pers_to_piqi_person_full conf base p compute_sosa
            in
            Api_piqi.Full_node.({
-             id = id;
+             id;
              person = p;
            }))
          l)
@@ -1265,7 +1265,7 @@ let person_node_map conf base l =
              pers_to_piqi_person_light conf base p compute_sosa
            in
            Api_piqi.Node.({
-             id = id;
+             id;
              person = p;
            }))
          l)
