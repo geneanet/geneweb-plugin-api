@@ -1272,7 +1272,6 @@ let has_history_if_is_main_person conf base p p_auth is_main_person =
   else false
 
 let has_duplication_if_is_main_person conf base p is_main_person =
-  (* Les doublons ne sont pas testés pour les LIA. *)
   if is_main_person then
       Geneweb.Perso.has_possible_duplications conf base p
   else
