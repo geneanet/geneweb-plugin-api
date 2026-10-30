@@ -1184,14 +1184,12 @@ let fill_fiche_families conf base p base_prefix nb_asc nb_asc_max nb_desc nb_des
   else []
 
 let has_sources p_auth psources birth_src baptism_src death_src burial_src =
-  if not p_auth then false
-    else if psources <> "" then true
-    else if
-      p_auth &&
-      (birth_src <> "" || baptism_src <> "" ||
-       death_src <> "" || burial_src <> "")
-    then true
-  else false
+  p_auth
+  && (psources <> ""
+     || birth_src <> ""
+     || baptism_src <> ""
+     || death_src <> ""
+     || burial_src <> "")
 
 let fill_titles conf base p =
   List.map
@@ -1267,15 +1265,10 @@ let fill_titles_with_links conf base p =
     (Geneweb.Perso.nobility_titles_list conf base p)
 
 let has_history_if_is_main_person conf base p p_auth is_main_person =
-  if is_main_person then
-    Geneweb.Perso.has_history conf base p p_auth
-  else false
+  is_main_person && Geneweb.Perso.has_history conf base p p_auth
 
 let has_duplication_if_is_main_person conf base p is_main_person =
-  if is_main_person then
-      Geneweb.Perso.has_possible_duplications conf base p
-  else
-      false
+  is_main_person && Geneweb.Perso.has_possible_duplications conf base p
 
 let fill_linked_page_if_is_main_person conf base p is_main_person =
   if is_main_person then
@@ -1443,7 +1436,7 @@ let rec pers_to_piqi_fiche_person
       let baptism_src = if is_main_person then fill_baptism_src conf base p_auth gen_p else "" in
       let death_src = if is_main_person then fill_death_src conf base p_auth gen_p else "" in
       let burial_src = if is_main_person then fill_burial_src conf base p_auth gen_p else "" in
-      let has_sources = if is_main_person then has_sources p_auth psources birth_src baptism_src death_src burial_src else false in
+      let has_sources = is_main_person && has_sources p_auth psources birth_src baptism_src death_src burial_src in
       let (death_type, death_date, death_date_conv, death_cal) = fill_death conf p_auth gen_p in
       (* Linked links (family book). *)
       let (linked_page_biblio, linked_page_bnote, linked_page_death, linked_page_head, linked_page_occu) = if not simple_graph_info then fill_linked_page_if_is_main_person conf base p is_main_person else ("", "", "", "", "") in
