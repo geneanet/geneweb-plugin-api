@@ -1458,12 +1458,6 @@ let print_add_family_ok conf base =
   let ip = Gwdb.iper_of_string @@ Int32.to_string add_family_ok.Api_saisie_write_piqi.Add_family_ok.index_person in
   let mod_family = add_family_ok.Api_saisie_write_piqi.Add_family_ok.family in
 
-  let father = mod_family.Api_saisie_write_piqi.Family.father in
-  let _fath_occ = father.Api_saisie_write_piqi.Person.occ in
-
-  let mother = mod_family.Api_saisie_write_piqi.Family.mother in
-  let _moth_occ = mother.Api_saisie_write_piqi.Person.occ in
-
   let ifam_opt, resp = compute_add_family_ok' conf base mod_family in
   let ifam = Option.value ifam_opt
       ~default:(Gwdb.ifam_of_string @@ Int32.to_string mod_family.Api_saisie_write_piqi.Family.index)
