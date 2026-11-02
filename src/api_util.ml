@@ -589,7 +589,8 @@ let empty_piqi_person conf ref_person =
 let spouse_to_piqi_spouse conf base p fam compute_sosa =
   let gen_p = Geneweb.Util.string_gen_person base (Gwdb.gen_person_of_person p) in
   let gen_p = Futil.map_person_ps Fun.id (fun ?format:_ -> Utf8.normalize) gen_p in
-  let p_auth = Geneweb.Person.is_visible conf base p in
+  let privacy = Api_privacy_filter.evaluate conf base p in
+  let p_auth = Api_privacy_filter.is_visible privacy in
   let ifath = Gwdb.get_father fam in
   let imoth = Gwdb.get_mother fam in
   let m_auth =
@@ -603,18 +604,12 @@ let spouse_to_piqi_spouse conf base p fam compute_sosa =
     | Female -> `female
     | Neuter -> `unknown
   in
-  let surname =
-    if not p_auth && (Geneweb.Person.is_hide_names conf p) then ""
-    else gen_p.surname
-  in
-  let first_name =
-    if not p_auth && (Geneweb.Person.is_hide_names conf p) then ""
-    else gen_p.first_name
-  in
+  let surname = Api_privacy_filter.surname ~mask:"" privacy gen_p in
+  let first_name = Api_privacy_filter.first_name ~mask:"" privacy gen_p in
   let sn = Name.lower surname in
   let fn = Name.lower first_name in
   let occ = Int32.of_int (Gwdb.get_occ p) in
-  let publicname = if gen_p.public_name = "" then None else Some gen_p.public_name in
+  let publicname = Api_privacy_filter.public_name privacy gen_p in
   let image =
     match Geneweb.Image.get_portrait conf base p with
     | Some src ->
@@ -732,7 +727,8 @@ let spouse_to_piqi_spouse conf base p fam compute_sosa =
 let pers_to_piqi_person_light conf base p compute_sosa =
   let gen_p = Geneweb.Util.string_gen_person base (Gwdb.gen_person_of_person p) in
   let gen_p = Futil.map_person_ps Fun.id (fun ?format:_ -> Utf8.normalize) gen_p in
-  let p_auth = Geneweb.Person.is_visible conf base p in
+  let privacy = Api_privacy_filter.evaluate conf base p in
+  let p_auth = Api_privacy_filter.is_visible privacy in
   let sosa_p = Sosa.to_string (compute_sosa p) in
   let sex =
     match gen_p.sex with
@@ -740,18 +736,12 @@ let pers_to_piqi_person_light conf base p compute_sosa =
     | Female -> `female
     | Neuter -> `unknown
   in
-  let surname =
-    if not p_auth && (Geneweb.Person.is_hide_names conf p) then ""
-    else gen_p.surname
-  in
-  let first_name =
-    if not p_auth && (Geneweb.Person.is_hide_names conf p) then ""
-    else gen_p.first_name
-  in
+  let surname = Api_privacy_filter.surname ~mask:"" privacy gen_p in
+  let first_name = Api_privacy_filter.first_name ~mask:"" privacy gen_p in
   let sn = Name.lower surname in
   let fn = Name.lower first_name in
   let occ = Int32.of_int (Gwdb.get_occ p) in
-  let publicname = if gen_p.public_name = "" then None else Some gen_p.public_name in
+  let publicname = Api_privacy_filter.public_name privacy gen_p in
   let image =
     match Geneweb.Image.get_portrait conf base p with
     | Some src ->
@@ -880,7 +870,8 @@ let pers_to_piqi_person_light conf base p compute_sosa =
 let pers_to_piqi_person_full conf base p compute_sosa =
   let gen_p = Geneweb.Util.string_gen_person base (Gwdb.gen_person_of_person p) in
   let gen_p = Futil.map_person_ps Fun.id (fun ?format:_ -> Utf8.normalize) gen_p in
-  let p_auth = Geneweb.Person.is_visible conf base p in
+  let privacy = Api_privacy_filter.evaluate conf base p in
+  let p_auth = Api_privacy_filter.is_visible privacy in
   let sosa_p = Sosa.to_string (compute_sosa p) in
   let sex =
     match gen_p.sex with
@@ -888,26 +879,17 @@ let pers_to_piqi_person_full conf base p compute_sosa =
     | Female -> `female
     | Neuter -> `unknown
   in
-  let surname =
-    if not p_auth && (Geneweb.Person.is_hide_names conf p) then ""
-    else gen_p.surname
-  in
-  let first_name =
-    if not p_auth && (Geneweb.Person.is_hide_names conf p) then ""
-    else gen_p.first_name
-  in
+  let surname = Api_privacy_filter.surname ~mask:"" privacy gen_p in
+  let first_name = Api_privacy_filter.first_name ~mask:"" privacy gen_p in
   let sn = Name.lower surname in
   let fn = Name.lower first_name in
   let occ = Int32.of_int (Gwdb.get_occ p) in
   let index = Int32.of_string @@ Gwdb.string_of_iper gen_p.key_index in
-  let publicname = if gen_p.public_name = "" then None else Some gen_p.public_name in
-  let aliases = gen_p.aliases in
-  let qualifiers =
-    if not p_auth && (Geneweb.Person.is_hide_names conf p) then []
-    else gen_p.qualifiers
-  in
-  let firstname_aliases = gen_p.first_names_aliases in
-  let surname_aliases = gen_p.surnames_aliases in
+  let publicname = Api_privacy_filter.public_name privacy gen_p in
+  let aliases = Api_privacy_filter.aliases privacy gen_p in
+  let qualifiers = Api_privacy_filter.qualifiers privacy gen_p in
+  let firstname_aliases = Api_privacy_filter.first_names_aliases privacy gen_p in
+  let surname_aliases = Api_privacy_filter.surnames_aliases privacy gen_p in
   let image =
     match Geneweb.Image.get_portrait conf base p with
     | Some src ->

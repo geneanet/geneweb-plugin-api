@@ -895,14 +895,14 @@ let pers_to_piqi_person_search_info conf' base p =
          let imoth = Gwdb.get_mother fam in
          let father = Gwdb.poi base ifath in
          let mother = Gwdb.poi base imoth in
-         let father_auth = Geneweb.Person.is_visible conf' base father in
+         let father_privacy = Api_privacy_filter.evaluate conf' base father in
          let husband =
-           if not father_auth && (Geneweb.Person.is_hide_names conf' father) then "x x"
+           if Api_privacy_filter.is_hidden father_privacy then "x x"
            else Gwdb.p_first_name base father ^ " " ^ Gwdb.p_surname base father
          in
-         let mother_auth = Geneweb.Person.is_visible conf' base mother in
+         let mother_privacy = Api_privacy_filter.evaluate conf' base mother in
          let wife =
-           if not mother_auth && (Geneweb.Person.is_hide_names conf' mother) then "x x"
+           if Api_privacy_filter.is_hidden mother_privacy then "x x"
            else Gwdb.p_first_name base mother ^ " " ^ Gwdb.p_surname base mother
          in
          Api_saisie_write_piqi.Was_witness.({

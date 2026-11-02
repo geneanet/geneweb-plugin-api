@@ -1,0 +1,9 @@
+(test
+ (name test)
+ (libraries
+  alcotest
+  geneweb
+  geneweb.test_utils
+  geneweb.dummy_gwdb
+  geneweb_plugin_api.lib)
+ (modules test privacy_filter_test))
