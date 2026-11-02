@@ -152,7 +152,12 @@ let test_public_name () =
   Geneweb_test_utils.Check.option Alcotest.string ~pos:__POS__
     ~msg:"Api_privacy_filter.public_name reveals public name for public person to visitor"
     (Some "Known Name")
-    (Plugin_api_lib.Api_privacy_filter.public_name pub_vis gen_p)
+    (Plugin_api_lib.Api_privacy_filter.public_name pub_vis gen_p);
+  let empty_gen_p = make_gen_p () in
+  Geneweb_test_utils.Check.option Alcotest.string ~pos:__POS__
+    ~msg:"Api_privacy_filter.public_name returns None when public name is empty"
+    None
+    (Plugin_api_lib.Api_privacy_filter.public_name pub_vis empty_gen_p)
 
 let test_names () =
   let base, priv_p, pub_p, _ = setup_db () in

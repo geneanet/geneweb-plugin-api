@@ -26,10 +26,9 @@ let first_name ?(mask = "x") t gen_p =
   if t.is_hidden then mask else gen_p.Def.first_name
 
 let public_name t gen_p =
-  let publicname =
-    if t.is_hidden then "" else gen_p.Def.public_name
-  in
-  if publicname = "" then None else Some publicname
+  Ext_option.return_if
+    (not t.is_hidden && gen_p.Def.public_name <> "")
+    (fun () -> gen_p.Def.public_name)
 
 let aliases t gen_p =
   if t.is_hidden then [] else gen_p.Def.aliases
