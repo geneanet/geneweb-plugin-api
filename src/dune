@@ -58,6 +58,7 @@
     api_graph
     api_marshal_dico
     api_piqi
+    api_privacy_filter
     api_piqi_util
     api_piqi_ext
     api_saisie_autocomplete
