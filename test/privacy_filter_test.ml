@@ -347,32 +347,32 @@ let test_contemporary_semi_public () =
        names not hidden"
     "sam"
     (Api_privacy_filter.first_name_lower semi_vis base semi_p);
-  (* In legacy behavior, public name and aliases are hidden when not is_visible *)
+  (* Public name and aliases follow name visibility *)
   Check.option Alcotest.string ~pos:__POS__
     ~msg:
-      "Api_privacy_filter.public_name hides public name when not visible in legacy behavior"
-    None
+      "Api_privacy_filter.public_name reveals public name when names not hidden"
+    (Some "Lord Sam")
     (Api_privacy_filter.public_name semi_vis gen_p);
   Check.list Alcotest.string ~pos:__POS__
-    ~msg:"Api_privacy_filter.aliases hides aliases when not visible in legacy behavior"
-    []
+    ~msg:"Api_privacy_filter.aliases reveals aliases when names not hidden"
+    [ "Sammy" ]
     (Api_privacy_filter.aliases semi_vis gen_p);
   Check.list Alcotest.string ~pos:__POS__
     ~msg:
-      "Api_privacy_filter.qualifiers hides qualifiers when not visible in legacy behavior"
-    []
+      "Api_privacy_filter.qualifiers reveals qualifiers when names not hidden"
+    [ "the Honest" ]
     (Api_privacy_filter.qualifiers semi_vis gen_p);
   Check.list Alcotest.string ~pos:__POS__
     ~msg:
-      "Api_privacy_filter.first_names_aliases hides first name aliases when \
-       not visible in legacy behavior"
-    []
+      "Api_privacy_filter.first_names_aliases reveals first name aliases when \
+       names not hidden"
+    [ "Samuel" ]
     (Api_privacy_filter.first_names_aliases semi_vis gen_p);
   Check.list Alcotest.string ~pos:__POS__
     ~msg:
-      "Api_privacy_filter.surnames_aliases hides surname aliases when not \
-       visible in legacy behavior"
-    []
+      "Api_privacy_filter.surnames_aliases reveals surname aliases when names \
+       not hidden"
+    [ "Semison" ]
     (Api_privacy_filter.surnames_aliases semi_vis gen_p);
   (* Titles strictly require record authentication (is_visible) and are hidden *)
   Check.list Alcotest.string ~pos:__POS__
