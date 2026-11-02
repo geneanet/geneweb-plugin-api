@@ -27,21 +27,21 @@ let first_name ?(mask = "x") t gen_p =
 
 let public_name t gen_p =
   let publicname =
-    if not t.is_visible then "" else gen_p.Def.public_name
+    if t.is_hidden then "" else gen_p.Def.public_name
   in
   if publicname = "" then None else Some publicname
 
 let aliases t gen_p =
-  if not t.is_visible then [] else gen_p.Def.aliases
+  if t.is_hidden then [] else gen_p.Def.aliases
 
 let qualifiers t gen_p =
-  if not t.is_visible then [] else gen_p.Def.qualifiers
+  if t.is_hidden then [] else gen_p.Def.qualifiers
 
 let first_names_aliases t gen_p =
-  if not t.is_visible then [] else gen_p.Def.first_names_aliases
+  if t.is_hidden then [] else gen_p.Def.first_names_aliases
 
 let surnames_aliases t gen_p =
-  if not t.is_visible then [] else gen_p.Def.surnames_aliases
+  if t.is_hidden then [] else gen_p.Def.surnames_aliases
 
 let titles t conf base p =
   if not t.is_visible then []
