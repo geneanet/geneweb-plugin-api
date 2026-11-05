@@ -1221,16 +1221,13 @@ let fill_death_date_raw conf p_auth gen_p =
           string_of_date_raw conf d
       | _ -> ""
 
-let fill_burial_date_raw_if_is_main_person conf p_auth gen_p is_main_person =
-  if is_main_person then
-    match (p_auth, gen_p.Def.burial) with
-    | (true, Buried cod) | (true, Cremated cod) ->
-        (match Date.od_of_cdate cod with
-        | Some d -> string_of_date_raw conf d
-        | _ -> "")
-    | _ -> ""
-  else
-    ""
+let fill_burial_date_raw conf p_auth gen_p =
+  match (p_auth, gen_p.Def.burial) with
+  | (true, Buried cod) | (true, Cremated cod) ->
+      (match Date.od_of_cdate cod with
+      | Some d -> string_of_date_raw conf d
+      | _ -> "")
+  | _ -> ""
 
 let fill_birth_text conf p p_auth =
   let open Api_util in
@@ -1436,7 +1433,16 @@ let rec pers_to_piqi_fiche_person
       let death_src = if is_main_person then fill_death_src conf base p_auth gen_p else "" in
       let burial_src = if is_main_person then fill_burial_src conf base p_auth gen_p else "" in
       let has_sources = if is_main_person then has_sources p_auth psources birth_src baptism_src death_src burial_src else false in
+      let (baptism_date, _, baptism_date_conv, _, baptism_date_cal) =
+        fill_baptism conf p_auth gen_p
+      in
+      let (birth_date, _, birth_date_conv, _, birth_date_cal) =
+        fill_birth conf p_auth gen_p
+      in
       let (death_type, death_date, death_date_conv, death_cal) = fill_death conf p_auth gen_p in
+      let (burial_date, _, burial_date_conv, _, burial_date_cal) =
+        fill_burial conf p_auth gen_p
+      in
       let (linked_page_biblio, linked_page_bnote, linked_page_death, linked_page_head, linked_page_occu) = if not simple_graph_info then fill_linked_page_if_is_main_person conf base p is_main_person else ("", "", "", "", "") in
       let pers_to_piqi_fiche_person_only conf base p base_prefix =
         pers_to_piqi_fiche_person conf base p base_prefix false 0 0 0 0 false simple_graph_info no_event
@@ -1450,7 +1456,7 @@ let rec pers_to_piqi_fiche_person
         (* Fields shared by all the members of the family. *)
         piqi_fiche_person.Api_saisie_read_piqi.Fiche_person.birth_date_raw <- transform_empty_string_to_None (fill_birth_date_raw conf p_auth gen_p);
         piqi_fiche_person.Api_saisie_read_piqi.Fiche_person.birth_text <- transform_empty_string_to_None (fill_birth_text conf p p_auth);
-        piqi_fiche_person.Api_saisie_read_piqi.Fiche_person.burial_date_raw <- transform_empty_string_to_None (fill_burial_date_raw_if_is_main_person conf p_auth gen_p is_main_person);
+        piqi_fiche_person.Api_saisie_read_piqi.Fiche_person.burial_date_raw <- transform_empty_string_to_None (fill_burial_date_raw conf p_auth gen_p);
         piqi_fiche_person.Api_saisie_read_piqi.Fiche_person.burial_text <- transform_empty_string_to_None (fill_burial_text conf p p_auth);
         piqi_fiche_person.Api_saisie_read_piqi.Fiche_person.burial_type <- fill_burial_type p_auth gen_p;
         piqi_fiche_person.Api_saisie_read_piqi.Fiche_person.cremation_text <- transform_empty_string_to_None (fill_cremation_text conf p p_auth);
@@ -1461,8 +1467,8 @@ let rec pers_to_piqi_fiche_person
         piqi_fiche_person.Api_saisie_read_piqi.Fiche_person.mother <- fiche_mother;
         if is_main_person || not simple_graph_info then
           piqi_fiche_person.Api_saisie_read_piqi.Fiche_person.families <- fill_fiche_families conf base p base_prefix nb_asc nb_asc_max nb_desc nb_desc_max pers_to_piqi_fiche_person simple_graph_info no_event;
-        piqi_fiche_person.Api_saisie_read_piqi.Fiche_person.baptism_date_raw <- if is_main_person then transform_empty_string_to_None (fill_baptism_date_raw conf p_auth gen_p) else None;
-        piqi_fiche_person.Api_saisie_read_piqi.Fiche_person.baptism_text <- if is_main_person then transform_empty_string_to_None (fill_baptism_text conf p p_auth) else None;
+        piqi_fiche_person.Api_saisie_read_piqi.Fiche_person.baptism_date_raw <- transform_empty_string_to_None (fill_baptism_date_raw conf p_auth gen_p);
+        piqi_fiche_person.Api_saisie_read_piqi.Fiche_person.baptism_text <- transform_empty_string_to_None (fill_baptism_text conf p p_auth);
         piqi_fiche_person.Api_saisie_read_piqi.Fiche_person.has_possible_duplications <- has_duplication_if_is_main_person conf base p is_main_person;
         piqi_fiche_person.Api_saisie_read_piqi.Fiche_person.ref_index <- ref_index;
         piqi_fiche_person.Api_saisie_read_piqi.Fiche_person.ref_person <- ref_person;
@@ -1533,7 +1539,7 @@ let rec pers_to_piqi_fiche_person
         occupation = transform_empty_string_to_None (fill_occupation conf base p_auth gen_p);
         sex = fill_sex p;
         public_name = fill_publicname p_auth gen_p;
-        baptism_place = if is_main_person then transform_empty_string_to_None (fill_baptism_place p_auth gen_p) else None;
+        baptism_place = transform_empty_string_to_None (fill_baptism_place p_auth gen_p);
         aliases = if is_main_person && not simple_graph_info then fill_aliases p_auth gen_p else [];
         firstname_aliases = if is_main_person && not simple_graph_info then fill_firstname_aliases p_auth gen_p else [];
         has_sources = has_sources;
@@ -1542,16 +1548,15 @@ let rec pers_to_piqi_fiche_person
         sosa = if is_main_person then fill_sosa conf base p else `no_sosa;
         surname_aliases = if is_main_person && not simple_graph_info then fill_surname_aliases p_auth gen_p else [];
 
-        (* These fields should not be set because Fiche Person fields are better. *)
-        baptism_date = None;
-        baptism_date_conv = None;
-        baptism_date_cal = None;
-        birth_date = None;
-        birth_date_conv = None;
-        birth_date_cal = None;
-        burial_date = None;
-        burial_date_conv = None;
-        burial_date_cal = None;
+        baptism_date = transform_empty_string_to_None baptism_date;
+        baptism_date_conv = transform_empty_string_to_None baptism_date_conv;
+        baptism_date_cal;
+        birth_date = transform_empty_string_to_None birth_date;
+        birth_date_conv = transform_empty_string_to_None birth_date_conv;
+        birth_date_cal;
+        burial_date = transform_empty_string_to_None burial_date;
+        burial_date_conv = transform_empty_string_to_None burial_date_conv;
+        burial_date_cal;
         events = Api_util.Paginated_data.Piqi.to_personal_events events;
         events_witnesses =
           Api_util.Paginated_data.Piqi.to_witnessed_events events_witnesses;
