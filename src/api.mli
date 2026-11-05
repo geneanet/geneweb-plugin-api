@@ -35,3 +35,6 @@ val print_person_warnings : Geneweb.Config.config -> Gwdb.base -> unit
 val print_all_persons : Geneweb.Config.config -> Gwdb.base -> unit
 val print_all_families : Geneweb.Config.config -> Gwdb.base -> unit
 val history : Geneweb.Config.config -> Gwdb.base -> unit
+
+val person_warnings :
+  Geneweb.Config.config -> Gwdb.base -> Gwdb.person -> Api_piqi.Base_warnings.t
