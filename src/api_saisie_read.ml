@@ -1572,8 +1572,8 @@ let rec pers_to_piqi_fiche_person
         events_witnesses =
           Api_util.Paginated_data.Piqi.to_witnessed_events events_witnesses;
         families = if return_simple_attributes && not simple_graph_info then fill_families conf base p else [];
-        father = if return_simple_attributes then father else None;
-        mother = if return_simple_attributes then mother else None;
+        father;
+        mother;
         titles = if not simple_graph_info then fill_titles conf base p else [];
         related = if return_simple_attributes then get_related_piqi conf base p base_prefix pers_to_piqi_simple_person simple_relation_person_constructor else [];
         rparents = if return_simple_attributes then get_rparents_piqi base conf base_prefix gen_p pers_to_piqi_simple_person simple_relation_person_constructor else [];
