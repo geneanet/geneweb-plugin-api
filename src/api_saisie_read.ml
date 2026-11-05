@@ -1023,6 +1023,14 @@ let has_sources p_auth psources birth_src baptism_src death_src burial_src =
      || death_src <> ""
      || burial_src <> "")
 
+let fill_titles conf base p =
+  List.map
+    (fun title ->
+       title
+       |> Futil.map_title_strings (Gwdb.sou base)
+       |> Api_util.title_to_piqi_title)
+    (Geneweb.Person.nobtit conf base p)
+
 let transform_empty_string_to_None string =
   if string = "" then None else Some string
 
@@ -1279,7 +1287,6 @@ let rec pers_to_piqi_fiche_person
         piqi_fiche_person.Api_saisie_read_piqi.Fiche_person.cremation_text <- transform_empty_string_to_None (fill_cremation_text conf p p_auth);
         piqi_fiche_person.Api_saisie_read_piqi.Fiche_person.death_date_raw <- transform_empty_string_to_None (fill_death_date_raw conf p_auth gen_p);
         piqi_fiche_person.Api_saisie_read_piqi.Fiche_person.death_text <- transform_empty_string_to_None (fill_death_text conf p p_auth);
-        piqi_fiche_person.Api_saisie_read_piqi.Fiche_person.titles_links <- if not simple_graph_info then Api_privacy_filter.titles_with_links privacy conf base p else [];
         piqi_fiche_person.Api_saisie_read_piqi.Fiche_person.sosa_nb <- if sosa_nb = Sosa.zero then None else Some (Sosa.to_string sosa_nb);
         piqi_fiche_person.Api_saisie_read_piqi.Fiche_person.father <- fiche_father;
         piqi_fiche_person.Api_saisie_read_piqi.Fiche_person.mother <- fiche_mother;
