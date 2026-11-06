@@ -845,7 +845,7 @@ let pers_to_piqi_person_light conf base p compute_sosa =
     visible_for_visitors = get_visibility conf base p;
     baseprefix = baseprefix;
     is_contemporary = Geneweb.Person.is_contemporary conf base p;
-    name_is_hidden = Geneweb.Person.is_hidden conf base p;
+    name_is_hidden = Api_privacy_filter.is_hidden privacy;
     name_is_restricted = Geneweb.Person.has_restricted_name conf base p;
   }
 
@@ -1048,7 +1048,7 @@ let pers_to_piqi_person_full conf base p compute_sosa =
     families = families;
     baseprefix = baseprefix;
     is_contemporary = Geneweb.Person.is_contemporary conf base p;
-    name_is_hidden = Geneweb.Person.is_hidden conf base p;
+    name_is_hidden = Api_privacy_filter.is_hidden privacy;
     name_is_restricted = Geneweb.Person.has_restricted_name conf base p;
   }
 

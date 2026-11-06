@@ -896,15 +896,9 @@ let pers_to_piqi_person_search_info conf' base p =
          let father = Gwdb.poi base ifath in
          let mother = Gwdb.poi base imoth in
          let father_privacy = Api_privacy_filter.evaluate conf' base father in
-         let husband =
-           if Api_privacy_filter.is_hidden father_privacy then "x x"
-           else Gwdb.p_first_name base father ^ " " ^ Gwdb.p_surname base father
-         in
+         let husband = Api_privacy_filter.person_name father_privacy base father in
          let mother_privacy = Api_privacy_filter.evaluate conf' base mother in
-         let wife =
-           if Api_privacy_filter.is_hidden mother_privacy then "x x"
-           else Gwdb.p_first_name base mother ^ " " ^ Gwdb.p_surname base mother
-         in
+         let wife = Api_privacy_filter.person_name mother_privacy base mother in
          Api_saisie_write_piqi.Was_witness.({
            husband;
            wife;
@@ -1268,6 +1262,7 @@ let pers_to_piqi_mod_person conf base p =
     Ext_array.to_list_map (fun x -> Int32.of_string @@ Gwdb.string_of_ifam x) (Gwdb.get_family p)
   in
   let is_contemporary = Geneweb.Person.is_contemporary conf base p in
+  let privacy = Api_privacy_filter.evaluate conf base p in
   {
     Api_saisie_write_piqi.Person.digest;
     index;
@@ -1294,7 +1289,7 @@ let pers_to_piqi_mod_person conf base p =
     families;
     create_link;
     is_contemporary;
-    name_is_hidden = Geneweb.Person.is_hidden conf base p;
+    name_is_hidden = Api_privacy_filter.is_hidden privacy;
     name_is_restricted = Geneweb.Person.has_restricted_name conf base p;
     father = Option.map (pers_to_piqi_simple_person conf base) father;
     mother = Option.map (pers_to_piqi_simple_person conf base) mother;

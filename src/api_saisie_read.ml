@@ -394,8 +394,8 @@ let pers_to_piqi_simple_person
     restricted_person.Api_saisie_read_piqi.Simple_person.visible_for_visitors <- `visibility_private;
     restricted_person
   else
-    let p_auth = Geneweb.Person.is_visible conf base p in
     let privacy = Api_privacy_filter.evaluate conf base p in
+    let p_auth = Api_privacy_filter.is_visible privacy in
     let index = Int32.of_string @@ Gwdb.string_of_iper (Gwdb.get_iper p) in
     let sex =
       match Gwdb.get_sex p with
@@ -1248,8 +1248,8 @@ let pers_to_piqi_person
   if Geneweb.Person.is_restricted conf base (Gwdb.get_iper p) then
     get_restricted_person ()
   else
-    let p_auth = Geneweb.Person.is_visible conf base p in
     let privacy = Api_privacy_filter.evaluate conf base p in
+    let p_auth = Api_privacy_filter.is_visible privacy in
     let gen_p = Geneweb.Util.string_gen_person base (Gwdb.gen_person_of_person p) in
     let gen_p = Futil.map_person_ps Fun.id (fun ?format:_ -> Utf8.normalize) gen_p in
     let (baptism_date, _, baptism_date_conv, _, baptism_cal) = fill_baptism conf p_auth gen_p in
@@ -1382,8 +1382,8 @@ let rec pers_to_piqi_fiche_person
     get_restricted_fiche_person ()
   else
     begin
-      let p_auth = Geneweb.Person.is_visible conf base p in
       let privacy = Api_privacy_filter.evaluate conf base p in
+      let p_auth = Api_privacy_filter.is_visible privacy in
       let gen_p = Geneweb.Util.string_gen_person base (Gwdb.gen_person_of_person p) in
       let gen_p = Futil.map_person_ps Fun.id (fun ?format:_ -> Utf8.normalize) gen_p in
       (* Sources only returned for the main person. *)
@@ -1681,7 +1681,8 @@ let print_from_identifier_person
             match Gwdb.person_of_key base fn sn (Int32.to_int oc) with
             | Some ip ->
               let p = Gwdb.poi base ip in
-              if Geneweb.Person.is_empty p || Geneweb.Person.is_hidden conf base p then
+              let privacy = Api_privacy_filter.evaluate conf base p in
+              if Geneweb.Person.is_empty p || Api_privacy_filter.is_hidden privacy then
                 Api_util.print_error conf `not_found ""
               else
                 (if identifier_person.Api_saisie_read_piqi.Identifier_person.track_visit
