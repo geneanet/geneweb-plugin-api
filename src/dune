@@ -18,7 +18,7 @@
 )
 
 (rule
-  (deps api_saisie_read.proto)
+  (deps api_saisie_read.proto api.proto)
   (targets api_saisie_read_piqi.ml api_saisie_read_piqi_ext.ml)
   (action (progn
             (run piqi of-proto --normalize api_saisie_read.proto)
