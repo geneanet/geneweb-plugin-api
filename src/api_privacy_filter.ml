@@ -4,9 +4,11 @@ type t = {
 }
 
 let evaluate conf base p =
-  let is_visible = Geneweb.Person.is_visible conf base p in
-  let is_hidden = Geneweb.Person.is_hide_names conf p && not is_visible in
-  { is_hidden; is_visible }
+  if Geneweb.Person.is_empty p then { is_hidden = false; is_visible = false }
+  else
+    let is_visible = Geneweb.Person.is_visible conf base p in
+    let is_hidden = Geneweb.Person.is_hide_names conf p && not is_visible in
+    { is_hidden; is_visible }
 
 let is_hidden t = t.is_hidden
 let is_visible t = t.is_visible
@@ -18,6 +20,10 @@ let surname_lower t base p =
 let first_name_lower t base p =
   if t.is_hidden then ""
   else Name.lower (Gwdb.sou base (Gwdb.get_first_name p))
+
+let person_name ?(mask = "x x") t base p =
+  if t.is_hidden then mask
+  else Gwdb.p_first_name base p ^ " " ^ Gwdb.p_surname base p
 
 let surname ?(mask = "x") t gen_p =
   if t.is_hidden then mask else gen_p.Def.surname
