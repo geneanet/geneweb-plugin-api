@@ -228,6 +228,28 @@ let test_names_lower () =
     "jane"
     (Plugin_api_lib.Api_privacy_filter.first_name_lower pub_vis base pub_p)
 
+let test_person_name () =
+  let base, priv_p, pub_p, _ = setup_db () in
+  let priv_vis = Plugin_api_lib.Api_privacy_filter.evaluate visitor_conf base priv_p in
+  let wiz_vis = Plugin_api_lib.Api_privacy_filter.evaluate wizard_conf base priv_p in
+  let pub_vis = Plugin_api_lib.Api_privacy_filter.evaluate visitor_conf base pub_p in
+  Geneweb_test_utils.Check.string ~pos:__POS__
+    ~msg:"Api_privacy_filter.person_name masks private person to x x for visitor"
+    "x x"
+    (Plugin_api_lib.Api_privacy_filter.person_name priv_vis base priv_p);
+  Geneweb_test_utils.Check.string ~pos:__POS__
+    ~msg:"Api_privacy_filter.person_name masks private person with custom mask"
+    "[hidden]"
+    (Plugin_api_lib.Api_privacy_filter.person_name ~mask:"[hidden]" priv_vis base priv_p);
+  Geneweb_test_utils.Check.string ~pos:__POS__
+    ~msg:"Api_privacy_filter.person_name reveals private person name to wizard"
+    "John Doe"
+    (Plugin_api_lib.Api_privacy_filter.person_name wiz_vis base priv_p);
+  Geneweb_test_utils.Check.string ~pos:__POS__
+    ~msg:"Api_privacy_filter.person_name reveals public person name to visitor"
+    "Jane Smith"
+    (Plugin_api_lib.Api_privacy_filter.person_name pub_vis base pub_p)
+
 let test_is_hidden () =
   let base, priv_p, pub_p, _ = setup_db () in
   let priv_vis = Plugin_api_lib.Api_privacy_filter.evaluate visitor_conf base priv_p in
@@ -388,6 +410,23 @@ let test_contemporary_semi_public () =
     (Plugin_api_lib.Api_privacy_filter.titles_with_links semi_vis visitor_show_names_conf base
        semi_p)
 
+let test_empty_person () =
+  let db = Geneweb_test_utils.Mock_db.create () in
+  let empty_id =
+    Geneweb_test_utils.Mock_db.add_person db ~first_name:"" ~surname:"" ()
+  in
+  let base = Geneweb_test_utils.Mock_db.build db in
+  let empty_p = Geneweb_test_utils.Mock_db.poi base empty_id in
+  let vis =
+    Plugin_api_lib.Api_privacy_filter.evaluate visitor_conf base empty_p
+  in
+  Geneweb_test_utils.Check.bool ~pos:__POS__
+    ~msg:"Api_privacy_filter.is_hidden returns false for empty person" false
+    (Plugin_api_lib.Api_privacy_filter.is_hidden vis);
+  Geneweb_test_utils.Check.bool ~pos:__POS__
+    ~msg:"Api_privacy_filter.is_visible returns false for empty person" false
+    (Plugin_api_lib.Api_privacy_filter.is_visible vis)
+
 let tests =
   [
     Geneweb_test_utils.Check.case "is_hidden" test_is_hidden;
@@ -398,6 +437,8 @@ let tests =
     Geneweb_test_utils.Check.case "public_name" test_public_name;
     Geneweb_test_utils.Check.case "names" test_names;
     Geneweb_test_utils.Check.case "names_lower" test_names_lower;
+    Geneweb_test_utils.Check.case "person_name" test_person_name;
     Geneweb_test_utils.Check.case "titles" test_titles;
     Geneweb_test_utils.Check.case "contemporary_semi_public" test_contemporary_semi_public;
+    Geneweb_test_utils.Check.case "empty_person" test_empty_person;
   ]
