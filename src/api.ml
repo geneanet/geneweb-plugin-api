@@ -38,7 +38,7 @@ let print_info_base conf base =
     Api_piqi.Infos_base.({
       nb_persons = Int64.of_int (Gwdb.nb_of_persons base);
       nb_families = Int64.of_int (Gwdb.nb_of_families base);
-      sosa = sosa;
+      sosa;
       last_modified_person = Option.map Int64.of_string last_modified_person;
       real_nb_persons = Some (Int64.of_int (Gwdb.nb_of_real_persons base));
       has_ignored_duplicates;

@@ -96,11 +96,11 @@ let format_stats_all l title series =
   let datas_all = Mstats.Data_l.({data = datas_all;}) in
   let datas = [datas_all] in
   Mstats.Stat.({
-    title = title;
-    labels = labels;
-    series = series;
+    title;
+    labels;
+    series;
     series_string = [];
-    datas = datas;
+    datas;
   })
 
 let format_stats_m_f l title series =
@@ -128,11 +128,11 @@ let format_stats_m_f l title series =
   let datas_female = Mstats.Data_l.({data = datas_female;}) in
   let datas = [datas_male; datas_female] in
   Mstats.Stat.({
-    title = title;
-    labels = labels;
-    series = series;
+    title;
+    labels;
+    series;
     series_string = [];
-    datas = datas;
+    datas;
   })
 
 let format_stats_m_f2 l1 l2 title series1 series2 =
@@ -213,11 +213,11 @@ let format_stats_m_f2 l1 l2 title series1 series2 =
   in
   let labels = List.map Int32.of_int labels in
   Mstats.Stat.({
-    title = title;
-    labels = labels;
+    title;
+    labels;
     series = series1 @ series2;
     series_string = [];
-    datas = datas;
+    datas;
   })
 
 let format_stats_dmy l title series =
@@ -264,11 +264,11 @@ let format_stats_dmy l title series =
   in
   let labels = List.map Int32.of_int labels in
   Mstats.Stat.({
-      title = title;
-      labels = labels;
-      series = series;
+      title;
+      labels;
+      series;
       series_string = [];
-      datas = datas;
+      datas;
     })
 
 let filter_gte_1600_and_create_ht l =
@@ -303,14 +303,14 @@ let format_top_stats ht title =
       datas
   in
   Mstats.Stat.({
-    title = title;
+    title;
     labels = [Int32.zero];
     series =
       [`serie_top_10_1; `serie_top_10_2; `serie_top_10_3; `serie_top_10_4;
        `serie_top_10_5; `serie_top_10_6; `serie_top_10_7; `serie_top_10_8;
        `serie_top_10_9; `serie_top_10_10];
-    series_string = series_string;
-    datas = datas;
+    series_string;
+    datas;
   })
 
 let format_stats_astro l title =
@@ -502,11 +502,11 @@ let format_stats_astro l title =
      `serie_pisces]
   in
   Mstats.Stat.({
-    title = title;
+    title;
     labels = [Int32.zero];
-    series = series;
+    series;
     series_string = [];
-    datas = datas;
+    datas;
   })
 
 let format_stats_moon l title =
@@ -583,11 +583,11 @@ let format_stats_moon l title =
      `serie_moon_last_quarter ]
   in
   Mstats.Stat.({
-      title = title;
+      title;
       labels = [Int32.zero];
-      series = series;
+      series;
       series_string = [];
-      datas = datas;
+      datas;
     })
 
 let print_ind_stats conf base =
@@ -665,10 +665,10 @@ let print_ind_stats conf base =
         let stats =
           Mstats.Stat.({
             title = `st_asc;
-            labels = labels;
+            labels;
             series = [`serie_asc_found; `serie_asc_uniq];
             series_string = [];
-            datas = datas;
+            datas;
           })
         in
         (ancestors, stats)
@@ -749,10 +749,10 @@ let print_ind_stats conf base =
         let stats =
           Mstats.Stat.({
             title = `st_desc;
-            labels = labels;
+            labels;
             series = [`serie_desc_found; `serie_desc_uniq];
             series_string = [];
-            datas = datas;
+            datas;
           })
         in
         (descendants, stats)

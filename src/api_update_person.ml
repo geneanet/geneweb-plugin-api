@@ -207,8 +207,8 @@ let reconstitute_person conf base mod_p
           | None -> ""
         in
         let r =
-          { Def.r_type = r_type; r_fath = r_fath;
-            r_moth = r_moth; r_sources = r_sources }
+          { Def.r_type; r_fath;
+            r_moth; r_sources }
         in
         r :: accu
     end mod_p.Api_saisie_write_piqi.Person.rparents []
