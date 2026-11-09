@@ -697,7 +697,7 @@ let pers_to_piqi_person_search_info conf' base p =
         in
         let (date, _, date_conv, _, date_cal) =
           match Date.od_of_cdate (Geneweb.Event.get_date evt) with
-          | Some d -> Api_saisie_read.string_of_date_and_conv conf' d
+          | Some d -> Api_util.string_of_date_and_conv conf' d
           | None -> ("", "", "", "", None)
         in
         let place =
