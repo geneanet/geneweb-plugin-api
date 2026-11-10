@@ -474,6 +474,19 @@ let print_base_warnings conf base =
     (fun w -> warnings := Geneweb.Warning.BaseWarningSet.add w !warnings)
     ignore ;
   let warnings = Geneweb.Warning.handle_homonymous base (Geneweb.Warning.BaseWarningSet.elements !warnings) in
+  let warnings =
+    List.filter
+      (function
+        | Geneweb.Warning.PossibleDuplicateFamQuestString _ -> false
+        | Geneweb.Warning.PossibleDuplicateFam (f1, _)
+        | Geneweb.Warning.PossibleDuplicateFamHomonymous (f1, _, _) ->
+            let fam = Gwdb.foi base f1 in
+            let father = Gwdb.poi base (Gwdb.get_father fam) in
+            let mother = Gwdb.poi base (Gwdb.get_mother fam) in
+            not (Geneweb.Person.is_empty_name father || Geneweb.Person.is_empty_name mother)
+        | _ -> true)
+      warnings
+  in
   let data =
     if filters.Api_def.nb_results then
       let len = List.length !errors + List.length warnings in
