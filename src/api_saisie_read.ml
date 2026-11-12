@@ -519,8 +519,8 @@ let fill_events
   else Api_util.Paginated_data.all []
 
 
-let fill_events_if_is_main_person conf base p base_prefix p_auth is_main_person pers_to_piqi witness_constructor event_constructor =
-  if is_main_person then
+let fill_events_if_is_main_person_or_parent conf base p base_prefix p_auth is_main_person ~nb_asc pers_to_piqi witness_constructor event_constructor =
+  if is_main_person || nb_asc = 1 then
     (fill_events conf base p base_prefix p_auth pers_to_piqi witness_constructor event_constructor).elements
   else []
 
@@ -1342,7 +1342,7 @@ let rec pers_to_piqi_fiche_person
         if not no_event then
           piqi_fiche_person.Api_saisie_read_piqi.Fiche_person.events_witnesses <- if is_main_person then (get_events_witnesses conf base p base_prefix p_auth pers_to_piqi_fiche_person_only fiche_event_witness_constructor).elements else [];
         if not no_event then
-          piqi_fiche_person.Api_saisie_read_piqi.Fiche_person.events <- fill_events_if_is_main_person conf base p base_prefix p_auth is_main_person pers_to_piqi_fiche_person_only fiche_witness_constructor fiche_event_constructor;
+          piqi_fiche_person.Api_saisie_read_piqi.Fiche_person.events <- fill_events_if_is_main_person_or_parent conf base p base_prefix p_auth is_main_person ~nb_asc pers_to_piqi_fiche_person_only fiche_witness_constructor fiche_event_constructor;
         piqi_fiche_person.Api_saisie_read_piqi.Fiche_person.is_contemporary <- Geneweb.Person.is_contemporary conf base p;
         piqi_fiche_person
       in
