@@ -1068,7 +1068,7 @@ let fill_titles conf base p =
     (fun title ->
        title
        |> Futil.map_title_strings (Gwdb.sou base)
-       |> Api_util.title_to_piqi_title)
+       |> Api_util.title_to_piqi_title ~conf)
     (Geneweb.Person.nobtit conf base p)
 
 let transform_empty_string_to_None string =
