@@ -1344,6 +1344,7 @@ let rec pers_to_piqi_fiche_person
         if not no_event then
           piqi_fiche_person.Api_saisie_read_piqi.Fiche_person.events <- fill_events_if_is_main_person_or_parent conf base p base_prefix p_auth is_main_person ~nb_asc pers_to_piqi_fiche_person_only fiche_witness_constructor fiche_event_constructor;
         piqi_fiche_person.Api_saisie_read_piqi.Fiche_person.is_contemporary <- Geneweb.Person.is_contemporary conf base p;
+        piqi_fiche_person.Api_saisie_read_piqi.Fiche_person.has_parent <- Some (Option.is_some @@ Gwdb.get_parents p);
         piqi_fiche_person
       in
       let events =

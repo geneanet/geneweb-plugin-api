@@ -413,6 +413,7 @@ message FichePerson {
   repeated EventFicheWitness events_witnesses = 28;
   repeated FicheEvent events = 29;
   required bool is_contemporary = 30;
+  optional bool has_parent = 31;
 }
 
 message Family {
