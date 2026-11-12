@@ -43,7 +43,8 @@ val piqi_of_witness_kind :
   | `witness_other
   | `witness_religiousofficer ]
 
-val title_to_piqi_title : string Def.gen_title -> Api_piqi.title
+val title_to_piqi_title :
+  conf:Geneweb.Config.config -> string Def.gen_title -> Api_piqi.title
 
 val get_visibility :
   Geneweb.Config.config ->
