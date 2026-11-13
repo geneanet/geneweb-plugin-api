@@ -63,7 +63,7 @@ let pevent_to_warning_event e =
       with Failure _ -> None
   }
 
-let add_warning_to_piqi_warning_list base =
+let add_warning_to_piqi_warning_list ~conf base =
   let get_pevent_name e = e.Def.epers_name in
   let get_fevent_name e = e.Def.efam_name in
   let p2wp = Api_util.person_to_warning_person in
@@ -240,7 +240,7 @@ let add_warning_to_piqi_warning_list base =
       let t = Futil.map_title_strings (Gwdb.sou base) t in
       { w with warning_title_dates_error =
                  Api_piqi.Warning_title_dates_error.{ person = p2wp base p
-                                             ; title = Api_util.title_to_piqi_title t }
+                                             ; title = Api_util.title_to_piqi_title ~conf t }
                  :: w.warning_title_dates_error }
     | UndefinedSex p ->
       { w with warning_undefined_sex =

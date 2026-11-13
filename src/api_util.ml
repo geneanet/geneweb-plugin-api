@@ -63,7 +63,36 @@ let string_of_date = function
     Date.Dgreg (d, _) -> string_of_prec_dmy d
   | Dtext t -> "(" ^ Utf8.normalize t ^ ")"
 
-let title_to_piqi_title t =
+let string_of_dmy_raw ~calendar (d : Date.dmy) : string =
+  let d =
+    Date.mangle_for_display ~calendar:Dgregorian
+      (Date.convert ~light:true ~from:calendar ~to_:Dgregorian d)
+  in
+  let prec =
+    match d.Date.prec with
+    | About -> "~"
+    | Maybe -> "?"
+    | Before -> "<"
+    | After -> ">"
+    | Sure | OrYear _ | YearInt _ -> ""
+  in
+  let date =
+    Printf.sprintf "%d/%d/%d" d.year d.month d.Date.day
+  in
+  let delta =
+    match d.Date.prec with
+    | OrYear d2 -> Printf.sprintf "|/%d/%d/%d" d2.year2 d2.month2 d2.Date.day2
+    | YearInt d2 -> Printf.sprintf "../%d/%d/%d" d2.year2 d2.month2 d2.Date.day2
+    | Sure | About | Maybe | Before | After -> ""
+  in
+  prec ^ "/" ^ date ^ "#" ^ delta
+
+let string_of_date_raw (conf : Geneweb.Config.config) (d : Date.date) : string =
+  match d with
+  | Date.Dgreg (d, calendar) -> string_of_dmy_raw ~calendar (Date.convert ~from:Dgregorian ~to_:calendar d)
+  | Date.Dtext t -> Geneweb.Util.string_with_macros ~conf ~env:[] t
+
+let title_to_piqi_title ~conf t =
   let t = Futil.map_title_strings Utf8.normalize t in
   let (title_type, name) =
     match t.t_name with
@@ -75,12 +104,12 @@ let title_to_piqi_title t =
   let fief = t.t_place in
   let date_begin =
     match Date.od_of_cdate t.t_date_start with
-    | Some d -> Some (string_of_date d)
+    | Some d -> Some (string_of_date_raw conf d)
     | None -> None
   in
   let date_end =
     match Date.od_of_cdate t.t_date_end with
-    | Some d -> Some (string_of_date d)
+    | Some d -> Some (string_of_date_raw conf d)
     | None -> None
   in
   let nth = Some (Int32.of_int t.t_nth) in
@@ -244,35 +273,6 @@ let string_of_dmy conf d is_long =
   in
   !!(Geneweb.DateDisplay.string_of_prec_dmy
        conf (Adef.safe sy) (Adef.safe sy2) d.Date.prec)
-
-let string_of_dmy_raw ~calendar (d : Date.dmy) : string =
-  let d =
-    Date.mangle_for_display ~calendar:Dgregorian
-      (Date.convert ~light:true ~from:calendar ~to_:Dgregorian d)
-  in
-  let prec =
-    match d.Date.prec with
-    | About -> "~"
-    | Maybe -> "?"
-    | Before -> "<"
-    | After -> ">"
-    | Sure | OrYear _ | YearInt _ -> ""
-  in
-  let date =
-    Printf.sprintf "%d/%d/%d" d.year d.month d.Date.day
-  in
-  let delta =
-    match d.Date.prec with
-    | OrYear d2 -> Printf.sprintf "|/%d/%d/%d" d2.year2 d2.month2 d2.Date.day2
-    | YearInt d2 -> Printf.sprintf "../%d/%d/%d" d2.year2 d2.month2 d2.Date.day2
-    | Sure | About | Maybe | Before | After -> ""
-  in
-  prec ^ "/" ^ date ^ "#" ^ delta
-
-let string_of_date_raw (conf : Geneweb.Config.config) (d : Date.date) : string =
-  match d with
-  | Date.Dgreg (d, calendar) -> string_of_dmy_raw ~calendar (Date.convert ~from:Dgregorian ~to_:calendar d)
-  | Date.Dtext t -> Geneweb.Util.string_with_macros ~conf ~env:[] t
 
 let string_of_french_dmy conf d =
   Geneweb.DateDisplay.code_french_date conf d.Date.day d.month d.year
@@ -1100,7 +1100,7 @@ let pers_to_piqi_person_full conf base p compute_sosa =
     if p_auth then Some gen_p.burial_src
     else None
   in
-  let titles = List.map title_to_piqi_title gen_p.titles in
+  let titles = List.map (title_to_piqi_title ~conf) gen_p.titles in
   let occupation =
     if p_auth then Some gen_p.occupation
     else None
