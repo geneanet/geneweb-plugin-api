@@ -1023,14 +1023,6 @@ let has_sources p_auth psources birth_src baptism_src death_src burial_src =
      || death_src <> ""
      || burial_src <> "")
 
-let fill_titles conf base p =
-  List.map
-    (fun title ->
-       title
-       |> Futil.map_title_strings (Gwdb.sou base)
-       |> Api_util.title_to_piqi_title ~conf)
-    (Geneweb.Person.nobtit conf base p)
-
 let transform_empty_string_to_None string =
   if string = "" then None else Some string
 
@@ -1207,7 +1199,7 @@ let pers_to_piqi_person
       notes = transform_empty_string_to_None (fill_notes conf base p p_auth is_main_person gen_p);
       psources = transform_empty_string_to_None psources;
       has_sources;
-      titles = Api_privacy_filter.titles privacy conf base p;
+      titles = List.map (Api_util.title_to_piqi_title ~conf) (Api_privacy_filter.titles privacy conf base p);
       related = get_related_piqi conf base p base_prefix pers_to_piqi_simple_person simple_relation_person_constructor;
       rparents = get_rparents_piqi base conf base_prefix gen_p pers_to_piqi_simple_person simple_relation_person_constructor;
       father;
@@ -1385,7 +1377,7 @@ let rec pers_to_piqi_fiche_person
         families = if return_simple_attributes && not simple_graph_info then fill_families conf base p else [];
         father = if return_simple_attributes then father else None;
         mother = if return_simple_attributes then mother else None;
-        titles = if not simple_graph_info then Api_privacy_filter.titles privacy conf base p else [];
+        titles = if not simple_graph_info then List.map (Api_util.title_to_piqi_title ~conf) (Api_privacy_filter.titles privacy conf base p) else [];
         related = if return_simple_attributes then get_related_piqi conf base p base_prefix pers_to_piqi_simple_person simple_relation_person_constructor else [];
         rparents = if return_simple_attributes then get_rparents_piqi base conf base_prefix gen_p pers_to_piqi_simple_person simple_relation_person_constructor else [];
         baseprefix = base_prefix;
