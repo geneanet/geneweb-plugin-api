@@ -50,7 +50,7 @@ val surnames_aliases : t -> ('a, 'b, string) Def.gen_person -> string list
 (** [surnames_aliases privacy gen_p] returns the surname aliases if names are not hidden. *)
 
 val titles :
-  t -> Geneweb.Config.config -> Gwdb.base -> Gwdb.person -> string list
+  t -> Geneweb.Config.config -> Gwdb.base -> Gwdb.person -> string Def.gen_title list
 (** [titles privacy conf base p] returns the nobility titles if authenticated. *)
 
 val titles_with_links :

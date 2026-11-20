@@ -364,7 +364,7 @@ message Person {
   optional string notes = 37;
   optional string psources = 38;
   required bool has_sources = 39;
-  repeated string titles = 40;
+  repeated Geneanet.Geneweb.Api.Proto.Standard.Model.Title titles = 40;
   repeated RelationPerson related = 41;
   repeated RelationPerson rparents = 42;
   optional SimplePerson father = 43;
@@ -394,7 +394,6 @@ message FichePerson {
   optional string burial_text = 8;
   optional string cremation_text = 9;
   required BurialType burial_type = 10;
-  repeated string titles_links = 11;
   optional string sosa_nb = 12;
   required bool has_history = 13;
   required bool has_possible_duplications = 14;
@@ -414,6 +413,7 @@ message FichePerson {
   repeated EventFicheWitness events_witnesses = 28;
   repeated FicheEvent events = 29;
   required bool is_contemporary = 30;
+  optional bool has_parent = 31;
 }
 
 message Family {
