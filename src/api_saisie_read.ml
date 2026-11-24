@@ -1277,7 +1277,7 @@ let rec pers_to_piqi_fiche_person
         piqi_fiche_person.Api_saisie_read_piqi.Fiche_person.sosa_nb <- if sosa_nb = Sosa.zero then None else Some (Sosa.to_string sosa_nb);
         piqi_fiche_person.Api_saisie_read_piqi.Fiche_person.father <- fiche_father;
         piqi_fiche_person.Api_saisie_read_piqi.Fiche_person.mother <- fiche_mother;
-        if is_main_person || not simple_graph_info then
+        if is_main_person || not simple_graph_info || (nb_desc < nb_desc_max && nb_asc <= nb_asc_max) then
           piqi_fiche_person.Api_saisie_read_piqi.Fiche_person.families <- fill_fiche_families conf base p base_prefix nb_asc nb_asc_max nb_desc nb_desc_max pers_to_piqi_fiche_person simple_graph_info no_event;
         piqi_fiche_person.Api_saisie_read_piqi.Fiche_person.baptism_date_raw <- if is_main_person then transform_empty_string_to_None (fill_baptism_date_raw conf p_auth gen_p) else None;
         piqi_fiche_person.Api_saisie_read_piqi.Fiche_person.baptism_text <- if is_main_person then transform_empty_string_to_None (fill_baptism_text conf p p_auth) else None;
