@@ -1,11 +1,5 @@
-type npocc = {
-  n : string;
-  p : string;
-  occ : Int32.t;
-}
-
+type npocc = { n : string; p : string; occ : Int32.t }
 type index = Int32.t
-
 type sex = Unknown | Male | Female
 
 type name_aliases = {
@@ -26,13 +20,8 @@ type event_request = {
   witnesses : paginated_witness_request option;
 }
 
-and witness_request = {
-  witness : requested_fields option;
-  note : bool;
-}
-
+and witness_request = { witness : requested_fields option; note : bool }
 and paginated_witness_request = witness_request paginated_request
-
 and paginated_event_request = event_request paginated_request
 
 and requested_fields = {
@@ -61,16 +50,8 @@ and requested_fields = {
 }
 
 type person_select = Index of index | Npocc of npocc
-
 type person
-type family
-
-type 'a paginated = {
-  elements : 'a list;
-  page_number : int;
-  total_count : int;
-}
-
+type 'a paginated = { elements : 'a list; page_number : int; total_count : int }
 type event_type = string Geneweb.Event.event_name
 type date = Date.date
 
@@ -98,13 +79,20 @@ type paginated_events = event paginated
 
 module Person : sig
   type t = person
-  val get_person : Geneweb.Config.config -> Gwdb.base -> person_select -> requested_fields -> t option
+
+  val get_person :
+    Geneweb.Config.config ->
+    Gwdb.base ->
+    person_select ->
+    requested_fields ->
+    t option
+
   val get_index : t -> index option
   val get_npocc : t -> npocc option
   val get_sex : t -> sex option
   val get_lastname : t -> string option
   val get_firstname : t -> string option
-  val get_public_name: t -> string option
+  val get_public_name : t -> string option
   val get_image : t -> string option
   val get_name_aliases : t -> name_aliases option
   val get_father : t -> person option
@@ -121,8 +109,4 @@ module Person : sig
   val get_burial : t -> event option
   val get_related : t -> (Def.relation_type * person) list option
   val get_rparents : t -> (Def.relation_type * person) list option
-end
-
-module Family : sig
-  type t = family
 end
