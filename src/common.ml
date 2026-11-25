@@ -218,8 +218,10 @@ end = struct
         Option.bind fields (fun fields ->
             Option.bind (Gwdb.get_parents person.person) (fun parents ->
                 let iparent = proj (Gwdb.foi person.base parents) in
-                let parent = Gwdb.poi person.base iparent in
-                Option.some (of_person person.conf person.base fields parent))))
+                if iparent = Gwdb.dummy_iper then None
+                else
+                  let parent = Gwdb.poi person.base iparent in
+                  Some (of_person person.conf person.base fields parent))))
     |> Option.join
 
   let get_father person = get_parent person.fields.father Gwdb.get_father person
@@ -332,9 +334,9 @@ end = struct
 
   let event_spouse conf base spouse_fields evt =
     Option.bind spouse_fields (fun fields ->
-        let spouse_iper = Geneweb.Event.get_spouse_iper evt in
-        let spouse = Option.map (Gwdb.poi base) spouse_iper in
-        Option.map (of_person conf base fields) spouse)
+        Option.bind (Geneweb.Event.get_spouse_iper evt) (fun spouse_iper ->
+            if spouse_iper = Gwdb.dummy_iper then None
+            else Some (of_person conf base fields (Gwdb.poi base spouse_iper))))
 
   let event_witnesses person evt
       (paginated_witness_request : paginated_witness_request) =
@@ -393,40 +395,43 @@ end = struct
     }
 
   let get_events person =
-    Ext_option.return_if
-      (person.confidentiality.visible && Option.is_some person.fields.events)
-      (fun () ->
-        let paginated_events_request : paginated_event_request =
-          Option.get person.fields.events
-        in
-        let conf = Geneweb.Config.Trimmed.from_config person.conf in
-        let auth_person =
-          Geneweb.Authorized.Person.make ~conf ~base:person.base
-            (Gwdb.get_iper person.person)
-        in
-        let events = Geneweb.Event.sorted_events conf person.base auth_person in
-        let paginated_events =
-          match paginated_events_request.elements_per_page with
-          | `All -> Api_util.Paginated_data.all events
-          | `Int element_count ->
-              let page =
-                Api_util.Page.make ~number:paginated_events_request.page_number
-                  ~element_count
-              in
-              Api_util.Paginated_data.extract page events
-        in
-        let paginated_events =
-          Api_util.Paginated_data.map
-            (fun evt ->
-              of_event person paginated_events_request.elements_request.spouse
-                paginated_events_request.elements_request.witnesses evt)
-            paginated_events
-        in
-        {
-          elements = paginated_events.Api_util.Paginated_data.elements;
-          page_number = paginated_events.page_number;
-          total_count = paginated_events.total_count;
-        })
+    Ext_option.return_if person.confidentiality.visible (fun () ->
+        Option.map
+          (fun (paginated_events_request : paginated_event_request) ->
+            let conf = Geneweb.Config.Trimmed.from_config person.conf in
+            let auth_person =
+              Geneweb.Authorized.Person.make ~conf ~base:person.base
+                (Gwdb.get_iper person.person)
+            in
+            let events =
+              Geneweb.Event.sorted_events conf person.base auth_person
+            in
+            let paginated_events =
+              match paginated_events_request.elements_per_page with
+              | `All -> Api_util.Paginated_data.all events
+              | `Int element_count ->
+                  let page =
+                    Api_util.Page.make
+                      ~number:paginated_events_request.page_number
+                      ~element_count
+                  in
+                  Api_util.Paginated_data.extract page events
+            in
+            let paginated_events =
+              Api_util.Paginated_data.map
+                (fun evt ->
+                  of_event person
+                    paginated_events_request.elements_request.spouse
+                    paginated_events_request.elements_request.witnesses evt)
+                paginated_events
+            in
+            {
+              elements = paginated_events.Api_util.Paginated_data.elements;
+              page_number = paginated_events.page_number;
+              total_count = paginated_events.total_count;
+            })
+          person.fields.events)
+    |> Option.join
 
   let pers_event ~name ~date ~place ~note ~source ~witnesses =
     Geneweb.Event.event_item_of_gen_pevent
@@ -508,10 +513,10 @@ end = struct
 
   let get_person conf base select fields =
     try
-      Option.map
-        (fun iper -> of_person conf base fields (Gwdb.poi base iper))
-        (index_of_select base select)
-    with Failure _ -> None
+      Option.bind (index_of_select base select) (fun iper ->
+          if iper = Gwdb.dummy_iper then None
+          else Some (of_person conf base fields (Gwdb.poi base iper)))
+    with Invalid_argument _ | Not_found | Failure _ -> None
 
   let get_related person =
     Option.map
