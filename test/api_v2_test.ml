@@ -265,6 +265,132 @@ let test_default_request_is_full_fields () =
     "mother is present with default full fields" true
     (Option.is_some piqi.mother)
 
+let test_family_extraction () =
+  let base, p_father, _p_mother, _p_child, _p_private = setup_db () in
+  let req =
+    Plugin_api_lib.Request.request_of_piqi_request
+      {
+        Plugin_api_lib.Api_v2_piqi.Request.index = Some (Int32.of_int p_father);
+        npocc = None;
+        person_request = None;
+      }
+  in
+  let resp =
+    Plugin_api_lib.Response.response conf_visitor base (Option.get req)
+  in
+  Alcotest.(check bool) "response found" true (Option.is_some resp);
+  let piqi = Plugin_api_lib.Response.to_piqi (Option.get resp) in
+  Alcotest.(check int) "families count" 1 (List.length piqi.families);
+  let fam = List.hd piqi.families in
+  Alcotest.(check bool) "spouse present" true (Option.is_some fam.spouse);
+  let spouse = Option.get fam.spouse in
+  Alcotest.(check (option string))
+    "spouse firstname" (Some "Marie") spouse.firstname;
+  Alcotest.(check (option string))
+    "spouse lastname" (Some "Martin") spouse.lastname;
+  Alcotest.(check int) "children count" 1 (List.length fam.children);
+  let child = List.hd fam.children in
+  Alcotest.(check (option string))
+    "child firstname" (Some "Pierre") child.firstname;
+  Alcotest.(check (option string))
+    "child lastname" (Some "Dupont") child.lastname
+
+let test_multiple_unions () =
+  let db = Geneweb_test_utils.Mock_db.create () in
+  let p_main =
+    Geneweb_test_utils.Mock_db.add_person db ~first_name:"Henri"
+      ~surname:"Quatre" ~sex:Def.Male ~access:Def.Public ()
+  in
+  let p_sp1 =
+    Geneweb_test_utils.Mock_db.add_person db ~first_name:"Marguerite"
+      ~surname:"Valois" ~sex:Def.Female ~access:Def.Public ()
+  in
+  let p_sp2 =
+    Geneweb_test_utils.Mock_db.add_person db ~first_name:"Marie"
+      ~surname:"Medicis" ~sex:Def.Female ~access:Def.Public ()
+  in
+  let p_c2 =
+    Geneweb_test_utils.Mock_db.add_person db ~first_name:"Louis"
+      ~surname:"Treize" ~sex:Def.Male ~access:Def.Public ()
+  in
+  let _fam1 =
+    Geneweb_test_utils.Mock_db.add_family db ~father:p_main ~mother:p_sp1 ()
+  in
+  let _fam2 =
+    Geneweb_test_utils.Mock_db.add_family db ~father:p_main ~mother:p_sp2
+      ~children:[ p_c2 ] ()
+  in
+  let base = Geneweb_test_utils.Mock_db.build db in
+  let req =
+    Plugin_api_lib.Request.request_of_piqi_request
+      {
+        Plugin_api_lib.Api_v2_piqi.Request.index = Some (Int32.of_int p_main);
+        npocc = None;
+        person_request = None;
+      }
+  in
+  let resp =
+    Plugin_api_lib.Response.response conf_visitor base (Option.get req)
+  in
+  let piqi = Plugin_api_lib.Response.to_piqi (Option.get resp) in
+  Alcotest.(check int) "two families" 2 (List.length piqi.families);
+  let fam1 = List.nth piqi.families 0 in
+  let fam2 = List.nth piqi.families 1 in
+  let sp1 = Option.get fam1.spouse in
+  let sp2 = Option.get fam2.spouse in
+  Alcotest.(check (option string))
+    "first spouse" (Some "Marguerite") sp1.firstname;
+  Alcotest.(check (option string)) "second spouse" (Some "Marie") sp2.firstname;
+  Alcotest.(check int) "fam1 has no children" 0 (List.length fam1.children);
+  Alcotest.(check int) "fam2 has 1 child" 1 (List.length fam2.children)
+
+let test_private_spouse_masking () =
+  let db = Geneweb_test_utils.Mock_db.create () in
+  let p_pub =
+    Geneweb_test_utils.Mock_db.add_person db ~first_name:"Public"
+      ~surname:"Husband" ~sex:Def.Male ~access:Def.Public ()
+  in
+  let p_priv =
+    Geneweb_test_utils.Mock_db.add_person db ~first_name:"Private"
+      ~surname:"Wife" ~sex:Def.Female ~access:Def.Private ()
+  in
+  let _fam =
+    Geneweb_test_utils.Mock_db.add_family db ~father:p_pub ~mother:p_priv ()
+  in
+  let base = Geneweb_test_utils.Mock_db.build db in
+  let req =
+    Plugin_api_lib.Request.request_of_piqi_request
+      {
+        Plugin_api_lib.Api_v2_piqi.Request.index = Some (Int32.of_int p_pub);
+        npocc = None;
+        person_request = None;
+      }
+  in
+  let resp_visitor =
+    Plugin_api_lib.Response.response conf_visitor base (Option.get req)
+  in
+  let piqi_visitor =
+    Plugin_api_lib.Response.to_piqi (Option.get resp_visitor)
+  in
+  let fam_visitor = List.hd piqi_visitor.families in
+  let sp_visitor = Option.get fam_visitor.spouse in
+  Alcotest.(check (option string))
+    "private spouse firstname masked for visitor" None sp_visitor.firstname;
+  Alcotest.(check (option string))
+    "private spouse lastname masked for visitor" None sp_visitor.lastname;
+  let resp_wizard =
+    Plugin_api_lib.Response.response conf_wizard base (Option.get req)
+  in
+  let piqi_wizard = Plugin_api_lib.Response.to_piqi (Option.get resp_wizard) in
+  let fam_wizard = List.hd piqi_wizard.families in
+  let sp_wizard = Option.get fam_wizard.spouse in
+  Alcotest.(check (option string))
+    "private spouse firstname revealed for wizard" (Some "Private")
+    sp_wizard.firstname;
+  Alcotest.(check (option string))
+    "private spouse lastname revealed for wizard" (Some "Wife")
+    sp_wizard.lastname
+
 let tests =
   [
     ("Api_v2.lookup_by_index", `Quick, test_lookup_by_index);
@@ -276,4 +402,7 @@ let tests =
     ( "Api_v2.default_request_is_full_fields",
       `Quick,
       test_default_request_is_full_fields );
+    ("Api_v2.family_extraction", `Quick, test_family_extraction);
+    ("Api_v2.multiple_unions", `Quick, test_multiple_unions);
+    ("Api_v2.private_spouse_masking", `Quick, test_private_spouse_masking);
   ]
