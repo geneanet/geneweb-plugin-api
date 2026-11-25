@@ -397,6 +397,99 @@ let test_private_spouse_masking () =
     "private spouse lastname revealed for wizard" (Some "Wife")
     sp_wizard.lastname
 
+let test_visibility_levels () =
+  let base, _p_father, _p_mother, p_child, p_private = setup_db () in
+  let req_child =
+    Plugin_api_lib.Request.request_of_piqi_request
+      {
+        Plugin_api_lib.Api_v2_piqi.Request.index = Some (Int32.of_int p_child);
+        npocc = None;
+        person_request = None;
+      }
+  in
+  let resp_child =
+    Plugin_api_lib.Response.response conf_visitor base (Option.get req_child)
+  in
+  let piqi_child = Plugin_api_lib.Response.to_piqi (Option.get resp_child) in
+  Alcotest.(check bool)
+    "child has public visibility" true
+    (piqi_child.visibility = Some `visibility_public);
+  let req_priv =
+    Plugin_api_lib.Request.request_of_piqi_request
+      {
+        Plugin_api_lib.Api_v2_piqi.Request.index = Some (Int32.of_int p_private);
+        npocc = None;
+        person_request = None;
+      }
+  in
+  let resp_priv =
+    Plugin_api_lib.Response.response conf_visitor base (Option.get req_priv)
+  in
+  let piqi_priv = Plugin_api_lib.Response.to_piqi (Option.get resp_priv) in
+  Alcotest.(check bool)
+    "private person has private visibility" true
+    (piqi_priv.visibility = Some `visibility_private)
+
+let test_family_sources () =
+  let db = Geneweb_test_utils.Mock_db.create () in
+  let p_h =
+    Geneweb_test_utils.Mock_db.add_person db ~first_name:"Paul"
+      ~surname:"Valery" ~sex:Def.Male ~access:Def.Public ()
+  in
+  let p_w =
+    Geneweb_test_utils.Mock_db.add_person db ~first_name:"Jeanne"
+      ~surname:"Gobillard" ~sex:Def.Female ~access:Def.Public ()
+  in
+  let _fam =
+    Geneweb_test_utils.Mock_db.add_family db ~father:p_h ~mother:p_w
+      ~fsources:"Archives de Paris" ()
+  in
+  let base = Geneweb_test_utils.Mock_db.build db in
+  let req =
+    Plugin_api_lib.Request.request_of_piqi_request
+      {
+        Plugin_api_lib.Api_v2_piqi.Request.index = Some (Int32.of_int p_h);
+        npocc = None;
+        person_request = None;
+      }
+  in
+  let resp =
+    Plugin_api_lib.Response.response conf_visitor base (Option.get req)
+  in
+  let piqi = Plugin_api_lib.Response.to_piqi (Option.get resp) in
+  let fam = List.hd piqi.families in
+  Alcotest.(check (option string))
+    "marriage source matches" (Some "Archives de Paris") fam.marriage_source
+
+let test_notes_raw () =
+  let db = Geneweb_test_utils.Mock_db.create () in
+  let s_idx =
+    Geneweb_test_utils.Mock_db.add_string db "Raw Note Content\nLine 2"
+  in
+  let p =
+    Geneweb_test_utils.Mock_db.add_person db ~first_name:"Charles"
+      ~surname:"Baudelaire" ~sex:Def.Male ~access:Def.Public ()
+  in
+  let base = Geneweb_test_utils.Mock_db.build db in
+  let ip = Gwdb.iper_of_int p in
+  let p_data = Gwdb.gen_person_of_person (Gwdb.poi base ip) in
+  Gwdb.patch_person base ip
+    { p_data with notes = Geneweb_test_utils.Mock_db.istr s_idx };
+  let req =
+    Plugin_api_lib.Request.request_of_piqi_request
+      {
+        Plugin_api_lib.Api_v2_piqi.Request.index = Some (Int32.of_int p);
+        npocc = None;
+        person_request = None;
+      }
+  in
+  let resp =
+    Plugin_api_lib.Response.response conf_visitor base (Option.get req)
+  in
+  let piqi = Plugin_api_lib.Response.to_piqi (Option.get resp) in
+  Alcotest.(check (option string))
+    "notes_raw extracted" (Some "Raw Note Content\nLine 2") piqi.notes_raw
+
 let tests =
   [
     ("Api_v2.lookup_by_index", `Quick, test_lookup_by_index);
@@ -411,4 +504,7 @@ let tests =
     ("Api_v2.family_extraction", `Quick, test_family_extraction);
     ("Api_v2.multiple_unions", `Quick, test_multiple_unions);
     ("Api_v2.private_spouse_masking", `Quick, test_private_spouse_masking);
+    ("Api_v2.visibility_levels", `Quick, test_visibility_levels);
+    ("Api_v2.family_sources", `Quick, test_family_sources);
+    ("Api_v2.notes_raw", `Quick, test_notes_raw);
   ]

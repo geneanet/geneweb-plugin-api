@@ -773,6 +773,7 @@ end = struct
     let marriage_source =
       Ext_option.return_if (m_auth && fam_req.marriage_source) (fun () ->
           let s = Gwdb.sou base (Gwdb.get_marriage_src foi) in
+          let s = if s = "" then Gwdb.sou base (Gwdb.get_fsources foi) else s in
           if s = "" then None
           else
             Some
