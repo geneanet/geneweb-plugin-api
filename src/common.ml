@@ -30,9 +30,14 @@ type marriage_type =
 
 type divorce_type = [ `not_divorced | `divorced | `separated ]
 
+type visibility =
+  [ `visibility_public | `visibility_semi_public | `visibility_private ]
+
 type event_request = {
   spouse : requested_fields option;
   witnesses : paginated_witness_request option;
+  event_notes_raw : bool;
+  date_str : bool;
 }
 
 and witness_request = { witness : requested_fields option; note : bool }
@@ -44,12 +49,15 @@ and family_request = {
   marriage_date : bool;
   marriage_place : bool;
   marriage_note : bool;
+  marriage_note_raw : bool;
   marriage_source : bool;
   marriage_type : bool;
   divorce_type : bool;
   divorce_date : bool;
   children : requested_fields option;
   fam_witnesses : paginated_witness_request option;
+  marriage_date_str : bool;
+  divorce_date_str : bool;
 }
 
 and requested_fields = {
@@ -66,6 +74,7 @@ and requested_fields = {
   sosa : bool;
   occupation : bool;
   notes : bool;
+  notes_raw : bool;
   sources : bool;
   titles : bool;
   events : paginated_event_request option;
@@ -76,6 +85,8 @@ and requested_fields = {
   related : requested_fields option;
   rparents : requested_fields option;
   families : family_request option;
+  visibility : bool;
+  is_contemporary : bool;
 }
 
 type person_select = Index of index | Npocc of npocc
@@ -104,8 +115,14 @@ type paginated_witnesses = witness paginated
 type event = {
   event_type : event_type;
   date : date option;
+  date_str : string option;
+  date_long : string option;
+  date_conv : string option;
+  date_conv_long : string option;
+  date_raw : string option;
   place : string option;
   notes : string option;
+  notes_raw : string option;
   sources : string option;
   spouse : person option;
   death_type : Def.death option;
@@ -119,12 +136,23 @@ type family = {
   index : int;
   fam_spouse : person option;
   marriage_date : date option;
+  marriage_date_str : string option;
+  marriage_date_long : string option;
+  marriage_date_conv : string option;
+  marriage_date_conv_long : string option;
+  marriage_date_raw : string option;
   marriage_place : string option;
   marriage_note : string option;
+  marriage_note_raw : string option;
   marriage_source : string option;
   marriage_type : marriage_type option;
   divorce_type : divorce_type option;
   divorce_date : date option;
+  divorce_date_str : string option;
+  divorce_date_long : string option;
+  divorce_date_conv : string option;
+  divorce_date_conv_long : string option;
+  divorce_date_raw : string option;
   children : person list option;
   fam_witnesses : witness list option;
 }
@@ -140,6 +168,16 @@ let as_strings proj person =
     (proj person.person)
 
 let as_some_strings proj person = Some (as_strings proj person)
+
+let format_date_strings conf req_date_str od =
+  match (req_date_str, od) with
+  | true, Some d ->
+      let d_str, d_long, d_conv, d_conv_long, _cal =
+        Api_util.string_of_date_and_conv conf d
+      in
+      let d_raw = Api_util.string_of_date_raw conf d in
+      (Some d_str, Some d_long, Some d_conv, Some d_conv_long, Some d_raw)
+  | _ -> (None, None, None, None, None)
 
 module Person : sig
   type t = person
@@ -164,6 +202,7 @@ module Person : sig
   val get_sosa : t -> string option
   val get_occupation : t -> string option
   val get_notes : t -> string option
+  val get_notes_raw : t -> string option
   val get_sources : t -> string option
   val get_titles : t -> string list option
   val get_events : t -> paginated_events option
@@ -174,6 +213,8 @@ module Person : sig
   val get_related : t -> (Def.relation_type * person) list option
   val get_rparents : t -> (Def.relation_type * person) list option
   val get_families : t -> family list option
+  val get_visibility : t -> visibility option
+  val get_is_contemporary : t -> bool option
 end = struct
   type t = person
 
@@ -290,6 +331,21 @@ end = struct
           (Geneweb.Notes.person_note ~keep_newlines:true person.conf person.base
              person.person
              (as_string Gwdb.get_notes person)))
+
+  let get_notes_raw person =
+    Ext_option.return_if
+      (Api_privacy_filter.is_visible person.privacy
+      && person.fields.notes_raw
+      && not person.conf.Geneweb.Config.no_note)
+      (fun () -> as_string Gwdb.get_notes person)
+
+  let get_visibility person =
+    Ext_option.return_if person.fields.visibility (fun () ->
+        Api_util.get_visibility person.conf person.base person.person)
+
+  let get_is_contemporary person =
+    Ext_option.return_if person.fields.is_contemporary (fun () ->
+        Geneweb.Person.is_contemporary person.conf person.base person.person)
 
   let get_sources person =
     Ext_option.return_if
@@ -414,11 +470,42 @@ end = struct
 
   let of_event person spouse_fields
       (paginated_witness_request : paginated_witness_request option) evt =
+    let od = Date.od_of_cdate (Geneweb.Event.get_date evt) in
+    let req_date_str =
+      Option.fold ~none:false
+        ~some:(fun (r : paginated_event_request) -> r.elements_request.date_str)
+        person.fields.events
+    in
+    let date_str, date_long, date_conv, date_conv_long, date_raw =
+      format_date_strings person.conf req_date_str od
+    in
+    let req_notes_raw =
+      Option.fold ~none:false
+        ~some:(fun (r : paginated_event_request) ->
+          r.elements_request.event_notes_raw)
+        person.fields.events
+    in
+    let notes_raw =
+      Ext_option.return_if
+        (req_notes_raw
+        && Api_privacy_filter.is_visible person.privacy
+        && not person.conf.Geneweb.Config.no_note)
+        (fun () ->
+          let n = Gwdb.sou person.base (Geneweb.Event.get_note evt) in
+          if n = "" then None else Some (Utf8.normalize n))
+      |> Option.join
+    in
     {
       event_type = event_type person.base (Geneweb.Event.get_name evt);
-      date = Date.od_of_cdate (Geneweb.Event.get_date evt);
+      date = od;
+      date_str;
+      date_long;
+      date_conv;
+      date_conv_long;
+      date_raw;
       place = event_place person.base evt;
       notes = event_notes person.conf person.base person.person evt;
+      notes_raw;
       sources = event_sources person.conf person.base evt;
       spouse = event_spouse person.conf person.base spouse_fields evt;
       death_type = None;
@@ -643,6 +730,15 @@ end = struct
           Date.od_of_cdate (Gwdb.get_marriage foi))
       |> Option.join
     in
+    let ( marriage_date_str,
+          marriage_date_long,
+          marriage_date_conv,
+          marriage_date_conv_long,
+          marriage_date_raw ) =
+      format_date_strings conf
+        (m_auth && fam_req.marriage_date_str)
+        marriage_date
+    in
     let marriage_place =
       Ext_option.return_if (m_auth && fam_req.marriage_place) (fun () ->
           let pl = Gwdb.sou base (Gwdb.get_marriage_place foi) in
@@ -664,6 +760,14 @@ end = struct
               (Utf8.normalize
                  (Adef.as_string
                     (Geneweb.Notes.note ~keep_newlines:true conf base [] n))))
+      |> Option.join
+    in
+    let marriage_note_raw =
+      Ext_option.return_if
+        (m_auth && fam_req.marriage_note_raw && not conf.Geneweb.Config.no_note)
+        (fun () ->
+          let n = Gwdb.sou base (Gwdb.get_marriage_note foi) in
+          if n = "" then None else Some (Utf8.normalize n))
       |> Option.join
     in
     let marriage_source =
@@ -698,6 +802,13 @@ end = struct
       | Def.Separated ->
           ( Ext_option.return_if fam_req.divorce_type (fun () -> `separated),
             None )
+    in
+    let ( divorce_date_str,
+          divorce_date_long,
+          divorce_date_conv,
+          divorce_date_conv_long,
+          divorce_date_raw ) =
+      format_date_strings conf (m_auth && fam_req.divorce_date_str) divorce_date
     in
     let children =
       Option.map
@@ -741,12 +852,23 @@ end = struct
       index = Gwdb.int_of_ifam ifam;
       fam_spouse;
       marriage_date;
+      marriage_date_str;
+      marriage_date_long;
+      marriage_date_conv;
+      marriage_date_conv_long;
+      marriage_date_raw;
       marriage_place;
       marriage_note;
+      marriage_note_raw;
       marriage_source;
       marriage_type;
       divorce_type;
       divorce_date;
+      divorce_date_str;
+      divorce_date_long;
+      divorce_date_conv;
+      divorce_date_conv_long;
+      divorce_date_raw;
       children;
       fam_witnesses;
     }

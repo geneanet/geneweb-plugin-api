@@ -18,6 +18,7 @@ let simple_fields =
     sosa = true;
     occupation = true;
     notes = false;
+    notes_raw = false;
     sources = false;
     titles = false;
     events = None;
@@ -28,6 +29,8 @@ let simple_fields =
     related = None;
     rparents = None;
     families = None;
+    visibility = true;
+    is_contemporary = true;
   }
 
 let full_page elements_request =
@@ -48,6 +51,7 @@ let full_fields =
     sosa = true;
     occupation = true;
     notes = true;
+    notes_raw = true;
     sources = true;
     titles = true;
     events =
@@ -59,6 +63,8 @@ let full_fields =
                Some
                  (full_page
                     { Common.witness = Some simple_fields; note = true });
+             event_notes_raw = true;
+             date_str = true;
            });
     birth = true;
     baptism = true;
@@ -73,6 +79,7 @@ let full_fields =
           marriage_date = true;
           marriage_place = true;
           marriage_note = true;
+          marriage_note_raw = true;
           marriage_source = true;
           marriage_type = true;
           divorce_type = true;
@@ -81,7 +88,11 @@ let full_fields =
           fam_witnesses =
             Some
               (full_page { Common.witness = Some simple_fields; note = true });
+          marriage_date_str = true;
+          divorce_date_str = true;
         };
+    visibility = true;
+    is_contemporary = true;
   }
 
 let get_fields { person_select = _; requested_fields } = requested_fields
@@ -113,6 +124,7 @@ let rec requested_fields person_request =
     sosa = optional person_request.sosa;
     occupation = optional person_request.occupation;
     notes = optional person_request.notes;
+    notes_raw = optional person_request.notes_raw;
     sources = optional person_request.sources;
     titles = optional person_request.titles;
     events = Option.map paginated_event_request person_request.events;
@@ -123,6 +135,8 @@ let rec requested_fields person_request =
     related = Option.map requested_fields person_request.related;
     rparents = Option.map requested_fields person_request.rparents;
     families = Option.map family_request person_request.families;
+    visibility = optional person_request.visibility;
+    is_contemporary = optional person_request.is_contemporary;
   }
 
 and family_request fam =
@@ -132,12 +146,15 @@ and family_request fam =
     marriage_date = optional fam.marriage_date;
     marriage_place = optional fam.marriage_place;
     marriage_note = optional fam.marriage_note;
+    marriage_note_raw = optional fam.marriage_note_raw;
     marriage_source = optional fam.marriage_source;
     marriage_type = optional fam.marriage_type;
     divorce_type = optional fam.divorce_type;
     divorce_date = optional fam.divorce_date;
     children = Option.map requested_fields fam.children;
     fam_witnesses = Option.map paginated_witness_request fam.witnesses;
+    marriage_date_str = optional fam.marriage_date_str;
+    divorce_date_str = optional fam.divorce_date_str;
   }
 
 and paginated_event_request events =
@@ -152,6 +169,8 @@ and paginated_event_request events =
       {
         Common.spouse = Option.map requested_fields events.spouse;
         witnesses = Option.map paginated_witness_request events.witnesses;
+        event_notes_raw = optional events.notes_raw;
+        date_str = optional events.date_str;
       };
   }
 

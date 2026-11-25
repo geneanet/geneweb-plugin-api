@@ -48,9 +48,15 @@ type marriage_type =
 type divorce_type = [ `not_divorced | `divorced | `separated ]
 (** Divorce status of a family union. *)
 
+type visibility =
+  [ `visibility_public | `visibility_semi_public | `visibility_private ]
+(** Public visibility classification for visitors. *)
+
 type event_request = {
   spouse : requested_fields option;
   witnesses : paginated_witness_request option;
+  event_notes_raw : bool;
+  date_str : bool;
 }
 (** Nested field selection for event entities. *)
 
@@ -65,12 +71,15 @@ and family_request = {
   marriage_date : bool;
   marriage_place : bool;
   marriage_note : bool;
+  marriage_note_raw : bool;
   marriage_source : bool;
   marriage_type : bool;
   divorce_type : bool;
   divorce_date : bool;
   children : requested_fields option;
   fam_witnesses : paginated_witness_request option;
+  marriage_date_str : bool;
+  divorce_date_str : bool;
 }
 (** Field selection for family unions. *)
 
@@ -88,6 +97,7 @@ and requested_fields = {
   sosa : bool;
   occupation : bool;
   notes : bool;
+  notes_raw : bool;
   sources : bool;
   titles : bool;
   events : paginated_event_request option;
@@ -98,6 +108,8 @@ and requested_fields = {
   related : requested_fields option;
   rparents : requested_fields option;
   families : family_request option;
+  visibility : bool;
+  is_contemporary : bool;
 }
 (** Complete mask specifying which fields and sub-entities to populate. *)
 
@@ -130,8 +142,14 @@ type paginated_witnesses = witness paginated
 type event = {
   event_type : event_type;
   date : date option;
+  date_str : string option;
+  date_long : string option;
+  date_conv : string option;
+  date_conv_long : string option;
+  date_raw : string option;
   place : string option;
   notes : string option;
+  notes_raw : string option;
   sources : string option;
   spouse : person option;
   death_type : Def.death option;
@@ -146,12 +164,23 @@ type family = {
   index : int;
   fam_spouse : person option;
   marriage_date : date option;
+  marriage_date_str : string option;
+  marriage_date_long : string option;
+  marriage_date_conv : string option;
+  marriage_date_conv_long : string option;
+  marriage_date_raw : string option;
   marriage_place : string option;
   marriage_note : string option;
+  marriage_note_raw : string option;
   marriage_source : string option;
   marriage_type : marriage_type option;
   divorce_type : divorce_type option;
   divorce_date : date option;
+  divorce_date_str : string option;
+  divorce_date_long : string option;
+  divorce_date_conv : string option;
+  divorce_date_conv_long : string option;
+  divorce_date_raw : string option;
   children : person list option;
   fam_witnesses : witness list option;
 }
@@ -209,6 +238,9 @@ module Person : sig
   val get_notes : t -> string option
   (** Returns person notes if requested, visible, and notes are not globally disabled. *)
 
+  val get_notes_raw : t -> string option
+  (** Returns raw uninterpreted person notes if requested, visible, and not disabled. *)
+
   val get_sources : t -> string option
   (** Returns person sources if requested and visible. *)
 
@@ -238,4 +270,10 @@ module Person : sig
 
   val get_families : t -> family list option
   (** Returns family unions (spouses, marriage details, children) if requested. *)
+
+  val get_visibility : t -> visibility option
+  (** Returns the visitor visibility level if requested. *)
+
+  val get_is_contemporary : t -> bool option
+  (** Returns whether the person is contemporary if requested. *)
 end

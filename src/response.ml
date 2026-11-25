@@ -12,6 +12,7 @@ type t = {
   sosa : string option;
   occupation : string option;
   notes : string option;
+  notes_raw : string option;
   sources : string option;
   titles : string list option;
   events : Common.paginated_events option;
@@ -22,6 +23,8 @@ type t = {
   related : (Def.relation_type * t) list option;
   rparents : (Def.relation_type * t) list option;
   families : Common.family list option;
+  visibility : Common.visibility option;
+  is_contemporary : bool option;
 }
 
 let rec response_of_person person =
@@ -39,6 +42,7 @@ let rec response_of_person person =
     sosa = Common.Person.get_sosa person;
     occupation = Common.Person.get_occupation person;
     notes = Common.Person.get_notes person;
+    notes_raw = Common.Person.get_notes_raw person;
     sources = Common.Person.get_sources person;
     titles = Common.Person.get_titles person;
     events = Common.Person.get_events person;
@@ -49,6 +53,8 @@ let rec response_of_person person =
     related = Option.map relations_to_piqi (Common.Person.get_related person);
     rparents = Option.map relations_to_piqi (Common.Person.get_rparents person);
     families = Common.Person.get_families person;
+    visibility = Common.Person.get_visibility person;
+    is_contemporary = Common.Person.get_is_contemporary person;
   }
 
 and relations_to_piqi relations =
@@ -109,14 +115,14 @@ let rec events_to_piqi event =
     Api_v2_piqi.Event.event_type;
     name;
     date = Option.map Date_conv.piqi_date_of_date event.date;
-    date_str = None;
-    date_long = None;
-    date_conv = None;
-    date_conv_long = None;
-    date_raw = None;
+    date_str = event.date_str;
+    date_long = event.date_long;
+    date_conv = event.date_conv;
+    date_conv_long = event.date_conv_long;
+    date_raw = event.date_raw;
     place = event.place;
     notes = event.notes;
-    notes_raw = None;
+    notes_raw = event.notes_raw;
     sources = event.sources;
     spouse =
       Option.map
@@ -197,28 +203,33 @@ and divorce_type_to_piqi = function
   | `divorced -> `divorced
   | `separated -> `separated
 
+and visibility_to_piqi = function
+  | `visibility_public -> `visibility_public
+  | `visibility_semi_public -> `visibility_semi_public
+  | `visibility_private -> `visibility_private
+
 and family_to_piqi (fam : Common.family) =
   {
     Api_v2_piqi.Family.index = Int32.of_int fam.index;
     spouse = Option.map (fun p -> to_piqi (response_of_person p)) fam.fam_spouse;
     marriage_date = Option.map Date_conv.piqi_date_of_date fam.marriage_date;
-    marriage_date_str = None;
-    marriage_date_long = None;
-    marriage_date_conv = None;
-    marriage_date_conv_long = None;
-    marriage_date_raw = None;
+    marriage_date_str = fam.marriage_date_str;
+    marriage_date_long = fam.marriage_date_long;
+    marriage_date_conv = fam.marriage_date_conv;
+    marriage_date_conv_long = fam.marriage_date_conv_long;
+    marriage_date_raw = fam.marriage_date_raw;
     marriage_place = fam.marriage_place;
     marriage_note = fam.marriage_note;
-    marriage_note_raw = None;
+    marriage_note_raw = fam.marriage_note_raw;
     marriage_source = fam.marriage_source;
     marriage_type = Option.map marriage_type_to_piqi fam.marriage_type;
     divorce_type = Option.map divorce_type_to_piqi fam.divorce_type;
     divorce_date = Option.map Date_conv.piqi_date_of_date fam.divorce_date;
-    divorce_date_str = None;
-    divorce_date_long = None;
-    divorce_date_conv = None;
-    divorce_date_conv_long = None;
-    divorce_date_raw = None;
+    divorce_date_str = fam.divorce_date_str;
+    divorce_date_long = fam.divorce_date_long;
+    divorce_date_conv = fam.divorce_date_conv;
+    divorce_date_conv_long = fam.divorce_date_conv_long;
+    divorce_date_raw = fam.divorce_date_raw;
     children =
       Option.value ~default:[]
         (Option.map
@@ -244,7 +255,7 @@ and to_piqi response =
     sosa = response.sosa;
     occupation = response.occupation;
     notes = response.notes;
-    notes_raw = None;
+    notes_raw = response.notes_raw;
     sources = response.sources;
     titles = Option.value ~default:[] response.titles;
     events = Option.map paginated_events_to_piqi response.events;
@@ -261,8 +272,8 @@ and to_piqi response =
     families =
       Option.value ~default:[]
         (Option.map (List.map family_to_piqi) response.families);
-    visibility = None;
-    is_contemporary = None;
+    visibility = Option.map visibility_to_piqi response.visibility;
+    is_contemporary = response.is_contemporary;
   }
 
 let response conf base request =
