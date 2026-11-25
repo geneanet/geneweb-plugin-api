@@ -51,16 +51,11 @@ and requested_fields = {
 
 type person_select = Index of index | Npocc of npocc
 
-type confidentiality = {
-  restricted : bool;
-  visible : bool;
-  hidden_names : bool;
-}
-
 type person = {
   conf : Geneweb.Config.config;
   base : Gwdb.base;
-  confidentiality : confidentiality;
+  restricted : bool;
+  privacy : Api_privacy_filter.t;
   fields : requested_fields;
   person : Gwdb.person;
 }
@@ -91,8 +86,7 @@ type event = {
 
 type paginated_events = event paginated
 
-let has_visible_names person =
-  person.confidentiality.visible || not person.confidentiality.hidden_names
+let has_visible_names person = not (Api_privacy_filter.is_hidden person.privacy)
 
 let as_string proj person =
   Utf8.normalize (Gwdb.sou person.base (proj person.person))
@@ -143,10 +137,8 @@ end = struct
     let restricted =
       Geneweb.Person.is_restricted conf base (Gwdb.get_iper person)
     in
-    let visible = Geneweb.Person.is_visible conf base person in
-    let hidden_names = Geneweb.Person.is_hide_names conf person in
-    let confidentiality = { restricted; visible; hidden_names } in
-    { conf; base; fields; confidentiality; person }
+    let privacy = Api_privacy_filter.evaluate conf base person in
+    { conf; base; restricted; privacy; fields; person }
 
   let of_field field f p = Ext_option.return_if field (fun () -> f p.person)
 
@@ -177,9 +169,8 @@ end = struct
     | Def.Female -> Female
 
   let get_sex person =
-    Ext_option.return_if
-      ((not person.confidentiality.restricted) && person.fields.sex) (fun () ->
-        get_sex person.person)
+    Ext_option.return_if ((not person.restricted) && person.fields.sex)
+      (fun () -> get_sex person.person)
 
   let get_lastname person =
     Ext_option.return_if
@@ -214,7 +205,7 @@ end = struct
         })
 
   let get_parent fields proj person =
-    Ext_option.return_if (not person.confidentiality.restricted) (fun () ->
+    Ext_option.return_if (not person.restricted) (fun () ->
         Option.bind fields (fun fields ->
             Option.bind (Gwdb.get_parents person.person) (fun parents ->
                 let iparent = proj (Gwdb.foi person.base parents) in
@@ -239,14 +230,16 @@ end = struct
 
   let get_occupation person =
     Ext_option.return_if
-      (person.confidentiality.visible && person.fields.occupation) (fun () ->
+      (Api_privacy_filter.is_visible person.privacy && person.fields.occupation)
+      (fun () ->
         Adef.as_string
         @@ Geneweb.Notes.source person.conf person.base
              (as_string Gwdb.get_occupation person))
 
   let get_notes person =
     Ext_option.return_if
-      (person.confidentiality.visible && person.fields.notes
+      (Api_privacy_filter.is_visible person.privacy
+      && person.fields.notes
       && not person.conf.Geneweb.Config.no_note)
       (fun () ->
         Adef.as_string
@@ -256,20 +249,16 @@ end = struct
 
   let get_sources person =
     Ext_option.return_if
-      (person.confidentiality.visible && person.fields.sources) (fun () ->
+      (Api_privacy_filter.is_visible person.privacy && person.fields.sources)
+      (fun () ->
         Adef.as_string
           (Geneweb.Notes.source person.conf person.base
              (as_string Gwdb.get_psources person)))
 
   let get_titles person =
     Ext_option.return_if person.fields.titles (fun () ->
-        List.map
-          (fun title ->
-            Adef.as_string
-              (Geneweb.Perso.string_of_title ~safe:true ~link:false person.conf
-                 person.base (Adef.safe "") person.person title))
-          (Geneweb.Perso.nobility_titles_list person.conf person.base
-             person.person))
+        Api_privacy_filter.titles person.privacy person.conf person.base
+          person.person)
 
   let event_type base e =
     let map_name n = Utf8.normalize (Gwdb.sou base n) in
@@ -351,7 +340,7 @@ end = struct
               let witness =
                 of_person person.conf person.base witness_fields wpers
               in
-              if witness.confidentiality.visible then
+              if Api_privacy_filter.is_visible witness.privacy then
                 let note =
                   Ext_option.return_if
                     (not (Gwdb.is_empty_string istr))
@@ -395,7 +384,8 @@ end = struct
     }
 
   let get_events person =
-    Ext_option.return_if person.confidentiality.visible (fun () ->
+    Ext_option.return_if (Api_privacy_filter.is_visible person.privacy)
+      (fun () ->
         Option.map
           (fun (paginated_events_request : paginated_event_request) ->
             let conf = Geneweb.Config.Trimmed.from_config person.conf in
@@ -448,7 +438,9 @@ end = struct
   let get_main_event ~person ~field ~name ~get_date ~get_place ~get_note
       ~get_source =
     let evt =
-      Ext_option.return_if (person.confidentiality.visible && field) (fun () ->
+      Ext_option.return_if
+        (Api_privacy_filter.is_visible person.privacy && field)
+        (fun () ->
           let date = get_date person.person in
           let place = get_place person.person in
           let note = get_note person.person in
