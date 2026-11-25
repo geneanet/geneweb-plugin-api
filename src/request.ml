@@ -27,6 +27,7 @@ let simple_fields =
     burial = false;
     related = None;
     rparents = None;
+    families = None;
   }
 
 let full_page elements_request =
@@ -65,6 +66,22 @@ let full_fields =
     burial = true;
     related = Some simple_fields;
     rparents = Some simple_fields;
+    families =
+      Some
+        {
+          Common.fam_spouse = Some simple_fields;
+          marriage_date = true;
+          marriage_place = true;
+          marriage_note = true;
+          marriage_source = true;
+          marriage_type = true;
+          divorce_type = true;
+          divorce_date = true;
+          children = Some simple_fields;
+          fam_witnesses =
+            Some
+              (full_page { Common.witness = Some simple_fields; note = true });
+        };
   }
 
 let get_fields { person_select = _; requested_fields } = requested_fields
@@ -105,6 +122,22 @@ let rec requested_fields person_request =
     burial = optional person_request.burial;
     related = Option.map requested_fields person_request.related;
     rparents = Option.map requested_fields person_request.rparents;
+    families = Option.map family_request person_request.families;
+  }
+
+and family_request fam =
+  {
+    Common.fam_spouse =
+      Option.map requested_fields fam.Api_v2_piqi.Family_request.spouse;
+    marriage_date = optional fam.marriage_date;
+    marriage_place = optional fam.marriage_place;
+    marriage_note = optional fam.marriage_note;
+    marriage_source = optional fam.marriage_source;
+    marriage_type = optional fam.marriage_type;
+    divorce_type = optional fam.divorce_type;
+    divorce_date = optional fam.divorce_date;
+    children = Option.map requested_fields fam.children;
+    fam_witnesses = Option.map paginated_witness_request fam.witnesses;
   }
 
 and paginated_event_request events =

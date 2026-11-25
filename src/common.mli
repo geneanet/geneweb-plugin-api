@@ -31,6 +31,23 @@ type 'a paginated_request = {
 }
 (** Pagination specification for nested collection requests. *)
 
+type marriage_type =
+  [ `married
+  | `not_married
+  | `engaged
+  | `no_sexes_check_not_married
+  | `no_mention
+  | `no_sexes_check_married
+  | `marriage_bann
+  | `marriage_contract
+  | `marriage_license
+  | `pacs
+  | `residence ]
+(** Marital union relationship kind. *)
+
+type divorce_type = [ `not_divorced | `divorced | `separated ]
+(** Divorce status of a family union. *)
+
 type event_request = {
   spouse : requested_fields option;
   witnesses : paginated_witness_request option;
@@ -42,6 +59,20 @@ and witness_request = { witness : requested_fields option; note : bool }
 
 and paginated_witness_request = witness_request paginated_request
 and paginated_event_request = event_request paginated_request
+
+and family_request = {
+  fam_spouse : requested_fields option;
+  marriage_date : bool;
+  marriage_place : bool;
+  marriage_note : bool;
+  marriage_source : bool;
+  marriage_type : bool;
+  divorce_type : bool;
+  divorce_date : bool;
+  children : requested_fields option;
+  fam_witnesses : paginated_witness_request option;
+}
+(** Field selection for family unions. *)
 
 and requested_fields = {
   index : bool;
@@ -66,6 +97,7 @@ and requested_fields = {
   burial : bool;
   related : requested_fields option;
   rparents : requested_fields option;
+  families : family_request option;
 }
 (** Complete mask specifying which fields and sub-entities to populate. *)
 
@@ -109,6 +141,21 @@ type event = {
 (** A personal or familial event. *)
 
 type paginated_events = event paginated
+
+type family = {
+  index : int;
+  fam_spouse : person option;
+  marriage_date : date option;
+  marriage_place : string option;
+  marriage_note : string option;
+  marriage_source : string option;
+  marriage_type : marriage_type option;
+  divorce_type : divorce_type option;
+  divorce_date : date option;
+  children : person list option;
+  fam_witnesses : witness list option;
+}
+(** A family union between individuals. *)
 
 module Person : sig
   type t = person
@@ -188,4 +235,7 @@ module Person : sig
 
   val get_rparents : t -> (Def.relation_type * person) list option
   (** Returns non-traditional / adoptive / foster parents if requested. *)
+
+  val get_families : t -> family list option
+  (** Returns family unions (spouses, marriage details, children) if requested. *)
 end

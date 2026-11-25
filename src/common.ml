@@ -15,6 +15,21 @@ type 'a paginated_request = {
   elements_request : 'a;
 }
 
+type marriage_type =
+  [ `married
+  | `not_married
+  | `engaged
+  | `no_sexes_check_not_married
+  | `no_mention
+  | `no_sexes_check_married
+  | `marriage_bann
+  | `marriage_contract
+  | `marriage_license
+  | `pacs
+  | `residence ]
+
+type divorce_type = [ `not_divorced | `divorced | `separated ]
+
 type event_request = {
   spouse : requested_fields option;
   witnesses : paginated_witness_request option;
@@ -23,6 +38,19 @@ type event_request = {
 and witness_request = { witness : requested_fields option; note : bool }
 and paginated_witness_request = witness_request paginated_request
 and paginated_event_request = event_request paginated_request
+
+and family_request = {
+  fam_spouse : requested_fields option;
+  marriage_date : bool;
+  marriage_place : bool;
+  marriage_note : bool;
+  marriage_source : bool;
+  marriage_type : bool;
+  divorce_type : bool;
+  divorce_date : bool;
+  children : requested_fields option;
+  fam_witnesses : paginated_witness_request option;
+}
 
 and requested_fields = {
   index : bool;
@@ -47,6 +75,7 @@ and requested_fields = {
   burial : bool;
   related : requested_fields option;
   rparents : requested_fields option;
+  families : family_request option;
 }
 
 type person_select = Index of index | Npocc of npocc
@@ -85,6 +114,20 @@ type event = {
 }
 
 type paginated_events = event paginated
+
+type family = {
+  index : int;
+  fam_spouse : person option;
+  marriage_date : date option;
+  marriage_place : string option;
+  marriage_note : string option;
+  marriage_source : string option;
+  marriage_type : marriage_type option;
+  divorce_type : divorce_type option;
+  divorce_date : date option;
+  children : person list option;
+  fam_witnesses : witness list option;
+}
 
 let has_visible_names person = not (Api_privacy_filter.is_hidden person.privacy)
 
@@ -130,6 +173,7 @@ module Person : sig
   val get_burial : t -> event option
   val get_related : t -> (Def.relation_type * person) list option
   val get_rparents : t -> (Def.relation_type * person) list option
+  val get_families : t -> family list option
 end = struct
   type t = person
 
@@ -559,4 +603,160 @@ end = struct
           []
           (Gwdb.get_rparents person.person))
       person.fields.rparents
+
+  let marriage_type_of_def = function
+    | Def.Married -> `married
+    | NotMarried -> `not_married
+    | Engaged -> `engaged
+    | NoSexesCheckNotMarried -> `no_sexes_check_not_married
+    | NoMention -> `no_mention
+    | NoSexesCheckMarried -> `no_sexes_check_married
+    | MarriageBann -> `marriage_bann
+    | MarriageContract -> `marriage_contract
+    | MarriageLicense -> `marriage_license
+    | Pacs -> `pacs
+    | Residence -> `residence
+
+  let of_family person (fam_req : family_request) ifam =
+    let base = person.base in
+    let conf = person.conf in
+    let foi = Gwdb.foi base ifam in
+    let spouse_iper = Gutil.spouse (Gwdb.get_iper person.person) foi in
+    let spouse_opt =
+      if spouse_iper = Gwdb.dummy_iper then None
+      else Some (Gwdb.poi base spouse_iper)
+    in
+    let spouse_privacy =
+      Option.map (Api_privacy_filter.evaluate conf base) spouse_opt
+    in
+    let m_auth =
+      Api_privacy_filter.is_visible person.privacy
+      && Option.fold ~none:false ~some:Api_privacy_filter.is_visible
+           spouse_privacy
+    in
+    let fam_spouse =
+      Option.bind fam_req.fam_spouse (fun s_fields ->
+          Option.map (of_person conf base s_fields) spouse_opt)
+    in
+    let marriage_date =
+      Ext_option.return_if (m_auth && fam_req.marriage_date) (fun () ->
+          Date.od_of_cdate (Gwdb.get_marriage foi))
+      |> Option.join
+    in
+    let marriage_place =
+      Ext_option.return_if (m_auth && fam_req.marriage_place) (fun () ->
+          let pl = Gwdb.sou base (Gwdb.get_marriage_place foi) in
+          if pl = "" then None
+          else
+            Some
+              (Utf8.normalize
+                 (Adef.as_string (Geneweb.Util.string_of_place pl))))
+      |> Option.join
+    in
+    let marriage_note =
+      Ext_option.return_if
+        (m_auth && fam_req.marriage_note && not conf.Geneweb.Config.no_note)
+        (fun () ->
+          let n = Gwdb.sou base (Gwdb.get_marriage_note foi) in
+          if n = "" then None
+          else
+            Some
+              (Utf8.normalize
+                 (Adef.as_string
+                    (Geneweb.Notes.note ~keep_newlines:true conf base [] n))))
+      |> Option.join
+    in
+    let marriage_source =
+      Ext_option.return_if (m_auth && fam_req.marriage_source) (fun () ->
+          let s = Gwdb.sou base (Gwdb.get_marriage_src foi) in
+          if s = "" then None
+          else
+            Some
+              (Utf8.normalize
+                 (Adef.as_string (Geneweb.Notes.source conf base s))))
+      |> Option.join
+    in
+    let marriage_type =
+      Ext_option.return_if fam_req.marriage_type (fun () ->
+          marriage_type_of_def (Gwdb.get_relation foi))
+    in
+    let divorce_type, divorce_date =
+      match Gwdb.get_divorce foi with
+      | Def.NotDivorced ->
+          ( Ext_option.return_if fam_req.divorce_type (fun () -> `not_divorced),
+            None )
+      | Def.Divorced cod ->
+          let d_type =
+            Ext_option.return_if fam_req.divorce_type (fun () -> `divorced)
+          in
+          let d_date =
+            Ext_option.return_if (m_auth && fam_req.divorce_date) (fun () ->
+                Date.od_of_cdate cod)
+            |> Option.join
+          in
+          (d_type, d_date)
+      | Def.Separated ->
+          ( Ext_option.return_if fam_req.divorce_type (fun () -> `separated),
+            None )
+    in
+    let children =
+      Option.map
+        (fun ch_fields ->
+          Array.fold_right
+            (fun ichild acc ->
+              if ichild = Gwdb.dummy_iper then acc
+              else
+                let ch_person = Gwdb.poi base ichild in
+                of_person conf base ch_fields ch_person :: acc)
+            (Gwdb.get_children foi) [])
+        fam_req.children
+    in
+    let fam_witnesses =
+      Option.map
+        (fun (w_req : paginated_witness_request) ->
+          let w_fields = w_req.elements_request.witness in
+          match w_fields with
+          | None -> []
+          | Some wf ->
+              Array.fold_right
+                (fun (ip, wkind, wnote) acc ->
+                  if ip = Gwdb.dummy_iper then acc
+                  else
+                    let w_pers = Gwdb.poi base ip in
+                    let w = of_person conf base wf w_pers in
+                    if Api_privacy_filter.is_visible w.privacy then
+                      let note =
+                        Ext_option.return_if
+                          (w_req.elements_request.note
+                          && not (Gwdb.is_empty_string wnote))
+                          (fun () -> Utf8.normalize (Gwdb.sou base wnote))
+                      in
+                      { witness = w; witness_type = wkind; note } :: acc
+                    else acc)
+                (Geneweb.Perso.get_marriage_witnesses_and_notes foi)
+                [])
+        fam_req.fam_witnesses
+    in
+    {
+      index = Gwdb.int_of_ifam ifam;
+      fam_spouse;
+      marriage_date;
+      marriage_place;
+      marriage_note;
+      marriage_source;
+      marriage_type;
+      divorce_type;
+      divorce_date;
+      children;
+      fam_witnesses;
+    }
+
+  let get_families person =
+    Option.map
+      (fun fam_req ->
+        Array.fold_right
+          (fun ifam acc -> of_family person fam_req ifam :: acc)
+          (Gwdb.get_family person.person)
+          [])
+      person.fields.families
 end
