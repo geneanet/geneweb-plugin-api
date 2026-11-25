@@ -83,6 +83,7 @@
   api_util
   api_warnings
   api_v2
+  api_v2_compat
   api_v2_piqi
   api_v2_piqi_ext
   common

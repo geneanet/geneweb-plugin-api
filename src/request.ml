@@ -3,6 +3,8 @@ type t = {
   requested_fields : Common.requested_fields;
 }
 
+let make ~person_select ~requested_fields = { person_select; requested_fields }
+
 let simple_fields =
   {
     Common.index = true;
