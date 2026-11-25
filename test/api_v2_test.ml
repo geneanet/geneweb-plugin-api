@@ -135,6 +135,9 @@ let test_parent_hierarchy () =
       related = None;
       rparents = None;
       families = None;
+      notes_raw = None;
+      visibility = None;
+      is_contemporary = None;
     }
   in
   let person_req =
@@ -225,6 +228,9 @@ let test_titles_extraction () =
       related = None;
       rparents = None;
       families = None;
+      notes_raw = None;
+      visibility = None;
+      is_contemporary = None;
     }
   in
   let req =

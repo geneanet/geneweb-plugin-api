@@ -87,6 +87,8 @@ message EventRequest {
   optional int32 elements_per_page = 2;
   optional PersonRequest spouse = 3;
   optional WitnessRequest witnesses = 4;
+  optional bool notes_raw = 5;
+  optional bool date_str = 6;
 }
 
 enum MarriageType {
@@ -114,12 +116,15 @@ message FamilyRequest {
   optional bool marriage_date = 2;
   optional bool marriage_place = 3;
   optional bool marriage_note = 4;
+  optional bool marriage_note_raw = 11;
   optional bool marriage_source = 5;
   optional bool marriage_type = 6;
   optional bool divorce_type = 7;
   optional bool divorce_date = 8;
   optional PersonRequest children = 9;
   optional WitnessRequest witnesses = 10;
+  optional bool marriage_date_str = 12;
+  optional bool divorce_date_str = 13;
 }
 
 message PersonRequest {
@@ -136,6 +141,7 @@ message PersonRequest {
   optional bool sosa = 11;
   optional bool occupation = 12;
   optional bool notes = 13;
+  optional bool notes_raw = 24;
   optional bool sources = 14;
   optional bool titles = 15;
   optional EventRequest events = 16;
@@ -146,6 +152,8 @@ message PersonRequest {
   optional PersonRequest related = 21;
   optional PersonRequest rparents = 22;
   optional FamilyRequest families = 23;
+  optional bool visibility = 25;
+  optional bool is_contemporary = 26;
 }
 
 enum EventType {
@@ -244,8 +252,14 @@ message Event {
   optional string name = 1;
   optional EventType event_type = 2;
   optional Date date = 3;
+  optional string date_str = 12;
+  optional string date_long = 13;
+  optional string date_conv = 14;
+  optional string date_conv_long = 15;
+  optional string date_raw = 16;
   optional string place = 4;
   optional string notes = 5;
+  optional string notes_raw = 11;
   optional string sources = 6;
   optional Person spouse = 7;
   optional DeathType death_type = 8;
@@ -277,16 +291,33 @@ message Relation {
   optional Person person = 2;
 }
 
+enum Visibility {
+  VISIBILITY_PUBLIC = 0;
+  VISIBILITY_SEMI_PUBLIC = 1;
+  VISIBILITY_PRIVATE = 2;
+}
+
 message Family {
   required int32 index = 1;
   optional Person spouse = 2;
   optional Date marriage_date = 3;
+  optional string marriage_date_str = 13;
+  optional string marriage_date_long = 14;
+  optional string marriage_date_conv = 15;
+  optional string marriage_date_conv_long = 16;
+  optional string marriage_date_raw = 17;
   optional string marriage_place = 4;
   optional string marriage_note = 5;
+  optional string marriage_note_raw = 12;
   optional string marriage_source = 6;
   optional MarriageType marriage_type = 7;
   optional DivorceType divorce_type = 8;
   optional Date divorce_date = 9;
+  optional string divorce_date_str = 18;
+  optional string divorce_date_long = 19;
+  optional string divorce_date_conv = 20;
+  optional string divorce_date_conv_long = 21;
+  optional string divorce_date_raw = 22;
   repeated Person children = 10;
   repeated Witness witnesses = 11;
 }
@@ -305,6 +336,7 @@ message Person {
   optional string sosa = 11;
   optional string occupation = 12;
   optional string notes = 13;
+  optional string notes_raw = 24;
   optional string sources = 14;
   repeated string titles = 15;
   optional PaginatedEvents events = 16;
@@ -315,4 +347,6 @@ message Person {
   repeated Relation related = 21;
   repeated Relation rparents = 22;
   repeated Family families = 23;
+  optional Visibility visibility = 25;
+  optional bool is_contemporary = 26;
 }

@@ -109,8 +109,14 @@ let rec events_to_piqi event =
     Api_v2_piqi.Event.event_type;
     name;
     date = Option.map Date_conv.piqi_date_of_date event.date;
+    date_str = None;
+    date_long = None;
+    date_conv = None;
+    date_conv_long = None;
+    date_raw = None;
     place = event.place;
     notes = event.notes;
+    notes_raw = None;
     sources = event.sources;
     spouse =
       Option.map
@@ -196,12 +202,23 @@ and family_to_piqi (fam : Common.family) =
     Api_v2_piqi.Family.index = Int32.of_int fam.index;
     spouse = Option.map (fun p -> to_piqi (response_of_person p)) fam.fam_spouse;
     marriage_date = Option.map Date_conv.piqi_date_of_date fam.marriage_date;
+    marriage_date_str = None;
+    marriage_date_long = None;
+    marriage_date_conv = None;
+    marriage_date_conv_long = None;
+    marriage_date_raw = None;
     marriage_place = fam.marriage_place;
     marriage_note = fam.marriage_note;
+    marriage_note_raw = None;
     marriage_source = fam.marriage_source;
     marriage_type = Option.map marriage_type_to_piqi fam.marriage_type;
     divorce_type = Option.map divorce_type_to_piqi fam.divorce_type;
     divorce_date = Option.map Date_conv.piqi_date_of_date fam.divorce_date;
+    divorce_date_str = None;
+    divorce_date_long = None;
+    divorce_date_conv = None;
+    divorce_date_conv_long = None;
+    divorce_date_raw = None;
     children =
       Option.value ~default:[]
         (Option.map
@@ -227,6 +244,7 @@ and to_piqi response =
     sosa = response.sosa;
     occupation = response.occupation;
     notes = response.notes;
+    notes_raw = None;
     sources = response.sources;
     titles = Option.value ~default:[] response.titles;
     events = Option.map paginated_events_to_piqi response.events;
@@ -243,6 +261,8 @@ and to_piqi response =
     families =
       Option.value ~default:[]
         (Option.map (List.map family_to_piqi) response.families);
+    visibility = None;
+    is_contemporary = None;
   }
 
 let response conf base request =
