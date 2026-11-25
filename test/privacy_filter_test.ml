@@ -280,13 +280,26 @@ let test_is_hidden () =
     true
     (Plugin_api_lib.Api_privacy_filter.is_visible pub_vis)
 
+let title_testable =
+  let pp fmt (t : string Def.gen_title) =
+    let name_str =
+      match t.Def.t_name with
+      | Def.Tmain -> "Tmain"
+      | Def.Tname s -> Printf.sprintf "Tname %S" s
+      | Def.Tnone -> "Tnone"
+    in
+    Format.fprintf fmt "{ t_name = %s; t_ident = %S; t_place = %S; t_nth = %d }"
+      name_str t.t_ident t.t_place t.t_nth
+  in
+  Alcotest.testable pp ( = )
+
 let test_titles () =
   let base, priv_p, pub_p, _ = setup_db () in
   let priv_vis = Plugin_api_lib.Api_privacy_filter.evaluate visitor_conf base priv_p in
   let wiz_vis = Plugin_api_lib.Api_privacy_filter.evaluate wizard_conf base priv_p in
   let pub_vis = Plugin_api_lib.Api_privacy_filter.evaluate visitor_conf base pub_p in
   (* When not visible (visitor on private person), always returns empty list *)
-  Geneweb_test_utils.Check.list Alcotest.string ~pos:__POS__
+  Geneweb_test_utils.Check.list title_testable ~pos:__POS__
     ~msg:"Api_privacy_filter.titles returns empty when not visible"
     []
     (Plugin_api_lib.Api_privacy_filter.titles priv_vis visitor_conf base priv_p);
@@ -295,11 +308,22 @@ let test_titles () =
     []
     (Plugin_api_lib.Api_privacy_filter.titles_with_links priv_vis visitor_conf base priv_p);
   (* When visible to wizard on private person, reveals nobility titles *)
-  let expected_priv = [ "duke of York (Duke)" ] in
+  let expected_priv : string Def.gen_title list =
+    [
+      {
+        Def.t_name = Def.Tname "Duke";
+        t_ident = "duke";
+        t_place = "of York";
+        t_date_start = Adef.Cnone;
+        t_date_end = Adef.Cnone;
+        t_nth = 0;
+      };
+    ]
+  in
   let expected_priv_links =
     [ "<a   href=\"?lang=en&m=TT&sm=S&t=duke&p=of+York\">duke of York</a> (Duke)" ]
   in
-  Geneweb_test_utils.Check.list Alcotest.string ~pos:__POS__
+  Geneweb_test_utils.Check.list title_testable ~pos:__POS__
     ~msg:"Api_privacy_filter.titles returns titles when visible to wizard"
     expected_priv
     (Plugin_api_lib.Api_privacy_filter.titles wiz_vis wizard_conf base priv_p);
@@ -308,11 +332,22 @@ let test_titles () =
     expected_priv_links
     (Plugin_api_lib.Api_privacy_filter.titles_with_links wiz_vis wizard_conf base priv_p);
   (* When visible to visitor on public person, reveals nobility titles *)
-  let expected_pub = [ "countess of Chester (Countess)" ] in
+  let expected_pub : string Def.gen_title list =
+    [
+      {
+        Def.t_name = Def.Tname "Countess";
+        t_ident = "countess";
+        t_place = "of Chester";
+        t_date_start = Adef.Cnone;
+        t_date_end = Adef.Cnone;
+        t_nth = 0;
+      };
+    ]
+  in
   let expected_pub_links =
     [ "<a   href=\"?lang=en&m=TT&sm=S&t=countess&p=of+Chester\">countess of Chester</a> (Countess)" ]
   in
-  Geneweb_test_utils.Check.list Alcotest.string ~pos:__POS__
+  Geneweb_test_utils.Check.list title_testable ~pos:__POS__
     ~msg:"Api_privacy_filter.titles returns titles for public person when visible"
     expected_pub
     (Plugin_api_lib.Api_privacy_filter.titles pub_vis visitor_conf base pub_p);
@@ -399,7 +434,7 @@ let test_contemporary_semi_public () =
     [ "Semison" ]
     (Plugin_api_lib.Api_privacy_filter.surnames_aliases semi_vis gen_p);
   (* Titles strictly require record authentication (is_visible) and are hidden *)
-  Geneweb_test_utils.Check.list Alcotest.string ~pos:__POS__
+  Geneweb_test_utils.Check.list title_testable ~pos:__POS__
     ~msg:"Api_privacy_filter.titles hides titles when not visible" []
     (Plugin_api_lib.Api_privacy_filter.titles semi_vis visitor_show_names_conf base semi_p);
   Geneweb_test_utils.Check.list Alcotest.string ~pos:__POS__

@@ -6,5 +6,4 @@
   geneweb.test_utils
   geneweb.dummy_gwdb
   geneweb_plugin_api.lib)
- (modules test privacy_filter_test))
-
+ (modules test convert_date_test privacy_filter_test))

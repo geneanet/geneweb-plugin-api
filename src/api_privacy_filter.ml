@@ -52,11 +52,8 @@ let titles t conf base p =
   if not t.is_visible then []
   else
     List.map
-      (fun x ->
-        Adef.as_string
-          (Geneweb.Perso.string_of_title ~safe:true ~link:false conf base
-             (Adef.safe "") p x))
-      (Geneweb.Perso.nobility_titles_list conf base p)
+      (Futil.map_title_strings (Gwdb.sou base))
+      (Geneweb.Person.nobtit conf base p)
 
 let titles_with_links t conf base p =
   if not t.is_visible then []

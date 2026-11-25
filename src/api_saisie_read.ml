@@ -479,8 +479,8 @@ let fill_events
   else Api_util.Paginated_data.all []
 
 
-let fill_events_if_is_main_person conf base p base_prefix p_auth is_main_person pers_to_piqi witness_constructor event_constructor =
-  if is_main_person then
+let fill_events_if_is_main_person_or_parent conf base p base_prefix p_auth is_main_person ~nb_asc pers_to_piqi witness_constructor event_constructor =
+  if is_main_person || nb_asc = 1 then
     (fill_events conf base p base_prefix p_auth pers_to_piqi witness_constructor event_constructor).elements
   else []
 
@@ -1199,7 +1199,7 @@ let pers_to_piqi_person
       notes = transform_empty_string_to_None (fill_notes conf base p p_auth is_main_person gen_p);
       psources = transform_empty_string_to_None psources;
       has_sources;
-      titles = Api_privacy_filter.titles privacy conf base p;
+      titles = List.map (Api_util.title_to_piqi_title ~conf) (Api_privacy_filter.titles privacy conf base p);
       related = get_related_piqi conf base p base_prefix pers_to_piqi_simple_person simple_relation_person_constructor;
       rparents = get_rparents_piqi base conf base_prefix gen_p pers_to_piqi_simple_person simple_relation_person_constructor;
       father;
@@ -1239,9 +1239,7 @@ let rec pers_to_piqi_fiche_person
           (simple_graph_info : bool)
           (no_event : bool)
         : Api_saisie_read_piqi.person =
-  (* Generates a fiche person by default. *)
   let piqi_fiche_person = Api_saisie_read_piqi.default_fiche_person() in
-  (* If the access is restricted, returns the person with default fields. *)
   if Geneweb.Person.is_restricted conf base (Gwdb.get_iper p) then
     get_restricted_fiche_person ()
   else
@@ -1250,7 +1248,6 @@ let rec pers_to_piqi_fiche_person
       let p_auth = Api_privacy_filter.is_visible privacy in
       let gen_p = Geneweb.Util.string_gen_person base (Gwdb.gen_person_of_person p) in
       let gen_p = Futil.map_person_ps Fun.id (fun ?format:_ -> Utf8.normalize) gen_p in
-      (* Sources only returned for the main person. *)
       let psources = if is_main_person then fill_sources conf base p_auth gen_p is_main_person else "" in
       let birth_src = if is_main_person then fill_birth_src conf base p_auth gen_p else "" in
       let baptism_src = if is_main_person then fill_baptism_src conf base p_auth gen_p else "" in
@@ -1258,7 +1255,6 @@ let rec pers_to_piqi_fiche_person
       let burial_src = if is_main_person then fill_burial_src conf base p_auth gen_p else "" in
       let has_sources = is_main_person && has_sources p_auth psources birth_src baptism_src death_src burial_src in
       let (death_type, death_date, death_date_conv, death_cal) = fill_death conf p_auth gen_p in
-      (* Linked links (family book). *)
       let (linked_page_biblio, linked_page_bnote, linked_page_death, linked_page_head, linked_page_occu) = if not simple_graph_info then fill_linked_page_if_is_main_person conf base p is_main_person else ("", "", "", "", "") in
       let pers_to_piqi_fiche_person_only conf base p base_prefix =
         pers_to_piqi_fiche_person conf base p base_prefix false 0 0 0 0 false simple_graph_info no_event
@@ -1266,7 +1262,6 @@ let rec pers_to_piqi_fiche_person
       let sosa_nb = Geneweb.Sosa_cache.get_sosa_person ~conf ~base ~person:p in
       let (fiche_father, fiche_mother) = if is_main_person || not simple_graph_info then fill_fiche_parents conf base p base_prefix nb_asc nb_asc_max with_parent_families pers_to_piqi_fiche_person simple_graph_info no_event else (None, None) in
       let (father, mother) = if with_parent_families then fill_parents conf base p base_prefix else (None, None) in
-      (* Returns simple person attributes only when nb of desc is 0. *)
       let return_simple_attributes = (nb_desc_max == 0) in
       let (ref_index, ref_person) = fill_ref_if_is_main_person conf base is_main_person in
       let piqi_fiche_person =
@@ -1279,14 +1274,11 @@ let rec pers_to_piqi_fiche_person
         piqi_fiche_person.Api_saisie_read_piqi.Fiche_person.cremation_text <- transform_empty_string_to_None (fill_cremation_text conf p p_auth);
         piqi_fiche_person.Api_saisie_read_piqi.Fiche_person.death_date_raw <- transform_empty_string_to_None (fill_death_date_raw conf p_auth gen_p);
         piqi_fiche_person.Api_saisie_read_piqi.Fiche_person.death_text <- transform_empty_string_to_None (fill_death_text conf p p_auth);
-        piqi_fiche_person.Api_saisie_read_piqi.Fiche_person.titles_links <- if not simple_graph_info then Api_privacy_filter.titles_with_links privacy conf base p else [];
         piqi_fiche_person.Api_saisie_read_piqi.Fiche_person.sosa_nb <- if sosa_nb = Sosa.zero then None else Some (Sosa.to_string sosa_nb);
         piqi_fiche_person.Api_saisie_read_piqi.Fiche_person.father <- fiche_father;
         piqi_fiche_person.Api_saisie_read_piqi.Fiche_person.mother <- fiche_mother;
-        if is_main_person || not simple_graph_info then
+        if is_main_person || not simple_graph_info || (nb_desc < nb_desc_max && nb_asc <= nb_asc_max) then
           piqi_fiche_person.Api_saisie_read_piqi.Fiche_person.families <- fill_fiche_families conf base p base_prefix nb_asc nb_asc_max nb_desc nb_desc_max pers_to_piqi_fiche_person simple_graph_info no_event;
-
-        (* Fields only filled for the main person. *)
         piqi_fiche_person.Api_saisie_read_piqi.Fiche_person.baptism_date_raw <- if is_main_person then transform_empty_string_to_None (fill_baptism_date_raw conf p_auth gen_p) else None;
         piqi_fiche_person.Api_saisie_read_piqi.Fiche_person.baptism_text <- if is_main_person then transform_empty_string_to_None (fill_baptism_text conf p p_auth) else None;
         piqi_fiche_person.Api_saisie_read_piqi.Fiche_person.has_possible_duplications <- has_duplication_if_is_main_person conf base p is_main_person;
@@ -1304,8 +1296,9 @@ let rec pers_to_piqi_fiche_person
         if not no_event then
           piqi_fiche_person.Api_saisie_read_piqi.Fiche_person.events_witnesses <- if is_main_person then (get_events_witnesses conf base p base_prefix p_auth pers_to_piqi_fiche_person_only fiche_event_witness_constructor).elements else [];
         if not no_event then
-          piqi_fiche_person.Api_saisie_read_piqi.Fiche_person.events <- fill_events_if_is_main_person conf base p base_prefix p_auth is_main_person pers_to_piqi_fiche_person_only fiche_witness_constructor fiche_event_constructor;
+          piqi_fiche_person.Api_saisie_read_piqi.Fiche_person.events <- fill_events_if_is_main_person_or_parent conf base p base_prefix p_auth is_main_person ~nb_asc pers_to_piqi_fiche_person_only fiche_witness_constructor fiche_event_constructor;
         piqi_fiche_person.Api_saisie_read_piqi.Fiche_person.is_contemporary <- Geneweb.Person.is_contemporary conf base p;
+        piqi_fiche_person.Api_saisie_read_piqi.Fiche_person.has_parent <- Some (Option.is_some @@ Gwdb.get_parents p);
         piqi_fiche_person
       in
       let events =
@@ -1359,8 +1352,6 @@ let rec pers_to_piqi_fiche_person
         occupation = transform_empty_string_to_None (fill_occupation conf base p_auth gen_p);
         sex = fill_sex p;
         public_name = Api_privacy_filter.public_name privacy gen_p;
-
-        (* Fields only filled for the main person. *)
         baptism_place = if is_main_person then transform_empty_string_to_None (fill_baptism_place p_auth gen_p) else None;
         aliases = if is_main_person && not simple_graph_info then Api_privacy_filter.aliases privacy gen_p else [];
         firstname_aliases = if is_main_person && not simple_graph_info then Api_privacy_filter.first_names_aliases privacy gen_p else [];
@@ -1386,7 +1377,7 @@ let rec pers_to_piqi_fiche_person
         families = if return_simple_attributes && not simple_graph_info then fill_families conf base p else [];
         father = if return_simple_attributes then father else None;
         mother = if return_simple_attributes then mother else None;
-        titles = if not simple_graph_info then Api_privacy_filter.titles privacy conf base p else [];
+        titles = if not simple_graph_info then List.map (Api_util.title_to_piqi_title ~conf) (Api_privacy_filter.titles privacy conf base p) else [];
         related = if return_simple_attributes then get_related_piqi conf base p base_prefix pers_to_piqi_simple_person simple_relation_person_constructor else [];
         rparents = if return_simple_attributes then get_rparents_piqi base conf base_prefix gen_p pers_to_piqi_simple_person simple_relation_person_constructor else [];
         baseprefix = base_prefix;
