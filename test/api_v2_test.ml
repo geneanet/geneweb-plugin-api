@@ -134,6 +134,7 @@ let test_parent_hierarchy () =
       burial = None;
       related = None;
       rparents = None;
+      families = None;
     }
   in
   let person_req =
@@ -223,6 +224,7 @@ let test_titles_extraction () =
       burial = None;
       related = None;
       rparents = None;
+      families = None;
     }
   in
   let req =

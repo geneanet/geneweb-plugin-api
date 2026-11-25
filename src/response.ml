@@ -199,6 +199,7 @@ and to_piqi response =
     rparents =
       Option.value ~default:[]
         (Option.map (List.map rparent_to_piqi) response.rparents);
+    families = [];
   }
 
 let response conf base request =

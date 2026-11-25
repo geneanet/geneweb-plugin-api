@@ -89,6 +89,39 @@ message EventRequest {
   optional WitnessRequest witnesses = 4;
 }
 
+enum MarriageType {
+  MARRIED = 0;
+  NOT_MARRIED = 1;
+  ENGAGED = 2;
+  NO_SEXES_CHECK_NOT_MARRIED = 3;
+  NO_MENTION = 4;
+  NO_SEXES_CHECK_MARRIED = 5;
+  MARRIAGE_BANN = 6;
+  MARRIAGE_CONTRACT = 7;
+  MARRIAGE_LICENSE = 8;
+  PACS = 9;
+  RESIDENCE = 10;
+}
+
+enum DivorceType {
+  NOT_DIVORCED = 0;
+  DIVORCED = 1;
+  SEPARATED = 2;
+}
+
+message FamilyRequest {
+  optional PersonRequest spouse = 1;
+  optional bool marriage_date = 2;
+  optional bool marriage_place = 3;
+  optional bool marriage_note = 4;
+  optional bool marriage_source = 5;
+  optional bool marriage_type = 6;
+  optional bool divorce_type = 7;
+  optional bool divorce_date = 8;
+  optional PersonRequest children = 9;
+  optional WitnessRequest witnesses = 10;
+}
+
 message PersonRequest {
   optional bool index = 1;
   optional bool npocc = 2;
@@ -112,6 +145,7 @@ message PersonRequest {
   optional bool burial = 20;
   optional PersonRequest related = 21;
   optional PersonRequest rparents = 22;
+  optional FamilyRequest families = 23;
 }
 
 enum EventType {
@@ -243,6 +277,20 @@ message Relation {
   optional Person person = 2;
 }
 
+message Family {
+  required int32 index = 1;
+  optional Person spouse = 2;
+  optional Date marriage_date = 3;
+  optional string marriage_place = 4;
+  optional string marriage_note = 5;
+  optional string marriage_source = 6;
+  optional MarriageType marriage_type = 7;
+  optional DivorceType divorce_type = 8;
+  optional Date divorce_date = 9;
+  repeated Person children = 10;
+  repeated Witness witnesses = 11;
+}
+
 message Person {
   optional int32 index = 1;
   optional Npocc npocc = 2;
@@ -266,4 +314,5 @@ message Person {
   optional Event burial = 20;
   repeated Relation related = 21;
   repeated Relation rparents = 22;
+  repeated Family families = 23;
 }
