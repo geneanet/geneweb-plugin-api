@@ -1,0 +1,208 @@
+type t = {
+  person_select : Common.person_select;
+  requested_fields : Common.requested_fields;
+}
+
+let make ~person_select ~requested_fields = { person_select; requested_fields }
+
+let simple_fields =
+  {
+    Common.index = true;
+    npocc = true;
+    lastname = true;
+    firstname = true;
+    sex = true;
+    image = true;
+    public_name = true;
+    name_aliases = true;
+    father = None;
+    mother = None;
+    sosa = true;
+    occupation = true;
+    notes = false;
+    notes_raw = false;
+    sources = false;
+    titles = false;
+    events = None;
+    birth = false;
+    baptism = false;
+    death = false;
+    burial = false;
+    related = None;
+    rparents = None;
+    families = None;
+    visibility = true;
+    is_contemporary = true;
+  }
+
+let full_page elements_request =
+  { Common.page_number = 1; elements_per_page = `All; elements_request }
+
+let full_fields =
+  {
+    Common.index = true;
+    npocc = true;
+    lastname = true;
+    firstname = true;
+    sex = true;
+    image = true;
+    public_name = true;
+    name_aliases = true;
+    father = Some simple_fields;
+    mother = Some simple_fields;
+    sosa = true;
+    occupation = true;
+    notes = true;
+    notes_raw = true;
+    sources = true;
+    titles = true;
+    events =
+      Some
+        (full_page
+           {
+             Common.spouse = Some simple_fields;
+             witnesses =
+               Some
+                 (full_page
+                    { Common.witness = Some simple_fields; note = true });
+             event_notes_raw = true;
+             date_str = true;
+           });
+    birth = true;
+    baptism = true;
+    death = true;
+    burial = true;
+    related = Some simple_fields;
+    rparents = Some simple_fields;
+    families =
+      Some
+        {
+          Common.fam_spouse = Some simple_fields;
+          marriage_date = true;
+          marriage_place = true;
+          marriage_note = true;
+          marriage_note_raw = true;
+          marriage_source = true;
+          marriage_type = true;
+          divorce_type = true;
+          divorce_date = true;
+          children = Some simple_fields;
+          fam_witnesses =
+            Some
+              (full_page { Common.witness = Some simple_fields; note = true });
+          marriage_date_str = true;
+          divorce_date_str = true;
+        };
+    visibility = true;
+    is_contemporary = true;
+  }
+
+let get_fields { person_select = _; requested_fields } = requested_fields
+let get_select { person_select; requested_fields = _ } = person_select
+
+let person_select_of_piqi_request piqi_request =
+  let requested_index = piqi_request.Api_v2_piqi.Request.index in
+  let requested_npocc = piqi_request.Api_v2_piqi.Request.npocc in
+  match (requested_index, requested_npocc) with
+  | Some index, _ -> Some (Common.Index index)
+  | _, Some Api_v2_piqi.Npocc.{ n = Some n; p = Some p; occ = Some occ } ->
+      Some (Common.Npocc { n; p; occ })
+  | _, _ -> None
+
+let optional = Option.value ~default:false
+
+let rec requested_fields person_request =
+  {
+    Common.index = optional person_request.Api_v2_piqi.Person_request.index;
+    npocc = optional person_request.npocc;
+    lastname = optional person_request.lastname;
+    firstname = optional person_request.firstname;
+    sex = optional person_request.sex;
+    image = optional person_request.image;
+    public_name = optional person_request.public_name;
+    name_aliases = optional person_request.name_aliases;
+    father = Option.map requested_fields person_request.father;
+    mother = Option.map requested_fields person_request.mother;
+    sosa = optional person_request.sosa;
+    occupation = optional person_request.occupation;
+    notes = optional person_request.notes;
+    notes_raw = optional person_request.notes_raw;
+    sources = optional person_request.sources;
+    titles = optional person_request.titles;
+    events = Option.map paginated_event_request person_request.events;
+    birth = optional person_request.birth;
+    baptism = optional person_request.baptism;
+    death = optional person_request.death;
+    burial = optional person_request.burial;
+    related = Option.map requested_fields person_request.related;
+    rparents = Option.map requested_fields person_request.rparents;
+    families = Option.map family_request person_request.families;
+    visibility = optional person_request.visibility;
+    is_contemporary = optional person_request.is_contemporary;
+  }
+
+and family_request fam =
+  {
+    Common.fam_spouse =
+      Option.map requested_fields fam.Api_v2_piqi.Family_request.spouse;
+    marriage_date = optional fam.marriage_date;
+    marriage_place = optional fam.marriage_place;
+    marriage_note = optional fam.marriage_note;
+    marriage_note_raw = optional fam.marriage_note_raw;
+    marriage_source = optional fam.marriage_source;
+    marriage_type = optional fam.marriage_type;
+    divorce_type = optional fam.divorce_type;
+    divorce_date = optional fam.divorce_date;
+    children = Option.map requested_fields fam.children;
+    fam_witnesses = Option.map paginated_witness_request fam.witnesses;
+    marriage_date_str = optional fam.marriage_date_str;
+    divorce_date_str = optional fam.divorce_date_str;
+  }
+
+and paginated_event_request events =
+  {
+    Common.page_number =
+      Option.value ~default:1
+        (Option.map Int32.to_int events.Api_v2_piqi.Event_request.page_number);
+    elements_per_page =
+      Option.value ~default:`All
+        (Option.map (fun i -> `Int (Int32.to_int i)) events.elements_per_page);
+    elements_request =
+      {
+        Common.spouse = Option.map requested_fields events.spouse;
+        witnesses = Option.map paginated_witness_request events.witnesses;
+        event_notes_raw = optional events.notes_raw;
+        date_str = optional events.date_str;
+      };
+  }
+
+and paginated_witness_request witnesses =
+  {
+    Common.page_number =
+      Option.value ~default:1
+        (Option.map Int32.to_int
+           witnesses.Api_v2_piqi.Witness_request.page_number);
+    elements_per_page =
+      Option.value ~default:`All
+        (Option.map
+           (fun i -> `Int (Int32.to_int i))
+           witnesses.elements_per_page);
+    elements_request =
+      {
+        witness = Option.map requested_fields witnesses.witness;
+        note = optional witnesses.note;
+      };
+  }
+
+let request_of_piqi_request piqi_request : t option =
+  let person_select = person_select_of_piqi_request piqi_request in
+  let person_request = piqi_request.Api_v2_piqi.Request.person_request in
+  Option.map
+    (fun person_select ->
+      {
+        person_select;
+        requested_fields =
+          Option.value ~default:full_fields
+            (Option.map requested_fields person_request);
+      })
+    person_select
