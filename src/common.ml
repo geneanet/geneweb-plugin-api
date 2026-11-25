@@ -497,7 +497,14 @@ end = struct
       evt
 
   let index_of_npocc base { n; p; occ } =
-    Gwdb.person_of_key base p n (Int32.to_int occ)
+    let occ = Int32.to_int occ in
+    match Gwdb.person_of_key base n p occ with
+    | Some ip -> Some ip
+    | None ->
+        Gwdb.person_of_key base
+          (String.capitalize_ascii n)
+          (String.capitalize_ascii p)
+          occ
 
   let index_of_select base = function
     | Index index -> Some (Gwdb.iper_of_int (Int32.to_int index))
