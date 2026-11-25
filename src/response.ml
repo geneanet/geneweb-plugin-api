@@ -21,6 +21,7 @@ type t = {
   burial : Common.event option;
   related : (Def.relation_type * t) list option;
   rparents : (Def.relation_type * t) list option;
+  families : Common.family list option;
 }
 
 let rec response_of_person person =
@@ -47,6 +48,7 @@ let rec response_of_person person =
     burial = Common.Person.get_burial person;
     related = Option.map relations_to_piqi (Common.Person.get_related person);
     rparents = Option.map relations_to_piqi (Common.Person.get_rparents person);
+    families = Common.Person.get_families person;
   }
 
 and relations_to_piqi relations =
@@ -171,6 +173,45 @@ and rparent_to_piqi (relation_type, person) =
     person = Some (to_piqi person);
   }
 
+and marriage_type_to_piqi = function
+  | `married -> `married
+  | `not_married -> `not_married
+  | `engaged -> `engaged
+  | `no_sexes_check_not_married -> `no_sexes_check_not_married
+  | `no_mention -> `no_mention
+  | `no_sexes_check_married -> `no_sexes_check_married
+  | `marriage_bann -> `marriage_bann
+  | `marriage_contract -> `marriage_contract
+  | `marriage_license -> `marriage_license
+  | `pacs -> `pacs
+  | `residence -> `residence
+
+and divorce_type_to_piqi = function
+  | `not_divorced -> `not_divorced
+  | `divorced -> `divorced
+  | `separated -> `separated
+
+and family_to_piqi (fam : Common.family) =
+  {
+    Api_v2_piqi.Family.index = Int32.of_int fam.index;
+    spouse = Option.map (fun p -> to_piqi (response_of_person p)) fam.fam_spouse;
+    marriage_date = Option.map Date_conv.piqi_date_of_date fam.marriage_date;
+    marriage_place = fam.marriage_place;
+    marriage_note = fam.marriage_note;
+    marriage_source = fam.marriage_source;
+    marriage_type = Option.map marriage_type_to_piqi fam.marriage_type;
+    divorce_type = Option.map divorce_type_to_piqi fam.divorce_type;
+    divorce_date = Option.map Date_conv.piqi_date_of_date fam.divorce_date;
+    children =
+      Option.value ~default:[]
+        (Option.map
+           (List.map (fun p -> to_piqi (response_of_person p)))
+           fam.children);
+    witnesses =
+      Option.value ~default:[]
+        (Option.map (List.map witness_to_piqi) fam.fam_witnesses);
+  }
+
 and to_piqi response =
   {
     Api_v2_piqi.Person.index = response.index;
@@ -199,7 +240,9 @@ and to_piqi response =
     rparents =
       Option.value ~default:[]
         (Option.map (List.map rparent_to_piqi) response.rparents);
-    families = [];
+    families =
+      Option.value ~default:[]
+        (Option.map (List.map family_to_piqi) response.families);
   }
 
 let response conf base request =
