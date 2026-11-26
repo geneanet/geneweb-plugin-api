@@ -206,7 +206,7 @@ let divorce_type_to_v1 = function
   | Some `separated -> `separated
   | None -> `not_divorced
 
-let fiche_family_of_family conf (fam : Common.family) :
+let _fiche_family_of_family conf (fam : Common.family) :
     Api_saisie_read_piqi.Fiche_family.t =
   let default_fam = Api_saisie_read_piqi.default_fiche_family () in
   let spouse =
@@ -380,11 +380,6 @@ and fiche_person_of_response conf base (resp : Response.t) :
     | Some evts -> List.map (fiche_event_of_event conf base) evts.elements
     | None -> []
   in
-  let families =
-    match resp.families with
-    | Some fams -> List.map (fiche_family_of_family conf) fams
-    | None -> []
-  in
   let sosa_nb =
     match resp.sosa with Some s when s <> "" && s <> "0" -> Some s | _ -> None
   in
@@ -406,7 +401,7 @@ and fiche_person_of_response conf base (resp : Response.t) :
     visible_for_visitors = visibility_to_v1 resp.visibility;
     father;
     mother;
-    families;
+    families = [];
     events;
     is_contemporary = Option.value ~default:false resp.is_contemporary;
   }

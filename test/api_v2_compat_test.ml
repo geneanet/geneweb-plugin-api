@@ -141,9 +141,8 @@ let test_emulate_person_wrapper () =
   Alcotest.(check bool)
     "fiche extension populated" true
     (Option.is_some person_piqi.fiche_person_person);
-  let fiche = Option.get person_piqi.fiche_person_person in
-  Alcotest.(check int) "families count" 1 (List.length fiche.families);
-  let fam = List.hd fiche.families in
+  Alcotest.(check int) "families count" 1 (List.length person_piqi.families);
+  let fam = List.hd person_piqi.families in
   Alcotest.(check string) "spouse firstname" "Marie" fam.spouse.firstname;
   Alcotest.(check string) "spouse lastname" "Martin" fam.spouse.lastname;
   Alcotest.(check int) "children count" 1 (List.length fam.children);
