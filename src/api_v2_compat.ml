@@ -102,12 +102,32 @@ let simple_person_of_response conf (resp : Response.t) :
   let is_hidden = visible_for_visitors = `visibility_private in
   let birth_short_date, birth_date_raw, birth_place =
     match resp.birth with
-    | Some b -> (b.date_str, b.date_raw, b.place)
+    | Some b ->
+        let short_date =
+          match b.date with
+          | Some d ->
+              let s =
+                Adef.as_string (Geneweb.DateDisplay.string_slash_of_date conf d)
+              in
+              if s = "" then None else Some (Utf8.normalize s)
+          | None -> None
+        in
+        (short_date, b.date_raw, b.place)
     | None -> (None, None, None)
   in
   let death_short_date, death_date_raw, death_place =
     match resp.death with
-    | Some d -> (d.date_str, d.date_raw, d.place)
+    | Some d ->
+        let short_date =
+          match d.date with
+          | Some d ->
+              let s =
+                Adef.as_string (Geneweb.DateDisplay.string_slash_of_date conf d)
+              in
+              if s = "" then None else Some (Utf8.normalize s)
+          | None -> None
+        in
+        (short_date, d.date_raw, d.place)
     | None -> (None, None, None)
   in
   let has_parent = resp.has_parent in
@@ -237,19 +257,28 @@ let event_type_to_v1 (ev_name : Common.event_type) :
   | Geneweb.Event.Pevent pe -> Api_piqi_util.piqi_pevent_name_of_pevent_name pe
   | Geneweb.Event.Fevent fe -> Api_piqi_util.piqi_fevent_name_of_fevent_name fe
 
-let fiche_event_of_event conf (evt : Common.event) :
-    Api_saisie_read_piqi.Fiche_event.t =
-  let default_evt = Api_saisie_read_piqi.default_fiche_event () in
+let event_name_of_event conf (ev_name : Common.event_type) : string =
+  match ev_name with
+  | Geneweb.Event.Pevent pe ->
+      Utf8.normalize
+        (Adef.as_string (Geneweb.Util.string_of_pevent_name' conf pe))
+  | Geneweb.Event.Fevent fe ->
+      Utf8.normalize
+        (Adef.as_string (Geneweb.Util.string_of_fevent_name' conf fe))
+
+let simple_event_of_event conf (evt : Common.event) :
+    Api_saisie_read_piqi.Event.t =
+  let default_evt = Api_saisie_read_piqi.default_event () in
   let spouse =
     Option.map
       (fun sp ->
-        person_of_simple
-          (simple_person_of_response conf (Response.response_of_person sp)))
+        simple_person_of_response conf (Response.response_of_person sp))
       evt.spouse
   in
+  let name = event_name_of_event conf evt.event_type in
   {
     default_evt with
-    name = "";
+    name;
     type_ = event_type_to_v1 evt.event_type;
     date = evt.date_str;
     date_long = evt.date_long;
@@ -262,8 +291,74 @@ let fiche_event_of_event conf (evt : Common.event) :
     spouse;
   }
 
-let fiche_person_of_response conf _base (resp : Response.t) :
+let rec fiche_event_of_event conf base (evt : Common.event) :
+    Api_saisie_read_piqi.Fiche_event.t =
+  let default_evt = Api_saisie_read_piqi.default_fiche_event () in
+  let spouse =
+    Option.map
+      (fun sp ->
+        let simple =
+          simple_person_of_response conf (Response.response_of_person sp)
+        in
+        let fp =
+          fiche_person_of_response conf base (Response.response_of_person sp)
+        in
+        {
+          (person_of_simple simple) with
+          type_ = `fiche;
+          fiche_person_person = Some fp;
+        })
+      evt.spouse
+  in
+  let name = event_name_of_event conf evt.event_type in
+  {
+    default_evt with
+    name;
+    type_ = event_type_to_v1 evt.event_type;
+    date = evt.date_str;
+    date_long = evt.date_long;
+    date_raw = evt.date_raw;
+    date_conv = evt.date_conv;
+    date_conv_long = evt.date_conv_long;
+    place = evt.place;
+    note = evt.notes;
+    src = evt.sources;
+    spouse;
+  }
+
+and fiche_person_of_response conf base (resp : Response.t) :
     Api_saisie_read_piqi.Fiche_person.t =
+  let p_opt =
+    match resp.index with
+    | Some idx ->
+        let ip = Gwdb.iper_of_string (Int32.to_string idx) in
+        if Gwdb.iper_exists base ip then Some (Gwdb.poi base ip) else None
+    | None -> None
+  in
+  let p_auth =
+    match p_opt with
+    | Some p -> Geneweb.Person.is_visible conf base p
+    | None -> false
+  in
+  let birth_text, baptism_text, death_text, burial_text, cremation_text =
+    match p_opt with
+    | Some p ->
+        let b = Adef.as_string (Geneweb.Perso.get_birth_text conf p p_auth) in
+        let bp =
+          Adef.as_string (Geneweb.Perso.get_baptism_text conf p p_auth)
+        in
+        let d = Adef.as_string (Geneweb.Perso.get_death_text conf p p_auth) in
+        let bu = Adef.as_string (Geneweb.Perso.get_burial_text conf p p_auth) in
+        let c =
+          Adef.as_string (Geneweb.Perso.get_cremation_text conf p p_auth)
+        in
+        ( (if b = "" then None else Some b),
+          (if bp = "" then None else Some bp),
+          (if d = "" then None else Some d),
+          (if bu = "" then None else Some bu),
+          if c = "" then None else Some c )
+    | None -> (None, None, None, None, None)
+  in
   let burial_type =
     match resp.burial with
     | Some { burial_type = Some (Def.Buried _); _ } -> `buried
@@ -280,30 +375,34 @@ let fiche_person_of_response conf _base (resp : Response.t) :
       (fun m -> person_of_simple (simple_person_of_response conf m))
       resp.mother
   in
+  let events =
+    match resp.events with
+    | Some evts -> List.map (fiche_event_of_event conf base) evts.elements
+    | None -> []
+  in
   let families =
     match resp.families with
     | Some fams -> List.map (fiche_family_of_family conf) fams
     | None -> []
   in
-  let events =
-    match resp.events with
-    | Some evts -> List.map (fiche_event_of_event conf) evts.elements
-    | None -> []
+  let sosa_nb =
+    match resp.sosa with Some s when s <> "" && s <> "0" -> Some s | _ -> None
   in
   let f = Api_saisie_read_piqi.default_fiche_person () in
   {
     f with
     birth_date_raw = Option.bind resp.birth (fun e -> e.date_raw);
-    birth_text = Option.bind resp.birth (fun e -> e.notes);
+    birth_text;
     baptism_date_raw = Option.bind resp.baptism (fun e -> e.date_raw);
-    baptism_text = Option.bind resp.baptism (fun e -> e.notes);
+    baptism_text;
     death_date_raw = Option.bind resp.death (fun e -> e.date_raw);
-    death_text = Option.bind resp.death (fun e -> e.notes);
+    death_text;
     burial_date_raw = Option.bind resp.burial (fun e -> e.date_raw);
-    burial_text = Option.bind resp.burial (fun e -> e.notes);
+    burial_text;
+    cremation_text;
     burial_type;
     titles_links = Option.value ~default:[] resp.titles;
-    sosa_nb = resp.sosa;
+    sosa_nb;
     visible_for_visitors = visibility_to_v1 resp.visibility;
     father;
     mother;
@@ -368,6 +467,33 @@ let person_of_response conf base (resp : Response.t) :
   let mother =
     Option.map (fun m -> simple_person_of_response conf m) resp.mother
   in
+  let events_elements =
+    match resp.events with
+    | Some evts -> List.map (simple_event_of_event conf) evts.elements
+    | None -> []
+  in
+  let events_page =
+    match resp.events with Some evts when evts.elements <> [] -> 1l | _ -> 0l
+  in
+  let events_total =
+    match resp.events with
+    | Some evts when evts.elements <> [] -> Int32.of_int evts.total_count
+    | _ -> 0l
+  in
+  let events =
+    {
+      Api_saisie_read_piqi.Paginated_personal_events.elements = events_elements;
+      page_number = events_page;
+      total_count = events_total;
+    }
+  in
+  let events_witnesses =
+    {
+      Api_saisie_read_piqi.Paginated_witnessed_events.elements = [];
+      page_number = 1l;
+      total_count = 0l;
+    }
+  in
   {
     p with
     type_ = `fiche;
@@ -375,6 +501,8 @@ let person_of_response conf base (resp : Response.t) :
     families = simple_families;
     father;
     mother;
+    events;
+    events_witnesses;
   }
 
 let print_fiche_person_emulated conf base =
