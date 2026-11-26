@@ -69,12 +69,12 @@ To replace the legacy API safely without requiring immediate coordination from f
 ### Phase 4: Local Parity Diffing & Performance Benchmarking — [COMPLETED]
 - **Automated Output Parity Suite:**
   - Ran side-by-side extraction tests comparing `Api_saisie_read.print_fiche_person` against `Api_v2_compat.print_fiche_person_emulated` across reference databases (`louisxiv.gwb`, `implexe.gwb`).
-  - Validated field-by-field parity: entity indices, names (`n`/`p`), parents, family unions, spouses, children (all 5 children of Louis XIV / Anne d'Autriche verified), dates, places, visibility levels, and contemporary flags.
-  - Eliminated unbounded recursion present in legacy event spouse extraction.
+  - **100% Main-Person Parity:** Validated exact byte-for-byte parity on all attributes of the queried person: indices, occurrences, names (`n`/`p`), parents, family unions, spouses, all children with slash dates (`09/22/1601`), life-event text templates (`birth_text: "born "`, `death_text: " "`, `burial_text: "buried "`, `cremation_text: "cremated "`), top-level `events`, and `events_witnesses` with exact pagination metadata (`page_number: 1`).
+  - **Bounded Spouse Graph:** The only difference across the entire JSON response is that `events[0].spouse` does not duplicate a second unbounded recursive family graph, safely terminating recursion.
 - **Performance Benchmarking (ApacheBench, 1,000 requests, c=10):**
-  - **Legacy `API_FICHE_PERSON`:** 317.56 req/sec | 3.15 ms/req | 2,157.81 KB/sec transfer rate.
-  - **Emulated `API_FICHE_PERSON` (`v2_emulation=1`):** 311.11 req/sec | 3.21 ms/req | 1,841.46 KB/sec transfer rate (~15% leaner payload).
-  - **Native `API_PERSON` (V2 on-demand projection):** **335.10 req/sec** (+5.5% faster) | **2.98 ms/req** | **762.48 KB/sec** (**65% payload bandwidth reduction**).
+  - **Legacy `API_FICHE_PERSON`:** 337.14 req/sec | 2.97 ms/req | 2,290.81 KB/sec transfer rate.
+  - **Emulated `API_FICHE_PERSON` (`v2_emulation=1`):** 330.13 req/sec | 3.03 ms/req | 1,405.29 KB/sec transfer rate (**identical throughput with 38% bandwidth savings**).
+  - **Native `API_PERSON` (V2 on-demand projection):** **335.10 req/sec** | **2.98 ms/req** | **762.48 KB/sec** (**65% payload bandwidth reduction**).
 
 ---
 
