@@ -331,7 +331,7 @@ and fiche_person_of_response conf base (resp : Response.t) :
   let p_opt =
     match resp.index with
     | Some idx ->
-        let ip = Gwdb.iper_of_string (Int32.to_string idx) in
+        let ip = Gwdb.iper_of_int (Int32.to_int idx) in
         if Gwdb.iper_exists base ip then Some (Gwdb.poi base ip) else None
     | None -> None
   in
@@ -501,19 +501,20 @@ let person_of_response conf base (resp : Response.t) :
   }
 
 let print_fiche_person_emulated conf base =
+  let not_found conf =
+    Geneweb.Output.status conf Def.Not_Found;
+    Geneweb.Output.print_sstring conf ""
+  in
   let params =
     Api_util.get_params conf Api_saisie_read_piqi_ext.parse_fiche_parameters
   in
-  match request_of_fiche_parameters params with
-  | None ->
-      Geneweb.Output.status conf Def.Not_Found;
-      Geneweb.Output.print_sstring conf ""
-  | Some req -> (
-      match Response.response conf base req with
-      | None ->
-          Geneweb.Output.status conf Def.Not_Found;
-          Geneweb.Output.print_sstring conf ""
-      | Some resp ->
-          let person_piqi = person_of_response conf base resp in
-          let data = Api_saisie_read_piqi_ext.gen_person person_piqi in
-          Api_util.print_result conf data)
+  match
+    Option.bind
+      (request_of_fiche_parameters params)
+      (Response.response conf base)
+  with
+  | None -> not_found conf
+  | Some resp ->
+      let person_piqi = person_of_response conf base resp in
+      let data = Api_saisie_read_piqi_ext.gen_person person_piqi in
+      Api_util.print_result conf data
