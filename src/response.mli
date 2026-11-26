@@ -27,6 +27,9 @@ type t = {
   families : Common.family list option;
   visibility : Common.visibility option;
   is_contemporary : bool option;
+  has_parent : bool;
+  has_spouse : bool;
+  has_child : bool;
 }
 (** Intermediate response record holding resolved person and event data. *)
 

@@ -25,6 +25,9 @@ type t = {
   families : Common.family list option;
   visibility : Common.visibility option;
   is_contemporary : bool option;
+  has_parent : bool;
+  has_spouse : bool;
+  has_child : bool;
 }
 
 let rec response_of_person person =
@@ -55,6 +58,9 @@ let rec response_of_person person =
     families = Common.Person.get_families person;
     visibility = Common.Person.get_visibility person;
     is_contemporary = Common.Person.get_is_contemporary person;
+    has_parent = Common.Person.has_parent person;
+    has_spouse = Common.Person.has_spouse person;
+    has_child = Common.Person.has_child person;
   }
 
 and relations_to_piqi relations =

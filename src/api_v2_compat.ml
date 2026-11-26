@@ -39,6 +39,9 @@ let request_of_fiche_parameters
              date_str = true;
            })
   in
+  let simple_child_fields =
+    { Request.simple_fields with birth = true; death = true }
+  in
   let requested_fields =
     {
       Request.full_fields with
@@ -46,7 +49,7 @@ let request_of_fiche_parameters
       families =
         Some
           {
-            Common.fam_spouse = Some Request.simple_fields;
+            Common.fam_spouse = Some simple_child_fields;
             marriage_date = true;
             marriage_place = true;
             marriage_note = true;
@@ -55,7 +58,7 @@ let request_of_fiche_parameters
             marriage_type = true;
             divorce_type = true;
             divorce_date = true;
-            children = Some Request.simple_fields;
+            children = Some simple_child_fields;
             fam_witnesses =
               Some
                 (Request.full_page
@@ -82,19 +85,19 @@ let sex_to_v1 = function
 let sosa_of_response (resp : Response.t) : Api_saisie_read_piqi.sosa =
   match resp.sosa with
   | Some s when s = "1" -> `sosa_ref
-  | Some s when s <> "" -> `sosa
+  | Some s when s <> "" && s <> "0" -> `sosa
   | _ -> `no_sosa
 
 let simple_person_of_response conf (resp : Response.t) :
     Api_saisie_read_piqi.Simple_person.t =
   let fn = Option.value ~default:"" resp.firstname in
   let sn = Option.value ~default:"" resp.lastname in
-  let n, p, occ =
-    match resp.npocc with
-    | Some np -> (np.n, np.p, np.occ)
-    | None -> (Name.lower sn, Name.lower fn, 0l)
+  let n = match resp.npocc with Some np -> np.p | None -> Name.lower sn in
+  let p = match resp.npocc with Some np -> np.n | None -> Name.lower fn in
+  let occ = match resp.npocc with Some np -> np.occ | None -> 0l in
+  let sosa_nb =
+    match resp.sosa with Some s when s <> "" && s <> "0" -> Some s | _ -> None
   in
-  let sosa_nb = resp.sosa in
   let visible_for_visitors = visibility_to_v1 resp.visibility in
   let is_hidden = visible_for_visitors = `visibility_private in
   let birth_short_date, birth_date_raw, birth_place =
@@ -107,19 +110,9 @@ let simple_person_of_response conf (resp : Response.t) :
     | Some d -> (d.date_str, d.date_raw, d.place)
     | None -> (None, None, None)
   in
-  let has_parent = Option.is_some resp.father || Option.is_some resp.mother in
-  let has_spouse =
-    match resp.families with Some l -> l <> [] | None -> false
-  in
-  let has_child =
-    match resp.families with
-    | Some l ->
-        List.exists
-          (fun (f : Common.family) ->
-            f.children <> None && f.children <> Some [])
-          l
-    | None -> false
-  in
+  let has_parent = resp.has_parent in
+  let has_spouse = resp.has_spouse in
+  let has_child = resp.has_child in
   {
     Api_saisie_read_piqi.Simple_person.index =
       Option.value ~default:0l resp.index;
@@ -319,12 +312,70 @@ let fiche_person_of_response conf _base (resp : Response.t) :
     is_contemporary = Option.value ~default:false resp.is_contemporary;
   }
 
+let family_of_v2_family conf (fam : Common.family) :
+    Api_saisie_read_piqi.Family.t =
+  let default_fam = Api_saisie_read_piqi.default_family () in
+  let spouse =
+    match fam.fam_spouse with
+    | Some sp -> simple_person_of_response conf (Response.response_of_person sp)
+    | None -> Api_saisie_read_piqi.default_simple_person ()
+  in
+  let children =
+    match fam.children with
+    | Some ch_list ->
+        List.map
+          (fun ch ->
+            simple_person_of_response conf (Response.response_of_person ch))
+          ch_list
+    | None -> []
+  in
+  {
+    default_fam with
+    index = Int32.of_int fam.index;
+    spouse;
+    marriage_date = fam.marriage_date_str;
+    marriage_date_long = fam.marriage_date_long;
+    marriage_date_raw = fam.marriage_date_raw;
+    marriage_date_conv = fam.marriage_date_conv;
+    marriage_date_conv_long = fam.marriage_date_conv_long;
+    marriage_place = fam.marriage_place;
+    marriage_src = fam.marriage_source;
+    marriage_type = marriage_type_to_v1 fam.marriage_type;
+    divorce_type = divorce_type_to_v1 fam.divorce_type;
+    divorce_date = fam.divorce_date_str;
+    divorce_date_long = fam.divorce_date_long;
+    divorce_date_raw = fam.divorce_date_raw;
+    divorce_date_conv = fam.divorce_date_conv;
+    divorce_date_conv_long = fam.divorce_date_conv_long;
+    notes = fam.marriage_note;
+    fsources = fam.marriage_source;
+    children;
+  }
+
 let person_of_response conf base (resp : Response.t) :
     Api_saisie_read_piqi.Person.t =
   let simple_p = simple_person_of_response conf resp in
   let fiche_p = fiche_person_of_response conf base resp in
   let p = person_of_simple simple_p in
-  { p with type_ = `fiche; fiche_person_person = Some fiche_p }
+  let simple_families =
+    match resp.families with
+    | Some fams -> List.map (family_of_v2_family conf) fams
+    | None -> []
+  in
+  let father =
+    Option.map (fun f -> simple_person_of_response conf f) resp.father
+  in
+  let mother =
+    Option.map (fun m -> simple_person_of_response conf m) resp.mother
+  in
+  {
+    p with
+    type_ = `fiche;
+    fiche_person_person = Some fiche_p;
+    families = simple_families;
+    father;
+    mother;
+  }
 
 let print_fiche_person_emulated conf base =
   let params =

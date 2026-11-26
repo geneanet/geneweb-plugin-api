@@ -276,4 +276,13 @@ module Person : sig
 
   val get_is_contemporary : t -> bool option
   (** Returns whether the person is contemporary if requested. *)
+
+  val has_parent : t -> bool
+  (** Returns whether the person has parents in the database. *)
+
+  val has_spouse : t -> bool
+  (** Returns whether the person has at least one spouse/union in the database. *)
+
+  val has_child : t -> bool
+  (** Returns whether the person has at least one child in the database. *)
 end

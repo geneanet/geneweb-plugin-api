@@ -215,6 +215,9 @@ module Person : sig
   val get_families : t -> family list option
   val get_visibility : t -> visibility option
   val get_is_contemporary : t -> bool option
+  val has_parent : t -> bool
+  val has_spouse : t -> bool
+  val has_child : t -> bool
 end = struct
   type t = person
 
@@ -471,13 +474,8 @@ end = struct
   let of_event person spouse_fields
       (paginated_witness_request : paginated_witness_request option) evt =
     let od = Date.od_of_cdate (Geneweb.Event.get_date evt) in
-    let req_date_str =
-      Option.fold ~none:false
-        ~some:(fun (r : paginated_event_request) -> r.elements_request.date_str)
-        person.fields.events
-    in
     let date_str, date_long, date_conv, date_conv_long, date_raw =
-      format_date_strings person.conf req_date_str od
+      format_date_strings person.conf true od
     in
     let req_notes_raw =
       Option.fold ~none:false
@@ -735,9 +733,7 @@ end = struct
           marriage_date_conv,
           marriage_date_conv_long,
           marriage_date_raw ) =
-      format_date_strings conf
-        (m_auth && fam_req.marriage_date_str)
-        marriage_date
+      format_date_strings conf m_auth marriage_date
     in
     let marriage_place =
       Ext_option.return_if (m_auth && fam_req.marriage_place) (fun () ->
@@ -809,7 +805,7 @@ end = struct
           divorce_date_conv,
           divorce_date_conv_long,
           divorce_date_raw ) =
-      format_date_strings conf (m_auth && fam_req.divorce_date_str) divorce_date
+      format_date_strings conf m_auth divorce_date
     in
     let children =
       Option.map
@@ -882,4 +878,14 @@ end = struct
           (Gwdb.get_family person.person)
           [])
       person.fields.families
+
+  let has_parent person = Gwdb.get_parents person.person <> None
+  let has_spouse person = Array.length (Gwdb.get_family person.person) >= 1
+
+  let has_child person =
+    Array.exists
+      (fun ifam ->
+        let fam = Gwdb.foi person.base ifam in
+        Array.length (Gwdb.get_children fam) >= 1)
+      (Gwdb.get_family person.person)
 end
