@@ -70,8 +70,8 @@ and relations_to_piqi relations =
 
 let npocc_to_piqi npocc : Api_v2_piqi.Npocc.t =
   {
-    Api_v2_piqi.Npocc.n = Some npocc.Common.n;
-    p = Some npocc.Common.p;
+    Api_v2_piqi.Npocc.n = Some npocc.Common.first_name;
+    p = Some npocc.Common.surname;
     occ = Some npocc.Common.occ;
   }
 

@@ -105,8 +105,11 @@ let person_select_of_piqi_request piqi_request =
   let requested_npocc = piqi_request.Api_v2_piqi.Request.npocc in
   match (requested_index, requested_npocc) with
   | Some index, _ -> Some (Common.Index index)
-  | _, Some Api_v2_piqi.Npocc.{ n = Some n; p = Some p; occ = Some occ } ->
-      Some (Common.Npocc { n; p; occ })
+  | ( _,
+      Some
+        Api_v2_piqi.Npocc.
+          { n = Some first_name; p = Some surname; occ = Some occ } ) ->
+      Some (Common.Npocc { first_name; surname; occ })
   | _, _ -> None
 
 let optional = Option.value ~default:false

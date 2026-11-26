@@ -1,4 +1,4 @@
-type npocc = { n : string; p : string; occ : Int32.t }
+type npocc = { first_name : string; surname : string; occ : Int32.t }
 type index = Int32.t
 type sex = Unknown | Male | Female
 
@@ -243,8 +243,8 @@ end = struct
               Name.lower (as_string proj person)
             in
             {
-              n = lowered_string Gwdb.get_first_name person;
-              p = lowered_string Gwdb.get_surname person;
+              first_name = lowered_string Gwdb.get_first_name person;
+              surname = lowered_string Gwdb.get_surname person;
               occ = Int32.of_int (Gwdb.get_occ person');
             })
           person)
@@ -625,14 +625,14 @@ end = struct
         { evt with burial_type = Some (Gwdb.get_burial person.person) })
       evt
 
-  let index_of_npocc base { n; p; occ } =
+  let index_of_npocc base { first_name; surname; occ } =
     let occ = Int32.to_int occ in
-    match Gwdb.person_of_key base n p occ with
+    match Gwdb.person_of_key base first_name surname occ with
     | Some ip -> Some ip
     | None ->
         Gwdb.person_of_key base
-          (String.capitalize_ascii n)
-          (String.capitalize_ascii p)
+          (String.capitalize_ascii first_name)
+          (String.capitalize_ascii surname)
           occ
 
   let index_of_select base = function

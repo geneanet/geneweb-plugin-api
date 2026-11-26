@@ -12,12 +12,12 @@ let request_of_fiche_parameters
           ( ident.Api_saisie_read_piqi.Identifier_person.n,
             ident.Api_saisie_read_piqi.Identifier_person.p )
         with
-        | Some n, Some p ->
+        | Some surname, Some first_name ->
             let occ =
               Option.value ~default:0l
                 ident.Api_saisie_read_piqi.Identifier_person.oc
             in
-            Some (Common.Npocc { n; p; occ })
+            Some (Common.Npocc { first_name; surname; occ })
         | _ -> None)
   in
   let no_event =
@@ -92,8 +92,12 @@ let simple_person_of_response conf (resp : Response.t) :
     Api_saisie_read_piqi.Simple_person.t =
   let fn = Option.value ~default:"" resp.firstname in
   let sn = Option.value ~default:"" resp.lastname in
-  let n = match resp.npocc with Some np -> np.p | None -> Name.lower sn in
-  let p = match resp.npocc with Some np -> np.n | None -> Name.lower fn in
+  let n =
+    match resp.npocc with Some np -> np.surname | None -> Name.lower sn
+  in
+  let p =
+    match resp.npocc with Some np -> np.first_name | None -> Name.lower fn
+  in
   let occ = match resp.npocc with Some np -> np.occ | None -> 0l in
   let sosa_nb =
     match resp.sosa with Some s when s <> "" && s <> "0" -> Some s | _ -> None

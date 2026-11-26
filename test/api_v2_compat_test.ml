@@ -276,6 +276,52 @@ let test_emulate_person_not_found () =
         ~msg:"Response.response returns None for nonexistent person" true
         (Option.is_none resp))
 
+let test_emulate_person_by_npoc () =
+  with_base (fun base _p_father _p_mother _p_child ->
+      let ident =
+        {
+          Plugin_api_lib.Api_saisie_read_piqi.Identifier_person.index = None;
+          oc = Some 0l;
+          n = Some "dupont";
+          p = Some "jean";
+          track_visit = None;
+        }
+      in
+      let params =
+        {
+          Plugin_api_lib.Api_saisie_read_piqi.Fiche_parameters.identifier_person =
+            ident;
+          nb_asc_max = None;
+          nb_desc_max = None;
+          simple_graph_info = None;
+          no_event = None;
+        }
+      in
+      let req =
+        Plugin_api_lib.Api_v2_compat.request_of_fiche_parameters params
+      in
+      Geneweb_test_utils.Check.bool ~pos:__POS__
+        ~msg:
+          "Api_v2_compat.request_of_fiche_parameters returns Some for npoc \
+           query"
+        true (Option.is_some req);
+      let resp =
+        Option.bind req (Plugin_api_lib.Response.response conf_visitor base)
+      in
+      Geneweb_test_utils.Check.bool ~pos:__POS__
+        ~msg:"Response.response finds person by npoc query" true
+        (Option.is_some resp);
+      let person_piqi =
+        Plugin_api_lib.Api_v2_compat.person_of_response conf_visitor base
+          (Option.get resp)
+      in
+      Geneweb_test_utils.Check.string ~pos:__POS__
+        ~msg:"Api_v2_compat.person_of_response preserves firstname" "Jean"
+        person_piqi.firstname;
+      Geneweb_test_utils.Check.string ~pos:__POS__
+        ~msg:"Api_v2_compat.person_of_response preserves lastname" "Dupont"
+        person_piqi.lastname)
+
 let tests =
   [
     Geneweb_test_utils.Check.case "Api_v2_compat.request_translation"
@@ -289,4 +335,6 @@ let tests =
       test_emulate_person_wrapper;
     Geneweb_test_utils.Check.case "Api_v2_compat.emulate_person_not_found"
       test_emulate_person_not_found;
+    Geneweb_test_utils.Check.case "Api_v2_compat.emulate_person_by_npoc"
+      test_emulate_person_by_npoc;
   ]

@@ -1,8 +1,8 @@
 (** Core domain models, field selection specifications, and privacy-filtered entity extraction for API v2. *)
 
 type npocc = {
-  n : string;  (** First name (nom de baptême) *)
-  p : string;  (** Surname (patronyme) *)
+  first_name : string;  (** First name (nom de baptême / prénom) *)
+  surname : string;  (** Surname (patronyme / nom de famille) *)
   occ : Int32.t;  (** Occurrence number *)
 }
 (** Person lookup key based on name and occurrence. *)
