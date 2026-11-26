@@ -72,15 +72,24 @@ let test_request_translation () =
     }
   in
   let req = Plugin_api_lib.Api_v2_compat.request_of_fiche_parameters params in
-  Alcotest.(check bool) "request translated" true (Option.is_some req);
+  Geneweb_test_utils.Check.bool ~pos:__POS__
+    ~msg:"Api_v2_compat.request_of_fiche_parameters translates valid parameters"
+    true (Option.is_some req);
   let req = Option.get req in
   let fields = Plugin_api_lib.Request.get_fields req in
-  Alcotest.(check bool) "father requested" true (Option.is_some fields.father);
-  Alcotest.(check bool) "mother requested" true (Option.is_some fields.mother);
-  Alcotest.(check bool)
-    "families requested" true
+  Geneweb_test_utils.Check.bool ~pos:__POS__
+    ~msg:"Api_v2_compat.request_of_fiche_parameters requests father field" true
+    (Option.is_some fields.father);
+  Geneweb_test_utils.Check.bool ~pos:__POS__
+    ~msg:"Api_v2_compat.request_of_fiche_parameters requests mother field" true
+    (Option.is_some fields.mother);
+  Geneweb_test_utils.Check.bool ~pos:__POS__
+    ~msg:"Api_v2_compat.request_of_fiche_parameters requests families field"
+    true
     (Option.is_some fields.families);
-  Alcotest.(check bool) "events requested" true (Option.is_some fields.events)
+  Geneweb_test_utils.Check.bool ~pos:__POS__
+    ~msg:"Api_v2_compat.request_of_fiche_parameters requests events field" true
+    (Option.is_some fields.events)
 
 let test_emulate_fiche_person () =
   with_base (fun base _p_father _p_mother p_child ->
@@ -115,18 +124,28 @@ let test_emulate_fiche_person () =
         Plugin_api_lib.Api_v2_compat.fiche_person_of_response conf_visitor base
           resp
       in
-      Alcotest.(check bool)
-        "father present in fiche" true
+      Geneweb_test_utils.Check.bool ~pos:__POS__
+        ~msg:"Api_v2_compat.fiche_person_of_response includes father in fiche"
+        true
         (Option.is_some fiche.father);
-      Alcotest.(check bool)
-        "mother present in fiche" true
+      Geneweb_test_utils.Check.bool ~pos:__POS__
+        ~msg:"Api_v2_compat.fiche_person_of_response includes mother in fiche"
+        true
         (Option.is_some fiche.mother);
       let father = Option.get fiche.father in
       let mother = Option.get fiche.mother in
-      Alcotest.(check string) "father firstname" "Jean" father.firstname;
-      Alcotest.(check string) "father lastname" "Dupont" father.lastname;
-      Alcotest.(check string) "mother firstname" "Marie" mother.firstname;
-      Alcotest.(check string) "mother lastname" "Martin" mother.lastname)
+      Geneweb_test_utils.Check.string ~pos:__POS__
+        ~msg:"Api_v2_compat.fiche_person_of_response preserves father firstname"
+        "Jean" father.firstname;
+      Geneweb_test_utils.Check.string ~pos:__POS__
+        ~msg:"Api_v2_compat.fiche_person_of_response preserves father lastname"
+        "Dupont" father.lastname;
+      Geneweb_test_utils.Check.string ~pos:__POS__
+        ~msg:"Api_v2_compat.fiche_person_of_response preserves mother firstname"
+        "Marie" mother.firstname;
+      Geneweb_test_utils.Check.string ~pos:__POS__
+        ~msg:"Api_v2_compat.fiche_person_of_response preserves mother lastname"
+        "Martin" mother.lastname)
 
 let test_emulate_person_wrapper () =
   with_base (fun base p_father _p_mother _p_child ->
@@ -160,22 +179,38 @@ let test_emulate_person_wrapper () =
       let person_piqi =
         Plugin_api_lib.Api_v2_compat.person_of_response conf_visitor base resp
       in
-      Alcotest.(check bool)
-        "person type is fiche" true
+      Geneweb_test_utils.Check.bool ~pos:__POS__
+        ~msg:"Api_v2_compat.person_of_response sets person type to fiche" true
         (person_piqi.type_ = `fiche);
-      Alcotest.(check string) "firstname" "Jean" person_piqi.firstname;
-      Alcotest.(check string) "lastname" "Dupont" person_piqi.lastname;
-      Alcotest.(check bool)
-        "fiche extension populated" true
+      Geneweb_test_utils.Check.string ~pos:__POS__
+        ~msg:"Api_v2_compat.person_of_response sets firstname" "Jean"
+        person_piqi.firstname;
+      Geneweb_test_utils.Check.string ~pos:__POS__
+        ~msg:"Api_v2_compat.person_of_response sets lastname" "Dupont"
+        person_piqi.lastname;
+      Geneweb_test_utils.Check.bool ~pos:__POS__
+        ~msg:"Api_v2_compat.person_of_response populates fiche extension" true
         (Option.is_some person_piqi.fiche_person_person);
-      Alcotest.(check int) "families count" 1 (List.length person_piqi.families);
+      Geneweb_test_utils.Check.int ~pos:__POS__
+        ~msg:"Api_v2_compat.person_of_response families count" 1
+        (List.length person_piqi.families);
       let fam = List.hd person_piqi.families in
-      Alcotest.(check string) "spouse firstname" "Marie" fam.spouse.firstname;
-      Alcotest.(check string) "spouse lastname" "Martin" fam.spouse.lastname;
-      Alcotest.(check int) "children count" 1 (List.length fam.children);
+      Geneweb_test_utils.Check.string ~pos:__POS__
+        ~msg:"Api_v2_compat.person_of_response spouse firstname" "Marie"
+        fam.spouse.firstname;
+      Geneweb_test_utils.Check.string ~pos:__POS__
+        ~msg:"Api_v2_compat.person_of_response spouse lastname" "Martin"
+        fam.spouse.lastname;
+      Geneweb_test_utils.Check.int ~pos:__POS__
+        ~msg:"Api_v2_compat.person_of_response children count" 1
+        (List.length fam.children);
       let child = List.hd fam.children in
-      Alcotest.(check string) "child firstname" "Pierre" child.firstname;
-      Alcotest.(check string) "child lastname" "Dupont" child.lastname)
+      Geneweb_test_utils.Check.string ~pos:__POS__
+        ~msg:"Api_v2_compat.person_of_response child firstname" "Pierre"
+        child.firstname;
+      Geneweb_test_utils.Check.string ~pos:__POS__
+        ~msg:"Api_v2_compat.person_of_response child lastname" "Dupont"
+        child.lastname)
 
 let test_request_translation_missing_identifier () =
   let ident =
@@ -198,7 +233,11 @@ let test_request_translation_missing_identifier () =
     }
   in
   let req = Plugin_api_lib.Api_v2_compat.request_of_fiche_parameters params in
-  Alcotest.(check bool) "request is none" true (Option.is_none req)
+  Geneweb_test_utils.Check.bool ~pos:__POS__
+    ~msg:
+      "Api_v2_compat.request_of_fiche_parameters returns None for missing \
+       identifier"
+    true (Option.is_none req)
 
 let test_emulate_person_not_found () =
   with_base (fun base _p_father _p_mother _p_child ->
@@ -225,22 +264,29 @@ let test_emulate_person_not_found () =
       let req =
         Plugin_api_lib.Api_v2_compat.request_of_fiche_parameters params
       in
-      Alcotest.(check bool) "request is some" true (Option.is_some req);
+      Geneweb_test_utils.Check.bool ~pos:__POS__
+        ~msg:
+          "Api_v2_compat.request_of_fiche_parameters returns Some for indexed \
+           query"
+        true (Option.is_some req);
       let resp =
         Option.bind req (Plugin_api_lib.Response.response conf_visitor base)
       in
-      Alcotest.(check bool)
-        "response is none for nonexistent person" true (Option.is_none resp))
+      Geneweb_test_utils.Check.bool ~pos:__POS__
+        ~msg:"Response.response returns None for nonexistent person" true
+        (Option.is_none resp))
 
 let tests =
   [
-    ("Api_v2_compat.request_translation", `Quick, test_request_translation);
-    ( "Api_v2_compat.request_translation_missing_identifier",
-      `Quick,
-      test_request_translation_missing_identifier );
-    ("Api_v2_compat.emulate_fiche_person", `Quick, test_emulate_fiche_person);
-    ("Api_v2_compat.emulate_person_wrapper", `Quick, test_emulate_person_wrapper);
-    ( "Api_v2_compat.emulate_person_not_found",
-      `Quick,
-      test_emulate_person_not_found );
+    Geneweb_test_utils.Check.case "Api_v2_compat.request_translation"
+      test_request_translation;
+    Geneweb_test_utils.Check.case
+      "Api_v2_compat.request_translation_missing_identifier"
+      test_request_translation_missing_identifier;
+    Geneweb_test_utils.Check.case "Api_v2_compat.emulate_fiche_person"
+      test_emulate_fiche_person;
+    Geneweb_test_utils.Check.case "Api_v2_compat.emulate_person_wrapper"
+      test_emulate_person_wrapper;
+    Geneweb_test_utils.Check.case "Api_v2_compat.emulate_person_not_found"
+      test_emulate_person_not_found;
   ]

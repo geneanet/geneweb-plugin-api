@@ -75,16 +75,22 @@ let test_lookup_by_index () =
             person_request = None;
           }
       in
-      Alcotest.(check bool) "request parsed" true (Option.is_some req);
+      Geneweb_test_utils.Check.bool ~pos:__POS__
+        ~msg:"Request.request_of_piqi_request parses index request" true
+        (Option.is_some req);
       let req = Option.get req in
       let resp = Plugin_api_lib.Response.response conf_visitor base req in
-      Alcotest.(check bool) "response found" true (Option.is_some resp);
+      Geneweb_test_utils.Check.bool ~pos:__POS__
+        ~msg:"Response.response finds person by index" true
+        (Option.is_some resp);
       let piqi = Plugin_api_lib.Response.to_piqi (Option.get resp) in
-      Alcotest.(check (option string))
-        "first name matches" (Some "Pierre") piqi.firstname;
-      Alcotest.(check (option string))
-        "surname matches" (Some "Dupont") piqi.lastname;
-      Alcotest.(check bool) "sex matches male" true (piqi.sex = Some `male))
+      Geneweb_test_utils.Check.option Alcotest.string ~pos:__POS__
+        ~msg:"Response.to_piqi first name matches" (Some "Pierre")
+        piqi.firstname;
+      Geneweb_test_utils.Check.option Alcotest.string ~pos:__POS__
+        ~msg:"Response.to_piqi surname matches" (Some "Dupont") piqi.lastname;
+      Geneweb_test_utils.Check.bool ~pos:__POS__
+        ~msg:"Response.to_piqi sex matches male" true (piqi.sex = Some `male))
 
 let test_lookup_by_npocc () =
   with_base (fun base _p_father _p_mother _p_child _p_private ->
@@ -103,16 +109,20 @@ let test_lookup_by_npocc () =
             person_request = None;
           }
       in
-      Alcotest.(check bool) "request parsed" true (Option.is_some req);
+      Geneweb_test_utils.Check.bool ~pos:__POS__
+        ~msg:"Request.request_of_piqi_request parses npocc request" true
+        (Option.is_some req);
       let resp =
         Plugin_api_lib.Response.response conf_visitor base (Option.get req)
       in
-      Alcotest.(check bool) "response found" true (Option.is_some resp);
+      Geneweb_test_utils.Check.bool ~pos:__POS__
+        ~msg:"Response.response finds person by npocc" true
+        (Option.is_some resp);
       let piqi = Plugin_api_lib.Response.to_piqi (Option.get resp) in
-      Alcotest.(check (option string))
-        "first name matches" (Some "Jean") piqi.firstname;
-      Alcotest.(check (option string))
-        "surname matches" (Some "Dupont") piqi.lastname)
+      Geneweb_test_utils.Check.option Alcotest.string ~pos:__POS__
+        ~msg:"Response.to_piqi first name matches" (Some "Jean") piqi.firstname;
+      Geneweb_test_utils.Check.option Alcotest.string ~pos:__POS__
+        ~msg:"Response.to_piqi surname matches" (Some "Dupont") piqi.lastname)
 
 let test_lookup_not_found () =
   with_base (fun base _p_father _p_mother _p_child _p_private ->
@@ -124,11 +134,17 @@ let test_lookup_not_found () =
             person_request = None;
           }
       in
-      Alcotest.(check bool) "request parsed" true (Option.is_some req);
+      Geneweb_test_utils.Check.bool ~pos:__POS__
+        ~msg:
+          "Request.request_of_piqi_request parses request for nonexistent \
+           person"
+        true (Option.is_some req);
       let resp =
         Plugin_api_lib.Response.response conf_visitor base (Option.get req)
       in
-      Alcotest.(check bool) "response not found" true (Option.is_none resp))
+      Geneweb_test_utils.Check.bool ~pos:__POS__
+        ~msg:"Response.response returns None for nonexistent person" true
+        (Option.is_none resp))
 
 let test_parent_hierarchy () =
   with_base (fun base _p_father _p_mother p_child _p_private ->
@@ -182,18 +198,26 @@ let test_parent_hierarchy () =
         Plugin_api_lib.Response.response conf_visitor base (Option.get req)
       in
       let piqi = Plugin_api_lib.Response.to_piqi (Option.get resp) in
-      Alcotest.(check bool) "father populated" true (Option.is_some piqi.father);
-      Alcotest.(check bool) "mother populated" true (Option.is_some piqi.mother);
+      Geneweb_test_utils.Check.bool ~pos:__POS__
+        ~msg:"Response.response populates father hierarchy" true
+        (Option.is_some piqi.father);
+      Geneweb_test_utils.Check.bool ~pos:__POS__
+        ~msg:"Response.response populates mother hierarchy" true
+        (Option.is_some piqi.mother);
       let father = Option.get piqi.father in
       let mother = Option.get piqi.mother in
-      Alcotest.(check (option string))
-        "father firstname" (Some "Jean") father.firstname;
-      Alcotest.(check (option string))
-        "father lastname" (Some "Dupont") father.lastname;
-      Alcotest.(check (option string))
-        "mother firstname" (Some "Marie") mother.firstname;
-      Alcotest.(check (option string))
-        "mother lastname" (Some "Martin") mother.lastname)
+      Geneweb_test_utils.Check.option Alcotest.string ~pos:__POS__
+        ~msg:"Response.to_piqi father firstname matches" (Some "Jean")
+        father.firstname;
+      Geneweb_test_utils.Check.option Alcotest.string ~pos:__POS__
+        ~msg:"Response.to_piqi father lastname matches" (Some "Dupont")
+        father.lastname;
+      Geneweb_test_utils.Check.option Alcotest.string ~pos:__POS__
+        ~msg:"Response.to_piqi mother firstname matches" (Some "Marie")
+        mother.firstname;
+      Geneweb_test_utils.Check.option Alcotest.string ~pos:__POS__
+        ~msg:"Response.to_piqi mother lastname matches" (Some "Martin")
+        mother.lastname)
 
 let test_privacy_filtering () =
   with_base (fun base _p_father _p_mother _p_child p_private ->
@@ -212,20 +236,24 @@ let test_privacy_filtering () =
       let piqi_visitor =
         Plugin_api_lib.Response.to_piqi (Option.get resp_visitor)
       in
-      Alcotest.(check (option string))
-        "hidden firstname for visitor" None piqi_visitor.firstname;
-      Alcotest.(check (option string))
-        "hidden lastname for visitor" None piqi_visitor.lastname;
+      Geneweb_test_utils.Check.option Alcotest.string ~pos:__POS__
+        ~msg:"Response.response hides firstname for visitor on private person"
+        None piqi_visitor.firstname;
+      Geneweb_test_utils.Check.option Alcotest.string ~pos:__POS__
+        ~msg:"Response.response hides lastname for visitor on private person"
+        None piqi_visitor.lastname;
       let resp_wizard =
         Plugin_api_lib.Response.response conf_wizard base (Option.get req)
       in
       let piqi_wizard =
         Plugin_api_lib.Response.to_piqi (Option.get resp_wizard)
       in
-      Alcotest.(check (option string))
-        "revealed firstname for wizard" (Some "Secret") piqi_wizard.firstname;
-      Alcotest.(check (option string))
-        "revealed lastname for wizard" (Some "Agent") piqi_wizard.lastname)
+      Geneweb_test_utils.Check.option Alcotest.string ~pos:__POS__
+        ~msg:"Response.response reveals firstname for wizard on private person"
+        (Some "Secret") piqi_wizard.firstname;
+      Geneweb_test_utils.Check.option Alcotest.string ~pos:__POS__
+        ~msg:"Response.response reveals lastname for wizard on private person"
+        (Some "Agent") piqi_wizard.lastname)
 
 let test_titles_extraction () =
   with_base (fun base _p_father _p_mother p_child _p_private ->
@@ -272,7 +300,9 @@ let test_titles_extraction () =
         Plugin_api_lib.Response.response conf_visitor base (Option.get req)
       in
       let piqi = Plugin_api_lib.Response.to_piqi (Option.get resp) in
-      Alcotest.(check int) "titles count" 1 (List.length piqi.titles))
+      Geneweb_test_utils.Check.int ~pos:__POS__
+        ~msg:"Response.response extracts requested titles" 1
+        (List.length piqi.titles))
 
 let test_default_request_is_full_fields () =
   with_base (fun base _p_father _p_mother p_child _p_private ->
@@ -288,16 +318,21 @@ let test_default_request_is_full_fields () =
       let resp =
         Plugin_api_lib.Response.response conf_visitor base (Option.get req)
       in
-      Alcotest.(check bool) "response found" true (Option.is_some resp);
+      Geneweb_test_utils.Check.bool ~pos:__POS__
+        ~msg:"Response.response default request returns some" true
+        (Option.is_some resp);
       let piqi = Plugin_api_lib.Response.to_piqi (Option.get resp) in
-      Alcotest.(check (option string))
-        "firstname" (Some "Pierre") piqi.firstname;
-      Alcotest.(check (option string)) "lastname" (Some "Dupont") piqi.lastname;
-      Alcotest.(check bool)
-        "father is present with default full fields" true
+      Geneweb_test_utils.Check.option Alcotest.string ~pos:__POS__
+        ~msg:"Response.to_piqi default request includes firstname"
+        (Some "Pierre") piqi.firstname;
+      Geneweb_test_utils.Check.option Alcotest.string ~pos:__POS__
+        ~msg:"Response.to_piqi default request includes lastname"
+        (Some "Dupont") piqi.lastname;
+      Geneweb_test_utils.Check.bool ~pos:__POS__
+        ~msg:"Response.to_piqi default request includes father" true
         (Option.is_some piqi.father);
-      Alcotest.(check bool)
-        "mother is present with default full fields" true
+      Geneweb_test_utils.Check.bool ~pos:__POS__
+        ~msg:"Response.to_piqi default request includes mother" true
         (Option.is_some piqi.mother))
 
 let test_family_extraction () =
@@ -316,35 +351,36 @@ let test_family_extraction () =
         Plugin_api_lib.Response.response conf_visitor base
           (Option.get req_father)
       in
-      Alcotest.(check bool)
-        "father response found" true
+      Geneweb_test_utils.Check.bool ~pos:__POS__
+        ~msg:"Response.response father response found" true
         (Option.is_some resp_father);
       let piqi_father =
         Plugin_api_lib.Response.to_piqi (Option.get resp_father)
       in
-      Alcotest.(check int)
-        "father families count" 1
+      Geneweb_test_utils.Check.int ~pos:__POS__
+        ~msg:"Response.to_piqi father families count" 1
         (List.length piqi_father.families);
       let fam_father = List.hd piqi_father.families in
-      Alcotest.(check bool)
-        "spouse present for father" true
+      Geneweb_test_utils.Check.bool ~pos:__POS__
+        ~msg:"Response.to_piqi spouse present for father" true
         (Option.is_some fam_father.spouse);
       let spouse_father = Option.get fam_father.spouse in
-      Alcotest.(check (option string))
-        "spouse firstname from father query" (Some "Marie")
-        spouse_father.firstname;
-      Alcotest.(check (option string))
-        "spouse lastname from father query" (Some "Martin")
-        spouse_father.lastname;
-      Alcotest.(check int)
-        "father children count" 1
+      Geneweb_test_utils.Check.option Alcotest.string ~pos:__POS__
+        ~msg:"Response.to_piqi spouse firstname from father query"
+        (Some "Marie") spouse_father.firstname;
+      Geneweb_test_utils.Check.option Alcotest.string ~pos:__POS__
+        ~msg:"Response.to_piqi spouse lastname from father query"
+        (Some "Martin") spouse_father.lastname;
+      Geneweb_test_utils.Check.int ~pos:__POS__
+        ~msg:"Response.to_piqi father children count" 1
         (List.length fam_father.children);
       let child_father = List.hd fam_father.children in
-      Alcotest.(check (option string))
-        "child firstname from father query" (Some "Pierre")
-        child_father.firstname;
-      Alcotest.(check (option string))
-        "child lastname from father query" (Some "Dupont") child_father.lastname;
+      Geneweb_test_utils.Check.option Alcotest.string ~pos:__POS__
+        ~msg:"Response.to_piqi child firstname from father query"
+        (Some "Pierre") child_father.firstname;
+      Geneweb_test_utils.Check.option Alcotest.string ~pos:__POS__
+        ~msg:"Response.to_piqi child lastname from father query" (Some "Dupont")
+        child_father.lastname;
       (* Symmetrical: Test mother-centric family extraction *)
       let req_mother =
         Plugin_api_lib.Request.request_of_piqi_request
@@ -359,35 +395,36 @@ let test_family_extraction () =
         Plugin_api_lib.Response.response conf_visitor base
           (Option.get req_mother)
       in
-      Alcotest.(check bool)
-        "mother response found" true
+      Geneweb_test_utils.Check.bool ~pos:__POS__
+        ~msg:"Response.response mother response found" true
         (Option.is_some resp_mother);
       let piqi_mother =
         Plugin_api_lib.Response.to_piqi (Option.get resp_mother)
       in
-      Alcotest.(check int)
-        "mother families count" 1
+      Geneweb_test_utils.Check.int ~pos:__POS__
+        ~msg:"Response.to_piqi mother families count" 1
         (List.length piqi_mother.families);
       let fam_mother = List.hd piqi_mother.families in
-      Alcotest.(check bool)
-        "spouse present for mother" true
+      Geneweb_test_utils.Check.bool ~pos:__POS__
+        ~msg:"Response.to_piqi spouse present for mother" true
         (Option.is_some fam_mother.spouse);
       let spouse_mother = Option.get fam_mother.spouse in
-      Alcotest.(check (option string))
-        "spouse firstname from mother query" (Some "Jean")
+      Geneweb_test_utils.Check.option Alcotest.string ~pos:__POS__
+        ~msg:"Response.to_piqi spouse firstname from mother query" (Some "Jean")
         spouse_mother.firstname;
-      Alcotest.(check (option string))
-        "spouse lastname from mother query" (Some "Dupont")
-        spouse_mother.lastname;
-      Alcotest.(check int)
-        "mother children count" 1
+      Geneweb_test_utils.Check.option Alcotest.string ~pos:__POS__
+        ~msg:"Response.to_piqi spouse lastname from mother query"
+        (Some "Dupont") spouse_mother.lastname;
+      Geneweb_test_utils.Check.int ~pos:__POS__
+        ~msg:"Response.to_piqi mother children count" 1
         (List.length fam_mother.children);
       let child_mother = List.hd fam_mother.children in
-      Alcotest.(check (option string))
-        "child firstname from mother query" (Some "Pierre")
-        child_mother.firstname;
-      Alcotest.(check (option string))
-        "child lastname from mother query" (Some "Dupont") child_mother.lastname)
+      Geneweb_test_utils.Check.option Alcotest.string ~pos:__POS__
+        ~msg:"Response.to_piqi child firstname from mother query"
+        (Some "Pierre") child_mother.firstname;
+      Geneweb_test_utils.Check.option Alcotest.string ~pos:__POS__
+        ~msg:"Response.to_piqi child lastname from mother query" (Some "Dupont")
+        child_mother.lastname)
 
 let test_multiple_unions () =
   let bname = Filename.temp_file "gw_api_v2_unions_" "" in
@@ -433,17 +470,25 @@ let test_multiple_unions () =
         Plugin_api_lib.Response.response conf_visitor base (Option.get req)
       in
       let piqi = Plugin_api_lib.Response.to_piqi (Option.get resp) in
-      Alcotest.(check int) "two families" 2 (List.length piqi.families);
+      Geneweb_test_utils.Check.int ~pos:__POS__
+        ~msg:"Response.to_piqi multiple unions families count" 2
+        (List.length piqi.families);
       let fam1 = List.nth piqi.families 0 in
       let fam2 = List.nth piqi.families 1 in
       let sp1 = Option.get fam1.spouse in
       let sp2 = Option.get fam2.spouse in
-      Alcotest.(check (option string))
-        "first spouse" (Some "Marguerite") sp1.firstname;
-      Alcotest.(check (option string))
-        "second spouse" (Some "Marie") sp2.firstname;
-      Alcotest.(check int) "fam1 has no children" 0 (List.length fam1.children);
-      Alcotest.(check int) "fam2 has 1 child" 1 (List.length fam2.children))
+      Geneweb_test_utils.Check.option Alcotest.string ~pos:__POS__
+        ~msg:"Response.to_piqi multiple unions first spouse firstname"
+        (Some "Marguerite") sp1.firstname;
+      Geneweb_test_utils.Check.option Alcotest.string ~pos:__POS__
+        ~msg:"Response.to_piqi multiple unions second spouse firstname"
+        (Some "Marie") sp2.firstname;
+      Geneweb_test_utils.Check.int ~pos:__POS__
+        ~msg:"Response.to_piqi multiple unions first family children count" 0
+        (List.length fam1.children);
+      Geneweb_test_utils.Check.int ~pos:__POS__
+        ~msg:"Response.to_piqi multiple unions second family children count" 1
+        (List.length fam2.children))
 
 let test_private_spouse_masking () =
   let bname = Filename.temp_file "gw_api_v2_priv_" "" in
@@ -480,10 +525,12 @@ let test_private_spouse_masking () =
       in
       let fam_visitor = List.hd piqi_visitor.families in
       let sp_visitor = Option.get fam_visitor.spouse in
-      Alcotest.(check (option string))
-        "private spouse firstname masked for visitor" None sp_visitor.firstname;
-      Alcotest.(check (option string))
-        "private spouse lastname masked for visitor" None sp_visitor.lastname;
+      Geneweb_test_utils.Check.option Alcotest.string ~pos:__POS__
+        ~msg:"Response.to_piqi masks private spouse firstname for visitor" None
+        sp_visitor.firstname;
+      Geneweb_test_utils.Check.option Alcotest.string ~pos:__POS__
+        ~msg:"Response.to_piqi masks private spouse lastname for visitor" None
+        sp_visitor.lastname;
       let resp_wizard =
         Plugin_api_lib.Response.response conf_wizard base (Option.get req)
       in
@@ -492,12 +539,12 @@ let test_private_spouse_masking () =
       in
       let fam_wizard = List.hd piqi_wizard.families in
       let sp_wizard = Option.get fam_wizard.spouse in
-      Alcotest.(check (option string))
-        "private spouse firstname revealed for wizard" (Some "Private")
-        sp_wizard.firstname;
-      Alcotest.(check (option string))
-        "private spouse lastname revealed for wizard" (Some "Wife")
-        sp_wizard.lastname)
+      Geneweb_test_utils.Check.option Alcotest.string ~pos:__POS__
+        ~msg:"Response.to_piqi reveals private spouse firstname for wizard"
+        (Some "Private") sp_wizard.firstname;
+      Geneweb_test_utils.Check.option Alcotest.string ~pos:__POS__
+        ~msg:"Response.to_piqi reveals private spouse lastname for wizard"
+        (Some "Wife") sp_wizard.lastname)
 
 let test_visibility_levels () =
   with_base (fun base _p_father _p_mother p_child p_private ->
@@ -517,8 +564,8 @@ let test_visibility_levels () =
       let piqi_child =
         Plugin_api_lib.Response.to_piqi (Option.get resp_child)
       in
-      Alcotest.(check bool)
-        "child has public visibility" true
+      Geneweb_test_utils.Check.bool ~pos:__POS__
+        ~msg:"Response.to_piqi sets public visibility for public person" true
         (piqi_child.visibility = Some `visibility_public);
       let req_priv =
         Plugin_api_lib.Request.request_of_piqi_request
@@ -533,8 +580,8 @@ let test_visibility_levels () =
         Plugin_api_lib.Response.response conf_visitor base (Option.get req_priv)
       in
       let piqi_priv = Plugin_api_lib.Response.to_piqi (Option.get resp_priv) in
-      Alcotest.(check bool)
-        "private person has private visibility" true
+      Geneweb_test_utils.Check.bool ~pos:__POS__
+        ~msg:"Response.to_piqi sets private visibility for private person" true
         (piqi_priv.visibility = Some `visibility_private))
 
 let test_family_sources () =
@@ -570,8 +617,9 @@ let test_family_sources () =
       in
       let piqi = Plugin_api_lib.Response.to_piqi (Option.get resp) in
       let fam = List.hd piqi.families in
-      Alcotest.(check (option string))
-        "marriage source matches" (Some "Archives de Paris") fam.marriage_source)
+      Geneweb_test_utils.Check.option Alcotest.string ~pos:__POS__
+        ~msg:"Response.to_piqi extracts marriage source"
+        (Some "Archives de Paris") fam.marriage_source)
 
 let test_notes_raw () =
   let bname = Filename.temp_file "gw_api_v2_notes_" "" in
@@ -604,24 +652,31 @@ let test_notes_raw () =
         Plugin_api_lib.Response.response conf_visitor base (Option.get req)
       in
       let piqi = Plugin_api_lib.Response.to_piqi (Option.get resp) in
-      Alcotest.(check (option string))
-        "notes_raw extracted" (Some "Raw Note Content\nLine 2") piqi.notes_raw)
+      Geneweb_test_utils.Check.option Alcotest.string ~pos:__POS__
+        ~msg:"Response.to_piqi extracts raw notes"
+        (Some "Raw Note Content\nLine 2") piqi.notes_raw)
 
 let tests =
   [
-    ("Api_v2.lookup_by_index", `Quick, test_lookup_by_index);
-    ("Api_v2.lookup_by_npocc", `Quick, test_lookup_by_npocc);
-    ("Api_v2.lookup_not_found", `Quick, test_lookup_not_found);
-    ("Api_v2.parent_hierarchy", `Quick, test_parent_hierarchy);
-    ("Api_v2.privacy_filtering", `Quick, test_privacy_filtering);
-    ("Api_v2.titles_extraction", `Quick, test_titles_extraction);
-    ( "Api_v2.default_request_is_full_fields",
-      `Quick,
-      test_default_request_is_full_fields );
-    ("Api_v2.family_extraction", `Quick, test_family_extraction);
-    ("Api_v2.multiple_unions", `Quick, test_multiple_unions);
-    ("Api_v2.private_spouse_masking", `Quick, test_private_spouse_masking);
-    ("Api_v2.visibility_levels", `Quick, test_visibility_levels);
-    ("Api_v2.family_sources", `Quick, test_family_sources);
-    ("Api_v2.notes_raw", `Quick, test_notes_raw);
+    Geneweb_test_utils.Check.case "Api_v2.lookup_by_index" test_lookup_by_index;
+    Geneweb_test_utils.Check.case "Api_v2.lookup_by_npocc" test_lookup_by_npocc;
+    Geneweb_test_utils.Check.case "Api_v2.lookup_not_found"
+      test_lookup_not_found;
+    Geneweb_test_utils.Check.case "Api_v2.parent_hierarchy"
+      test_parent_hierarchy;
+    Geneweb_test_utils.Check.case "Api_v2.privacy_filtering"
+      test_privacy_filtering;
+    Geneweb_test_utils.Check.case "Api_v2.titles_extraction"
+      test_titles_extraction;
+    Geneweb_test_utils.Check.case "Api_v2.default_request_is_full_fields"
+      test_default_request_is_full_fields;
+    Geneweb_test_utils.Check.case "Api_v2.family_extraction"
+      test_family_extraction;
+    Geneweb_test_utils.Check.case "Api_v2.multiple_unions" test_multiple_unions;
+    Geneweb_test_utils.Check.case "Api_v2.private_spouse_masking"
+      test_private_spouse_masking;
+    Geneweb_test_utils.Check.case "Api_v2.visibility_levels"
+      test_visibility_levels;
+    Geneweb_test_utils.Check.case "Api_v2.family_sources" test_family_sources;
+    Geneweb_test_utils.Check.case "Api_v2.notes_raw" test_notes_raw;
   ]
